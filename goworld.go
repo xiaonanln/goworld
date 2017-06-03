@@ -1,13 +1,7 @@
 package goworld
 
-import (
-	"time"
-	"os"
-)
+import "github.com/xiaonanln/goworld/startup"
 
 func Run() {
-	for {
-		os.Stdout.Write([]byte("."))
-		time.Sleep(time.Second)
-	}
+	goworld_startup.Startup()
 }

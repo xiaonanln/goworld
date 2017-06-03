@@ -1,4 +1,4 @@
-package bigworld_netutil
+package goworld_netutil
 
 import (
 	"net"
