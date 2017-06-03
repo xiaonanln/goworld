@@ -3,7 +3,7 @@ package goworld_proto
 import (
 	"testing"
 
-	"github.com/xiaonanln/vacuum/uuid"
+	"github.com/xiaonanln/goworld/uuid"
 )
 
 type testMsg struct {

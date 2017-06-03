@@ -1,4 +1,4 @@
-package goworld_netutil
+package netutil
 
 import (
 	"encoding/binary"

@@ -11,8 +11,8 @@ import (
 
 	"encoding/json"
 
-	"github.com/xiaonanln/vacuum/netutil"
-	"github.com/xiaonanln/vacuum/uuid"
+	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/uuid"
 	"github.com/xiaonanln/vacuum/vlog"
 )
 

@@ -1,7 +1,18 @@
 package goworld_startup
 
-import "github.com/xiaonanln/goworld/netutil"
+import (
+	"net"
+
+	"github.com/xiaonanln/goworld/netutil"
+)
 
 func Startup() {
-	goworld_netutil.ServeTCPForever()
+	netutil.ServeTCPForever("127.0.0.1:4000", &serverDelegate{})
+}
+
+type serverDelegate struct {
+}
+
+func (sd *serverDelegate) ServeTCPConnection(net.Conn) {
+
 }
