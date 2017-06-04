@@ -2,11 +2,10 @@ package netutil
 
 import (
 	"net"
-
 	"runtime/debug"
 	"time"
 
-	"github.com/xiaonanln/vacuum/vlog"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
@@ -20,7 +19,7 @@ type TCPServerDelegate interface {
 func ServeTCPForever(listenAddr string, delegate TCPServerDelegate) {
 	for {
 		err := serveTCPForeverOnce(listenAddr, delegate)
-		vlog.Error("server@%s failed with error: %v, will restart after %s", listenAddr, err, RESTART_TCP_SERVER_INTERVAL)
+		gwlog.Error("server@%s failed with error: %v, will restart after %s", listenAddr, err, RESTART_TCP_SERVER_INTERVAL)
 		time.Sleep(RESTART_TCP_SERVER_INTERVAL)
 	}
 }
@@ -28,7 +27,7 @@ func ServeTCPForever(listenAddr string, delegate TCPServerDelegate) {
 func serveTCPForeverOnce(listenAddr string, delegate TCPServerDelegate) error {
 	defer func() {
 		if err := recover(); err != nil {
-			vlog.Error("serveTCPImpl: paniced with error %s", err)
+			gwlog.Error("serveTCPImpl: paniced with error %s", err)
 			debug.PrintStack()
 		}
 	}()
@@ -39,7 +38,7 @@ func serveTCPForeverOnce(listenAddr string, delegate TCPServerDelegate) error {
 
 func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
 	ln, err := net.Listen("tcp", listenAddr)
-	vlog.Info("Listening on TCP: %s ...", listenAddr)
+	gwlog.Info("Listening on TCP: %s ...", listenAddr)
 
 	if err != nil {
 		return err
@@ -57,7 +56,7 @@ func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
 			}
 		}
 
-		vlog.Info("Connection from: %s", conn.RemoteAddr())
+		gwlog.Info("Connection from: %s", conn.RemoteAddr())
 		go delegate.ServeTCPConnection(conn)
 	}
 	return nil

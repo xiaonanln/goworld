@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"runtime/debug"
 
-	"github.com/xiaonanln/vacuum/vlog"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 func init() {
@@ -125,11 +125,11 @@ func runServe(f reflect.Value, args []reflect.Value) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			vlog.Error("ServeForever: func %v quited with error %v", f, err)
+			gwlog.Error("ServeForever: func %v quited with error %v", f, err)
 			debug.PrintStack()
 		}
 	}()
 
 	rets := f.Call(args)
-	vlog.Debug("ServeForever: func %v returns %v", f, rets)
+	gwlog.Debug("ServeForever: func %v returns %v", f, rets)
 }

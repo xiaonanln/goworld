@@ -13,7 +13,7 @@ import (
 
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/uuid"
-	"github.com/xiaonanln/vacuum/vlog"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
@@ -51,12 +51,12 @@ type Message [MAX_MESSAGE_SIZE]byte
 
 func allocMessage() *Message {
 	msg := messagePool.Get().(*Message)
-	//vlog.Debug("ALLOC %p", msg)
+	//gwlog.Debug("ALLOC %p", msg)
 	return msg
 }
 
 func (m *Message) Release() {
-	//vlog.Debug("RELEASE %p", m)
+	//gwlog.Debug("RELEASE %p", m)
 	messagePool.Put(m)
 }
 
@@ -92,7 +92,7 @@ func (mc *MessageConnection) SendMsgEx(mt MsgType_t, msg interface{}, msgPacker 
 	var pktSize uint32 = uint32(payloadLen + PREPAYLOAD_SIZE)
 	NETWORK_ENDIAN.PutUint32((msgbuf)[:SIZE_FIELD_SIZE], pktSize)
 	err = mc.SendAll((msgbuf)[:pktSize])
-	vlog.Debug(">>> SendMsg: size=%v, %s%v, error=%v", pktSize, MsgTypeToString(mt), toJsonString(msg), err)
+	gwlog.Debug(">>> SendMsg: size=%v, %s%v, error=%v", pktSize, MsgTypeToString(mt), toJsonString(msg), err)
 	return err
 }
 
@@ -120,7 +120,7 @@ func (mc *MessageConnection) SendRelayMsg(targetID string, mt MsgType_t, msg int
 	var pktSize uint32 = uint32(payloadLen + RELAY_PREPAYLOAD_SIZE)
 	NETWORK_ENDIAN.PutUint32((msgbuf)[:SIZE_FIELD_SIZE], pktSize|RELAY_MASK) // set highest bit of size to 1 to indicate a relay msg
 	err = mc.SendAll((msgbuf)[:pktSize])
-	vlog.Debug(">>> SendRelayMsg: size=%v, targetID=%s, type=%v: %v, error=%v", pktSize, targetID, mt, msg, err)
+	gwlog.Debug(">>> SendRelayMsg: size=%v, targetID=%s, type=%v: %v, error=%v", pktSize, targetID, mt, msg, err)
 	return err
 }
 
@@ -159,8 +159,8 @@ func (mc *MessageConnection) RecvMsg(handler MessageHandler) error {
 		return err
 	}
 
-	vlog.Debug("<<< RecvMsg: pktsize=%v, isRelayMsg=%v, packet=%v", pktSize, isRelayMsg, msg[:pktSize])
-	//vlog.WithFields(vlog.Fields{"pktSize": pktSize, "isRelayMsg": isRelayMsg}).Debugf("RecvMsg")
+	gwlog.Debug("<<< RecvMsg: pktsize=%v, isRelayMsg=%v, packet=%v", pktSize, isRelayMsg, msg[:pktSize])
+	//gwlog.WithFields(gwlog.Fields{"pktSize": pktSize, "isRelayMsg": isRelayMsg}).Debugf("RecvMsg")
 	if isRelayMsg {
 		// if it is a relay msg, we just relay what we receive without interpret the payload
 		targetID := string(msg[SIZE_FIELD_SIZE : SIZE_FIELD_SIZE+STRING_ID_SIZE])
