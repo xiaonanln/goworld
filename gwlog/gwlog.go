@@ -23,6 +23,10 @@ var (
 	Fatal  = sublog.Fatalf
 )
 
+func init() {
+	sublog.SetLevel(sublog.DebugLevel)
+}
+
 func ParseLevel(lvl string) (sublog.Level, error) {
 	return sublog.ParseLevel(lvl)
 }

@@ -78,7 +78,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			continue
 		}
 
-		gwlog.Info("Section %s", sec.Name())
+		//gwlog.Info("Section %s", sec.Name())
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.dispatcher)

@@ -3,6 +3,10 @@ package config
 import (
 	"testing"
 
+	"encoding/json"
+
+	"fmt"
+
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -41,4 +45,33 @@ func TestReload(t *testing.T) {
 	config := Get()
 	config = Reload()
 	gwlog.Debug("goworld config: \n%s", config)
+}
+
+func TestGetDispatcher(t *testing.T) {
+	cfg := GetDispatcher()
+	cfgStr, _ := json.Marshal(cfg)
+	fmt.Printf("dispatcher config: %s", string(cfgStr))
+}
+
+func TestGetGame(t *testing.T) {
+	for id := 1; id <= 10; id++ {
+		cfg := GetGame(id)
+		if cfg == nil {
+			gwlog.Info("Game %d not found", id)
+		} else {
+			gwlog.Info("Game %d config: %v", id, cfg)
+		}
+	}
+}
+
+func TestGetGate(t *testing.T) {
+
+	for id := 1; id <= 5; id++ {
+		cfg := GetGate(id)
+		if cfg == nil {
+			gwlog.Info("Gate %d not found", id)
+		} else {
+			gwlog.Info("Gate %d config: %v", id, cfg)
+		}
+	}
 }
