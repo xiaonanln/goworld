@@ -3,6 +3,10 @@ package config
 import (
 	"strings"
 
+	"strconv"
+
+	"fmt"
+
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
 )
@@ -49,8 +53,16 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
-func GetGame(idx int) {
+func GetGame(gameid int) *GameConfig {
+	return Get().games[gameid]
+}
 
+func GetGate(gateid int) *GateConfig {
+	return Get().gates[gateid]
+}
+
+func GetDispatcher() *DispatcherConfig {
+	return &Get().dispatcher
 }
 
 func readGoWorldConfig() *GoWorldConfig {
@@ -59,7 +71,7 @@ func readGoWorldConfig() *GoWorldConfig {
 		gates: map[int]*GateConfig{},
 	}
 	iniFile, err := ini.Load(DEFAULT_CONFIG_FILENAME)
-	checkConfigError(err)
+	checkConfigError(err, "")
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()
 		if secName == "DEFAULT" {
@@ -72,10 +84,14 @@ func readGoWorldConfig() *GoWorldConfig {
 			readDispatcherConfig(sec, &config.dispatcher)
 		} else if secName[:4] == "game" {
 			// game config
-			config.games[secName] = readGameConfig(sec)
+			id, err := strconv.Atoi(secName[4:])
+			checkConfigError(err, fmt.Sprintf("invalid game name: %s", secName))
+			config.games[id] = readGameConfig(sec)
 		} else if secName[:4] == "gate" {
 			// gate config
-			config.gates[secName] = readGateConfig(sec)
+			id, err := strconv.Atoi(secName[4:])
+			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
+			config.gates[id] = readGateConfig(sec)
 		} else {
 			gwlog.Warn("unknown section: %s", secName)
 		}
@@ -127,8 +143,11 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	return
 }
 
-func checkConfigError(err error) {
+func checkConfigError(err error, msg string) {
 	if err != nil {
-		gwlog.Panic(err)
+		if msg == "" {
+			msg = err.Error()
+		}
+		gwlog.Panicf("read config error: %s", msg)
 	}
 }
