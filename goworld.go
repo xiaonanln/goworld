@@ -5,8 +5,8 @@ import (
 	"github.com/xiaonanln/goworld/entity"
 )
 
-func Run(gameid int, delegate game.IGameDelegate) {
-	game.Run(gameid, delegate)
+func Run(delegate game.IGameDelegate) {
+	game.Run(delegate)
 }
 
 func RegisterEntity(typeName string, entityPtr entity.IEntity) {

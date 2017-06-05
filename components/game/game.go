@@ -7,6 +7,8 @@ import (
 
 	"time"
 
+	"flag"
+
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
 )
@@ -16,8 +18,16 @@ var (
 	gameDelegate IGameDelegate
 )
 
-func Run(_gameid int, delegate IGameDelegate) {
-	gameid = _gameid
+func init() {
+	parseArgs()
+}
+
+func parseArgs() {
+	flag.IntVar(&gameid, "gid", 0, "set gameid")
+	flag.Parse()
+}
+
+func Run(delegate IGameDelegate) {
 	gameDelegate = delegate
 
 	cfg := config.GetGame(gameid)

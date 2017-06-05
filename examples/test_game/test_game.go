@@ -1,15 +1,9 @@
 package main
 
 import (
-	"flag"
-
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/entity"
-)
-
-var (
-	gameid = 0
 )
 
 type TestEntity struct {
@@ -25,15 +19,8 @@ type gameDelegate struct {
 }
 
 func main() {
-	parseArgs()
-
 	goworld.RegisterEntity("TestEntity", &TestEntity{})
-	goworld.Run(gameid, &gameDelegate{})
-}
-
-func parseArgs() {
-	flag.IntVar(&gameid, "gid", 0, "set gameid")
-	flag.Parse()
+	goworld.Run(&gameDelegate{})
 }
 
 func (game gameDelegate) OnReady() {
