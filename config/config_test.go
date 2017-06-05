@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
-	config := GetGoWorldConfig()
+	config := Get()
 	gwlog.Debug("goworld config: \n%s", config)
 	if config == nil {
 		t.FailNow()

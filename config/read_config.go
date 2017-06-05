@@ -37,16 +37,16 @@ type GoWorldConfig struct {
 	gates      map[string]*GateConfig
 }
 
-func GetGoWorldConfig() *GoWorldConfig {
+func Get() *GoWorldConfig {
 	if goWorldConfig == nil {
 		goWorldConfig = readGoWorldConfig()
 	}
 	return goWorldConfig
 }
 
-func ReloadGoWorldConfig() *GoWorldConfig {
+func Reload() *GoWorldConfig {
 	goWorldConfig = nil
-	return GetGoWorldConfig()
+	return Get()
 }
 
 func readGoWorldConfig() *GoWorldConfig {
