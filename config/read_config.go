@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 
+	"encoding/json"
+
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
 )
@@ -63,6 +65,14 @@ func GetGate(gateid int) *GateConfig {
 
 func GetDispatcher() *DispatcherConfig {
 	return &Get().dispatcher
+}
+
+func DumpPretty(cfg interface{}) string {
+	s, err := json.MarshalIndent(cfg, "", "    ")
+	if err != nil {
+		return err.Error()
+	}
+	return string(s)
 }
 
 func readGoWorldConfig() *GoWorldConfig {
