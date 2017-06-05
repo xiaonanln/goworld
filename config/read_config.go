@@ -33,8 +33,8 @@ type GateConfig struct {
 
 type GoWorldConfig struct {
 	dispatcher DispatcherConfig
-	games      map[string]*GameConfig
-	gates      map[string]*GateConfig
+	games      map[int]*GameConfig
+	gates      map[int]*GateConfig
 }
 
 func Get() *GoWorldConfig {
@@ -49,10 +49,14 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
+func GetGame(idx int) {
+
+}
+
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		games: map[string]*GameConfig{},
-		gates: map[string]*GateConfig{},
+		games: map[int]*GameConfig{},
+		gates: map[int]*GateConfig{},
 	}
 	iniFile, err := ini.Load(DEFAULT_CONFIG_FILENAME)
 	checkConfigError(err)
