@@ -6,7 +6,7 @@ type RawConnection struct {
 	Conn net.Conn
 }
 
-func NewConnection(conn net.Conn) RawConnection {
+func NewRawConnection(conn net.Conn) RawConnection {
 	return RawConnection{conn}
 }
 
