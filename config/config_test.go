@@ -6,8 +6,8 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
-func TestLoadConfig(t *testing.T) {
-	config := GetGoWorldConfig()
+func TestLoad(t *testing.T) {
+	config := Get()
 	gwlog.Debug("goworld config: \n%s", config)
 	if config == nil {
 		t.FailNow()
@@ -35,4 +35,10 @@ func TestLoadConfig(t *testing.T) {
 		}
 	}
 	gwlog.Info("read goworld config: %v", config)
+}
+
+func TestReload(t *testing.T) {
+	config := Get()
+	config = Reload()
+	gwlog.Debug("goworld config: \n%s", config)
 }
