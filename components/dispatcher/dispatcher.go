@@ -3,13 +3,10 @@ package main
 import (
 	"fmt"
 
-	"net"
-
 	"flag"
 
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/netutil"
 )
 
 var (
@@ -21,18 +18,13 @@ func debuglog(format string, a ...interface{}) {
 	gwlog.Debug("dispatcher: %s", s)
 }
 
-type DispatcherDelegate struct{}
-
-func main() {
-	flag.StringVar(&configFile, "c", config.DEFAULT_CONFIG_FILENAME, "config file")
+func parseArgs() {
 	flag.Parse()
-
-	config.LoadConfig(configFile)
-	gwlog.SetLevel(gwlog.DEBUG)
-
-	netutil.ServeTCPForever(config.GetConfig().Dispatcher.Host, &DispatcherDelegate{})
 }
 
-func (dd *DispatcherDelegate) ServeTCPConnection(conn net.Conn) {
-	client_proxy.NewClientProxy(conn).Serve()
+func main() {
+	cfg := config.GetDispatcher()
+	//host := fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
+	dispatcher := newDispatcherService(cfg)
+	dispatcher.Run()
 }
