@@ -5,6 +5,8 @@ import (
 
 	"flag"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -24,7 +26,8 @@ func parseArgs() {
 
 func main() {
 	cfg := config.GetDispatcher()
+	fmt.Fprintf(os.Stderr, "Read dispatcher config: \n%s\n", config.DumpPretty(cfg))
 	//host := fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	dispatcher := newDispatcherService(cfg)
-	dispatcher.Run()
+	dispatcher.run()
 }

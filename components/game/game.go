@@ -37,9 +37,15 @@ func Run(delegate IGameDelegate) {
 		gameDelegate.OnReady()
 	})
 
+	tickCounter := 0
 	for {
 		timer.Tick()
+		tickCounter += 1
 		os.Stderr.Write([]byte{'.'})
+		if tickCounter%100 == 0 {
+			os.Stderr.Write([]byte{'\n'})
+		}
+
 		time.Sleep(time.Millisecond * 100)
 	}
 }

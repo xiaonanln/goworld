@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="dispatcher" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="true">
+    <module name="goworld" />
+    <working_directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$" />
+    <kind value="PACKAGE" />
+    <package value="github.com/xiaonanln/goworld/components/dispatcher" />
+    <method />
+  </configuration>
+</component>

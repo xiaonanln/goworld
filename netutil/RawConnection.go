@@ -10,14 +10,14 @@ func NewRawConnection(conn net.Conn) RawConnection {
 	return RawConnection{conn}
 }
 
-func (c RawConnection) String() string {
-	return c.Conn.RemoteAddr().String()
+func (rc RawConnection) String() string {
+	return rc.Conn.RemoteAddr().String()
 }
 
-func (c RawConnection) RecvByte() (byte, error) {
+func (rc RawConnection) RecvByte() (byte, error) {
 	buf := []byte{0}
 	for {
-		n, err := c.Conn.Read(buf)
+		n, err := rc.Conn.Read(buf)
 		if n >= 1 {
 			return buf[0], nil
 		} else if err != nil {
@@ -29,10 +29,10 @@ func (c RawConnection) RecvByte() (byte, error) {
 	}
 }
 
-func (c RawConnection) SendByte(b byte) error {
+func (rc RawConnection) SendByte(b byte) error {
 	buf := []byte{b}
 	for {
-		n, err := c.Conn.Write(buf)
+		n, err := rc.Conn.Write(buf)
 		if n >= 1 {
 			return nil
 		} else if err != nil {
@@ -44,9 +44,9 @@ func (c RawConnection) SendByte(b byte) error {
 	}
 }
 
-func (c RawConnection) RecvAll(buf []byte) error {
+func (rc RawConnection) RecvAll(buf []byte) error {
 	for len(buf) > 0 {
-		n, err := c.Conn.Read(buf)
+		n, err := rc.Conn.Read(buf)
 		if err != nil {
 			if IsTemporaryNetError(err) {
 				continue
@@ -59,9 +59,9 @@ func (c RawConnection) RecvAll(buf []byte) error {
 	return nil
 }
 
-func (c RawConnection) SendAll(data []byte) error {
+func (rc RawConnection) SendAll(data []byte) error {
 	for len(data) > 0 {
-		n, err := c.Conn.Write(data)
+		n, err := rc.Conn.Write(data)
 		if err != nil {
 			if IsTemporaryNetError(err) {
 				continue
@@ -74,14 +74,14 @@ func (c RawConnection) SendAll(data []byte) error {
 	return nil
 }
 
-func (c RawConnection) Read(data []byte) (int, error) {
-	return c.Conn.Read(data)
+func (rc RawConnection) Read(data []byte) (int, error) {
+	return rc.Conn.Read(data)
 }
 
-func (c RawConnection) Write(data []byte) (int, error) {
-	return c.Conn.Write(data)
+func (rc RawConnection) Write(data []byte) (int, error) {
+	return rc.Conn.Write(data)
 }
 
-func (c RawConnection) Close() error {
-	return c.Conn.Close()
+func (rc RawConnection) Close() error {
+	return rc.Conn.Close()
 }

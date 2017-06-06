@@ -61,21 +61,21 @@ func allocPacket() *Packet {
 	return msg
 }
 
-func (mc *PacketConnection) NewPacket() *Packet {
+func (pc *PacketConnection) NewPacket() *Packet {
 	return allocPacket()
 }
 
-func (mc *PacketConnection) SendPacket(packet *Packet) error {
+func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	packet.prepareSend()
-	err := mc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.payloadLen])
+	err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.payloadLen])
 	return err
 }
 
-func (mc *PacketConnection) RecvPacket() (*Packet, error) {
+func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	packet := allocPacket()
 
 	payloadLenBuf := packet.bytes[:SIZE_FIELD_SIZE]
-	err := mc.binconn.RecvAll(payloadLenBuf)
+	err := pc.binconn.RecvAll(payloadLenBuf)
 	if err != nil {
 		packet.Release()
 		return nil, err
@@ -90,7 +90,7 @@ func (mc *PacketConnection) RecvPacket() (*Packet, error) {
 		return nil, fmt.Errorf("message packet too large: %v", payloadLen)
 	}
 
-	err = mc.binconn.RecvAll(packet.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+payloadLen]) // receive the packet type and payload
+	err = pc.binconn.RecvAll(packet.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+payloadLen]) // receive the packet type and payload
 	if err != nil {
 		packet.Release()
 		return nil, err
