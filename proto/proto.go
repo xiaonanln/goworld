@@ -4,13 +4,14 @@ var (
 	msgTypeToString = map[int]string{}
 )
 
-type msgtype_t uint16
+type MsgType_t uint16
 
 const (
-	MT_INVALID     = iota
-	MT_SET_GAME_ID = iota
+	MT_INVALID              = iota
+	MT_SET_GAME_ID          = iota
+	MT_NOTIFY_CREATE_ENTITY = iota
 )
 
-func MsgTypeToString(msgType msgtype_t) string {
+func MsgTypeToString(msgType MsgType_t) string {
 	return msgTypeToString[int(msgType)]
 }

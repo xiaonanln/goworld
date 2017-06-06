@@ -14,5 +14,5 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) {
 }
 
 func CreateEntity(typeName string) {
-	entity.CreateEntity(typeName)
+	game.CreateEntity(typeName)
 }

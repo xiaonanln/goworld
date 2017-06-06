@@ -42,7 +42,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
 
-func CreateEntity(typeName string) {
+func CreateEntity(typeName string) EntityID {
 	gwlog.Debug("CreateEntity: %s", typeName)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -56,4 +56,5 @@ func CreateEntity(typeName string) {
 	entity.I = entityPtrVal.Interface().(IEntity)
 	entityManager.Put(entity)
 	entity.I.OnCreated()
+	return entityID
 }

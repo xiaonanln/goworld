@@ -31,12 +31,15 @@ func (dcp *DispatcherClientProxy) serve() {
 
 	gwlog.Info("New dispatcher client: %s", dcp)
 	for {
-		pkt, err := dcp.RecvPacket()
+		var msgtype proto.MsgType_t
+		var data []byte
+		_, err := dcp.Recv(&msgtype, &data)
 		if err != nil {
 			gwlog.Panic(err)
 		}
 
-		gwlog.Info("%s.RecvPacket: %v", dcp, pkt.Payload())
+		gwlog.Info("%s.RecvPacket: msgtype=%v, data=%v", dcp, msgtype, data)
+
 	}
 }
 

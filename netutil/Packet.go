@@ -50,6 +50,13 @@ func (p *Packet) AppendUint64(v uint64) {
 	p.payloadLen += 8
 }
 
+func (p *Packet) AppendBytes(v []byte) {
+	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	bytesLen := uint32(len(v))
+	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
+	p.payloadLen += bytesLen
+}
+
 func (p *Packet) SetPayloadLen(plen uint32) {
 	if plen > MAX_PAYLOAD_LENGTH {
 		log.Panicf("payload length too long: %d", plen)

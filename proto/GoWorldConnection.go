@@ -3,7 +3,12 @@ package proto
 import (
 	"net"
 
+	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/netutil"
+)
+
+const (
+	MSG_TYPE_SIZE = 2
 )
 
 type GoWorldConnection struct {
@@ -16,15 +21,34 @@ func NewGoWorldConnection(conn net.Conn) GoWorldConnection {
 	}
 }
 
-func (gwc *GoWorldConnection) SetGameID(id int) {
+func (gwc *GoWorldConnection) SetGameID(id int) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(uint16(id))
-	gwc.packetConn.SendPacket(packet)
+	return gwc.packetConn.SendPacket(packet)
 }
 
-func (gwc *GoWorldConnection) RecvPacket() (*netutil.Packet, error) {
-	return gwc.packetConn.RecvPacket()
+func (gwc *GoWorldConnection) NotifyCreateEntity(id entity.EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_NOTIFY_CREATE_ENTITY)
+	packet.AppendBytes([]byte(id))
+	return gwc.packetConn.SendPacket(packet)
+}
+
+//func (gwc *GoWorldConnection) RecvPacket() (*netutil.Packet, error) {
+//	return gwc.packetConn.RecvPacket()
+//}
+
+func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t, data *[]byte) (*netutil.Packet, error) {
+	pkt, err := gwc.packetConn.RecvPacket()
+	if err != nil {
+		return nil, err
+	}
+
+	payload := pkt.Payload()
+	*msgtype = MsgType_t(netutil.PACKET_ENDIAN.Uint16(payload[:MSG_TYPE_SIZE]))
+	*data = payload[MSG_TYPE_SIZE:]
+	return pkt, nil
 }
 
 func (gwc *GoWorldConnection) Close() {

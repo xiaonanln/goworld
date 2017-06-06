@@ -12,10 +12,11 @@ import (
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/proto"
 )
 
 const (
-	LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR = 3 * time.Second
+	LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR = time.Second
 )
 
 var (
@@ -84,7 +85,9 @@ func serveDispatcherClient() {
 	gwlog.Debug("serveDispatcherClient: start serving dispatcher client ...")
 	for {
 		dispatcherClient := assureConnectedDispatcherClient()
-		pkt, err := dispatcherClient.RecvPacket()
+		var msgtype proto.MsgType_t
+		var data []byte
+		_, err := dispatcherClient.Recv(&msgtype, &data)
 		if err != nil {
 			gwlog.Error("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
@@ -92,6 +95,7 @@ func serveDispatcherClient() {
 			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
-		gwlog.Info("%s.RecvPacket: %v", pkt.Payload())
+
+		gwlog.Info("%s.RecvPacket: msgtype=%v, data=%v", msgtype, data)
 	}
 }
