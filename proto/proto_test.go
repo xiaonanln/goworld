@@ -1,4 +1,4 @@
-package goworld_proto
+package proto
 
 import (
 	"testing"

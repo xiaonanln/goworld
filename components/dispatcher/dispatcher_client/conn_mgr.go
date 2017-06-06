@@ -20,6 +20,7 @@ const (
 
 var (
 	_dispatcherClient         *DispatcherClient // DO NOT access it directly
+	dispatcherClientDelegate  IDispatcherClientDelegate
 	errDispatcherNotConnected = errors.New("dispatcher not connected")
 )
 
@@ -44,8 +45,9 @@ func assureConnectedDispatcherClient() *DispatcherClient {
 			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
-
 		setDispatcherClient(dispatcherClient)
+		dispatcherClientDelegate.OnDispatcherClientConnect()
+
 		gwlog.Info("dispatcher_client: connected to dispatcher: %s", dispatcherClient)
 	}
 
@@ -61,9 +63,15 @@ func connectDispatchClient() (*DispatcherClient, error) {
 	return newDispatcherClient(conn), nil
 }
 
-func Initialize() {
+type IDispatcherClientDelegate interface {
+	OnDispatcherClientConnect()
+}
+
+func Initialize(delegate IDispatcherClientDelegate) {
+	dispatcherClientDelegate = delegate
+
 	assureConnectedDispatcherClient()
-	go netutil.ServeForever(serveDispatcherClient)
+	go netutil.ServeForever(serveDispatcherClient) // start the recv routine
 }
 
 func GetDispatcherClientForSend() *DispatcherClient {
@@ -75,7 +83,15 @@ func GetDispatcherClientForSend() *DispatcherClient {
 func serveDispatcherClient() {
 	gwlog.Debug("serveDispatcherClient: start serving dispatcher client ...")
 	for {
-		assureConnectedDispatcherClient()
-		time.Sleep(time.Second)
+		dispatcherClient := assureConnectedDispatcherClient()
+		pkt, err := dispatcherClient.RecvPacket()
+		if err != nil {
+			gwlog.Error("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
+			dispatcherClient.Close()
+			setDispatcherClient(nil)
+			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
+			continue
+		}
+		gwlog.Info("%s.RecvPacket: %v", pkt.Payload())
 	}
 }

@@ -3,7 +3,7 @@ package netutil
 import "net"
 
 type RawConnection struct {
-	Conn net.Conn
+	net.Conn
 }
 
 func NewRawConnection(conn net.Conn) RawConnection {
@@ -72,16 +72,4 @@ func (rc RawConnection) SendAll(data []byte) error {
 		data = data[n:]
 	}
 	return nil
-}
-
-func (rc RawConnection) Read(data []byte) (int, error) {
-	return rc.Conn.Read(data)
-}
-
-func (rc RawConnection) Write(data []byte) (int, error) {
-	return rc.Conn.Write(data)
-}
-
-func (rc RawConnection) Close() error {
-	return rc.Conn.Close()
 }

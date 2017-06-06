@@ -1,11 +1,16 @@
-package goworld_proto
+package proto
 
 var (
 	msgTypeToString = map[int]string{}
 )
 
-type MsgType_t uint16
+type msgtype_t uint16
 
-func MsgTypeToString(msgType MsgType_t) string {
+const (
+	MT_INVALID     = iota
+	MT_SET_GAME_ID = iota
+)
+
+func MsgTypeToString(msgType msgtype_t) string {
 	return msgTypeToString[int(msgType)]
 }
