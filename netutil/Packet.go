@@ -20,6 +20,7 @@ func (p *Packet) Payload() []byte {
 }
 
 func (p *Packet) Release() {
+	p.payloadLen = 0
 	messagePool.Put(p)
 }
 
@@ -55,6 +56,27 @@ func (p *Packet) AppendBytes(v []byte) {
 	bytesLen := uint32(len(v))
 	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
 	p.payloadLen += bytesLen
+}
+
+func (p *Packet) ReadUint16(pcursor *int) (v uint16) {
+	pos := *pcursor + PREPAYLOAD_SIZE
+	v = PACKET_ENDIAN.Uint16(p.bytes[pos : pos+2])
+	*pcursor += 2
+	return
+}
+
+func (p *Packet) ReadUint32(pcursor *int) (v uint32) {
+	pos := *pcursor + PREPAYLOAD_SIZE
+	v = PACKET_ENDIAN.Uint32(p.bytes[pos : pos+4])
+	*pcursor += 4
+	return
+}
+
+func (p *Packet) ReadUint64(pcursor *int) (v uint64) {
+	pos := *pcursor + PREPAYLOAD_SIZE
+	v = PACKET_ENDIAN.Uint64(p.bytes[pos : pos+8])
+	*pcursor += 8
+	return
 }
 
 func (p *Packet) SetPayloadLen(plen uint32) {

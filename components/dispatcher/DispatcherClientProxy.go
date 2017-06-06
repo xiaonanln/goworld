@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/vacuum/netutil"
 )
 
 type DispatcherClientProxy struct {
@@ -39,7 +39,12 @@ func (dcp *DispatcherClientProxy) serve() {
 		}
 
 		gwlog.Info("%s.RecvPacket: msgtype=%v, data=%v", dcp, msgtype, data)
-
+		if msgtype == proto.MT_SET_GAME_ID {
+			gameid := int(netutil.PACKET_ENDIAN.Uint16(data[:2]))
+			gwlog.Info("%s SET GAME ID %d", dcp, gameid)
+		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
+			gwlog.Info("%s NOTIFY CREATE ENTITY %s", dcp, data)
+		}
 	}
 }
 
