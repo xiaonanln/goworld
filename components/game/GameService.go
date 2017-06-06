@@ -52,4 +52,5 @@ func (gs *GameService) String() string {
 
 func (gs *GameService) OnDispatcherClientConnect() {
 	gwlog.Debug("%s.OnDispatcherClientConnect ...", gs)
+	dispatcher_client.GetDispatcherClientForSend().SetGameID(gs.id)
 }

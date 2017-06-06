@@ -2,21 +2,44 @@ package main
 
 import (
 	"net"
-	"time"
 
-	"github.com/xiaonanln/goTimer"
+	"fmt"
+
+	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/vacuum/netutil"
 )
 
 type DispatcherClientProxy struct {
-	net.Conn
+	proto.GoWorldConnection
 }
 
 func newDispatcherClientProxy(conn net.Conn) *DispatcherClientProxy {
-	return &DispatcherClientProxy{conn}
+	return &DispatcherClientProxy{GoWorldConnection: proto.NewGoWorldConnection(conn)}
 }
 
 func (dcp *DispatcherClientProxy) serve() {
-	timer.AddCallback(time.Second, func() {
+	// Serve the dispatcher client from game / gate
+	defer func() {
 		dcp.Close()
-	})
+
+		err := recover()
+		if err != nil && !netutil.IsConnectionClosed(err) {
+			gwlog.Error("Client %s paniced with error: %v", dcp, err)
+		}
+	}()
+
+	gwlog.Info("New dispatcher client: %s", dcp)
+	for {
+		pkt, err := dcp.RecvPacket()
+		if err != nil {
+			gwlog.Panic(err)
+		}
+
+		gwlog.Info("%s.RecvPacket: %v", dcp, pkt.Payload())
+	}
+}
+
+func (dcp *DispatcherClientProxy) String() string {
+	return fmt.Sprintf("DispatcherClientProxy<%s>", dcp.RemoteAddr())
 }
