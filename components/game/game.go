@@ -10,6 +10,7 @@ import (
 	"flag"
 
 	"github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 )
 
@@ -32,6 +33,8 @@ func Run(delegate IGameDelegate) {
 
 	cfg := config.GetGame(gameid)
 	fmt.Fprintf(os.Stderr, "Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
+
+	dispatcher_client.Initialize()
 
 	timer.AddCallback(0, func() {
 		gameDelegate.OnReady()

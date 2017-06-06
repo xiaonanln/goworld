@@ -3,6 +3,7 @@
     <output_file path="C:\gopath\src\github.com\xiaonanln\goworld\examples\test_server" />
     <module name="goworld" />
     <working_directory value="C:\gopath\src\github.com\xiaonanln\goworld" />
+    <go_parameters value="-ldflags=&quot;-linkmode internal&quot;" />
     <parameters value="-gid=1" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />

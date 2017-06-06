@@ -1,6 +1,11 @@
 package main
 
-import "net"
+import (
+	"net"
+	"time"
+
+	"github.com/xiaonanln/goTimer"
+)
 
 type DispatcherClientProxy struct {
 	net.Conn
@@ -11,5 +16,7 @@ func newDispatcherClientProxy(conn net.Conn) *DispatcherClientProxy {
 }
 
 func (dcp *DispatcherClientProxy) serve() {
-	dcp.Close()
+	timer.AddCallback(time.Second, func() {
+		dcp.Close()
+	})
 }
