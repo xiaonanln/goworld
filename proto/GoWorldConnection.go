@@ -39,15 +39,13 @@ func (gwc *GoWorldConnection) NotifyCreateEntity(id entity.EntityID) error {
 //	return gwc.packetConn.RecvPacket()
 //}
 
-func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t, data *[]byte) (*netutil.Packet, error) {
+func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t) (*netutil.Packet, error) {
 	pkt, err := gwc.packetConn.RecvPacket()
 	if err != nil {
 		return nil, err
 	}
 
-	payload := pkt.Payload()
-	*msgtype = MsgType_t(netutil.PACKET_ENDIAN.Uint16(payload[:MSG_TYPE_SIZE]))
-	*data = payload[MSG_TYPE_SIZE:]
+	*msgtype = MsgType_t(pkt.ReadUint16())
 	return pkt, nil
 }
 

@@ -86,8 +86,7 @@ func serveDispatcherClient() {
 	for {
 		dispatcherClient := assureConnectedDispatcherClient()
 		var msgtype proto.MsgType_t
-		var data []byte
-		_, err := dispatcherClient.Recv(&msgtype, &data)
+		pkt, err := dispatcherClient.Recv(&msgtype)
 		if err != nil {
 			gwlog.Error("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
@@ -96,6 +95,6 @@ func serveDispatcherClient() {
 			continue
 		}
 
-		gwlog.Info("%s.RecvPacket: msgtype=%v, data=%v", msgtype, data)
+		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", msgtype, pkt.Payload())
 	}
 }

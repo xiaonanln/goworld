@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -32,18 +33,18 @@ func (dcp *DispatcherClientProxy) serve() {
 	gwlog.Info("New dispatcher client: %s", dcp)
 	for {
 		var msgtype proto.MsgType_t
-		var data []byte
-		_, err := dcp.Recv(&msgtype, &data)
+		pkt, err := dcp.Recv(&msgtype)
 		if err != nil {
 			gwlog.Panic(err)
 		}
 
-		gwlog.Info("%s.RecvPacket: msgtype=%v, data=%v", dcp, msgtype, data)
+		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		if msgtype == proto.MT_SET_GAME_ID {
-			gameid := int(netutil.PACKET_ENDIAN.Uint16(data[:2]))
+			gameid := pkt.ReadUint16()
 			gwlog.Info("%s SET GAME ID %d", dcp, gameid)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
-			gwlog.Info("%s NOTIFY CREATE ENTITY %s", dcp, data)
+			eid := pkt.ReadBytes(entity.ENTITYID_LENGTH)
+			gwlog.Info("%s NOTIFY CREATE ENTITY %s", dcp, eid)
 		}
 	}
 }

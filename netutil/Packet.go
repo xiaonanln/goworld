@@ -12,6 +12,7 @@ var (
 
 type Packet struct {
 	payloadLen uint32
+	readCursor uint32
 	bytes      [MAX_PACKET_SIZE]byte
 }
 
@@ -21,6 +22,7 @@ func (p *Packet) Payload() []byte {
 
 func (p *Packet) Release() {
 	p.payloadLen = 0
+	p.readCursor = 0
 	messagePool.Put(p)
 }
 
@@ -58,25 +60,32 @@ func (p *Packet) AppendBytes(v []byte) {
 	p.payloadLen += bytesLen
 }
 
-func (p *Packet) ReadUint16(pcursor *int) (v uint16) {
-	pos := *pcursor + PREPAYLOAD_SIZE
+func (p *Packet) ReadUint16() (v uint16) {
+	pos := p.readCursor + PREPAYLOAD_SIZE
 	v = PACKET_ENDIAN.Uint16(p.bytes[pos : pos+2])
-	*pcursor += 2
+	p.readCursor += 2
 	return
 }
 
-func (p *Packet) ReadUint32(pcursor *int) (v uint32) {
-	pos := *pcursor + PREPAYLOAD_SIZE
+func (p *Packet) ReadUint32() (v uint32) {
+	pos := p.readCursor + PREPAYLOAD_SIZE
 	v = PACKET_ENDIAN.Uint32(p.bytes[pos : pos+4])
-	*pcursor += 4
+	p.readCursor += 4
 	return
 }
 
-func (p *Packet) ReadUint64(pcursor *int) (v uint64) {
-	pos := *pcursor + PREPAYLOAD_SIZE
+func (p *Packet) ReadUint64() (v uint64) {
+	pos := p.readCursor + PREPAYLOAD_SIZE
 	v = PACKET_ENDIAN.Uint64(p.bytes[pos : pos+8])
-	*pcursor += 8
+	p.readCursor += 8
 	return
+}
+
+func (p *Packet) ReadBytes(size uint32) []byte {
+	pos := p.readCursor + PREPAYLOAD_SIZE
+	bytes := p.bytes[pos : pos+size]
+	p.readCursor += size
+	return bytes
 }
 
 func (p *Packet) SetPayloadLen(plen uint32) {
