@@ -20,11 +20,14 @@ func (space *Space) OnCreated() {
 }
 
 func (space *Space) CreateEntity(typeName string) {
-	entityID := createEntity(typeName, space)
-	gwlog.Info("%s.createEntity %s: %s", space, typeName, entityID)
-
+	createEntity(typeName, space)
 }
 
 func (space *Space) enter(entity *Entity) {
 	gwlog.Info("%s.enter <<< %s", space, entity)
+	entity.space = space
+}
+
+func (space *Space) leave(entity *Entity) {
+	entity.space = nil
 }

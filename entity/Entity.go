@@ -33,6 +33,9 @@ func (e *Entity) String() string {
 
 func (e *Entity) Destroy() {
 	gwlog.Info("%s.Destroy.", e)
+	if e.space != nil {
+		e.space.leave(e)
+	}
 	e.I.OnDestroy()
 	entityManager.del(e.ID)
 }

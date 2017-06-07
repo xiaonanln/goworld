@@ -39,5 +39,8 @@ type SpaceDelegate struct {
 func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 	delegate.DefaultSpaceDelegate.OnSpaceCreated(space)
 
-	space.CreateEntity("TestEntity")
+	N := 5
+	for i := 0; i < N; i++ {
+		space.CreateEntity("TestEntity")
+	}
 }
