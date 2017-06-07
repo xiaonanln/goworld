@@ -3,6 +3,7 @@ package entity
 import (
 	"reflect"
 
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -59,6 +60,8 @@ func createEntity(typeName string, space *Space) EntityID {
 	entity.ID = entityID
 	entity.I = entityPtrVal.Interface().(IEntity)
 	entity.TypeName = typeName
+	entity.timers = map[*timer.Timer]struct{}{}
+
 	entityManager.put(entity)
 	entity.I.OnCreated()
 
