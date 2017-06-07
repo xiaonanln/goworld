@@ -13,10 +13,15 @@ import (
 
 type DispatcherClientProxy struct {
 	proto.GoWorldConnection
+	owner  *DispatcherService
+	gameid int
 }
 
-func newDispatcherClientProxy(conn net.Conn) *DispatcherClientProxy {
-	return &DispatcherClientProxy{GoWorldConnection: proto.NewGoWorldConnection(conn)}
+func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *DispatcherClientProxy {
+	return &DispatcherClientProxy{
+		GoWorldConnection: proto.NewGoWorldConnection(conn),
+		owner:             owner,
+	}
 }
 
 func (dcp *DispatcherClientProxy) serve() {
@@ -40,15 +45,16 @@ func (dcp *DispatcherClientProxy) serve() {
 
 		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		if msgtype == proto.MT_SET_GAME_ID {
-			gameid := pkt.ReadUint16()
-			gwlog.Info("%s SET GAME ID %d", dcp, gameid)
+			gameid := int(pkt.ReadUint16())
+			dcp.gameid = gameid
+			dcp.owner.HandleSetGameID(dcp, gameid)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
-			eid := pkt.ReadBytes(entity.ENTITYID_LENGTH)
-			gwlog.Info("%s NOTIFY CREATE ENTITY %s", dcp, eid)
+			eid := entity.EntityID(pkt.ReadBytes(entity.ENTITYID_LENGTH))
+			dcp.owner.HandleNotifyCreateEntity(dcp, eid)
 		}
 	}
 }
 
 func (dcp *DispatcherClientProxy) String() string {
-	return fmt.Sprintf("DispatcherClientProxy<%s>", dcp.RemoteAddr())
+	return fmt.Sprintf("DispatcherClientProxy<%d|%s>", dcp.gameid, dcp.RemoteAddr())
 }
