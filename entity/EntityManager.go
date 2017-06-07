@@ -12,20 +12,24 @@ var (
 )
 
 type EntityManager struct {
-	entities map[EntityID]IEntity
+	entities map[EntityID]*Entity
 }
 
 func newEntityManager() *EntityManager {
 	return &EntityManager{
-		entities: map[EntityID]IEntity{},
+		entities: map[EntityID]*Entity{},
 	}
 }
 
-func (em *EntityManager) Put(entity *Entity) {
+func (em *EntityManager) put(entity *Entity) {
 	em.entities[entity.ID] = entity
 }
 
-func (em *EntityManager) Get(id EntityID) IEntity {
+func (em *EntityManager) del(entityID EntityID) {
+	delete(em.entities, entityID)
+}
+
+func (em *EntityManager) get(id EntityID) *Entity {
 	return em.entities[id]
 }
 
@@ -55,7 +59,7 @@ func createEntity(typeName string, space *Space) EntityID {
 	entity.ID = entityID
 	entity.I = entityPtrVal.Interface().(IEntity)
 	entity.TypeName = typeName
-	entityManager.Put(entity)
+	entityManager.put(entity)
 	entity.I.OnCreated()
 
 	if space != nil {

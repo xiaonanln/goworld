@@ -19,16 +19,28 @@ type Entity struct {
 	ID       EntityID
 	TypeName string
 	I        IEntity
+	space    *Space
 }
 
 type IEntity interface {
 	OnCreated()
+	OnDestroy()
 }
 
 func (e *Entity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
 
+func (e *Entity) Destroy() {
+	gwlog.Info("%s.Destroy.", e)
+	e.I.OnDestroy()
+	entityManager.del(e.ID)
+}
+
+// Default Handlers
 func (e *Entity) OnCreated() {
 	gwlog.Debug("%s.OnCreated", e)
+}
+
+func (e *Entity) OnDestroy() {
 }
