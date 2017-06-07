@@ -42,8 +42,8 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
 
-func CreateEntity(typeName string) EntityID {
-	gwlog.Debug("CreateEntity: %s", typeName)
+func createEntity(typeName string, space *Space) EntityID {
+	gwlog.Debug("createEntity: %s in space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
@@ -54,7 +54,13 @@ func CreateEntity(typeName string) EntityID {
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.ID = entityID
 	entity.I = entityPtrVal.Interface().(IEntity)
+	entity.TypeName = typeName
 	entityManager.Put(entity)
 	entity.I.OnCreated()
+
+	if space != nil {
+		space.enter(entity)
+	}
+
 	return entityID
 }

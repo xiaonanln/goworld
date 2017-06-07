@@ -13,6 +13,14 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) {
 	entity.RegisterEntity(typeName, entityPtr)
 }
 
-func CreateEntity(typeName string) {
-	game.CreateEntity(typeName)
+//func createEntity(typeName string) {
+//	game.createEntity(typeName)
+//}
+
+func CreateSpace() {
+	entity.CreateSpace()
+}
+
+func SetSpaceDelegate(delegate entity.ISpaceDelegate) {
+	entity.SetSpaceDelegate(delegate)
 }

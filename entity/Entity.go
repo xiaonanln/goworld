@@ -16,8 +16,9 @@ func GenEntityID() EntityID {
 }
 
 type Entity struct {
-	ID EntityID
-	I  IEntity
+	ID       EntityID
+	TypeName string
+	I        IEntity
 }
 
 type IEntity interface {
@@ -25,7 +26,7 @@ type IEntity interface {
 }
 
 func (e *Entity) String() string {
-	return fmt.Sprintf("Entity<%s>", e.ID)
+	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
 
 func (e *Entity) OnCreated() {
