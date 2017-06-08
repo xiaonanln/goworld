@@ -32,6 +32,7 @@ type Entity struct {
 type IEntity interface {
 	OnInit()
 	OnCreated()
+	OnEnterSpace()
 	OnDestroy()
 }
 
@@ -97,6 +98,10 @@ func (e *Entity) OnInit() {
 
 func (e *Entity) OnCreated() {
 	gwlog.Info("%s.OnCreated", e)
+}
+
+func (e *Entity) OnEnterSpace() {
+	gwlog.Info("%s.OnEnterSpace >>> %s", e, e.space)
 }
 
 func (e *Entity) OnDestroy() {

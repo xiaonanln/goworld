@@ -39,6 +39,8 @@ func (space *Space) enter(entity *Entity) {
 		other.interest(entity)
 	}
 	space.entities.Add(entity)
+
+	entity.I.OnEnterSpace()
 }
 
 func (space *Space) leave(entity *Entity) {
