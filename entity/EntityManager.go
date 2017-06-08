@@ -3,7 +3,7 @@ package entity
 import (
 	"reflect"
 
-	"github.com/xiaonanln/goTimer"
+	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -13,25 +13,25 @@ var (
 )
 
 type EntityManager struct {
-	entities map[EntityID]*Entity
+	entities EntityMap
 }
 
 func newEntityManager() *EntityManager {
 	return &EntityManager{
-		entities: map[EntityID]*Entity{},
+		entities: EntityMap{},
 	}
 }
 
 func (em *EntityManager) put(entity *Entity) {
-	em.entities[entity.ID] = entity
+	em.entities.Add(entity)
 }
 
 func (em *EntityManager) del(entityID EntityID) {
-	delete(em.entities, entityID)
+	em.entities.Del(entityID)
 }
 
 func (em *EntityManager) get(id EntityID) *Entity {
-	return em.entities[id]
+	return em.entities.Get(id)
 }
 
 func RegisterEntity(typeName string, entityPtr IEntity) {
@@ -60,7 +60,10 @@ func createEntity(typeName string, space *Space) EntityID {
 	entity.ID = entityID
 	entity.I = entityPtrVal.Interface().(IEntity)
 	entity.TypeName = typeName
+
 	entity.timers = map[*timer.Timer]struct{}{}
+	initAOI(&entity.aoi)
+	entity.I.OnInit()
 
 	entityManager.put(entity)
 	entity.I.OnCreated()

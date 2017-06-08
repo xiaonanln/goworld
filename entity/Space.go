@@ -8,15 +8,23 @@ const (
 
 type Space struct {
 	Entity
+
+	entities EntitySet
 }
 
 func init() {
 	RegisterEntity(SPACE_ENTITY_TYPE, &Space{})
 }
 
+func (space *Space) OnInit() {
+	space.entities = EntitySet{}
+}
+
 func (space *Space) OnCreated() {
 	gwlog.Debug("%s.OnCreated", space)
-	spaceDelegate.OnSpaceCreated(space)
+	space.Post(func() {
+		spaceDelegate.OnSpaceCreated(space)
+	})
 }
 
 func (space *Space) CreateEntity(typeName string) {
@@ -26,8 +34,19 @@ func (space *Space) CreateEntity(typeName string) {
 func (space *Space) enter(entity *Entity) {
 	gwlog.Info("%s.enter <<< %s", space, entity)
 	entity.space = space
+	for other := range space.entities {
+		entity.interest(other)
+		other.interest(entity)
+	}
+	space.entities.Add(entity)
 }
 
 func (space *Space) leave(entity *Entity) {
 	entity.space = nil
+	// remove from space entities
+	space.entities.Del(entity)
+	for other := range space.entities {
+		entity.uninterest(other)
+		other.uninterest(entity)
+	}
 }

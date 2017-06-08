@@ -2,6 +2,7 @@
   <configuration default="false" name="gate1" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="true">
     <module name="goworld" />
     <working_directory value="$PROJECT_DIR$" />
+    <go_parameters value=" -race" />
     <parameters value="-gid=1" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />

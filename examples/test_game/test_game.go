@@ -1,9 +1,12 @@
 package main
 
 import (
+	"time"
+
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 type TestEntity struct {
@@ -39,8 +42,16 @@ type SpaceDelegate struct {
 func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 	delegate.DefaultSpaceDelegate.OnSpaceCreated(space)
 
-	N := 5
+	N := 3
 	for i := 0; i < N; i++ {
 		space.CreateEntity("TestEntity")
 	}
+}
+
+func (e *TestEntity) OnCreated() {
+	e.Entity.OnCreated()
+	gwlog.Info("Creating callback ...")
+	e.AddTimer(time.Second, func() {
+		gwlog.Info("%s.Neighbors = %v", e, e.Neighbors())
+	})
 }
