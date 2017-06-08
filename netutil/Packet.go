@@ -60,6 +60,21 @@ func (p *Packet) AppendBytes(v []byte) {
 	p.payloadLen += bytesLen
 }
 
+func (p *Packet) AppendVarStr(s string) {
+	p.AppendVarBytes([]byte(s))
+}
+
+func (p *Packet) AppendVarBytes(v []byte) {
+	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	bytesLen := uint32(len(v))
+	PACKET_ENDIAN.PutUint32(p.bytes[payloadEnd:payloadEnd+4], bytesLen)
+	payloadEnd += 4
+
+	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
+
+	p.payloadLen += bytesLen + 4
+}
+
 func (p *Packet) ReadUint16() (v uint16) {
 	pos := p.readCursor + PREPAYLOAD_SIZE
 	v = PACKET_ENDIAN.Uint16(p.bytes[pos : pos+2])

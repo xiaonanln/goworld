@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	timer "github.com/xiaonanln/goTimer"
+	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -73,4 +74,8 @@ func createEntity(typeName string, space *Space) EntityID {
 	}
 
 	return entityID
+}
+
+func CreateEntity(typeName string) EntityID {
+	return createEntity(typeName, nil)
 }

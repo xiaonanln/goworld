@@ -5,7 +5,7 @@ import (
 
 	"fmt"
 
-	"github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -45,12 +45,14 @@ func (dcp *DispatcherClientProxy) serve() {
 
 		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
-			eid := entity.EntityID(pkt.ReadBytes(entity.ENTITYID_LENGTH))
+			eid := common.EntityID(pkt.ReadBytes(common.ENTITYID_LENGTH))
 			dcp.owner.HandleNotifyCreateEntity(dcp, eid)
 		} else if msgtype == proto.MT_SET_GAME_ID {
 			gameid := int(pkt.ReadUint16())
 			dcp.gameid = gameid
 			dcp.owner.HandleSetGameID(dcp, gameid)
+		} else {
+			gwlog.Warn("Unknown msgtype: %d", msgtype)
 		}
 	}
 }

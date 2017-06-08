@@ -5,18 +5,12 @@ import (
 
 	"time"
 
+	. "github.com/xiaonanln/goworld/common"
+
 	timer "github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/uuid"
 )
-
-const ENTITYID_LENGTH = uuid.UUID_LENGTH
-
-type EntityID string
-
-func GenEntityID() EntityID {
-	return EntityID(uuid.GenUUID())
-}
 
 type Entity struct {
 	ID       EntityID
@@ -89,6 +83,11 @@ func (e *Entity) clearTimers() {
 		t.Cancel()
 	}
 	e.timers = map[*timer.Timer]struct{}{}
+}
+
+// Register for global service
+func (e *Entity) RegisterService(serviceName string) {
+	dispatcher_client.GetDispatcherClientForSend().SendRegisterService(e.ID, serviceName)
 }
 
 // Default Handlers

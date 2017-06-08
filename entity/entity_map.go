@@ -1,6 +1,7 @@
 package entity
 
 import "bytes"
+import . "github.com/xiaonanln/goworld/common"
 
 type EntityMap map[EntityID]*Entity
 

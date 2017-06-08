@@ -5,8 +5,8 @@ import (
 
 	"net"
 
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 )
@@ -14,13 +14,13 @@ import (
 type DispatcherService struct {
 	config     *config.DispatcherConfig
 	clients    map[int]*DispatcherClientProxy
-	entityLocs map[entity.EntityID]int
+	entityLocs map[common.EntityID]int
 }
 
 func newDispatcherService(cfg *config.DispatcherConfig) *DispatcherService {
 	return &DispatcherService{
 		config:     cfg,
-		entityLocs: map[entity.EntityID]int{},
+		entityLocs: map[common.EntityID]int{},
 	}
 }
 
@@ -44,7 +44,7 @@ func (ds *DispatcherService) HandleSetGameID(dcp *DispatcherClientProxy, gameid 
 }
 
 // Entity is create on the target game
-func (ds *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, entityID entity.EntityID) {
+func (ds *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", ds, dcp, entityID)
 	ds.entityLocs[entityID] = dcp.gameid
 }
