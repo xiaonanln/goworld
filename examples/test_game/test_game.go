@@ -53,5 +53,13 @@ func (e *TestEntity) OnCreated() {
 	gwlog.Info("Creating callback ...")
 	e.AddTimer(time.Second, func() {
 		gwlog.Info("%s.Neighbors = %v", e, e.Neighbors())
+		for _other := range e.Neighbors() {
+			if _other.TypeName != "TestEntity" {
+				continue
+			}
+
+			other := _other.I.(*TestEntity)
+			gwlog.Info("%s is a neighbor of %s", other, e)
+		}
 	})
 }
