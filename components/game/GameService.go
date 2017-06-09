@@ -70,7 +70,7 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 	eids.Add(entityID)
 }
 
-func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string) {
+func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}) {
 	gwlog.Debug("%s.HandleCallEntityMethod: %s.%s()", gs, entityID, method)
-
+	entity.OnCall(entityID, method, args)
 }

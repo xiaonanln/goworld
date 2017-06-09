@@ -1,7 +1,7 @@
 package proto
 
 var (
-	MSG_PACKER MsgPacker = MessagePackMsgPacker{}
+	ARGS_PACKER MsgPacker = MessagePackMsgPacker{}
 )
 
 type MsgPacker interface {

@@ -11,6 +11,7 @@ import (
 
 var (
 	registeredEntityTypes = map[string]reflect.Type{}
+	entityType2RpcDescMap = map[string]RpcDescMap{}
 	entityManager         = newEntityManager()
 )
 
@@ -45,6 +46,15 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 
 	// register the string of entity
 	registeredEntityTypes[typeName] = entityType
+	entityType2RpcDescMap[typeName] = RpcDescMap{}
+
+	entityPtrType := reflect.PtrTo(entityType)
+	numMethods := entityPtrType.NumMethod()
+	for i := 0; i < numMethods; i++ {
+		method := entityPtrType.Method(i)
+		gwlog.Info("%s has method %s", typeName, method)
+		entityType2RpcDescMap[typeName].visit(method)
+	}
 
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
@@ -60,8 +70,10 @@ func createEntity(typeName string, space *Space) EntityID {
 	entityPtrVal := reflect.New(entityType)
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.ID = entityID
+	entity.IV = entityPtrVal
 	entity.I = entityPtrVal.Interface().(IEntity)
 	entity.TypeName = typeName
+	entity.rpcDescMap = entityType2RpcDescMap[typeName]
 
 	entity.timers = map[*timer.Timer]struct{}{}
 	initAOI(&entity.aoi)
@@ -83,6 +95,17 @@ func CreateEntity(typeName string) EntityID {
 	return createEntity(typeName, nil)
 }
 
-func call(id EntityID, method string, args []interface{}) {
-	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method)
+func callRemote(id EntityID, method string, args []interface{}) {
+	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
+}
+
+func OnCall(id EntityID, method string, args []interface{}) {
+	e := entityManager.get(id)
+	if e == nil {
+		// entity not found, may destroyed before call
+		gwlog.Warn("Entity %s is not found while calling %s%v", id, method, args)
+		return
+	}
+
+	e.onCall(method, args)
 }

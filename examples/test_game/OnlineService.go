@@ -13,3 +13,7 @@ func (s *OnlineService) OnCreated() {
 	gwlog.Info("Registering OnlineService ...")
 	s.DeclareService("OnlineService")
 }
+
+func (s *OnlineService) CheckIn_Server() {
+
+}

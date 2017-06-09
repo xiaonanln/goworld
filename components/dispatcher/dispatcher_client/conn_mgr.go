@@ -68,7 +68,7 @@ func connectDispatchClient() (*DispatcherClient, error) {
 type IDispatcherClientDelegate interface {
 	OnDispatcherClientConnect()
 	HandleDeclareService(entityID common.EntityID, serviceName string)
-	HandleCallEntityMethod(entityID common.EntityID, method string)
+	HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }
 
 func Initialize(delegate IDispatcherClientDelegate) {
@@ -102,7 +102,13 @@ func serveDispatcherClient() {
 		if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			eid := pkt.ReadEntityID()
 			method := pkt.ReadVarStr()
-			dispatcherClientDelegate.HandleCallEntityMethod(eid, method)
+
+			argsData := pkt.ReadVarBytes()
+
+			var args []interface{}
+			proto.ARGS_PACKER.UnpackMsg(argsData, &args)
+			gwlog.Info("UNPACK ARGS %v => %v", argsData, args)
+			dispatcherClientDelegate.HandleCallEntityMethod(eid, method, args)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			eid := pkt.ReadEntityID()
 			serviceName := pkt.ReadVarStr()

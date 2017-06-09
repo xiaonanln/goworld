@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/vacuum/netutil"
+	"github.com/xiaonanln/goworld/netutil"
 )
 
 type GateServer struct {

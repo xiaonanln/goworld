@@ -1,9 +1,8 @@
 package netutil
 
 import (
-	"log"
-
 	"encoding/binary"
+	"log"
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -22,6 +21,11 @@ type Packet struct {
 
 func (p *Packet) Payload() []byte {
 	return p.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+p.payloadLen]
+}
+
+func (p *Packet) FreePayload() []byte {
+	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	return p.bytes[payloadEnd:]
 }
 
 func (p *Packet) Release() {
@@ -120,7 +124,7 @@ func (p *Packet) ReadUint64() (v uint64) {
 
 func (p *Packet) ReadBytes(size uint32) []byte {
 	pos := p.readCursor + PREPAYLOAD_SIZE
-	bytes := p.bytes[pos : pos+size]
+	bytes := p.bytes[pos : pos+size] // bytes are not copied
 	p.readCursor += size
 	return bytes
 }
@@ -141,6 +145,10 @@ func (p *Packet) ReadVarStr() string {
 func (p *Packet) ReadVarBytes() []byte {
 	blen := p.ReadUint32()
 	return p.ReadBytes(blen)
+}
+
+func (p *Packet) GetPayloadLen() uint32 {
+	return p.payloadLen
 }
 
 func (p *Packet) SetPayloadLen(plen uint32) {

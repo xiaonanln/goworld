@@ -2,10 +2,12 @@ package entity
 
 import (
 	"fmt"
+	"reflect"
 
 	"time"
 
 	. "github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/typeconv"
 
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
@@ -16,6 +18,9 @@ type Entity struct {
 	ID       EntityID
 	TypeName string
 	I        IEntity
+	IV       reflect.Value
+
+	rpcDescMap RpcDescMap
 
 	space *Space
 	aoi   AOI
@@ -87,7 +92,27 @@ func (e *Entity) clearTimers() {
 
 // Call other entities
 func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
-	call(id, method, args)
+	callRemote(id, method, args)
+}
+
+func (e *Entity) onCall(methodName string, args []interface{}) {
+	defer func() {
+		err := recover() // recover from any error during RPC call
+		if err != nil {
+			gwlog.TraceError("%s.%s%v paniced: %s", e, methodName, args, err)
+		}
+	}()
+
+	rpcDesc := e.rpcDescMap[methodName]
+	methodType := rpcDesc.MethodType
+	gwlog.Info("%v %v", methodType.In(0), methodType.NumIn())
+	in := make([]reflect.Value, len(args)+1)
+	in[0] = reflect.ValueOf(e.I)
+	for i, arg := range args {
+		argType := methodType.In(i)
+		in[i+1] = typeconv.Convert(arg, argType)
+	}
+	rpcDesc.Func.Call(in)
 }
 
 // Register for global service
