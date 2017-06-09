@@ -43,12 +43,20 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 
 func (service *DispatcherService) HandleSetGameID(dcp *DispatcherClientProxy, pkt *netutil.Packet, gameid int) {
 	gwlog.Debug("%s.HandleSetGameID: dcp=%s, gameid=%d", service, dcp, gameid)
-	for gameid >= len(service.clients) {
+	if gameid <= 0 {
+		gwlog.Panicf("invalid gameid: %d", gameid)
+	}
+
+	for gameid > len(service.clients) {
 		service.clients = append(service.clients, nil)
 	}
-	service.clients[gameid] = dcp
+	service.clients[gameid-1] = dcp
 	pkt.Release()
 	return
+}
+
+func (service *DispatcherService) dispatcherClientOfGame(gameid int) *DispatcherClientProxy {
+	return service.clients[gameid-1]
 }
 
 // Entity is create on the target game
@@ -70,6 +78,19 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 	//}
 	//service.registeredServices[serviceName] = entityID
 	//dcp.SendDeclareServiceReply(entityID, serviceName, true)
+}
+
+func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, method string) {
+	gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s, method=%s", service, dcp, entityID, method)
+
+	gameid := service.entityLocs[entityID]
+	if gameid == 0 {
+		// game not found
+		gwlog.Warn("Entity %s not found when calling method %s", entityID, method)
+		return
+	}
+
+	service.dispatcherClientOfGame(gameid).SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {

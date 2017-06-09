@@ -70,6 +70,8 @@ func createEntity(typeName string, space *Space) EntityID {
 	entityManager.put(entity)
 	entity.I.OnCreated()
 
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
+
 	if space != nil {
 		space.enter(entity)
 	}

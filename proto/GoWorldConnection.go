@@ -37,7 +37,7 @@ func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string
 	packet.AppendUint16(MT_DECLARE_SERVICE)
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(serviceName)
-	return gwc.sendPacketRelease(packet)
+	return gwc.SendPacketRelease(packet)
 }
 
 func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string) error {
@@ -45,7 +45,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string) e
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD)
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(method)
-	return gwc.sendPacketRelease(packet)
+	return gwc.SendPacketRelease(packet)
 }
 
 //func (gwc *GoWorldConnection) SendDeclareServiceReply(id EntityID, serviceName string, success bool) error {
@@ -61,7 +61,7 @@ func (gwc *GoWorldConnection) SendPacket(pkt *netutil.Packet) error {
 	return gwc.packetConn.SendPacket(pkt)
 }
 
-func (gwc *GoWorldConnection) sendPacketRelease(pkt *netutil.Packet) error {
+func (gwc *GoWorldConnection) SendPacketRelease(pkt *netutil.Packet) error {
 	err := gwc.packetConn.SendPacket(pkt)
 	pkt.Release()
 	return err

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 var (
@@ -13,6 +14,7 @@ var (
 )
 
 type Packet struct {
+	released   bool
 	payloadLen uint32
 	readCursor uint32
 	bytes      [MAX_PACKET_SIZE]byte
@@ -23,8 +25,13 @@ func (p *Packet) Payload() []byte {
 }
 
 func (p *Packet) Release() {
+	if p.released {
+		gwlog.Panicf("packet must not be released multiple times!")
+	}
+
 	p.payloadLen = 0
 	p.readCursor = 0
+	p.released = true
 	messagePool.Put(p)
 }
 

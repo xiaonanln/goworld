@@ -43,7 +43,11 @@ func (dcp *DispatcherClientProxy) serve() {
 		}
 
 		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
-		if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
+		if msgtype == proto.MT_CALL_ENTITY_METHOD {
+			eid := pkt.ReadEntityID()
+			method := pkt.ReadVarStr()
+			dcp.owner.HandleCallEntityMethod(dcp, pkt, eid, method)
+		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
 			eid := pkt.ReadEntityID()
 			dcp.owner.HandleNotifyCreateEntity(dcp, pkt, eid)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
@@ -55,7 +59,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.gameid = gameid
 			dcp.owner.HandleSetGameID(dcp, pkt, gameid)
 		} else {
-			gwlog.Warn("Unknown msgtype: %d", msgtype)
+			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 		}
 	}
 }

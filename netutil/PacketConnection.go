@@ -22,7 +22,7 @@ var (
 	NETWORK_ENDIAN = binary.LittleEndian
 	messagePool    = sync.Pool{
 		New: func() interface{} {
-			return &Packet{}
+			return &Packet{released: true}
 		},
 	}
 )
@@ -36,9 +36,13 @@ func NewPacketConnection(conn net.Conn) PacketConnection {
 }
 
 func allocPacket() *Packet {
-	msg := messagePool.Get().(*Packet)
-	//gwlog.Debug("ALLOC %p", msg)
-	return msg
+	pkt := messagePool.Get().(*Packet)
+	//gwlog.Debug("ALLOC %p", pkt)
+	if !pkt.released {
+		gwlog.Panicf("packet must be released when allocated from pool")
+	}
+	pkt.released = false
+	return pkt
 }
 
 func (pc PacketConnection) NewPacket() *Packet {
