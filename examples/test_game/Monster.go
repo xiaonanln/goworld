@@ -8,15 +8,15 @@ type Monster struct {
 
 func (e *Monster) OnCreated() {
 	e.Entity.OnCreated()
-	//e.AddTimer(time.Second, func() {
-	//	gwlog.Info("%s.Neighbors = %v", e, e.Neighbors())
-	//	for _other := range e.Neighbors() {
+	//a.AddTimer(time.Second, func() {
+	//	gwlog.Info("%s.Neighbors = %v", a, a.Neighbors())
+	//	for _other := range a.Neighbors() {
 	//		if _other.TypeName != "Monster" {
 	//			continue
 	//		}
 	//
 	//		other := _other.I.(*Monster)
-	//		gwlog.Info("%s is a neighbor of %s", other, e)
+	//		gwlog.Info("%s is a neighbor of %s", other, a)
 	//	}
 	//})
 }

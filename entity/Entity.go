@@ -85,9 +85,14 @@ func (e *Entity) clearTimers() {
 	e.timers = map[*timer.Timer]struct{}{}
 }
 
+// Call other entities
+func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
+	call(id, method, args)
+}
+
 // Register for global service
-func (e *Entity) RegisterService(serviceName string) {
-	dispatcher_client.GetDispatcherClientForSend().SendRegisterService(e.ID, serviceName)
+func (e *Entity) DeclareService(serviceName string) {
+	dispatcher_client.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
 }
 
 // Default Handlers

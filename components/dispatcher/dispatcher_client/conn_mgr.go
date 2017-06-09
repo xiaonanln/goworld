@@ -9,6 +9,7 @@ import (
 
 	"errors"
 
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
@@ -66,6 +67,7 @@ func connectDispatchClient() (*DispatcherClient, error) {
 
 type IDispatcherClientDelegate interface {
 	OnDispatcherClientConnect()
+	HandleDeclareService(entityID common.EntityID, serviceName string)
 }
 
 func Initialize(delegate IDispatcherClientDelegate) {
@@ -96,5 +98,13 @@ func serveDispatcherClient() {
 		}
 
 		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", msgtype, pkt.Payload())
+		if msgtype == proto.MT_DECLARE_SERVICE {
+			eid := pkt.ReadEntityID()
+			serviceName := pkt.ReadVarStr()
+			dispatcherClientDelegate.HandleDeclareService(eid, serviceName)
+		} else {
+			gwlog.TraceError("unknown msgtype: %v", msgtype)
+		}
+		pkt.Release()
 	}
 }

@@ -29,3 +29,7 @@ func CreateEntity(typeName string) EntityID {
 func SetSpaceDelegate(delegate entity.ISpaceDelegate) {
 	entity.SetSpaceDelegate(delegate)
 }
+
+func GetServiceProviders(serviceName string) []EntityID {
+	return game.GetServiceProviders(serviceName)
+}

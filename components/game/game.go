@@ -1,9 +1,14 @@
 package game
 
-import "flag"
+import (
+	"flag"
+
+	"github.com/xiaonanln/goworld/common"
+)
 
 var (
-	gameid int
+	gameid      int
+	gameService *GameService
 )
 
 func init() {
@@ -16,5 +21,10 @@ func parseArgs() {
 }
 
 func Run(delegate IGameDelegate) {
-	newGameService(gameid, delegate).run()
+	gameService = newGameService(gameid, delegate)
+	gameService.run()
+}
+
+func GetServiceProviders(serviceName string) []common.EntityID {
+	return gameService.registeredServices[serviceName].ToList()
 }

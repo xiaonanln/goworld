@@ -11,6 +11,12 @@ func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 
 	N := 3
 	for i := 0; i < N; i++ {
+		space.CreateEntity("Avatar")
+	}
+
+	M := 10
+	for i := 0; i < M; i++ {
 		space.CreateEntity("Monster")
 	}
+
 }

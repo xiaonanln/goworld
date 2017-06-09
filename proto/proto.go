@@ -10,7 +10,8 @@ const (
 	MT_INVALID              = iota
 	MT_SET_GAME_ID          = iota
 	MT_NOTIFY_CREATE_ENTITY = iota
-	MT_REGISTER_SERVICE     = iota
+	MT_DECLARE_SERVICE      = iota
+	MT_CALL_ENTITY_METHOD   = iota
 )
 
 func MsgTypeToString(msgType MsgType_t) string {

@@ -7,6 +7,8 @@ import (
 	"encoding/binary"
 
 	"sync"
+
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
@@ -45,6 +47,7 @@ func (pc PacketConnection) NewPacket() *Packet {
 
 func (pc PacketConnection) SendPacket(packet *Packet) error {
 	packet.prepareSend()
+	gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.payloadLen])
 	err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.payloadLen])
 	return err
 }

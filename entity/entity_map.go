@@ -62,3 +62,11 @@ func (es EntityIDSet) Contains(id EntityID) bool {
 	_, ok := es[id]
 	return ok
 }
+
+func (es EntityIDSet) ToList() []EntityID {
+	list := make([]EntityID, 0, len(es))
+	for eid := range es {
+		list = append(list, eid)
+	}
+	return list
+}

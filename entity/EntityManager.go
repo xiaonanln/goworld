@@ -5,6 +5,7 @@ import (
 
 	timer "github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -78,4 +79,8 @@ func createEntity(typeName string, space *Space) EntityID {
 
 func CreateEntity(typeName string) EntityID {
 	return createEntity(typeName, nil)
+}
+
+func call(id EntityID, method string, args []interface{}) {
+	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method)
 }
