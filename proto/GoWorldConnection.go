@@ -23,14 +23,21 @@ func (gwc *GoWorldConnection) SendSetGameID(id int) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(uint16(id))
-	return gwc.packetConn.SendPacket(packet)
+	return gwc.SendPacketRelease(packet)
 }
 
 func (gwc *GoWorldConnection) SendNotifyCreateEntity(id EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CREATE_ENTITY)
 	packet.AppendEntityID(id)
-	return gwc.packetConn.SendPacket(packet)
+	return gwc.SendPacketRelease(packet)
+}
+
+func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_CREATE_ENTITY_ANYWHERE)
+	packet.AppendVarStr(typeName)
+	return gwc.SendPacketRelease(packet)
 }
 
 func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string) error {

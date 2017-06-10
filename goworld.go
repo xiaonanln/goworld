@@ -18,8 +18,12 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) {
 //	game.createEntity(typeName)
 //}
 
-func CreateSpace() {
-	entity.CreateSpace()
+func CreateSpaceAnywhere() {
+	entity.CreateSpaceAnywhere()
+}
+
+func CreateSpaceLocally() {
+	entity.CreateSpaceLocally()
 }
 
 func CreateEntity(typeName string) EntityID {

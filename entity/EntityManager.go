@@ -90,11 +90,16 @@ func createEntity(typeName string, space *Space) EntityID {
 	return entityID
 }
 
+func createEntityAnywhere(typeName string) {
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName)
+}
+
 func CreateEntity(typeName string) EntityID {
 	return createEntity(typeName, nil)
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {
+	gwlog.Info("dispatcher_client.GetDispatcherClientForSend(): %v", dispatcher_client.GetDispatcherClientForSend())
 	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 

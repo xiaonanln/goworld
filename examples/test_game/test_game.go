@@ -50,5 +50,5 @@ func (game gameDelegate) isGameStarted() bool {
 }
 
 func (game gameDelegate) onGameStarted() {
-	goworld.CreateSpace()
+	goworld.CreateSpaceAnywhere()
 }

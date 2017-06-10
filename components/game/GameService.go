@@ -62,6 +62,9 @@ func (gs *GameService) run() {
 				var args []interface{}
 				proto.ARGS_PACKER.UnpackMsg(argsData, &args)
 				gs.HandleCallEntityMethod(eid, method, args)
+			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
+				typeName := pkt.ReadVarStr()
+				gs.HandleCreateEntityAnywhere(typeName)
 			} else if msgtype == proto.MT_DECLARE_SERVICE {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
@@ -95,6 +98,11 @@ func (gs *GameService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pkt
 		msgtype: msgtype,
 		pkt:     pkt,
 	}
+}
+
+func (gs *GameService) HandleCreateEntityAnywhere(typeName string) {
+	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s", gs, typeName)
+	entity.CreateEntity(typeName)
 }
 
 func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {

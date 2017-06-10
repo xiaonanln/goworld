@@ -12,8 +12,10 @@ import (
 )
 
 type DispatcherService struct {
-	config             *config.DispatcherConfig
-	clients            []*DispatcherClientProxy
+	config            *config.DispatcherConfig
+	clients           []*DispatcherClientProxy
+	chooseClientIndex int
+
 	entityLocs         map[common.EntityID]int
 	registeredServices map[string]common.EntityID
 }
@@ -22,6 +24,7 @@ func newDispatcherService(cfg *config.DispatcherConfig) *DispatcherService {
 	return &DispatcherService{
 		config:             cfg,
 		clients:            []*DispatcherClientProxy{},
+		chooseClientIndex:  0,
 		entityLocs:         map[common.EntityID]int{},
 		registeredServices: map[string]common.EntityID{},
 	}
@@ -59,11 +62,41 @@ func (service *DispatcherService) dispatcherClientOfGame(gameid int) *Dispatcher
 	return service.clients[gameid-1]
 }
 
+// Choose a dispatcher client for sending Anywhere packets
+func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProxy {
+	client := service.clients[service.chooseClientIndex]
+	service.chooseClientIndex = (service.chooseClientIndex + 1) % len(service.clients)
+	return client
+	//startIndex := service.chooseClientIndex
+	//clients := service.clients
+	//clientsNum := len(clients)
+	//if clients[startIndex] != nil { // most of time
+	//	service.chooseClientIndex = (service.chooseClientIndex + 1) % clientsNum
+	//	return clients[startIndex]
+	//} else {
+	//	index := (startIndex + 1) % clientsNum
+	//	for index != startIndex {
+	//		if clients[index] != nil {
+	//			service.chooseClientIndex = (index + 1) % clientsNum
+	//			return clients[index]
+	//		}
+	//		index = (index + 1) % clientsNum
+	//	}
+	//
+	//	return nil // non-nil client not found, should not happen
+	//}
+}
+
 // Entity is create on the target game
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	service.entityLocs[entityID] = dcp.gameid
 	pkt.Release()
+}
+
+func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet, typeName string) {
+	gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, entityID=%s, typeName=%s", service, dcp, typeName)
+	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, serviceName string) {

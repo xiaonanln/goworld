@@ -1,5 +1,10 @@
+# TODO: CREATE Entity / Space Anywhere
+# TODO: wait for all games to be ready before fire OnGameStarted
+    # TODO: Set number of games and gates in config file
+# TODO: create entity on random game server
 # TODO: create entity and call entity (locally or remotely)
 # TODO: Create a space, and create entities in space, and call entities from each other
-# TODO: Implement Online Manager
+
+# TODO: Implement Online Manager with service mechanism
 # TODO: persistent entity: save, load
 # TODO: Load entity from DB
