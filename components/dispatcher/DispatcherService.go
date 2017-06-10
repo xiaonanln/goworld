@@ -99,8 +99,9 @@ func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClie
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 
-func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, serviceName string) {
-	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
+func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
+	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s", service, dcp, entityID)
+	service.entityLocs[entityID] = dcp.gameid
 	service.broadcastToDispatcherClients(pkt)
 	pkt.Release()
 	//_, ok := service.registeredServices[serviceName]

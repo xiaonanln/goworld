@@ -55,8 +55,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt, typeName)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			eid := pkt.ReadEntityID()
-			serviceName := pkt.ReadVarStr()
-			dcp.owner.HandleDeclareService(dcp, pkt, eid, serviceName)
+			dcp.owner.HandleDeclareService(dcp, pkt, eid)
 		} else if msgtype == proto.MT_SET_GAME_ID {
 			gameid := int(pkt.ReadUint16())
 			dcp.gameid = gameid
