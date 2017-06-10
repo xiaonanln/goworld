@@ -1,4 +1,3 @@
-# TODO: CREATE Entity / Space Anywhere
 # TODO: wait for all games to be ready before fire OnGameStarted
     # TODO: Set number of games and gates in config file
 # TODO: create entity on random game server

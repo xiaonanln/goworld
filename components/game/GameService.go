@@ -102,7 +102,7 @@ func (gs *GameService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pkt
 
 func (gs *GameService) HandleCreateEntityAnywhere(typeName string) {
 	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s", gs, typeName)
-	entity.CreateEntity(typeName)
+	entity.CreateEntityLocally(typeName)
 }
 
 func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {

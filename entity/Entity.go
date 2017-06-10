@@ -12,6 +12,11 @@ import (
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/storage"
+)
+
+var (
+	entityStorage storage.EntityStorage
 )
 
 type Entity struct {
@@ -33,6 +38,10 @@ type IEntity interface {
 	OnCreated()
 	OnEnterSpace()
 	OnDestroy()
+
+	IsPersistent() bool
+	GetPersistentData() map[string]interface{}
+	LoadPersistentData(data map[string]interface{})
 }
 
 func (e *Entity) String() string {
@@ -47,6 +56,19 @@ func (e *Entity) Destroy() {
 	e.clearTimers()
 	e.I.OnDestroy()
 	entityManager.del(e.ID)
+}
+
+func (e *Entity) Save() {
+	if !e.I.IsPersistent() {
+		return
+	}
+
+	gwlog.Info("SAVING %s ...", e)
+
+	data := e.I.GetPersistentData()
+	if err := entityStorage.Write(e.TypeName, e.ID, data); err != nil {
+		gwlog.TraceError("Save %s failed: %s", err.Error())
+	}
 }
 
 // Space Operations related to entity
@@ -139,4 +161,18 @@ func (e *Entity) OnEnterSpace() {
 }
 
 func (e *Entity) OnDestroy() {
+}
+
+// Default handlers for persistence
+
+func (e *Entity) IsPersistent() bool {
+	return false
+}
+
+func (e *Entity) GetPersistentData() map[string]interface{} {
+	return nil
+}
+
+func (e *Entity) LoadPersistentData(data map[string]interface{}) {
+
 }

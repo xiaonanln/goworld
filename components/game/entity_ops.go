@@ -1,7 +1,7 @@
 package game
 
-//func CreateEntity(typeName string) {
-//	entityID := entity.CreateEntity(typeName)
+//func CreateEntityLocally(typeName string) {
+//	entityID := entity.CreateEntityLocally(typeName)
 //	// tell the dispatcher about the entity creation
 //	dispatcher_client.GetDispatcherClientForSend().NotifyCreateEntity(entityID)
 //}

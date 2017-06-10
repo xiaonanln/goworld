@@ -94,8 +94,12 @@ func createEntityAnywhere(typeName string) {
 	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName)
 }
 
-func CreateEntity(typeName string) EntityID {
+func CreateEntityLocally(typeName string) EntityID {
 	return createEntity(typeName, nil)
+}
+
+func CreateEntityAnywhere(typeName string) {
+	createEntityAnywhere(typeName)
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {

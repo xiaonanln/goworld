@@ -26,8 +26,12 @@ func CreateSpaceLocally() {
 	entity.CreateSpaceLocally()
 }
 
-func CreateEntity(typeName string) EntityID {
-	return entity.CreateEntity(typeName)
+func CreateEntityLocally(typeName string) EntityID {
+	return entity.CreateEntityLocally(typeName)
+}
+
+func CreateEntityAnywhere(typeName string) {
+	entity.CreateEntityAnywhere(typeName)
 }
 
 func SetSpaceDelegate(delegate entity.ISpaceDelegate) {

@@ -28,7 +28,7 @@ func main() {
 
 func (game gameDelegate) OnReady() {
 	game.GameDelegate.OnReady()
-	goworld.CreateEntity("OnlineService")
+	goworld.CreateEntityAnywhere("OnlineService")
 	timer.AddCallback(time.Millisecond*1000, game.checkGameStarted)
 }
 

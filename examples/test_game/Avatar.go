@@ -35,3 +35,15 @@ func (a *Avatar) OnEnterSpace() {
 	a.Entity.OnEnterSpace()
 
 }
+
+func (a *Avatar) IsPersistent() bool {
+	return true
+}
+
+func (a *Avatar) GetPersistentData() map[string]interface{} {
+	return map[string]interface{}{}
+}
+
+func (a *Avatar) LoadPersistentData(data map[string]interface{}) {
+
+}
