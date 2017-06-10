@@ -32,7 +32,7 @@ func (space *Space) CreateEntity(typeName string) {
 }
 
 func (space *Space) enter(entity *Entity) {
-	gwlog.Info("%s.enter <<< %s", space, entity)
+	gwlog.Debug("%s.enter <<< %s", space, entity)
 	entity.space = space
 	for other := range space.entities {
 		entity.interest(other)

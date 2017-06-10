@@ -107,7 +107,7 @@ func serveDispatcherClient() {
 
 			var args []interface{}
 			proto.ARGS_PACKER.UnpackMsg(argsData, &args)
-			gwlog.Info("UNPACK ARGS %v => %v", argsData, args)
+			//gwlog.Debug("UNPACK ARGS %v => %v", argsData, args)
 			dispatcherClientDelegate.HandleCallEntityMethod(eid, method, args)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			eid := pkt.ReadEntityID()

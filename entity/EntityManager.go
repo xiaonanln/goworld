@@ -52,7 +52,6 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	numMethods := entityPtrType.NumMethod()
 	for i := 0; i < numMethods; i++ {
 		method := entityPtrType.Method(i)
-		gwlog.Info("%s has method %s", typeName, method)
 		entityType2RpcDescMap[typeName].visit(method)
 	}
 

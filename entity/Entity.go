@@ -105,11 +105,16 @@ func (e *Entity) onCall(methodName string, args []interface{}) {
 
 	rpcDesc := e.rpcDescMap[methodName]
 	methodType := rpcDesc.MethodType
-	gwlog.Info("%v %v", methodType.In(0), methodType.NumIn())
+
+	if rpcDesc.NumArgs != len(args) {
+		gwlog.Error("Method %s receives %d arguments, but given %d: %v", methodName, rpcDesc.NumArgs, len(args), args)
+		return
+	}
+
 	in := make([]reflect.Value, len(args)+1)
 	in[0] = reflect.ValueOf(e.I)
 	for i, arg := range args {
-		argType := methodType.In(i)
+		argType := methodType.In(i + 1)
 		in[i+1] = typeconv.Convert(arg, argType)
 	}
 	rpcDesc.Func.Call(in)
@@ -126,11 +131,11 @@ func (e *Entity) OnInit() {
 }
 
 func (e *Entity) OnCreated() {
-	gwlog.Info("%s.OnCreated", e)
+	gwlog.Debug("%s.OnCreated", e)
 }
 
 func (e *Entity) OnEnterSpace() {
-	gwlog.Info("%s.OnEnterSpace >>> %s", e, e.space)
+	gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.space)
 }
 
 func (e *Entity) OnDestroy() {

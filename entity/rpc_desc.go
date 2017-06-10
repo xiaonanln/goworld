@@ -18,7 +18,7 @@ type RpcDesc struct {
 	NumArgs    int
 }
 
-type RpcDescMap map[string]RpcDesc
+type RpcDescMap map[string]*RpcDesc
 
 func (rdm RpcDescMap) visit(method reflect.Method) {
 	methodName := method.Name
@@ -39,9 +39,11 @@ func (rdm RpcDescMap) visit(method reflect.Method) {
 		return
 	}
 
-	rdm[rpcName] = RpcDesc{
+	methodType := method.Type
+	rdm[rpcName] = &RpcDesc{
 		Func:       method.Func,
 		Flags:      flag,
-		MethodType: method.Type,
+		MethodType: methodType,
+		NumArgs:    methodType.NumIn() - 1, // do not count the receiver
 	}
 }

@@ -1,12 +1,24 @@
 package main
 
 import (
+	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
+type AvatarInfo struct {
+	name  string
+	level int
+}
+
 type OnlineService struct {
 	entity.Entity
+
+	avatars map[EntityID]*AvatarInfo
+}
+
+func (s *OnlineService) OnInit() {
+	s.avatars = map[EntityID]*AvatarInfo{}
 }
 
 func (s *OnlineService) OnCreated() {
@@ -14,6 +26,10 @@ func (s *OnlineService) OnCreated() {
 	s.DeclareService("OnlineService")
 }
 
-func (s *OnlineService) CheckIn_Server() {
-
+func (s *OnlineService) CheckIn_Server(avatarID EntityID, name string, level int) {
+	s.avatars[avatarID] = &AvatarInfo{
+		name:  name,
+		level: level,
+	}
+	gwlog.Info("%s CHECK IN: %s %s %d, total online %d", s, avatarID, name, level, len(s.avatars))
 }
