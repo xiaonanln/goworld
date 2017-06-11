@@ -4,6 +4,7 @@ import (
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/storage"
 )
 
 func Run(delegate game.IGameDelegate) {
@@ -48,4 +49,9 @@ func SetSpaceDelegate(delegate entity.ISpaceDelegate) {
 
 func GetServiceProviders(serviceName string) []EntityID {
 	return game.GetServiceProviders(serviceName)
+}
+
+// Get all saved entity ids in storage, may take long time and block the main routine
+func ListEntityIDs(typeName string) []EntityID {
+	return storage.ListEntityIDs(typeName)
 }

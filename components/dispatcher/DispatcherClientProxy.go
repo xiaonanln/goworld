@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -42,17 +43,21 @@ func (dcp *DispatcherClientProxy) serve() {
 			gwlog.Panic(err)
 		}
 
-		gwlog.Info("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
+		if consts.DEBUG_PACKETS {
+			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
+		}
+
 		if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			eid := pkt.ReadEntityID()
 			method := pkt.ReadVarStr()
 			dcp.owner.HandleCallEntityMethod(dcp, pkt, eid, method)
+		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
+			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
 			eid := pkt.ReadEntityID()
 			dcp.owner.HandleNotifyCreateEntity(dcp, pkt, eid)
 		} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
-			typeName := pkt.ReadVarStr()
-			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt, typeName)
+			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			eid := pkt.ReadEntityID()
 			dcp.owner.HandleDeclareService(dcp, pkt, eid)

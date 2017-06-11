@@ -28,7 +28,18 @@ func main() {
 
 func (game gameDelegate) OnReady() {
 	game.GameDelegate.OnReady()
-	goworld.CreateEntityAnywhere("OnlineService")
+
+	eids := goworld.ListEntityIDs("OnlineService")
+	gwlog.Info("Found saved OnlineService ids: %v", eids)
+
+	if len(eids) == 0 {
+		goworld.CreateEntityAnywhere("OnlineService")
+	} else {
+		// already exists
+		onlineServiceID := eids[0]
+		goworld.LoadEntityAnywhere("OnlineService", onlineServiceID)
+	}
+
 	timer.AddCallback(time.Millisecond*1000, game.checkGameStarted)
 }
 

@@ -14,7 +14,8 @@ type AvatarInfo struct {
 type OnlineService struct {
 	entity.Entity
 
-	avatars map[EntityID]*AvatarInfo
+	avatars  map[EntityID]*AvatarInfo
+	maxlevel int
 }
 
 func (s *OnlineService) OnInit() {
@@ -31,5 +32,23 @@ func (s *OnlineService) CheckIn_Server(avatarID EntityID, name string, level int
 		name:  name,
 		level: level,
 	}
+	if level > s.maxlevel {
+		s.maxlevel = level
+	}
 	gwlog.Info("%s CHECK IN: %s %s %d, total online %d", s, avatarID, name, level, len(s.avatars))
+}
+
+func (s *OnlineService) IsPersistent() bool {
+	return true
+}
+
+func (s *OnlineService) GetPersistentData() map[string]interface{} {
+	return map[string]interface{}{
+		"maxlevel": s.maxlevel,
+	}
+}
+
+func (s *OnlineService) LoadPersistentData(data map[string]interface{}) {
+	gwlog.Debug("%s loading persistent data: %v", s, data)
+	s.maxlevel = int(data["maxlevel"].(float64))
 }

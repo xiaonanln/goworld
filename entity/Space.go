@@ -1,6 +1,9 @@
 package entity
 
-import "github.com/xiaonanln/goworld/gwlog"
+import (
+	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/gwlog"
+)
 
 const (
 	SPACE_ENTITY_TYPE = "__space__"
@@ -28,7 +31,11 @@ func (space *Space) OnCreated() {
 }
 
 func (space *Space) CreateEntity(typeName string) {
-	createEntity(typeName, space)
+	createEntity(typeName, space, "", nil)
+}
+
+func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
+
 }
 
 func (space *Space) enter(entity *Entity) {

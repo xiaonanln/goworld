@@ -9,14 +9,14 @@ type Monster struct {
 func (e *Monster) OnCreated() {
 	e.Entity.OnCreated()
 	//a.AddTimer(time.Second, func() {
-	//	gwlog.Info("%s.Neighbors = %v", a, a.Neighbors())
+	//	gwlog.Info("%s.Neighbors = %v", s, s.Neighbors())
 	//	for _other := range a.Neighbors() {
 	//		if _other.TypeName != "Monster" {
 	//			continue
 	//		}
 	//
 	//		other := _other.I.(*Monster)
-	//		gwlog.Info("%s is a neighbor of %s", other, a)
+	//		gwlog.Info("%s is s neighbor of %s", other, s)
 	//	}
 	//})
 }

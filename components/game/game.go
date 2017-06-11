@@ -3,6 +3,9 @@ package game
 import (
 	"flag"
 
+	"math/rand"
+	"time"
+
 	"github.com/xiaonanln/goworld/common"
 )
 
@@ -21,6 +24,7 @@ func parseArgs() {
 }
 
 func Run(delegate IGameDelegate) {
+	rand.Seed(time.Now().Unix())
 	gameService = newGameService(gameid, delegate)
 	gameService.run()
 }

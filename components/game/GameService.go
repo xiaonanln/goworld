@@ -58,7 +58,6 @@ func (gs *GameService) run() {
 	for {
 		select {
 		case item := <-gs.packetQueue:
-			gwlog.Debug("Game %s recv packet: %v %v", gs, item.msgtype, item.pkt.Payload())
 			msgtype, pkt := item.msgtype, item.pkt
 			if msgtype == proto.MT_CALL_ENTITY_METHOD {
 				eid := pkt.ReadEntityID()
@@ -67,6 +66,10 @@ func (gs *GameService) run() {
 				var args []interface{}
 				proto.ARGS_PACKER.UnpackMsg(argsData, &args)
 				gs.HandleCallEntityMethod(eid, method, args)
+			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
+				typeName := pkt.ReadVarStr()
+				eid := pkt.ReadEntityID()
+				gs.HandleLoadEntityAnywhere(typeName, eid)
 			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 				typeName := pkt.ReadVarStr()
 				gs.HandleCreateEntityAnywhere(typeName)
@@ -108,6 +111,11 @@ func (gs *GameService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pkt
 func (gs *GameService) HandleCreateEntityAnywhere(typeName string) {
 	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s", gs, typeName)
 	entity.CreateEntityLocally(typeName)
+}
+
+func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
+	gwlog.Debug("%s.HandleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
+	entity.LoadEntityLocally(typeName, entityID)
 }
 
 func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {

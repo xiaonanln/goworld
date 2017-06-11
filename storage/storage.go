@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -28,7 +29,10 @@ type saveRequest struct {
 type loadRequest struct {
 	TypeName string
 	EntityID common.EntityID
+	Callback LoadCallbackFunc
 }
+
+type LoadCallbackFunc func(data interface{}, err error)
 
 func Save(typeName string, entityID common.EntityID, data interface{}) {
 	operationQueue.Push(saveRequest{
@@ -38,11 +42,20 @@ func Save(typeName string, entityID common.EntityID, data interface{}) {
 	})
 }
 
-func Load(typeName string, entityID common.EntityID) {
+func Load(typeName string, entityID common.EntityID, callback LoadCallbackFunc) {
 	operationQueue.Push(loadRequest{
 		TypeName: typeName,
 		EntityID: entityID,
+		Callback: callback,
 	})
+}
+
+func ListEntityIDs(typeName string) []common.EntityID {
+	eids, err := storageEngine.List(typeName)
+	if err != nil {
+		gwlog.TraceError("ListEntityIDs %s failed: %s", typeName, err)
+	}
+	return eids
 }
 
 func Initialize() {
@@ -91,7 +104,12 @@ func storageRoutine() {
 				gwlog.TraceError("storage: load %s %s failed: %s", loadReq.TypeName, loadReq.EntityID, err)
 				data = nil
 			}
-			gwlog.Info("LOAD DATA: %v", data)
+
+			timer.AddCallback(0, func() {
+				loadReq.Callback(data, err)
+			})
+		} else {
+			gwlog.Panicf("storage: unknown operation: %v", op)
 		}
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage"
 )
@@ -64,6 +65,10 @@ func (e *Entity) Save() {
 	data := e.I.GetPersistentData()
 
 	storage.Save(e.TypeName, e.ID, data)
+}
+
+func (e *Entity) setupSaveTimer() {
+	e.AddTimer(consts.SAVE_INTERVAL, e.Save)
 }
 
 // Space Operations related to entity
@@ -165,9 +170,10 @@ func (e *Entity) IsPersistent() bool {
 }
 
 func (e *Entity) GetPersistentData() map[string]interface{} {
+	gwlog.TraceError("%s.GetPersistentData not implemented", e)
 	return nil
 }
 
 func (e *Entity) LoadPersistentData(data map[string]interface{}) {
-
+	gwlog.TraceError("%s.LoadPersistentData not implemented", e)
 }

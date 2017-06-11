@@ -94,8 +94,15 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 	pkt.Release()
 }
 
-func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet, typeName string) {
-	gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, entityID=%s, typeName=%s", service, dcp, typeName)
+func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	//typeName := pkt.ReadVarStr()
+	//eid := pkt.ReadEntityID()
+	gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
+	service.chooseDispatcherClient().SendPacketRelease(pkt)
+}
+
+func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 

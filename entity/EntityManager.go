@@ -7,6 +7,7 @@ import (
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/storage"
 )
 
 var (
@@ -58,14 +59,17 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
 
-func createEntity(typeName string, space *Space) EntityID {
+func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}) EntityID {
 	gwlog.Debug("createEntity: %s in space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
 	}
 
-	entityID := GenEntityID()
+	if entityID == "" {
+		entityID = GenEntityID()
+	}
+
 	entityPtrVal := reflect.New(entityType)
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.ID = entityID
@@ -79,7 +83,16 @@ func createEntity(typeName string, space *Space) EntityID {
 	entity.I.OnInit()
 
 	entityManager.put(entity)
-	entity.Save() // save immediately after creation
+	if data != nil {
+		entity.I.LoadPersistentData(data)
+	} else {
+		entity.Save() // save immediately after creation
+	}
+
+	if entity.I.IsPersistent() { // startup the periodical timer for saving entity
+		entity.setupSaveTimer()
+	}
+
 	entity.I.OnCreated()
 
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
@@ -91,12 +104,28 @@ func createEntity(typeName string, space *Space) EntityID {
 	return entityID
 }
 
+func loadEntityLocally(typeName string, entityID EntityID) {
+	// load the data from storage
+	storage.Load(typeName, entityID, func(data interface{}, err error) {
+		// callback runs in main routine
+		if err != nil {
+			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
+		}
+
+		createEntity(typeName, nil, entityID, data.(map[string]interface{}))
+	})
+}
+
+func loadEntityAnywhere(typeName string, entityID EntityID) {
+	dispatcher_client.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
+}
+
 func createEntityAnywhere(typeName string) {
 	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName)
 }
 
 func CreateEntityLocally(typeName string) EntityID {
-	return createEntity(typeName, nil)
+	return createEntity(typeName, nil, "", nil)
 }
 
 func CreateEntityAnywhere(typeName string) {
@@ -107,12 +136,8 @@ func LoadEntityLocally(typeName string, entityID EntityID) {
 	loadEntityLocally(typeName, entityID)
 }
 
-func loadEntityLocally(typeName string, entityID EntityID) {
-	dispatcher_client.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
-}
-
 func LoadEntityAnywhere(typeName string, entityID EntityID) {
-	loadEntityLocally(typeName, entityID)
+	loadEntityAnywhere(typeName, entityID)
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {

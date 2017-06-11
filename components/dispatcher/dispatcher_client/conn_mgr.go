@@ -10,6 +10,7 @@ import (
 	"errors"
 
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -98,7 +99,9 @@ func serveDispatcherClient() {
 			continue
 		}
 
-		gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", msgtype, pkt.Payload())
+		if consts.DEBUG_PACKETS {
+			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", msgtype, pkt.Payload())
+		}
 		dispatcherClientDelegate.HandleDispatcherClientPacket(msgtype, pkt)
 	}
 }
