@@ -10,6 +10,8 @@ import (
 	"encoding/base64"
 	"os"
 
+	"strings"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage/common"
@@ -34,8 +36,8 @@ func (ss *FileSystemEntityStorage) Write(name string, entityID common.EntityID, 
 	return ioutil.WriteFile(stringSaveFile, dataBytes, 0644)
 }
 
-func (ss *FileSystemEntityStorage) Read(name string, entityID common.EntityID) (interface{}, error) {
-	stringSaveFile := filepath.Join(ss.directory, getFileName(name, entityID))
+func (ss *FileSystemEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
+	stringSaveFile := filepath.Join(ss.directory, getFileName(typeName, entityID))
 	dataBytes, err := ioutil.ReadFile(stringSaveFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -52,6 +54,31 @@ func (ss *FileSystemEntityStorage) Read(name string, entityID common.EntityID) (
 		return nil, err
 	}
 	return data, nil
+}
+
+func (ss *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, error) {
+	prefix := typeName + "$"
+	pat := filepath.Join(ss.directory, prefix+"*")
+	files, err := filepath.Glob(pat)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]common.EntityID, 0, len(files))
+	prefixLen := len(prefix)
+	for _, fpath := range files {
+		_, fn := filepath.Split(fpath)
+		if !strings.HasPrefix(fn, prefix) {
+			gwlog.Error("invalid file: %s", fpath)
+		}
+		idbytes, err := base64.URLEncoding.DecodeString(fn[prefixLen:])
+		if err != nil {
+			gwlog.TraceError("fail to parse file %s", fpath)
+			continue
+		}
+
+		res = append(res, common.MustEntityID(string(idbytes)))
+	}
+	return res, nil
 }
 
 func newFileSystemEntityStorage(directory string) (*FileSystemEntityStorage, error) {

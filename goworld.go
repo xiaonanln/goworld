@@ -34,6 +34,14 @@ func CreateEntityAnywhere(typeName string) {
 	entity.CreateEntityAnywhere(typeName)
 }
 
+func LoadEntityLocally(typeName string, entityID EntityID) {
+	entity.LoadEntityLocally(typeName, entityID)
+}
+
+func LoadEntityAnywhere(typeName string, entityID EntityID) {
+	entity.LoadEntityAnywhere(typeName, entityID)
+}
+
 func SetSpaceDelegate(delegate entity.ISpaceDelegate) {
 	entity.SetSpaceDelegate(delegate)
 }

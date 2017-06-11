@@ -45,4 +45,22 @@ func TestFileSystemEntityStorage(t *testing.T) {
 	if verifyData.(map[string]interface{})["d"].(float64) != 1.11 {
 		t.Errorf("read wrong data: %v", verifyData)
 	}
+
+	avatarIDs, err := es.List("Avatar")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(avatarIDs) == 0 {
+		t.Errorf("Avatar IDs is empty!")
+	}
+
+	gwlog.Info("Found avatars saved: %v", avatarIDs)
+	for _, avatarID := range avatarIDs {
+		data, err := es.Read("Avatar", avatarID)
+		if err != nil {
+			t.Error(err)
+		}
+		t.Logf("Read Avatar %s => %v", avatarID, data)
+	}
+
 }

@@ -49,5 +49,5 @@ func (a *Avatar) GetPersistentData() map[string]interface{} {
 }
 
 func (a *Avatar) LoadPersistentData(data map[string]interface{}) {
-
+	gwlog.Debug("%s loading persistent data: %v", a, data)
 }

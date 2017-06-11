@@ -103,6 +103,18 @@ func CreateEntityAnywhere(typeName string) {
 	createEntityAnywhere(typeName)
 }
 
+func LoadEntityLocally(typeName string, entityID EntityID) {
+	loadEntityLocally(typeName, entityID)
+}
+
+func loadEntityLocally(typeName string, entityID EntityID) {
+	dispatcher_client.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
+}
+
+func LoadEntityAnywhere(typeName string, entityID EntityID) {
+	loadEntityLocally(typeName, entityID)
+}
+
 func callRemote(id EntityID, method string, args []interface{}) {
 	gwlog.Info("dispatcher_client.GetDispatcherClientForSend(): %v", dispatcher_client.GetDispatcherClientForSend())
 	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)

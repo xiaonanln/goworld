@@ -13,6 +13,7 @@ const (
 	MT_DECLARE_SERVICE        = iota
 	MT_CALL_ENTITY_METHOD     = iota
 	MT_CREATE_ENTITY_ANYWHERE = iota
+	MT_LOAD_ENTITY_ANYWHERE   = iota
 )
 
 func MsgTypeToString(msgType MsgType_t) string {

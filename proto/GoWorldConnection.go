@@ -40,6 +40,14 @@ func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string) error {
 	return gwc.SendPacketRelease(packet)
 }
 
+func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_LOAD_ENTITY_ANYWHERE)
+	packet.AppendVarStr(typeName)
+	packet.AppendEntityID(entityID)
+	return gwc.SendPacketRelease(packet)
+}
+
 func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_DECLARE_SERVICE)
