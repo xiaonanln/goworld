@@ -34,15 +34,15 @@ func TestFileSystemEntityStorage(t *testing.T) {
 	}
 
 	if verifyData.(map[string]interface{})["a"].(float64) != 1 {
-		t.Error("read wrong data: %v", verifyData)
+		t.Errorf("read wrong data: %v", verifyData)
 	}
 	if verifyData.(map[string]interface{})["b"].(string) != "2" {
-		t.Error("read wrong data: %v", verifyData)
+		t.Errorf("read wrong data: %v", verifyData)
 	}
 	if verifyData.(map[string]interface{})["c"].(bool) != true {
-		t.Error("read wrong data: %v", verifyData)
+		t.Errorf("read wrong data: %v", verifyData)
 	}
 	if verifyData.(map[string]interface{})["d"].(float64) != 1.11 {
-		t.Error("read wrong data: %v", verifyData)
+		t.Errorf("read wrong data: %v", verifyData)
 	}
 }

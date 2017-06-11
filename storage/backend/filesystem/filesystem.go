@@ -12,7 +12,7 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/storage"
+	"github.com/xiaonanln/goworld/storage/common"
 )
 
 type FileSystemEntityStorage struct {
@@ -64,6 +64,6 @@ func newFileSystemEntityStorage(directory string) (*FileSystemEntityStorage, err
 	}, nil
 }
 
-func OpenDirectory(directory string) (storage.EntityStorage, error) {
+func OpenDirectory(directory string) (storage_common.EntityStorage, error) {
 	return newFileSystemEntityStorage(directory)
 }

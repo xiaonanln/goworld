@@ -41,7 +41,11 @@ func (a *Avatar) IsPersistent() bool {
 }
 
 func (a *Avatar) GetPersistentData() map[string]interface{} {
-	return map[string]interface{}{}
+	return map[string]interface{}{
+		"name":  a.name,
+		"level": a.level,
+		"money": a.money,
+	}
 }
 
 func (a *Avatar) LoadPersistentData(data map[string]interface{}) {

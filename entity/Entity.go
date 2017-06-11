@@ -15,10 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/storage"
 )
 
-var (
-	entityStorage storage.EntityStorage
-)
-
 type Entity struct {
 	ID       EntityID
 	TypeName string
@@ -66,9 +62,8 @@ func (e *Entity) Save() {
 	gwlog.Info("SAVING %s ...", e)
 
 	data := e.I.GetPersistentData()
-	if err := entityStorage.Write(e.TypeName, e.ID, data); err != nil {
-		gwlog.TraceError("Save %s failed: %s", err.Error())
-	}
+
+	storage.Save(e.TypeName, e.ID, data)
 }
 
 // Space Operations related to entity

@@ -79,6 +79,7 @@ func createEntity(typeName string, space *Space) EntityID {
 	entity.I.OnInit()
 
 	entityManager.put(entity)
+	entity.Save() // save immediately after creation
 	entity.I.OnCreated()
 
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)

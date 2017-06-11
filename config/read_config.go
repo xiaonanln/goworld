@@ -41,6 +41,14 @@ type GoWorldConfig struct {
 	dispatcher DispatcherConfig
 	games      map[int]*GameConfig
 	gates      map[int]*GateConfig
+	storage    StorageConfig
+}
+
+type StorageConfig struct {
+	Type string
+	// Filesystem Storage Configs
+	Directory string // directory for filesystem storage
+	// MongoDB storage configs
 }
 
 func Get() *GoWorldConfig {
@@ -67,6 +75,10 @@ func GetDispatcher() *DispatcherConfig {
 	return &Get().dispatcher
 }
 
+func GetStorage() *StorageConfig {
+	return &Get().storage
+}
+
 func DumpPretty(cfg interface{}) string {
 	s, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {
@@ -89,6 +101,7 @@ func readGoWorldConfig() *GoWorldConfig {
 		}
 
 		//gwlog.Info("Section %s", sec.Name())
+		secName = strings.ToLower(secName)
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.dispatcher)
@@ -102,6 +115,9 @@ func readGoWorldConfig() *GoWorldConfig {
 			id, err := strconv.Atoi(secName[4:])
 			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
 			config.gates[id] = readGateConfig(sec)
+		} else if secName == "storage" {
+			// storage config
+			readStorageConfig(sec, &config.storage)
 		} else {
 			gwlog.Warn("unknown section: %s", secName)
 		}
@@ -153,11 +169,36 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	return
 }
 
+func readStorageConfig(sec *ini.Section, config *StorageConfig) {
+	// setup default values
+	config.Type = "filesystem"
+	config.Directory = "_entity_storage"
+
+	for _, key := range sec.Keys() {
+		name := strings.ToLower(key.Name())
+		if name == "type" {
+			config.Type = key.MustString("filesystem")
+		} else if name == "directory" {
+			config.Directory = key.MustString("_entity_storage")
+		}
+	}
+
+	validateStorageConfig(config)
+}
+
 func checkConfigError(err error, msg string) {
 	if err != nil {
 		if msg == "" {
 			msg = err.Error()
 		}
 		gwlog.Panicf("read config error: %s", msg)
+	}
+}
+
+func validateStorageConfig(config *StorageConfig) {
+	if config.Type == "filesystem" {
+		// directory must be set
+	} else {
+		gwlog.Panicf("unknown storage type: %s", config.Type)
 	}
 }

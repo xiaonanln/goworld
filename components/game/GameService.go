@@ -10,10 +10,12 @@ import (
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/storage"
 )
 
 type packetQueueItem struct { // packet queue from dispatcher client
@@ -34,7 +36,7 @@ func newGameService(gameid int, delegate IGameDelegate) *GameService {
 		id:                 gameid,
 		gameDelegate:       delegate,
 		registeredServices: map[string]entity.EntityIDSet{},
-		packetQueue:        make(chan packetQueueItem, DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
+		packetQueue:        make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 	}
 }
 
@@ -42,8 +44,11 @@ func (gs *GameService) run() {
 	cfg := config.GetGame(gameid)
 	fmt.Fprintf(os.Stderr, "Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
+	// initializing storage
+	storage.Initialize()
+
 	dispatcher_client.Initialize(gs)
-	ticker := time.Tick(TICK_INTERVAL)
+	ticker := time.Tick(consts.GAME_TICK_INTERVAL)
 	timer.AddCallback(0, func() {
 		gs.gameDelegate.OnReady()
 	})

@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -74,4 +76,13 @@ func TestGetGate(t *testing.T) {
 			gwlog.Info("Gate %d config: %v", id, cfg)
 		}
 	}
+}
+
+func TestGetStorage(t *testing.T) {
+	cfg := GetStorage()
+	if cfg == nil {
+		t.Errorf("storage config not found")
+	}
+	gwlog.Info("storage config:")
+	fmt.Fprintf(os.Stderr, "%s\n", DumpPretty(cfg))
 }

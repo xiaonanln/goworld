@@ -1,8 +1,97 @@
 package storage
 
-import "github.com/xiaonanln/goworld/common"
+import (
+	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/storage/backend/filesystem"
+	"github.com/xiaonanln/goworld/storage/common"
+)
 
-type EntityStorage interface {
-	Write(typeName string, entityID common.EntityID, data interface{}) error
-	Read(typeName string, entityID common.EntityID) (interface{}, error)
+var (
+	storageEngine  storage_common.EntityStorage
+	operationQueue = sync_queue.NewSyncQueue()
+)
+
+const ( // storage request types
+	SR_SAVE = iota
+	SR_LOAD = iota
+)
+
+type saveRequest struct {
+	TypeName string
+	EntityID common.EntityID
+	Data     interface{}
+}
+
+type loadRequest struct {
+	TypeName string
+	EntityID common.EntityID
+}
+
+func Save(typeName string, entityID common.EntityID, data interface{}) {
+	operationQueue.Push(saveRequest{
+		TypeName: typeName,
+		EntityID: entityID,
+		Data:     data,
+	})
+}
+
+func Load(typeName string, entityID common.EntityID) {
+	operationQueue.Push(loadRequest{
+		TypeName: typeName,
+		EntityID: entityID,
+	})
+}
+
+func Initialize() {
+	var err error
+	cfg := config.GetStorage()
+	if cfg.Type == "filesystem" {
+		storageEngine, err = entity_storage_filesystem.OpenDirectory(cfg.Directory)
+		if err != nil {
+			gwlog.Panic(err)
+		}
+	} else {
+		gwlog.Panicf("unknown storage type: %s", cfg.Type)
+	}
+
+	go storageRoutine()
+}
+
+func storageRoutine() {
+	defer func() {
+		err := recover()
+		gwlog.TraceError("storage routine paniced: %s, restarting ...", err)
+		go storageRoutine() // restart the storage routine
+	}()
+
+	for {
+		op := operationQueue.Pop()
+		if saveReq, ok := op.(saveRequest); ok {
+			// handle save request
+			for {
+				gwlog.Debug("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
+				err := storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)
+				if err != nil {
+					// save failed ?
+					gwlog.Error("storage: save failed: %s", err)
+					continue // always retry if fail
+				} else {
+					break
+				}
+			}
+		} else if loadReq, ok := op.(loadRequest); ok {
+			// handle load request
+			gwlog.Debug("storage: LOADING %s %s ...", loadReq.TypeName, loadReq.EntityID)
+			data, err := storageEngine.Read(loadReq.TypeName, loadReq.EntityID)
+			if err != nil {
+				// save failed ?
+				gwlog.TraceError("storage: load %s %s failed: %s", loadReq.TypeName, loadReq.EntityID, err)
+				data = nil
+			}
+			gwlog.Info("LOAD DATA: %v", data)
+		}
+	}
 }
