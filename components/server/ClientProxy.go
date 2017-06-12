@@ -41,7 +41,10 @@ func (cp *ClientProxy) serve() {
 			panic(err)
 		}
 
-		pkt.ReadEntityID()
-		pkt.ReadVarStr()
+		entityID := pkt.ReadEntityID()
+		method := pkt.ReadVarStr()
+		var args []interface{}
+		pkt.ReadMessage(&args)
+		gwlog.Info("Recv %s %s %v", entityID, method, args)
 	}
 }
