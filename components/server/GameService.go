@@ -1,4 +1,4 @@
-package game
+package server
 
 import (
 	"fmt"
@@ -25,35 +25,36 @@ type packetQueueItem struct { // packet queue from dispatcher client
 
 type GameService struct {
 	id                 int
-	gameDelegate       IGameDelegate
+	serverDelegate     IServerDelegate
 	registeredServices map[string]entity.EntityIDSet
 
 	packetQueue chan packetQueueItem
 }
 
-func newGameService(gameid int, delegate IGameDelegate) *GameService {
+func newGameService(serverid int, delegate IServerDelegate) *GameService {
 	return &GameService{
-		id:                 gameid,
-		gameDelegate:       delegate,
+		id:                 serverid,
+		serverDelegate:     delegate,
 		registeredServices: map[string]entity.EntityIDSet{},
 		packetQueue:        make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 	}
 }
 
 func (gs *GameService) run() {
-	cfg := config.GetGame(gameid)
-	fmt.Fprintf(os.Stderr, "Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
+	cfg := config.GetServer(serverid)
+
+	fmt.Fprintf(os.Stderr, "Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))
 
 	// initializing storage
 	storage.Initialize()
 
 	dispatcher_client.Initialize(gs)
-	ticker := time.Tick(consts.GAME_TICK_INTERVAL)
+	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
 	timer.AddCallback(0, func() {
-		gs.gameDelegate.OnReady()
+		gs.serverDelegate.OnReady()
 	})
 
-	// here begins the main loop of Game
+	// here begins the main loop of Server
 	tickCount := 0
 	for {
 		select {
@@ -98,7 +99,7 @@ func (gs *GameService) String() string {
 
 func (gs *GameService) OnDispatcherClientConnect() {
 	gwlog.Debug("%s.OnDispatcherClientConnect ...", gs)
-	dispatcher_client.GetDispatcherClientForSend().SendSetGameID(gs.id)
+	dispatcher_client.GetDispatcherClientForSend().SendSetServerID(gs.id)
 }
 
 func (gs *GameService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pkt *netutil.Packet) {

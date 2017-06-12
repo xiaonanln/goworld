@@ -24,22 +24,15 @@ func TestLoad(t *testing.T) {
 	if config.dispatcher.Port == 0 {
 		t.Errorf("dispatcher port not found")
 	}
-	for gameName, gameConfig := range config.games {
-		if gameConfig.Ip == "" {
-			t.Errorf("game %s ip not found", gameName)
+	for serverName, serverConfig := range config.servers {
+		if serverConfig.Ip == "" {
+			t.Errorf("server %s ip not found", serverName)
 		}
-		if gameConfig.Port == 0 {
-			t.Errorf("game %s port not found", gameName)
-		}
-	}
-	for gateName, gateConfig := range config.gates {
-		if gateConfig.Ip == "" {
-			t.Errorf("gate %s ip not found", gateName)
-		}
-		if gateConfig.Port == 0 {
-			t.Errorf("gate %s port not found", gateName)
+		if serverConfig.Port == 0 {
+			t.Errorf("server %s port not found", serverName)
 		}
 	}
+
 	gwlog.Info("read goworld config: %v", config)
 }
 
@@ -55,25 +48,13 @@ func TestGetDispatcher(t *testing.T) {
 	fmt.Printf("dispatcher config: %s", string(cfgStr))
 }
 
-func TestGetGame(t *testing.T) {
+func TestGetServer(t *testing.T) {
 	for id := 1; id <= 10; id++ {
-		cfg := GetGame(id)
+		cfg := GetServer(id)
 		if cfg == nil {
-			gwlog.Info("Game %d not found", id)
+			gwlog.Info("Server %d not found", id)
 		} else {
-			gwlog.Info("Game %d config: %v", id, cfg)
-		}
-	}
-}
-
-func TestGetGate(t *testing.T) {
-
-	for id := 1; id <= 5; id++ {
-		cfg := GetGate(id)
-		if cfg == nil {
-			gwlog.Info("Gate %d not found", id)
-		} else {
-			gwlog.Info("Gate %d config: %v", id, cfg)
+			gwlog.Info("Server %d config: %v", id, cfg)
 		}
 	}
 }

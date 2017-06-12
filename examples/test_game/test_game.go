@@ -5,7 +5,7 @@ import (
 
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
-	"github.com/xiaonanln/goworld/components/game"
+	"github.com/xiaonanln/goworld/components/server"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -13,8 +13,8 @@ func init() {
 
 }
 
-type gameDelegate struct {
-	game.GameDelegate
+type serverDelegate struct {
+	server.ServerDelegate
 }
 
 func main() {
@@ -23,11 +23,11 @@ func main() {
 	goworld.RegisterEntity("Monster", &Monster{})
 	goworld.RegisterEntity("Avatar", &Avatar{})
 
-	goworld.Run(&gameDelegate{})
+	goworld.Run(&serverDelegate{})
 }
 
-func (game gameDelegate) OnReady() {
-	game.GameDelegate.OnReady()
+func (server serverDelegate) OnReady() {
+	server.ServerDelegate.OnReady()
 
 	eids := goworld.ListEntityIDs("OnlineService")
 	gwlog.Info("Found saved OnlineService ids: %v", eids)
@@ -40,26 +40,26 @@ func (game gameDelegate) OnReady() {
 		goworld.LoadEntityAnywhere("OnlineService", onlineServiceID)
 	}
 
-	timer.AddCallback(time.Millisecond*1000, game.checkGameStarted)
+	timer.AddCallback(time.Millisecond*1000, server.checkServerStarted)
 }
 
-func (game gameDelegate) checkGameStarted() {
-	ok := game.isGameStarted()
-	gwlog.Info("checkGameStarted: %v", ok)
+func (server serverDelegate) checkServerStarted() {
+	ok := server.isServerStarted()
+	gwlog.Info("checkServerStarted: %v", ok)
 	if ok {
-		game.onGameStarted()
+		server.onServerStarted()
 	} else {
-		timer.AddCallback(time.Millisecond*1000, game.checkGameStarted)
+		timer.AddCallback(time.Millisecond*1000, server.checkServerStarted)
 	}
 }
 
-func (game gameDelegate) isGameStarted() bool {
+func (server serverDelegate) isServerStarted() bool {
 	if len(goworld.GetServiceProviders("OnlineService")) == 0 {
 		return false
 	}
 	return true
 }
 
-func (game gameDelegate) onGameStarted() {
+func (server serverDelegate) onServerStarted() {
 	goworld.CreateSpaceAnywhere()
 }

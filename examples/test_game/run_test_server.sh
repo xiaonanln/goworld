@@ -1,4 +1,4 @@
 start sh run_dispatcher.sh
 go build
-start ./test_game -configfile=../../goworld.ini -gid=1
-start ./test_game -configfile=../../goworld.ini -gid=2
+start ./test_server -configfile=../../goworld.ini -sid=1
+start ./test_server -configfile=../../goworld.ini -sid=2

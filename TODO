@@ -1,7 +1,7 @@
-# TODO: Make sure load entity won't create multiple entities on multiple games!
+# TODO: Make sure load entity won't create multiple entities on multiple servers!
 
-# TODO: wait for all games to be ready before fire OnGameStarted
-    # TODO: Set number of games and gates in config file
+# TODO: wait for all servers to be ready before fire OnServerStarted
+    # TODO: Set number of servers and gates in config file
 # TODO: Gate
 # TODO: Client
 # TODO: Entity Attributes

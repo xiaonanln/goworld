@@ -44,22 +44,22 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 	client.serve()
 }
 
-func (service *DispatcherService) HandleSetGameID(dcp *DispatcherClientProxy, pkt *netutil.Packet, gameid int) {
-	gwlog.Debug("%s.HandleSetGameID: dcp=%s, gameid=%d", service, dcp, gameid)
-	if gameid <= 0 {
-		gwlog.Panicf("invalid gameid: %d", gameid)
+func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid int) {
+	gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d", service, dcp, serverid)
+	if serverid <= 0 {
+		gwlog.Panicf("invalid serverid: %d", serverid)
 	}
 
-	for gameid > len(service.clients) {
+	for serverid > len(service.clients) {
 		service.clients = append(service.clients, nil)
 	}
-	service.clients[gameid-1] = dcp
+	service.clients[serverid-1] = dcp
 	pkt.Release()
 	return
 }
 
-func (service *DispatcherService) dispatcherClientOfGame(gameid int) *DispatcherClientProxy {
-	return service.clients[gameid-1]
+func (service *DispatcherService) dispatcherClientOfServer(serverid int) *DispatcherClientProxy {
+	return service.clients[serverid-1]
 }
 
 // Choose a dispatcher client for sending Anywhere packets
@@ -87,10 +87,10 @@ func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProx
 	//}
 }
 
-// Entity is create on the target game
+// Entity is create on the target server
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
-	service.entityLocs[entityID] = dcp.gameid
+	service.entityLocs[entityID] = dcp.serverid
 	pkt.Release()
 }
 
@@ -108,7 +108,7 @@ func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClie
 
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s", service, dcp, entityID)
-	service.entityLocs[entityID] = dcp.gameid
+	service.entityLocs[entityID] = dcp.serverid
 	service.broadcastToDispatcherClients(pkt)
 	pkt.Release()
 	//_, ok := service.registeredServices[serviceName]
@@ -124,14 +124,14 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, method string) {
 	gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s, method=%s", service, dcp, entityID, method)
 
-	gameid := service.entityLocs[entityID]
-	if gameid == 0 {
-		// game not found
+	serverid := service.entityLocs[entityID]
+	if serverid == 0 {
+		// server not found
 		gwlog.Warn("Entity %s not found when calling method %s", entityID, method)
 		return
 	}
 
-	service.dispatcherClientOfGame(gameid).SendPacketRelease(pkt)
+	service.dispatcherClientOfServer(serverid).SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {

@@ -14,7 +14,7 @@ import (
 type DispatcherClientProxy struct {
 	proto.GoWorldConnection
 	owner  *DispatcherService
-	gameid int
+	serverid int
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *DispatcherClientProxy {
@@ -25,7 +25,7 @@ func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *Dispatch
 }
 
 func (dcp *DispatcherClientProxy) serve() {
-	// Serve the dispatcher client from game / gate
+	// Serve the dispatcher client from server / gate
 	defer func() {
 		dcp.Close()
 
@@ -61,10 +61,10 @@ func (dcp *DispatcherClientProxy) serve() {
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			eid := pkt.ReadEntityID()
 			dcp.owner.HandleDeclareService(dcp, pkt, eid)
-		} else if msgtype == proto.MT_SET_GAME_ID {
-			gameid := int(pkt.ReadUint16())
-			dcp.gameid = gameid
-			dcp.owner.HandleSetGameID(dcp, pkt, gameid)
+		} else if msgtype == proto.MT_SET_SERVER_ID {
+			serverid := int(pkt.ReadUint16())
+			dcp.serverid = serverid
+			dcp.owner.HandleSetServerID(dcp, pkt, serverid)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 		}
@@ -72,5 +72,5 @@ func (dcp *DispatcherClientProxy) serve() {
 }
 
 func (dcp *DispatcherClientProxy) String() string {
-	return fmt.Sprintf("DispatcherClientProxy<%d|%s>", dcp.gameid, dcp.RemoteAddr())
+	return fmt.Sprintf("DispatcherClientProxy<%d|%s>", dcp.serverid, dcp.RemoteAddr())
 }

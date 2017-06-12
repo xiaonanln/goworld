@@ -8,7 +8,7 @@ type MsgType_t uint16
 
 const (
 	MT_INVALID                = iota
-	MT_SET_GAME_ID            = iota
+	MT_SET_SERVER_ID          = iota
 	MT_NOTIFY_CREATE_ENTITY   = iota
 	MT_DECLARE_SERVICE        = iota
 	MT_CALL_ENTITY_METHOD     = iota

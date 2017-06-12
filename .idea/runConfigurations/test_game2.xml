@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="test_game2" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="true">
-    <output_file path="C:\gopath\src\github.com\xiaonanln\goworld\examples\test_game" />
+    <output_file path="$PROJECT_DIR$/examples/test_game" />
     <module name="goworld" />
     <working_directory value="C:\gopath\src\github.com\xiaonanln\goworld" />
     <go_parameters value=" -race -gcflags &quot;-N -l&quot;" />
-    <parameters value="-gid=2" />
+    <parameters value="-sid=2" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />
     <package value="github.com/xiaonanln/goworld/examples/test_game" />

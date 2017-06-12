@@ -9,6 +9,8 @@ import (
 
 	"encoding/json"
 
+	"sync"
+
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
 )
@@ -21,9 +23,10 @@ const (
 var (
 	configFilePath = DEFAULT_CONFIG_FILE
 	goWorldConfig  *GoWorldConfig
+	configLock     sync.Mutex
 )
 
-type GameConfig struct {
+type ServerConfig struct {
 	Ip   string
 	Port int
 }
@@ -33,15 +36,9 @@ type DispatcherConfig struct {
 	Port int
 }
 
-type GateConfig struct {
-	Ip   string
-	Port int
-}
-
 type GoWorldConfig struct {
 	dispatcher DispatcherConfig
-	games      map[int]*GameConfig
-	gates      map[int]*GateConfig
+	servers    map[int]*ServerConfig
 	storage    StorageConfig
 }
 
@@ -57,6 +54,8 @@ func SetConfigFile(f string) {
 }
 
 func Get() *GoWorldConfig {
+	configLock.Lock()
+	defer configLock.Unlock() // protect concurrent access from Games & Gate
 	if goWorldConfig == nil {
 		goWorldConfig = readGoWorldConfig()
 	}
@@ -64,16 +63,15 @@ func Get() *GoWorldConfig {
 }
 
 func Reload() *GoWorldConfig {
+	configLock.Lock()
+	defer configLock.Unlock()
+
 	goWorldConfig = nil
 	return Get()
 }
 
-func GetGame(gameid int) *GameConfig {
-	return Get().games[gameid]
-}
-
-func GetGate(gateid int) *GateConfig {
-	return Get().gates[gateid]
+func GetServer(serverid int) *ServerConfig {
+	return Get().servers[serverid]
 }
 
 func GetDispatcher() *DispatcherConfig {
@@ -94,8 +92,7 @@ func DumpPretty(cfg interface{}) string {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		games: map[int]*GameConfig{},
-		gates: map[int]*GateConfig{},
+		servers: map[int]*ServerConfig{},
 	}
 	gwlog.Info("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
@@ -111,16 +108,11 @@ func readGoWorldConfig() *GoWorldConfig {
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.dispatcher)
-		} else if secName[:4] == "game" {
-			// game config
-			id, err := strconv.Atoi(secName[4:])
-			checkConfigError(err, fmt.Sprintf("invalid game name: %s", secName))
-			config.games[id] = readGameConfig(sec)
-		} else if secName[:4] == "gate" {
-			// gate config
-			id, err := strconv.Atoi(secName[4:])
-			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
-			config.gates[id] = readGateConfig(sec)
+		} else if secName[:6] == "server" {
+			// server config
+			id, err := strconv.Atoi(secName[6:])
+			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
+			config.servers[id] = readServerConfig(sec)
 		} else if secName == "storage" {
 			// storage config
 			readStorageConfig(sec, &config.storage)
@@ -132,23 +124,8 @@ func readGoWorldConfig() *GoWorldConfig {
 	return &config
 }
 
-func readGameConfig(sec *ini.Section) *GameConfig {
-	gc := &GameConfig{
-		Ip: DEFAULT_LOCALHOST_IP,
-	}
-	for _, key := range sec.Keys() {
-		name := strings.ToLower(key.Name())
-		if name == "ip" {
-			gc.Ip = key.MustString(DEFAULT_LOCALHOST_IP)
-		} else if name == "port" {
-			gc.Port = key.MustInt(0)
-		}
-	}
-	return gc
-}
-
-func readGateConfig(sec *ini.Section) *GateConfig {
-	gc := &GateConfig{
+func readServerConfig(sec *ini.Section) *ServerConfig {
+	gc := &ServerConfig{
 		Ip: DEFAULT_LOCALHOST_IP,
 	}
 	for _, key := range sec.Keys() {
