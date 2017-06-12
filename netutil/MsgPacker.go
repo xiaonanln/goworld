@@ -1,7 +1,7 @@
-package proto
+package netutil
 
 var (
-	ARGS_PACKER MsgPacker = MessagePackMsgPacker{}
+	MSG_PACKER MsgPacker = MessagePackMsgPacker{}
 )
 
 type MsgPacker interface {

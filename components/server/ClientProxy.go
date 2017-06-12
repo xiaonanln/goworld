@@ -34,4 +34,14 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
+	for {
+		var msgtype proto.MsgType_t
+		pkt, err := cp.Recv(&msgtype)
+		if err != nil {
+			panic(err)
+		}
+
+		pkt.ReadEntityID()
+		pkt.ReadVarStr()
+	}
 }

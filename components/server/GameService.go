@@ -63,9 +63,8 @@ func (gs *GameService) run() {
 			if msgtype == proto.MT_CALL_ENTITY_METHOD {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
-				argsData := pkt.ReadVarBytes()
 				var args []interface{}
-				proto.ARGS_PACKER.UnpackMsg(argsData, &args)
+				pkt.ReadMessage(&args)
 				gs.HandleCallEntityMethod(eid, method, args)
 			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 				typeName := pkt.ReadVarStr()

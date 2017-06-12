@@ -147,6 +147,26 @@ func (p *Packet) ReadVarBytes() []byte {
 	return p.ReadBytes(blen)
 }
 
+func (p *Packet) AppendMessage(msg interface{}) {
+	freePayload := p.FreePayload()
+
+	argsData, err := MSG_PACKER.PackMsg(msg, freePayload[4:4])
+	if err != nil {
+		gwlog.Panic(err)
+	}
+	argsDataLen := uint32(len(argsData))
+	PACKET_ENDIAN.PutUint32(freePayload[:4], argsDataLen)
+	p.SetPayloadLen(p.payloadLen + 4 + argsDataLen)
+}
+
+func (p *Packet) ReadMessage(msg interface{}) {
+	b := p.ReadVarBytes()
+	err := MSG_PACKER.UnpackMsg(b, msg)
+	if err != nil {
+		gwlog.Panic(err)
+	}
+}
+
 func (p *Packet) GetPayloadLen() uint32 {
 	return p.payloadLen
 }

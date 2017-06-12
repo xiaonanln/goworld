@@ -5,7 +5,6 @@ import (
 
 	. "github.com/xiaonanln/goworld/common"
 
-	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 )
 
@@ -61,16 +60,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, a
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD)
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(method)
-
-	freePayload := packet.FreePayload()
-
-	argsData, err := ARGS_PACKER.PackMsg(args, freePayload[4:4])
-	if err != nil {
-		gwlog.Panic(err)
-	}
-	argsDataLen := uint32(len(argsData))
-	netutil.PACKET_ENDIAN.PutUint32(freePayload[:4], argsDataLen)
-	packet.SetPayloadLen(packet.GetPayloadLen() + 4 + argsDataLen)
+	packet.AppendMessage(args)
 	return gwc.SendPacketRelease(packet)
 }
 
