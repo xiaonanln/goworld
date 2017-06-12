@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	DEFAULT_CONFIG_FILENAME = "goworld.ini"
-	DEFAULT_LOCALHOST_IP    = "127.0.0.1"
+	DEFAULT_CONFIG_FILE  = "goworld.ini"
+	DEFAULT_LOCALHOST_IP = "127.0.0.1"
 )
 
 var (
-	goWorldConfig *GoWorldConfig
+	configFilePath = DEFAULT_CONFIG_FILE
+	goWorldConfig  *GoWorldConfig
 )
 
 type GameConfig struct {
@@ -49,6 +50,10 @@ type StorageConfig struct {
 	// Filesystem Storage Configs
 	Directory string // directory for filesystem storage
 	// MongoDB storage configs
+}
+
+func SetConfigFile(f string) {
+	configFilePath = f
 }
 
 func Get() *GoWorldConfig {
@@ -92,7 +97,8 @@ func readGoWorldConfig() *GoWorldConfig {
 		games: map[int]*GameConfig{},
 		gates: map[int]*GateConfig{},
 	}
-	iniFile, err := ini.Load(DEFAULT_CONFIG_FILENAME)
+	gwlog.Info("Using config file: %s", configFilePath)
+	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()

@@ -21,10 +21,16 @@ func debuglog(format string, a ...interface{}) {
 }
 
 func parseArgs() {
+	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.Parse()
 }
 
 func main() {
+	parseArgs()
+
+	if configFile != "" {
+		config.SetConfigFile(configFile)
+	}
 	cfg := config.GetDispatcher()
 	fmt.Fprintf(os.Stderr, "Read dispatcher config: \n%s\n", config.DumpPretty(cfg))
 	//host := fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
