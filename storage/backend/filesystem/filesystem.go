@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage/common"
 )
@@ -32,7 +33,9 @@ func (ss *FileSystemEntityStorage) Write(name string, entityID common.EntityID, 
 		return err
 	}
 
-	gwlog.Debug("Saving to file %s: %s", stringSaveFile, string(dataBytes))
+	if consts.DEBUG_SAVE_LOAD {
+		gwlog.Debug("Saving to file %s: %s", stringSaveFile, string(dataBytes))
+	}
 	return ioutil.WriteFile(stringSaveFile, dataBytes, 0644)
 }
 

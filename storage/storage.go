@@ -5,6 +5,7 @@ import (
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/storage/common"
@@ -85,7 +86,9 @@ func storageRoutine() {
 		if saveReq, ok := op.(saveRequest); ok {
 			// handle save request
 			for {
-				gwlog.Debug("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
+				if consts.DEBUG_SAVE_LOAD {
+					gwlog.Debug("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
+				}
 				err := storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)
 				if err != nil {
 					// save failed ?

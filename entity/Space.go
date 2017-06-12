@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -35,11 +36,13 @@ func (space *Space) CreateEntity(typeName string) {
 }
 
 func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
-
+	loadEntityLocally(typeName, entityID, space)
 }
 
 func (space *Space) enter(entity *Entity) {
-	gwlog.Debug("%s.enter <<< %s", space, entity)
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s.enter <<< %s", space, entity)
+	}
 	entity.space = space
 	for other := range space.entities {
 		entity.interest(other)

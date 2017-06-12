@@ -1,6 +1,10 @@
 package main
 
-import "github.com/xiaonanln/goworld/entity"
+import (
+	"github.com/xiaonanln/goworld"
+	"github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/gwlog"
+)
 
 type SpaceDelegate struct {
 	entity.DefaultSpaceDelegate // override from default space delegate
@@ -9,7 +13,12 @@ type SpaceDelegate struct {
 func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 	delegate.DefaultSpaceDelegate.OnSpaceCreated(space)
 
-	N := 3
+	avatarIds := goworld.ListEntityIDs("Avatar")
+	for _, avatarID := range avatarIds {
+		gwlog.Info("Loading avatar %s", avatarID)
+		space.LoadEntity("Avatar", avatarID)
+	}
+	N := 1
 	for i := 0; i < N; i++ {
 		space.CreateEntity("Avatar")
 	}

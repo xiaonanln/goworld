@@ -22,12 +22,11 @@ type Entity struct {
 	I        IEntity
 	IV       reflect.Value
 
+	destroyed  bool
 	rpcDescMap RpcDescMap
-
-	space *Space
-	aoi   AOI
-
-	timers map[*timer.Timer]struct{}
+	space      *Space
+	aoi        AOI
+	timers     map[*timer.Timer]struct{}
 }
 
 type IEntity interface {
@@ -46,6 +45,10 @@ func (e *Entity) String() string {
 }
 
 func (e *Entity) Destroy() {
+	if e.destroyed {
+		return
+	}
+
 	gwlog.Info("%s.Destroy.", e)
 	if e.space != nil {
 		e.space.leave(e)
@@ -53,6 +56,11 @@ func (e *Entity) Destroy() {
 	e.clearTimers()
 	e.I.OnDestroy()
 	entityManager.del(e.ID)
+	e.destroyed = true
+}
+
+func (e *Entity) IsDestroyed() bool {
+	return e.destroyed
 }
 
 func (e *Entity) Save() {
@@ -60,7 +68,9 @@ func (e *Entity) Save() {
 		return
 	}
 
-	gwlog.Info("SAVING %s ...", e)
+	if consts.DEBUG_SAVE_LOAD {
+		gwlog.Debug("SAVING %s ...", e)
+	}
 
 	data := e.I.GetPersistentData()
 
@@ -157,7 +167,9 @@ func (e *Entity) OnCreated() {
 }
 
 func (e *Entity) OnEnterSpace() {
-	gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.space)
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.space)
+	}
 }
 
 func (e *Entity) OnDestroy() {

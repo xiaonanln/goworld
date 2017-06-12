@@ -82,7 +82,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	initAOI(&entity.aoi)
 	entity.I.OnInit()
 
-	entityManager.put(entity)
+	entityManager.put(entity) // TODO: make sure entity is destroyed if creation fails
 	if data != nil {
 		entity.I.LoadPersistentData(data)
 	} else {
@@ -104,7 +104,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	return entityID
 }
 
-func loadEntityLocally(typeName string, entityID EntityID) {
+func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
 	// load the data from storage
 	storage.Load(typeName, entityID, func(data interface{}, err error) {
 		// callback runs in main routine
@@ -112,7 +112,12 @@ func loadEntityLocally(typeName string, entityID EntityID) {
 			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
 		}
 
-		createEntity(typeName, nil, entityID, data.(map[string]interface{}))
+		if space != nil && space.IsDestroyed() {
+			// space might be destroy during the Load process, so cancel the entity creation
+			return
+		}
+
+		createEntity(typeName, space, entityID, data.(map[string]interface{}))
 	})
 }
 
@@ -133,7 +138,7 @@ func CreateEntityAnywhere(typeName string) {
 }
 
 func LoadEntityLocally(typeName string, entityID EntityID) {
-	loadEntityLocally(typeName, entityID)
+	loadEntityLocally(typeName, entityID, nil)
 }
 
 func LoadEntityAnywhere(typeName string, entityID EntityID) {

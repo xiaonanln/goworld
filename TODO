@@ -1,9 +1,10 @@
+# TODO: Make sure load entity won't create multiple entities on multiple games!
 # TODO: wait for all games to be ready before fire OnGameStarted
     # TODO: Set number of games and gates in config file
-# TODO: create entity on random game server
-# TODO: create entity and call entity (locally or remotely)
-# TODO: Create a space, and create entities in space, and call entities from each other
+# TODO: Gate
+# TODO: Client
+# TODO: Entity Attributes
 
-# TODO: Implement Online Manager with service mechanism
-# TODO: persistent entity: save, load
-# TODO: Load entity from DB
+# Subsystem to be implemented
+# TODO: Chatrooms with multiple channels: world, prof, club, ...
+#
