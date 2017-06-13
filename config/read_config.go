@@ -11,6 +11,8 @@ import (
 
 	"sync"
 
+	"sort"
+
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
 )
@@ -27,8 +29,9 @@ var (
 )
 
 type ServerConfig struct {
-	Ip   string
-	Port int
+	Ip         string
+	Port       int
+	BootEntity string
 }
 
 type DispatcherConfig struct {
@@ -37,9 +40,9 @@ type DispatcherConfig struct {
 }
 
 type GoWorldConfig struct {
-	dispatcher DispatcherConfig
-	servers    map[int]*ServerConfig
-	storage    StorageConfig
+	Dispatcher DispatcherConfig
+	Servers    map[int]*ServerConfig
+	Storage    StorageConfig
 }
 
 type StorageConfig struct {
@@ -71,15 +74,25 @@ func Reload() *GoWorldConfig {
 }
 
 func GetServer(serverid int) *ServerConfig {
-	return Get().servers[serverid]
+	return Get().Servers[serverid]
+}
+
+func GetServerIDs() []int {
+	cfg := Get()
+	serverIDs := make([]int, 0, len(cfg.Servers))
+	for id, _ := range cfg.Servers {
+		serverIDs = append(serverIDs, id)
+	}
+	sort.Ints(serverIDs)
+	return serverIDs
 }
 
 func GetDispatcher() *DispatcherConfig {
-	return &Get().dispatcher
+	return &Get().Dispatcher
 }
 
 func GetStorage() *StorageConfig {
-	return &Get().storage
+	return &Get().Storage
 }
 
 func DumpPretty(cfg interface{}) string {
@@ -92,7 +105,7 @@ func DumpPretty(cfg interface{}) string {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		servers: map[int]*ServerConfig{},
+		Servers: map[int]*ServerConfig{},
 	}
 	gwlog.Info("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
@@ -107,15 +120,15 @@ func readGoWorldConfig() *GoWorldConfig {
 		secName = strings.ToLower(secName)
 		if secName == "dispatcher" {
 			// dispatcher config
-			readDispatcherConfig(sec, &config.dispatcher)
+			readDispatcherConfig(sec, &config.Dispatcher)
 		} else if secName[:6] == "server" {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
-			config.servers[id] = readServerConfig(sec)
+			config.Servers[id] = readServerConfig(sec)
 		} else if secName == "storage" {
 			// storage config
-			readStorageConfig(sec, &config.storage)
+			readStorageConfig(sec, &config.Storage)
 		} else {
 			gwlog.Warn("unknown section: %s", secName)
 		}
@@ -125,18 +138,24 @@ func readGoWorldConfig() *GoWorldConfig {
 }
 
 func readServerConfig(sec *ini.Section) *ServerConfig {
-	gc := &ServerConfig{
+	sc := &ServerConfig{
 		Ip: DEFAULT_LOCALHOST_IP,
 	}
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
-			gc.Ip = key.MustString(DEFAULT_LOCALHOST_IP)
+			sc.Ip = key.MustString(DEFAULT_LOCALHOST_IP)
 		} else if name == "port" {
-			gc.Port = key.MustInt(0)
+			sc.Port = key.MustInt(0)
+		} else if name == "boot_entity" {
+			sc.BootEntity = key.MustString("")
 		}
 	}
-	return gc
+	// validate game config
+	if sc.BootEntity == "" {
+		panic("boot_entity is not set in server config")
+	}
+	return sc
 }
 
 func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {

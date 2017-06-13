@@ -18,13 +18,13 @@ func TestLoad(t *testing.T) {
 	if config == nil {
 		t.FailNow()
 	}
-	if config.dispatcher.Ip == "" {
+	if config.Dispatcher.Ip == "" {
 		t.Errorf("dispatch ip not found")
 	}
-	if config.dispatcher.Port == 0 {
+	if config.Dispatcher.Port == 0 {
 		t.Errorf("dispatcher port not found")
 	}
-	for serverName, serverConfig := range config.servers {
+	for serverName, serverConfig := range config.Servers {
 		if serverConfig.Ip == "" {
 			t.Errorf("server %s ip not found", serverName)
 		}
