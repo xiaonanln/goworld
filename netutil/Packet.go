@@ -136,6 +136,13 @@ func (p *Packet) AppendEntityID(id common.EntityID) {
 func (p *Packet) ReadEntityID() common.EntityID {
 	return common.EntityID(p.ReadBytes(common.ENTITYID_LENGTH))
 }
+func (p *Packet) AppendClientID(id common.ClientID) {
+	p.AppendBytes([]byte(id))
+}
+
+func (p *Packet) ReadClientID() common.ClientID {
+	return common.ClientID(p.ReadBytes(common.CLIENTID_LENGTH))
+}
 
 func (p *Packet) ReadVarStr() string {
 	b := p.ReadVarBytes()

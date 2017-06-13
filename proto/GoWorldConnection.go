@@ -32,6 +32,13 @@ func (gwc *GoWorldConnection) SendNotifyCreateEntity(id EntityID) error {
 	return gwc.SendPacketRelease(packet)
 }
 
+func (gwc *GoWorldConnection) SendNotifyNewClient(id ClientID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_NOTIFY_CLIENT_CONNECTED)
+	packet.AppendClientID(id)
+	return gwc.SendPacketRelease(packet)
+}
+
 func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CREATE_ENTITY_ANYWHERE)

@@ -13,8 +13,8 @@ import (
 
 type DispatcherClientProxy struct {
 	proto.GoWorldConnection
-	owner  *DispatcherService
-	serverid int
+	owner    *DispatcherService
+	serverid uint16
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *DispatcherClientProxy {
@@ -47,10 +47,12 @@ func (dcp *DispatcherClientProxy) serve() {
 			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
 
-		if msgtype == proto.MT_CALL_ENTITY_METHOD {
+		if msgtype == proto.MT_CALL_ENTITY_METHOD { // TODO: remove if ... else if ... else if ... else if ...
 			eid := pkt.ReadEntityID()
 			method := pkt.ReadVarStr()
 			dcp.owner.HandleCallEntityMethod(dcp, pkt, eid, method)
+		} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
+			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
@@ -62,7 +64,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			eid := pkt.ReadEntityID()
 			dcp.owner.HandleDeclareService(dcp, pkt, eid)
 		} else if msgtype == proto.MT_SET_SERVER_ID {
-			serverid := int(pkt.ReadUint16())
+			serverid := pkt.ReadUint16()
 			dcp.serverid = serverid
 			dcp.owner.HandleSetServerID(dcp, pkt, serverid)
 		} else {

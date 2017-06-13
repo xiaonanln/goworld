@@ -19,3 +19,11 @@ func MustEntityID(id string) EntityID {
 	}
 	return EntityID(id)
 }
+
+type ClientID string
+
+func GenClientID() ClientID {
+	return ClientID(uuid.GenUUID())
+}
+
+const CLIENTID_LENGTH = uuid.UUID_LENGTH

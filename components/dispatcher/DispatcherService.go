@@ -16,7 +16,7 @@ type DispatcherService struct {
 	clients           []*DispatcherClientProxy
 	chooseClientIndex int
 
-	entityLocs         map[common.EntityID]int
+	entityLocs         map[common.EntityID]uint16
 	registeredServices map[string]common.EntityID
 }
 
@@ -25,7 +25,7 @@ func newDispatcherService(cfg *config.DispatcherConfig) *DispatcherService {
 		config:             cfg,
 		clients:            []*DispatcherClientProxy{},
 		chooseClientIndex:  0,
-		entityLocs:         map[common.EntityID]int{},
+		entityLocs:         map[common.EntityID]uint16{},
 		registeredServices: map[string]common.EntityID{},
 	}
 }
@@ -44,13 +44,13 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 	client.serve()
 }
 
-func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid int) {
+func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid uint16) {
 	gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d", service, dcp, serverid)
 	if serverid <= 0 {
 		gwlog.Panicf("invalid serverid: %d", serverid)
 	}
 
-	for serverid > len(service.clients) {
+	for serverid > uint16(len(service.clients)) {
 		service.clients = append(service.clients, nil)
 	}
 	service.clients[serverid-1] = dcp
@@ -58,7 +58,7 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 	return
 }
 
-func (service *DispatcherService) dispatcherClientOfServer(serverid int) *DispatcherClientProxy {
+func (service *DispatcherService) dispatcherClientOfServer(serverid uint16) *DispatcherClientProxy {
 	return service.clients[serverid-1]
 }
 
@@ -92,6 +92,13 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	service.entityLocs[entityID] = dcp.serverid
 	pkt.Release()
+}
+
+func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	// Client connected at one server, create boot entity in any server, but TODO: handle reconnect
+	//clientid := pkt.ReadClientID()
+	pkt.AppendUint16(dcp.serverid)
+	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {

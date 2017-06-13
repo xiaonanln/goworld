@@ -24,6 +24,7 @@ type packetQueueItem struct { // packet queue from dispatcher client
 }
 
 type GameService struct {
+	config             *config.ServerConfig
 	id                 int
 	serverDelegate     IServerDelegate
 	registeredServices map[string]entity.EntityIDSet
@@ -42,7 +43,7 @@ func newGameService(serverid int, delegate IServerDelegate) *GameService {
 
 func (gs *GameService) run() {
 	cfg := config.GetServer(serverid)
-
+	gs.config = cfg
 	fmt.Fprintf(os.Stderr, "Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))
 
 	// initializing storage
@@ -66,6 +67,10 @@ func (gs *GameService) run() {
 				var args []interface{}
 				pkt.ReadMessage(&args)
 				gs.HandleCallEntityMethod(eid, method, args)
+			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
+				clientid := pkt.ReadClientID()
+				sid := pkt.ReadUint16()
+				gs.HandleNotifyClientConnected(clientid, sid)
 			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 				typeName := pkt.ReadVarStr()
 				eid := pkt.ReadEntityID()
@@ -132,4 +137,12 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}) {
 	gwlog.Debug("%s.HandleCallEntityMethod: %s.%s()", gs, entityID, method)
 	entity.OnCall(entityID, method, args)
+}
+
+func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid uint16) {
+	client := newGameClient(clientid, sid)
+	gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
+
+	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
+	entity.CreateEntityLocally(gs.config.BootEntity)
 }

@@ -5,6 +5,7 @@ import (
 
 	"net"
 
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -31,6 +32,7 @@ func (gs *GateService) String() string {
 
 func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	cp := newClientProxy(conn)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyNewClient(cp.clientid)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.ServeTCPConnection: new client %s", gs, cp)
 	}
