@@ -28,7 +28,7 @@ func CreateSpaceLocally() {
 }
 
 func CreateEntityLocally(typeName string) EntityID {
-	return entity.CreateEntityLocally(typeName)
+	return entity.CreateEntityLocally(typeName, nil)
 }
 
 func CreateEntityAnywhere(typeName string) {

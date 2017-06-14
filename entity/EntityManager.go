@@ -59,7 +59,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
 
-func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}) EntityID {
+func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}, client *GameClient) EntityID {
 	gwlog.Debug("createEntity: %s in space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -95,6 +95,11 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 
 	entity.I.OnCreated()
 
+	if client != nil {
+		// assign client to the newly created entity
+		entity.SetClient(client)
+	}
+
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 
 	if space != nil {
@@ -117,7 +122,7 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
 			return
 		}
 
-		createEntity(typeName, space, entityID, data.(map[string]interface{}))
+		createEntity(typeName, space, entityID, data.(map[string]interface{}), nil)
 	})
 }
 
@@ -129,8 +134,8 @@ func createEntityAnywhere(typeName string) {
 	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName)
 }
 
-func CreateEntityLocally(typeName string) EntityID {
-	return createEntity(typeName, nil, "", nil)
+func CreateEntityLocally(typeName string, client *GameClient) EntityID {
+	return createEntity(typeName, nil, "", nil, client)
 }
 
 func CreateEntityAnywhere(typeName string) {

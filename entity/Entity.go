@@ -30,15 +30,22 @@ type Entity struct {
 	client     *GameClient
 }
 
+// Functions declared by IEntity can be override in Entity subclasses
 type IEntity interface {
+	// Entity Lifetime
 	OnInit()
 	OnCreated()
-	OnEnterSpace()
 	OnDestroy()
-
+	// Space Operations
+	OnEnterSpace()
+	OnLeaveSpace(space *Space)
+	// Storage: Save & Load
 	IsPersistent() bool
 	GetPersistentData() map[string]interface{}
 	LoadPersistentData(data map[string]interface{})
+	// Client Notifications
+	OnClientConnected()
+	OnClientDisconnected()
 }
 
 func (e *Entity) String() string {
@@ -173,6 +180,12 @@ func (e *Entity) OnEnterSpace() {
 	}
 }
 
+func (e *Entity) OnLeaveSpace(space *Space) {
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s.OnLeaveSpace <<< %s", e, space)
+	}
+}
+
 func (e *Entity) OnDestroy() {
 }
 
@@ -197,5 +210,25 @@ func (e *Entity) GetClient() *GameClient {
 }
 
 func (e *Entity) SetClient(client *GameClient) {
+	oldClient := e.client
 	e.client = client
+
+	if oldClient == nil && client != nil {
+		// got net client
+		e.I.OnClientConnected()
+	} else if oldClient != nil && client == nil {
+		e.I.OnClientDisconnected()
+	}
+}
+
+func (e *Entity) OnClientConnected() {
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("%s.OnClientConnected: %s", e, e.client)
+	}
+}
+
+func (e *Entity) OnClientDisconnected() {
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("%s.OnClientDisconnected: %s", e, e.client)
+	}
 }

@@ -32,7 +32,7 @@ func (space *Space) OnCreated() {
 }
 
 func (space *Space) CreateEntity(typeName string) {
-	createEntity(typeName, space, "", nil)
+	createEntity(typeName, space, "", nil, nil)
 }
 
 func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
@@ -43,6 +43,11 @@ func (space *Space) enter(entity *Entity) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.enter <<< %s", space, entity)
 	}
+
+	if entity.space != nil {
+		gwlog.Panicf("%s.enter(%s): current space is not nil", space, entity)
+	}
+
 	entity.space = space
 	for other := range space.entities {
 		entity.interest(other)
@@ -54,6 +59,10 @@ func (space *Space) enter(entity *Entity) {
 }
 
 func (space *Space) leave(entity *Entity) {
+	if entity.space != space {
+		gwlog.Panicf("%s.leave(%s): entity is not in this space", space, entity)
+	}
+
 	entity.space = nil
 	// remove from space entities
 	space.entities.Del(entity)
@@ -61,4 +70,6 @@ func (space *Space) leave(entity *Entity) {
 		entity.uninterest(other)
 		other.uninterest(entity)
 	}
+
+	entity.I.OnLeaveSpace(space)
 }

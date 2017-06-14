@@ -115,7 +115,7 @@ func (gs *GameService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pkt
 
 func (gs *GameService) HandleCreateEntityAnywhere(typeName string) {
 	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s", gs, typeName)
-	entity.CreateEntityLocally(typeName)
+	entity.CreateEntityLocally(typeName, nil)
 }
 
 func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
@@ -144,5 +144,5 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid
 	gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
-	entity.CreateEntityLocally(gs.config.BootEntity)
+	entity.CreateEntityLocally(gs.config.BootEntity, client)
 }
