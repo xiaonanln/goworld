@@ -142,11 +142,13 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 }
 
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) HandleDestroyEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {

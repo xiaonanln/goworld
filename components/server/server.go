@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/proto"
 )
 
 var (
@@ -34,6 +37,8 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
+	dispatcher_client.Initialize(&dispatcherClientDelegate{})
+
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine
 
@@ -43,4 +48,23 @@ func Run(delegate IServerDelegate) {
 
 func GetServiceProviders(serviceName string) []common.EntityID {
 	return gameService.registeredServices[serviceName].ToList()
+}
+
+type dispatcherClientDelegate struct {
+}
+
+func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
+	dispatcher_client.GetDispatcherClientForSend().SendSetServerID(serverid)
+
+}
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+	if msgtype < proto.MT_GATE_SERVICE_MSG_TYPE_START {
+		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
+			msgtype: msgtype,
+			pkt:     packet,
+		}
+	} else {
+		gateService.HandleDispatcherClientPacket(msgtype, packet)
+	}
+
 }

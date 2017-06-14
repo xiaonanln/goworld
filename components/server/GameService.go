@@ -8,7 +8,6 @@ import (
 
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
@@ -49,7 +48,6 @@ func (gs *GameService) run() {
 	// initializing storage
 	storage.Initialize()
 
-	dispatcher_client.Initialize(gs)
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
 	timer.AddCallback(0, func() {
 		gs.serverDelegate.OnReady()
@@ -99,18 +97,6 @@ func (gs *GameService) run() {
 
 func (gs *GameService) String() string {
 	return fmt.Sprintf("GameService<%d>", gs.id)
-}
-
-func (gs *GameService) OnDispatcherClientConnect() {
-	gwlog.Debug("%s.OnDispatcherClientConnect ...", gs)
-	dispatcher_client.GetDispatcherClientForSend().SendSetServerID(gs.id)
-}
-
-func (gs *GameService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pkt *netutil.Packet) {
-	gs.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
-		msgtype: msgtype,
-		pkt:     pkt,
-	}
 }
 
 func (gs *GameService) HandleCreateEntityAnywhere(typeName string) {
