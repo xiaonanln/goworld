@@ -71,6 +71,26 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, a
 	return gwc.SendPacketRelease(packet)
 }
 
+func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_CREATE_ENTITY_ON_CLIENT)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendVarStr(typeName)
+	packet.AppendEntityID(entityid)
+	return gwc.SendPacketRelease(packet)
+}
+
+func (gwc *GoWorldConnection) SendDestroyEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_DESTROY_ENTITY_ON_CLIENT)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendVarStr(typeName)
+	packet.AppendEntityID(entityid)
+	return gwc.SendPacketRelease(packet)
+}
+
 //func (gwc *GoWorldConnection) SendDeclareServiceReply(id EntityID, serviceName string, success bool) error {
 //	packet := gwc.packetConn.NewPacket()
 //	packet.AppendUint16(MT_DECLARE_SERVICE_REPLY)

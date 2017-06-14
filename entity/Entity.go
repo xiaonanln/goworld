@@ -211,7 +211,20 @@ func (e *Entity) GetClient() *GameClient {
 
 func (e *Entity) SetClient(client *GameClient) {
 	oldClient := e.client
+	if oldClient == client {
+		return
+	}
+
 	e.client = client
+	if oldClient != nil {
+		// send destroy entity to client
+		client.SendDestroyEntity(e)
+	}
+
+	if client != nil {
+		// send create entity to client
+		client.SendCreateEntity(e)
+	}
 
 	if oldClient == nil && client != nil {
 		// got net client
@@ -220,7 +233,6 @@ func (e *Entity) SetClient(client *GameClient) {
 		e.I.OnClientDisconnected()
 	}
 }
-
 func (e *Entity) OnClientConnected() {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.OnClientConnected: %s", e, e.client)

@@ -141,6 +141,14 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	service.dispatcherClientOfServer(serverid).SendPacketRelease(pkt)
 }
 
+func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+
+}
+
+func (service *DispatcherService) HandleDestroyEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+
+}
+
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
 	for _, dcp := range service.clients {
 		if dcp != nil {
