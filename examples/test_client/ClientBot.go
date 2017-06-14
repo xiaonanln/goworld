@@ -9,8 +9,8 @@ import (
 
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/vacuum/netutil"
 )
 
 type ClientBot struct {
@@ -61,6 +61,21 @@ func (bot *ClientBot) loop() {
 		if err != nil {
 			gwlog.Panic(err)
 		}
-		gwlog.Info("recv packet: %v", pkt.Payload())
+		//gwlog.Info("recv packet: msgtype=%v, packet=%v", msgtype, pkt.Payload())
+		bot.handlePacket(msgtype, pkt)
 	}
+}
+func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+	_ = packet.ReadUint16()
+	_ = packet.ReadClientID()
+	if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
+		typeName := packet.ReadVarStr()
+		entityid := packet.ReadEntityID()
+		gwlog.Info("Create entity %s.%s", typeName, entityid)
+	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
+		typeName := packet.ReadVarStr()
+		entityid := packet.ReadEntityID()
+		gwlog.Info("Destroy entity %s.%s", typeName, entityid)
+	}
+
 }
