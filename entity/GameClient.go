@@ -1,4 +1,4 @@
-package server
+package entity
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type GameClient struct {
 	serverid uint16
 }
 
-func newGameClient(clientid common.ClientID, sid uint16) *GameClient {
+func MakeGameClient(clientid common.ClientID, sid uint16) *GameClient {
 	return &GameClient{
 		clientid: clientid,
 		serverid: sid,

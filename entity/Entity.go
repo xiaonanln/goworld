@@ -27,6 +27,7 @@ type Entity struct {
 	space      *Space
 	aoi        AOI
 	timers     map[*timer.Timer]struct{}
+	client     *GameClient
 }
 
 type IEntity interface {
@@ -188,4 +189,13 @@ func (e *Entity) GetPersistentData() map[string]interface{} {
 
 func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 	gwlog.TraceError("%s.LoadPersistentData not implemented", e)
+}
+
+// Clients
+func (e *Entity) GetClient() *GameClient {
+	return e.client
+}
+
+func (e *Entity) SetClient(client *GameClient) {
+	e.client = client
 }

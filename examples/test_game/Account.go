@@ -15,5 +15,5 @@ func (a *Account) OnInit() {
 }
 
 func (a *Account) OnCreated() {
-	gwlog.Info("%s created: client=%s", a.Client)
+	gwlog.Info("%s created: client=%v", a, a.GetClient())
 }

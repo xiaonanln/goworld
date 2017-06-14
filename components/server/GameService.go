@@ -140,7 +140,7 @@ func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method s
 }
 
 func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid uint16) {
-	client := newGameClient(clientid, sid)
+	client := entity.MakeGameClient(clientid, sid)
 	gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
