@@ -2,7 +2,7 @@
   <configuration default="false" name="test_game1" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="true">
     <module name="goworld" />
     <working_directory value="$PROJECT_DIR$" />
-    <go_parameters value=" -race" />
+    <go_parameters value="-race  -gcflags &quot;-N -l&quot;" />
     <parameters value="-sid=1" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />

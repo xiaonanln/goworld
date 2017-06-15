@@ -135,7 +135,7 @@ func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
 	callRemote(id, method, args)
 }
 
-func (e *Entity) onCall(methodName string, args []interface{}) {
+func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
 		if err != nil {
@@ -144,10 +144,32 @@ func (e *Entity) onCall(methodName string, args []interface{}) {
 	}()
 
 	rpcDesc := e.rpcDescMap[methodName]
+	if rpcDesc == nil {
+		// rpc not found
+		gwlog.Error("%s.onCall: Method %s is not a valid RPC", e, methodName)
+		return
+	}
+
 	methodType := rpcDesc.MethodType
+	// TODO: check method flags with clientid
+	if clientid == "" {
+		// rpc call from server
+		if rpcDesc.Flags&RF_SERVER == 0 {
+			// can not call from server
+			gwlog.Error("%s.onCall: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
+			return
+		}
+	} else {
+		isFromOwnClient := clientid == e.getClientID()
+		if rpcDesc.Flags&RF_OWN_CLIENT == 0 && isFromOwnClient {
+			gwlog.Error("%s.onCall: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
+		} else if rpcDesc.Flags&RF_OTHER_CLIENT == 0 && !isFromOwnClient {
+			gwlog.Error("%s.onCall: Method %s can not be called from OtherClient: flags=%v", e, methodName, rpcDesc.Flags)
+		}
+	}
 
 	if rpcDesc.NumArgs != len(args) {
-		gwlog.Error("Method %s receives %d arguments, but given %d: %v", methodName, rpcDesc.NumArgs, len(args), args)
+		gwlog.Error("%s.onCall: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
 		return
 	}
 
@@ -207,6 +229,14 @@ func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 // Clients
 func (e *Entity) GetClient() *GameClient {
 	return e.client
+}
+
+func (e *Entity) getClientID() ClientID {
+	if e.client != nil {
+		return e.client.clientid
+	} else {
+		return ""
+	}
 }
 
 func (e *Entity) SetClient(client *GameClient) {

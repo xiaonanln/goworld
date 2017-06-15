@@ -16,17 +16,19 @@ type DispatcherService struct {
 	clients           []*DispatcherClientProxy
 	chooseClientIndex int
 
-	entityLocs         map[common.EntityID]uint16
-	registeredServices map[string]common.EntityID
+	entityLocs           map[common.EntityID]uint16
+	registeredServices   map[string]common.EntityID
+	targetServerOfClient map[common.ClientID]uint16
 }
 
 func newDispatcherService(cfg *config.DispatcherConfig) *DispatcherService {
 	return &DispatcherService{
-		config:             cfg,
-		clients:            []*DispatcherClientProxy{},
-		chooseClientIndex:  0,
-		entityLocs:         map[common.EntityID]uint16{},
-		registeredServices: map[string]common.EntityID{},
+		config:               cfg,
+		clients:              []*DispatcherClientProxy{},
+		chooseClientIndex:    0,
+		entityLocs:           map[common.EntityID]uint16{},
+		registeredServices:   map[string]common.EntityID{},
+		targetServerOfClient: map[common.ClientID]uint16{},
 	}
 }
 
@@ -141,8 +143,22 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	service.dispatcherClientOfServer(serverid).SendPacketRelease(pkt)
 }
 
+func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	entityid := pkt.ReadEntityID()
+	method := pkt.ReadVarStr()
+	var args []interface{}
+	pkt.ReadMessage(&args)
+	clientid := pkt.ReadClientID() // TODO: optimize packet structure
+	sid := service.targetServerOfClient[clientid]
+	gwlog.Info("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
+	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+}
+
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
+	clientid := pkt.ReadClientID()
+	service.targetServerOfClient[clientid] = sid
+	// Server <sid> is creating entity on client <clientid>, so we can safely assumes that target entity of
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
 

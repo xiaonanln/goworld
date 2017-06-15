@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -58,10 +59,6 @@ func (cp *ClientProxy) serve() {
 	}
 }
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
-	entityID := pkt.ReadEntityID()
-	method := pkt.ReadVarStr()
-	var args []interface{}
-	pkt.ReadMessage(&args)
-	gwlog.Info("RPC FROM CLIENT: %s.%s %v", entityID, method, args)
-
+	pkt.AppendClientID(cp.clientid) // append clientid to the packet
+	dispatcher_client.GetDispatcherClientForSend().SendPacketRelease(pkt)
 }

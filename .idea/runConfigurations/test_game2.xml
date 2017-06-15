@@ -3,7 +3,7 @@
     <output_file path="$PROJECT_DIR$/examples/test_game" />
     <module name="goworld" />
     <working_directory value="C:\gopath\src\github.com\xiaonanln\goworld" />
-    <go_parameters value=" -race -gcflags &quot;-N -l&quot;" />
+    <go_parameters value="-race  -gcflags &quot;-N -l&quot;" />
     <parameters value="-sid=2" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />

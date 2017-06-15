@@ -59,12 +59,19 @@ func (gs *GameService) run() {
 		select {
 		case item := <-gs.packetQueue:
 			msgtype, pkt := item.msgtype, item.pkt
-			if msgtype == proto.MT_CALL_ENTITY_METHOD {
+			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
 				var args []interface{}
 				pkt.ReadMessage(&args)
-				gs.HandleCallEntityMethod(eid, method, args)
+				clientid := pkt.ReadClientID()
+				gs.HandleCallEntityMethod(eid, method, args, clientid)
+			} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
+				eid := pkt.ReadEntityID()
+				method := pkt.ReadVarStr()
+				var args []interface{}
+				pkt.ReadMessage(&args)
+				gs.HandleCallEntityMethod(eid, method, args, "")
 			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 				clientid := pkt.ReadClientID()
 				sid := pkt.ReadUint16()
@@ -120,9 +127,9 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 	eids.Add(entityID)
 }
 
-func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}) {
+func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}, clientid common.ClientID) {
 	gwlog.Debug("%s.HandleCallEntityMethod: %s.%s()", gs, entityID, method)
-	entity.OnCall(entityID, method, args)
+	entity.OnCall(entityID, method, args, clientid)
 }
 
 func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid uint16) {
