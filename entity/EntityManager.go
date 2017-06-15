@@ -165,3 +165,7 @@ func OnCall(id EntityID, method string, args []interface{}, clientID ClientID) {
 
 	e.onCall(method, args, clientID)
 }
+
+func GetEntity(id EntityID) *Entity {
+	return entityManager.get(id)
+}

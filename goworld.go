@@ -55,3 +55,7 @@ func GetServiceProviders(serviceName string) []EntityID {
 func ListEntityIDs(typeName string) []EntityID {
 	return storage.ListEntityIDs(typeName)
 }
+
+func GetEntity(id EntityID) *entity.Entity {
+	return entity.GetEntity(id)
+}

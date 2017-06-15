@@ -30,3 +30,7 @@ func (client *GameClient) SendCreateEntity(entity *Entity) {
 func (client *GameClient) SendDestroyEntity(entity *Entity) {
 	dispatcher_client.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID)
 }
+
+func (client *GameClient) Call(method string, args ...interface{}) {
+
+}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -23,13 +25,18 @@ func newClientEntity(owner *ClientBot, typeName string, entityid EntityID) *Clie
 	return e
 }
 
+func (e *ClientEntity) String() string {
+	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
+}
 func (e *ClientEntity) OnCreated() {
-	gwlog.Info("%s.OnCreated ")
-	timer.AddCallback(0, func() {
-		username := e.owner.username()
-		password := e.owner.password()
-		e.CallServer("Login", username, password)
-	})
+	gwlog.Info("%s.OnCreated ", e)
+	if e.TypeName == "Account" {
+		timer.AddCallback(0, func() {
+			username := e.owner.username()
+			password := e.owner.password()
+			e.CallServer("Login", username, password)
+		})
+	}
 }
 
 func (e *ClientEntity) CallServer(method string, args ...interface{}) {
