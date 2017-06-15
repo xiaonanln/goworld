@@ -7,6 +7,7 @@ import (
 
 	"math/rand"
 
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
@@ -14,15 +15,19 @@ import (
 )
 
 type ClientBot struct {
-	id     int
-	waiter *sync.WaitGroup
-	conn   proto.GoWorldConnection
+	id       int
+	waiter   *sync.WaitGroup
+	conn     proto.GoWorldConnection
+	entities map[common.EntityID]*ClientEntity
+
+	logined bool
 }
 
 func newClientBot(id int, waiter *sync.WaitGroup) *ClientBot {
 	return &ClientBot{
-		id:     id,
-		waiter: waiter,
+		id:       id,
+		waiter:   waiter,
+		entities: map[common.EntityID]*ClientEntity{},
 	}
 }
 
@@ -72,10 +77,37 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
 		gwlog.Info("Create entity %s.%s", typeName, entityid)
+		bot.createEntity(typeName, entityid)
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
 		gwlog.Info("Destroy entity %s.%s", typeName, entityid)
+		bot.destroyEntity(typeName, entityid)
 	}
+}
 
+func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID) {
+	if bot.entities[entityid] == nil {
+		e := newClientEntity(bot, typeName, entityid)
+		bot.entities[entityid] = e
+	}
+}
+
+func (bot *ClientBot) destroyEntity(typeName string, entityid common.EntityID) {
+	if bot.entities[entityid] != nil {
+		delete(bot.entities, entityid)
+	}
+}
+
+func (bot *ClientBot) username() string {
+	return fmt.Sprintf("test%d", bot.id)
+}
+
+func (bot *ClientBot) password() string {
+	return "123456"
+}
+
+func (bot *ClientBot) CallServer(id common.EntityID, method string, args []interface{}) {
+	gwlog.Info("%s call server: %s.%s%v", bot, id, method, args)
+	bot.conn.SendCallEntityMethodFromClient(id, method, args)
 }

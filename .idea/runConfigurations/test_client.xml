@@ -2,7 +2,7 @@
   <configuration default="false" name="test_client" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="true">
     <module name="goworld" />
     <working_directory value="$PROJECT_DIR$" />
-    <go_parameters value=" -race" />
+    <go_parameters value=" -race  -gcflags -N" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />
     <package value="github.com/xiaonanln/goworld/examples/test_client" />

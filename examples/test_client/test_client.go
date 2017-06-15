@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
 )
 
@@ -37,5 +38,6 @@ func main() {
 		bot := newClientBot(i+1, &wait)
 		go bot.run()
 	}
+	timer.StartTicks(time.Millisecond * 100)
 	wait.Wait()
 }
