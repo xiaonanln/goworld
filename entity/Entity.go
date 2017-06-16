@@ -22,12 +22,13 @@ type Entity struct {
 	I        IEntity
 	IV       reflect.Value
 
-	destroyed  bool
-	rpcDescMap RpcDescMap
-	space      *Space
-	aoi        AOI
-	timers     map[*timer.Timer]struct{}
-	client     *GameClient
+	destroyed        bool
+	rpcDescMap       RpcDescMap
+	space            *Space
+	aoi              AOI
+	timers           map[*timer.Timer]struct{}
+	client           *GameClient
+	declaredServices StringSet
 }
 
 // Functions declared by IEntity can be override in Entity subclasses
@@ -62,9 +63,15 @@ func (e *Entity) Destroy() {
 		e.space.leave(e)
 	}
 	e.clearTimers()
+	if e.isCrossServerCallable() {
+		dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
+	}
+
+	defer func() { // make sure always run after OnDestroy
+		entityManager.del(e.ID)
+		e.destroyed = true
+	}()
 	e.I.OnDestroy()
-	entityManager.del(e.ID)
-	e.destroyed = true
 }
 
 func (e *Entity) IsDestroyed() bool {
@@ -83,6 +90,21 @@ func (e *Entity) Save() {
 	data := e.I.GetPersistentData()
 
 	storage.Save(e.TypeName, e.ID, data)
+}
+
+func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.Value) {
+	e.ID = entityID
+	e.IV = entityPtrVal
+	e.I = entityPtrVal.Interface().(IEntity)
+	e.TypeName = typeName
+	e.rpcDescMap = entityType2RpcDescMap[typeName]
+
+	e.timers = map[*timer.Timer]struct{}{}
+	e.declaredServices = StringSet{}
+
+	initAOI(&e.aoi)
+	e.I.OnInit()
+
 }
 
 func (e *Entity) setupSaveTimer() {
@@ -184,6 +206,7 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 
 // Register for global service
 func (e *Entity) DeclareService(serviceName string) {
+	e.declaredServices.Add(serviceName)
 	dispatcher_client.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
 }
 
@@ -226,7 +249,11 @@ func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 	gwlog.TraceError("%s.LoadPersistentData not implemented", e)
 }
 
-// Clients
+func (e *Entity) isCrossServerCallable() bool {
+	return e.IsPersistent() || len(e.declaredServices) > 0
+}
+
+// Client related utilities
 func (e *Entity) GetClient() *GameClient {
 	return e.client
 }

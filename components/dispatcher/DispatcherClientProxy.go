@@ -64,6 +64,9 @@ func (dcp *DispatcherClientProxy) serve() {
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
 			eid := pkt.ReadEntityID()
 			dcp.owner.HandleNotifyCreateEntity(dcp, pkt, eid)
+		} else if msgtype == proto.MT_NOTIFY_DESTROY_ENTITY {
+			eid := pkt.ReadEntityID()
+			dcp.owner.HandleNotifyDestroyEntity(dcp, pkt, eid)
 		} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {

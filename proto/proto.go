@@ -11,6 +11,7 @@ const (
 	// Server Messages
 	MT_SET_SERVER_ID                  = iota
 	MT_NOTIFY_CREATE_ENTITY           = iota
+	MT_NOTIFY_DESTROY_ENTITY          = iota
 	MT_DECLARE_SERVICE                = iota
 	MT_CALL_ENTITY_METHOD             = iota
 	MT_CREATE_ENTITY_ANYWHERE         = iota

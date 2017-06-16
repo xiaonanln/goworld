@@ -96,6 +96,12 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 	pkt.Release()
 }
 
+func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
+	gwlog.Debug("%s.HandleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	delete(service.entityLocs, entityID)
+	pkt.Release()
+}
+
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	// Client connected at one server, create boot entity in any server, but TODO: handle reconnect
 	//clientid := pkt.ReadClientID()
@@ -107,6 +113,7 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 	//typeName := pkt.ReadVarStr()
 	//eid := pkt.ReadEntityID()
 	gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
+	// TODO: check for entity loc and make sure that it's not loaded before
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 

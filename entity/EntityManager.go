@@ -3,7 +3,6 @@ package entity
 import (
 	"reflect"
 
-	timer "github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -72,15 +71,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 
 	entityPtrVal := reflect.New(entityType)
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
-	entity.ID = entityID
-	entity.IV = entityPtrVal
-	entity.I = entityPtrVal.Interface().(IEntity)
-	entity.TypeName = typeName
-	entity.rpcDescMap = entityType2RpcDescMap[typeName]
-
-	entity.timers = map[*timer.Timer]struct{}{}
-	initAOI(&entity.aoi)
-	entity.I.OnInit()
+	entity.init(typeName, entityID, entityPtrVal)
 
 	entityManager.put(entity) // TODO: make sure entity is destroyed if creation fails
 	if data != nil {
@@ -91,6 +82,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 
 	if entity.I.IsPersistent() { // startup the periodical timer for saving entity
 		entity.setupSaveTimer()
+		dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 	}
 
 	entity.I.OnCreated()
@@ -99,8 +91,6 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 		// assign client to the newly created entity
 		entity.SetClient(client)
 	}
-
-	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 
 	if space != nil {
 		space.enter(entity)
