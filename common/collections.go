@@ -1,13 +1,14 @@
 package common
 
-type StringSet map[string]bool
+type StringSet map[string]struct{}
 
 func (ss StringSet) Contains(elem string) bool {
-	return ss[elem]
+	_, ok := ss[elem]
+	return ok
 }
 
 func (ss StringSet) Add(elem string) {
-	ss[elem] = true
+	ss[elem] = struct{}{}
 }
 
 func (ss StringSet) Remove(elem string) {

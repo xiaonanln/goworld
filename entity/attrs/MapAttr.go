@@ -1,8 +1,10 @@
 package attrs
 
+import "github.com/xiaonanln/goworld/common"
+
 type MapAttr struct {
-	attrs    map[string]interface{}
-	dirtySet map[string]bool
+	attrs     map[string]interface{}
+	dirtyKeys common.StringSet
 }
 
 func (self *MapAttr) Size() int {
@@ -16,13 +18,13 @@ func (self *MapAttr) HasKey(key string) bool {
 
 func (self *MapAttr) Set(key string, val interface{}) {
 	self.attrs[key] = val
-	self.dirtySet[key] = true
+	self.dirtyKeys.Add(key)
 }
 
 func (self *MapAttr) SetDefault(key string, val interface{}) {
 	if _, ok := self.attrs[key]; !ok {
 		self.attrs[key] = val
-		self.dirtySet[key] = true
+		self.dirtyKeys.Add(key)
 	}
 }
 
@@ -49,7 +51,7 @@ func (self *MapAttr) GetStr(key string, defaultVal string) string {
 
 func (self *MapAttr) GetMapAttr(key string) *MapAttr {
 	val, ok := self.attrs[key]
-	self.dirtySet[key] = true // even GetMapAttr makes it dirty
+	self.dirtyKeys.Add(key)
 
 	if !ok {
 		attrs := NewMapAttr()
@@ -126,7 +128,7 @@ func (self *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
 
 func NewMapAttr() *MapAttr {
 	return &MapAttr{
-		attrs:    make(map[string]interface{}),
-		dirtySet: make(map[string]bool),
+		attrs:     make(map[string]interface{}),
+		dirtyKeys: common.StringSet{},
 	}
 }
