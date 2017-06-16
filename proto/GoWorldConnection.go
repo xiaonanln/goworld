@@ -55,8 +55,8 @@ func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string) error {
 func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_LOAD_ENTITY_ANYWHERE)
-	packet.AppendVarStr(typeName)
 	packet.AppendEntityID(entityID)
+	packet.AppendVarStr(typeName)
 	return gwc.SendPacketRelease(packet)
 }
 

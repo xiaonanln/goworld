@@ -77,8 +77,8 @@ func (gs *GameService) run() {
 				sid := pkt.ReadUint16()
 				gs.HandleNotifyClientConnected(clientid, sid)
 			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
-				typeName := pkt.ReadVarStr()
 				eid := pkt.ReadEntityID()
+				typeName := pkt.ReadVarStr()
 				gs.HandleLoadEntityAnywhere(typeName, eid)
 			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 				typeName := pkt.ReadVarStr()

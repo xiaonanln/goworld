@@ -5,6 +5,8 @@ import (
 
 	"net"
 
+	"sync"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -12,6 +14,8 @@ import (
 )
 
 type DispatcherService struct {
+	sync.RWMutex
+
 	config            *config.DispatcherConfig
 	clients           []*DispatcherClientProxy
 	chooseClientIndex int
@@ -23,9 +27,10 @@ type DispatcherService struct {
 
 func newDispatcherService(cfg *config.DispatcherConfig) *DispatcherService {
 	return &DispatcherService{
-		config:               cfg,
-		clients:              []*DispatcherClientProxy{},
-		chooseClientIndex:    0,
+		config:            cfg,
+		clients:           []*DispatcherClientProxy{},
+		chooseClientIndex: 0,
+
 		entityLocs:           map[common.EntityID]uint16{},
 		registeredServices:   map[string]common.EntityID{},
 		targetServerOfClient: map[common.ClientID]uint16{},
@@ -92,13 +97,17 @@ func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProx
 // Entity is create on the target server
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	service.Lock()
 	service.entityLocs[entityID] = dcp.serverid
+	service.Unlock()
 	pkt.Release()
 }
 
 func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	service.Lock()
 	delete(service.entityLocs, entityID)
+	service.Unlock()
 	pkt.Release()
 }
 
@@ -113,8 +122,18 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 	//typeName := pkt.ReadVarStr()
 	//eid := pkt.ReadEntityID()
 	gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
-	// TODO: check for entity loc and make sure that it's not loaded before
-	service.chooseDispatcherClient().SendPacketRelease(pkt)
+	eid := pkt.ReadEntityID() // field 1
+	service.Lock()
+	sid := service.entityLocs[eid]
+
+	if sid == 0 { // entity not loaded, try load now
+		dcp := service.chooseDispatcherClient()
+		service.entityLocs[eid] = dcp.serverid
+		service.Unlock()
+		dcp.SendPacketRelease(pkt)
+	} else {
+		service.Unlock()
+	}
 }
 
 func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -124,7 +143,9 @@ func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClie
 
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s", service, dcp, entityID)
+	service.Lock()
 	service.entityLocs[entityID] = dcp.serverid
+	service.Unlock()
 	service.broadcastToDispatcherClients(pkt)
 	pkt.Release()
 	//_, ok := service.registeredServices[serviceName]
@@ -140,7 +161,9 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, method string) {
 	gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s, method=%s", service, dcp, entityID, method)
 
+	service.RLock()
 	serverid := service.entityLocs[entityID]
+	service.RUnlock()
 	if serverid == 0 {
 		// server not found
 		gwlog.Warn("Entity %s not found when calling method %s", entityID, method)
