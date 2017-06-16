@@ -72,10 +72,11 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	entityPtrVal := reflect.New(entityType)
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.init(typeName, entityID, entityPtrVal)
+	entity.space = nilSpace
 
 	entityManager.put(entity)
 	if data != nil {
-		entity.I.LoadPersistentData(data)
+		entity.LoadPersistentData(data)
 	} else {
 		entity.Save() // save immediately after creation
 	}

@@ -42,13 +42,3 @@ func (s *OnlineService) IsPersistent() bool {
 	return true
 }
 
-func (s *OnlineService) GetPersistentData() map[string]interface{} {
-	return map[string]interface{}{
-		"maxlevel": s.maxlevel,
-	}
-}
-
-func (s *OnlineService) LoadPersistentData(data map[string]interface{}) {
-	gwlog.Debug("%s loading persistent data: %v", s, data)
-	s.maxlevel = int(data["maxlevel"].(float64))
-}

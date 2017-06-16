@@ -10,6 +10,10 @@ const (
 	SPACE_ENTITY_TYPE = "__space__"
 )
 
+var (
+	nilSpace *Space
+)
+
 type Space struct {
 	Entity
 
@@ -25,10 +29,20 @@ func (space *Space) OnInit() {
 }
 
 func (space *Space) OnCreated() {
+	if nilSpace == nil {
+		// first space created is considered as the nil space
+		nilSpace = space
+		return
+	}
+
 	gwlog.Debug("%s.OnCreated", space)
 	space.Post(func() {
 		spaceDelegate.OnSpaceCreated(space)
 	})
+}
+
+func (space *Space) IsNilSpace() bool {
+	return space == nilSpace
 }
 
 func (space *Space) CreateEntity(typeName string) {
@@ -44,7 +58,7 @@ func (space *Space) enter(entity *Entity) {
 		gwlog.Debug("%s.enter <<< %s", space, entity)
 	}
 
-	if entity.space != nil {
+	if entity.space != nilSpace {
 		gwlog.Panicf("%s.enter(%s): current space is not nil", space, entity)
 	}
 
@@ -63,7 +77,7 @@ func (space *Space) leave(entity *Entity) {
 		gwlog.Panicf("%s.leave(%s): entity is not in this space", space, entity)
 	}
 
-	entity.space = nil
+	entity.space = nilSpace
 	// remove from space entities
 	space.entities.Del(entity)
 	for other := range space.entities {

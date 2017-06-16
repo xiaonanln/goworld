@@ -12,6 +12,7 @@ import (
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
+	"github.com/xiaonanln/goworld/entity/attrs"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage"
 )
@@ -29,6 +30,8 @@ type Entity struct {
 	timers           map[*timer.Timer]struct{}
 	client           *GameClient
 	declaredServices StringSet
+
+	Attrs *attrs.MapAttr
 }
 
 // Functions declared by IEntity can be override in Entity subclasses
@@ -42,8 +45,6 @@ type IEntity interface {
 	OnLeaveSpace(space *Space)
 	// Storage: Save & Load
 	IsPersistent() bool
-	GetPersistentData() map[string]interface{}
-	LoadPersistentData(data map[string]interface{})
 	// Client Notifications
 	OnClientConnected()
 	OnClientDisconnected()
@@ -87,7 +88,7 @@ func (e *Entity) Save() {
 		gwlog.Debug("SAVING %s ...", e)
 	}
 
-	data := e.I.GetPersistentData()
+	data := e.GetPersistentData()
 
 	storage.Save(e.TypeName, e.ID, data)
 }
@@ -97,10 +98,12 @@ func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.V
 	e.IV = entityPtrVal
 	e.I = entityPtrVal.Interface().(IEntity)
 	e.TypeName = typeName
+
 	e.rpcDescMap = entityType2RpcDescMap[typeName]
 
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
+	e.Attrs = attrs.NewMapAttr()
 
 	initAOI(&e.aoi)
 	e.I.OnInit()
@@ -247,12 +250,11 @@ func (e *Entity) IsPersistent() bool {
 }
 
 func (e *Entity) GetPersistentData() map[string]interface{} {
-	gwlog.TraceError("%s.GetPersistentData not implemented", e)
-	return nil
+	return e.Attrs.ToMap()
 }
 
 func (e *Entity) LoadPersistentData(data map[string]interface{}) {
-	gwlog.TraceError("%s.LoadPersistentData not implemented", e)
+	e.Attrs.AssignMap(data)
 }
 
 func (e *Entity) isCrossServerCallable() bool {

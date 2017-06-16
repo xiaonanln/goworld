@@ -9,6 +9,7 @@ import (
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
@@ -40,6 +41,7 @@ func Run(delegate IServerDelegate) {
 	}
 
 	dispatcher_client.Initialize(&dispatcherClientDelegate{})
+	entity.CreateSpaceLocally() // create to be the nil space
 
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine

@@ -50,18 +50,9 @@ func (a *Avatar) IsPersistent() bool {
 	return true
 }
 
-func (a *Avatar) GetPersistentData() map[string]interface{} {
-	return map[string]interface{}{
-		"name":  a.name,
-		"level": a.level,
-		"money": a.money,
-	}
-}
-
-func (a *Avatar) LoadPersistentData(data map[string]interface{}) {
-	gwlog.Debug("%s loading persistent data: %v", a, data)
-}
-
 func (a *Avatar) enterSpace(spaceId int) {
 	curspace := a.GetSpace()
+	if curspace.Attrs.GetInt("SpaceNo", 0) == spaceId {
+
+	}
 }

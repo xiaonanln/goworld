@@ -13,7 +13,7 @@ type SpaceDelegate struct {
 func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 	delegate.DefaultSpaceDelegate.OnSpaceCreated(space)
 
-	avatarIds := goworld.ListEntityIDs("Avatar")
+	avatarIds := goworld.ListEntityIDs("Avatar")[:1]
 	for _, avatarID := range avatarIds {
 		gwlog.Info("Loading avatar %s", avatarID)
 		space.LoadEntity("Avatar", avatarID)
