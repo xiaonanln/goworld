@@ -28,7 +28,7 @@ func (dcp *DispatcherClientProxy) serve() {
 	// Serve the dispatcher client from server / gate
 	defer func() {
 		dcp.Close()
-
+		//dcp.owner.HandleDispatcherClientDisconnect(dcp)
 		err := recover()
 		if err != nil && !netutil.IsConnectionClosed(err) {
 			gwlog.Error("Client %s paniced with error: %v", dcp, err)

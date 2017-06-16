@@ -116,6 +116,29 @@ func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProx
 	//}
 }
 
+//
+//func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *DispatcherClientProxy) {
+//	gwlog.Panic(service, dcp)
+//	service.Lock()
+//	sid := dcp.serverid
+//	if service.clients[sid] != dcp {
+//		// should never happen
+//		service.Unlock()
+//		return
+//	}
+//	service.clients[sid] = nil
+//	remove := entity.EntityIDSet{}
+//	for eid, loc := range service.entityLocs {
+//		if loc == sid {
+//			remove.Add(eid)
+//		}
+//	}
+//
+//	for eid := range remove {
+//		service.entityLocs[eid]
+//	}
+//}
+
 // Entity is create on the target server
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)

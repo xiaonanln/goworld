@@ -41,10 +41,6 @@ func (space *Space) OnCreated() {
 	})
 }
 
-func (space *Space) IsNilSpace() bool {
-	return space == nilSpace
-}
-
 func (space *Space) CreateEntity(typeName string) {
 	createEntity(typeName, space, "", nil, nil)
 }
