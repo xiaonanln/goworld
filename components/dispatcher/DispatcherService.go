@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/proto"
 )
 
 type DispatcherService struct {
@@ -25,10 +26,12 @@ type DispatcherService struct {
 	targetServerOfClient map[common.ClientID]uint16
 }
 
-func newDispatcherService(cfg *config.DispatcherConfig) *DispatcherService {
+func newDispatcherService() *DispatcherService {
+	cfg := config.Get()
+	serverCount := len(cfg.Servers)
 	return &DispatcherService{
-		config:            cfg,
-		clients:           []*DispatcherClientProxy{},
+		config:            &cfg.Dispatcher,
+		clients:           make([]*DispatcherClientProxy, serverCount),
 		chooseClientIndex: 0,
 
 		entityLocs:           map[common.EntityID]uint16{},
@@ -57,12 +60,28 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 		gwlog.Panicf("invalid serverid: %d", serverid)
 	}
 
-	for serverid > uint16(len(service.clients)) {
-		service.clients = append(service.clients, nil)
-	}
+	olddcp := service.clients[serverid-1] // should be nil, unless reconnect
 	service.clients[serverid-1] = dcp
+	// notify all servers that all servers connected to dispatcher now!
+	if olddcp == nil && service.isAllClientsConnected() {
+		// for the first time that all servers connected to dispatcher, notify all servers
+		gwlog.Info("All servers(%d) are connected", len(service.clients))
+		pkt.ClearPayload() // reuse this packet
+		pkt.AppendUint16(proto.MT_NOTIFY_ALL_SERVERS_CONNECTED_TO_DISPATCHER)
+		service.broadcastToDispatcherClients(pkt)
+	}
+
 	pkt.Release()
 	return
+}
+
+func (service *DispatcherService) isAllClientsConnected() bool {
+	for _, client := range service.clients {
+		if client == nil {
+			return false
+		}
+	}
+	return true
 }
 
 func (service *DispatcherService) dispatcherClientOfServer(serverid uint16) *DispatcherClientProxy {
@@ -198,8 +217,6 @@ func (service *DispatcherService) HandleDestroyEntityOnClient(dcp *DispatcherCli
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
 	for _, dcp := range service.clients {
-		if dcp != nil {
-			dcp.SendPacket(pkt)
-		}
+		dcp.SendPacket(pkt)
 	}
 }

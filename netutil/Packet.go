@@ -39,6 +39,11 @@ func (p *Packet) Release() {
 	messagePool.Put(p)
 }
 
+func (p *Packet) ClearPayload() {
+	p.readCursor = 0
+	p.payloadLen = 0
+}
+
 func (p *Packet) AppendByte(b byte) {
 	p.bytes[PREPAYLOAD_SIZE+p.payloadLen] = b
 	p.payloadLen += 1

@@ -9,15 +9,16 @@ type MsgType_t uint16
 const (
 	MT_INVALID = iota
 	// Server Messages
-	MT_SET_SERVER_ID                  = iota
-	MT_NOTIFY_CREATE_ENTITY           = iota
-	MT_NOTIFY_DESTROY_ENTITY          = iota
-	MT_DECLARE_SERVICE                = iota
-	MT_CALL_ENTITY_METHOD             = iota
-	MT_CREATE_ENTITY_ANYWHERE         = iota
-	MT_LOAD_ENTITY_ANYWHERE           = iota
-	MT_NOTIFY_CLIENT_CONNECTED        = iota
-	MT_CALL_ENTITY_METHOD_FROM_CLIENT = iota
+	MT_SET_SERVER_ID                              = iota
+	MT_NOTIFY_CREATE_ENTITY                       = iota
+	MT_NOTIFY_DESTROY_ENTITY                      = iota
+	MT_DECLARE_SERVICE                            = iota
+	MT_CALL_ENTITY_METHOD                         = iota
+	MT_CREATE_ENTITY_ANYWHERE                     = iota
+	MT_LOAD_ENTITY_ANYWHERE                       = iota
+	MT_NOTIFY_CLIENT_CONNECTED                    = iota
+	MT_CALL_ENTITY_METHOD_FROM_CLIENT             = iota
+	MT_NOTIFY_ALL_SERVERS_CONNECTED_TO_DISPATCHER = iota
 )
 
 const ( // Message types that should be handled by GateService

@@ -1,5 +1,4 @@
 TODO: Determine how dispatcher know the target server of client packets
-TODO: Make sure load entity won't create multiple entities on multiple servers!
 
 TODO: wait for all servers to be ready before fire OnServerStarted
     TODO: Set number of servers and gates in config file
