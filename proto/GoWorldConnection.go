@@ -18,10 +18,10 @@ func NewGoWorldConnection(conn net.Conn) GoWorldConnection {
 	}
 }
 
-func (gwc *GoWorldConnection) SendSetServerID(id int) error {
+func (gwc *GoWorldConnection) SendSetServerID(id uint16) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_SERVER_ID)
-	packet.AppendUint16(uint16(id))
+	packet.AppendUint16(id)
 	return gwc.SendPacketRelease(packet)
 }
 

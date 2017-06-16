@@ -73,8 +73,8 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
-func GetServer(serverid int) *ServerConfig {
-	return Get().Servers[serverid]
+func GetServer(serverid uint16) *ServerConfig {
+	return Get().Servers[int(serverid)]
 }
 
 func GetServerIDs() []int {

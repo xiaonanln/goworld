@@ -24,7 +24,7 @@ type packetQueueItem struct { // packet queue from dispatcher client
 
 type GameService struct {
 	config             *config.ServerConfig
-	id                 int
+	id                 uint16
 	serverDelegate     IServerDelegate
 	registeredServices map[string]entity.EntityIDSet
 
@@ -32,7 +32,7 @@ type GameService struct {
 	isAllServersConnected bool
 }
 
-func newGameService(serverid int, delegate IServerDelegate) *GameService {
+func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
 	return &GameService{
 		id:                 serverid,
 		serverDelegate:     delegate,

@@ -59,3 +59,7 @@ func ListEntityIDs(typeName string) []EntityID {
 func GetEntity(id EntityID) *entity.Entity {
 	return entity.GetEntity(id)
 }
+
+func GetServerID() uint16 {
+	return server.GetServerID()
+}

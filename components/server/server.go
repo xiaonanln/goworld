@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	serverid    int
+	serverid    uint16
 	configFile  string
 	gameService *GameService
 	gateService *GateService
@@ -25,9 +25,11 @@ func init() {
 }
 
 func parseArgs() {
-	flag.IntVar(&serverid, "sid", 0, "set serverid")
+	var serveridArg int
+	flag.IntVar(&serveridArg, "sid", 0, "set serverid")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.Parse()
+	serverid = uint16(serveridArg)
 }
 
 func Run(delegate IServerDelegate) {
@@ -66,5 +68,8 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	} else {
 		gateService.HandleDispatcherClientPacket(msgtype, packet)
 	}
+}
 
+func GetServerID() uint16 {
+	return serverid
 }

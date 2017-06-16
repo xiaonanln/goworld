@@ -9,6 +9,12 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
+var (
+	SERVICE_NAMES = []string{
+		"OnlineService",
+	}
+)
+
 func init() {
 
 }
@@ -31,37 +37,46 @@ func main() {
 func (server serverDelegate) OnServerReady() {
 	server.ServerDelegate.OnServerReady()
 
-	eids := goworld.ListEntityIDs("OnlineService")
-	gwlog.Info("Found saved OnlineService ids: %v", eids)
+	if goworld.GetServerID() == 1 { // Create services on just 1 server
+		for _, serviceName := range SERVICE_NAMES {
+			eids := goworld.ListEntityIDs(serviceName)
+			gwlog.Info("Found saved %s ids: %v", serviceName, eids)
 
-	if len(eids) == 0 {
-		goworld.CreateEntityAnywhere("OnlineService")
-	} else {
-		// already exists
-		onlineServiceID := eids[0]
-		goworld.LoadEntityAnywhere("OnlineService", onlineServiceID)
+			if len(eids) == 0 {
+				goworld.CreateEntityAnywhere(serviceName)
+			} else {
+				// already exists
+				serviceID := eids[0]
+				goworld.LoadEntityAnywhere(serviceName, serviceID)
+			}
+		}
 	}
 
 	timer.AddCallback(time.Millisecond*1000, server.checkServerStarted)
 }
 
 func (server serverDelegate) checkServerStarted() {
-	ok := server.isServerStarted()
+	ok := server.isAllServicesReady()
 	gwlog.Info("checkServerStarted: %v", ok)
 	if ok {
-		server.onServerStarted()
+		server.onAllServicesReady()
 	} else {
 		timer.AddCallback(time.Millisecond*1000, server.checkServerStarted)
 	}
 }
 
-func (server serverDelegate) isServerStarted() bool {
-	if len(goworld.GetServiceProviders("OnlineService")) == 0 {
-		return false
+func (server serverDelegate) isAllServicesReady() bool {
+	for _, serviceName := range SERVICE_NAMES {
+		if len(goworld.GetServiceProviders(serviceName)) == 0 {
+			return false
+		}
 	}
 	return true
 }
 
-func (server serverDelegate) onServerStarted() {
-	goworld.CreateSpaceAnywhere()
+func (server serverDelegate) onAllServicesReady() {
+	gwlog.Info("All services are ready!")
+	if goworld.GetServerID() == 1 {
+		goworld.CreateSpaceAnywhere()
+	}
 }
