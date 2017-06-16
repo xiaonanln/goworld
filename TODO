@@ -1,4 +1,5 @@
 TODO: Use SpaceService to manager all spaces
+TODO: Handle Server-Reconnect in Dispatcher (easily)
 TODO: Create/Destroy entities inside/outside AOI in client
 TODO: Determine how dispatcher know the target server of client packets
 TODO: Entity transfer among spaces

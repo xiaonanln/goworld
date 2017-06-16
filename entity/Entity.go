@@ -220,6 +220,11 @@ func (e *Entity) OnCreated() {
 	gwlog.Debug("%s.OnCreated", e)
 }
 
+// Space Utilities
+func (e *Entity) GetSpace() *Space {
+	return e.space
+}
+
 func (e *Entity) OnEnterSpace() {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.space)

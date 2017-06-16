@@ -10,11 +10,17 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
+const (
+	DEFAULT_SPACE_NO = 1
+)
+
 type Avatar struct {
 	entity.Entity
 	name  string
 	level int
 	money int
+
+	spaceId int
 }
 
 func (a *Avatar) OnInit() {
@@ -29,11 +35,15 @@ func (a *Avatar) OnCreated() {
 	onlineServiceEid := goworld.GetServiceProviders("OnlineService")[0]
 	gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
 	a.Call(onlineServiceEid, "CheckIn", a.ID, a.name, a.level)
+
+	if a.spaceId == 0 {
+		a.spaceId = DEFAULT_SPACE_NO
+	}
+	a.enterSpace(a.spaceId)
 }
 
 func (a *Avatar) OnEnterSpace() {
 	a.Entity.OnEnterSpace()
-
 }
 
 func (a *Avatar) IsPersistent() bool {
@@ -50,4 +60,8 @@ func (a *Avatar) GetPersistentData() map[string]interface{} {
 
 func (a *Avatar) LoadPersistentData(data map[string]interface{}) {
 	gwlog.Debug("%s loading persistent data: %v", a, data)
+}
+
+func (a *Avatar) enterSpace(spaceId int) {
+	curspace := a.GetSpace()
 }
