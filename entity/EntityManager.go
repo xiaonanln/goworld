@@ -73,7 +73,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.init(typeName, entityID, entityPtrVal)
 
-	entityManager.put(entity) // TODO: make sure entity is destroyed if creation fails
+	entityManager.put(entity)
 	if data != nil {
 		entity.I.LoadPersistentData(data)
 	} else {

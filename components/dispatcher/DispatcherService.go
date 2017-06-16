@@ -112,7 +112,6 @@ func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClien
 }
 
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	// Client connected at one server, create boot entity in any server, but TODO: handle reconnect
 	//clientid := pkt.ReadClientID()
 	pkt.AppendUint16(dcp.serverid)
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
@@ -178,7 +177,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 	method := pkt.ReadVarStr()
 	var args []interface{}
 	pkt.ReadMessage(&args)
-	clientid := pkt.ReadClientID() // TODO: optimize packet structure
+	clientid := pkt.ReadClientID()
 	sid := service.targetServerOfClient[clientid]
 	gwlog.Info("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)

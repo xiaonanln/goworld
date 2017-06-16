@@ -47,7 +47,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
 
-		if msgtype == proto.MT_CALL_ENTITY_METHOD { // TODO: remove if ... else if ... else if ... else if ...
+		if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			eid := pkt.ReadEntityID()
 			method := pkt.ReadVarStr()
 			dcp.owner.HandleCallEntityMethod(dcp, pkt, eid, method)

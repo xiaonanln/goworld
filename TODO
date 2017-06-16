@@ -1,11 +1,16 @@
-# TODO: Make sure load entity won't create multiple entities on multiple servers!
+TODO: Determine how dispatcher know the target server of client packets
+TODO: Make sure load entity won't create multiple entities on multiple servers!
 
-# TODO: wait for all servers to be ready before fire OnServerStarted
-    # TODO: Set number of servers and gates in config file
-# TODO: Gate
-# TODO: Client
-# TODO: Entity Attributes
+TODO: wait for all servers to be ready before fire OnServerStarted
+    TODO: Set number of servers and gates in config file
+TODO: Gate
+TODO: Client
+TODO: Entity Attributes
 
 # Subsystem to be implemented
-# TODO: Chatrooms with multiple channels: world, prof, club, ...
-#
+TODO: Chatrooms with multiple channels: world, prof, club, ...
+
+# Future works
+TODO: remove if ... else if ... else if ... else if ...
+TODO: make sure entity is destroyed if creation fails
+TODO: Entity Client Reconnect Mechianism

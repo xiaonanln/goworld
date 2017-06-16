@@ -10,7 +10,6 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/goworld/uuid"
 )
 
 type ClientProxy struct {
@@ -23,10 +22,6 @@ func newClientProxy(conn net.Conn) *ClientProxy {
 		GoWorldConnection: proto.NewGoWorldConnection(conn),
 		clientid:          common.GenClientID(), // each client has its unique clientid
 	}
-}
-
-func newClientID() string {
-	return uuid.GenUUID()
 }
 
 func (cp *ClientProxy) String() string {
@@ -58,6 +53,7 @@ func (cp *ClientProxy) serve() {
 
 	}
 }
+
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
 	pkt.AppendClientID(cp.clientid) // append clientid to the packet
 	dispatcher_client.GetDispatcherClientForSend().SendPacketRelease(pkt)
