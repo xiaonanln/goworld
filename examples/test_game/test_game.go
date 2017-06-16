@@ -28,8 +28,8 @@ func main() {
 	goworld.Run(&serverDelegate{})
 }
 
-func (server serverDelegate) OnReady() {
-	server.ServerDelegate.OnReady()
+func (server serverDelegate) OnServerReady() {
+	server.ServerDelegate.OnServerReady()
 
 	eids := goworld.ListEntityIDs("OnlineService")
 	gwlog.Info("Found saved OnlineService ids: %v", eids)

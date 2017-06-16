@@ -1,13 +1,12 @@
-TODO: Determine how dispatcher know the target server of client packets
-
 TODO: wait for all servers to be ready before fire OnServerStarted
     TODO: Set number of servers and gates in config file
-TODO: Gate
-TODO: Client
-TODO: Entity Attributes
+TODO: Determine how dispatcher know the target server of client packets
+TODO: Create/Destroy entities inside/outside AOI in client
+TODO: Entity transfer among spaces
 
 # Subsystem to be implemented
-TODO: Chatrooms with multiple channels: world, prof, club, ...
+TODO: Entity Attributes
+TODO: Example chatrooms with multiple channels: world, prof, club, ...
 
 # Future works
 TODO: remove if ... else if ... else if ... else if ...

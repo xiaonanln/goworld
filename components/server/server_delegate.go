@@ -3,12 +3,12 @@ package server
 import "github.com/xiaonanln/goworld/gwlog"
 
 type IServerDelegate interface {
-	OnReady()
+	OnServerReady()
 }
 
 type ServerDelegate struct {
 }
 
-func (gd *ServerDelegate) OnReady() {
+func (gd *ServerDelegate) OnServerReady() {
 	gwlog.Info("server %d is ready.", serverid)
 }

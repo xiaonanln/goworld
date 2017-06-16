@@ -28,7 +28,8 @@ type GameService struct {
 	serverDelegate     IServerDelegate
 	registeredServices map[string]entity.EntityIDSet
 
-	packetQueue chan packetQueueItem
+	packetQueue           chan packetQueueItem
+	isAllServersConnected bool
 }
 
 func newGameService(serverid int, delegate IServerDelegate) *GameService {
@@ -49,10 +50,6 @@ func (gs *GameService) run() {
 	storage.Initialize()
 
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
-	timer.AddCallback(0, func() {
-		gs.serverDelegate.OnReady()
-	})
-
 	// here begins the main loop of Server
 	tickCount := 0
 	for {
@@ -87,6 +84,8 @@ func (gs *GameService) run() {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
 				gs.HandleDeclareService(eid, serviceName)
+			} else if msgtype == proto.MT_NOTIFY_ALL_SERVERS_CONNECTED {
+				gs.HandleNotifyAllServersConnected()
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 			}
@@ -125,6 +124,11 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 		gs.registeredServices[serviceName] = eids
 	}
 	eids.Add(entityID)
+}
+
+func (gs *GameService) HandleNotifyAllServersConnected() {
+	// all servers are connected
+	gs.serverDelegate.OnServerReady()
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}, clientid common.ClientID) {

@@ -173,7 +173,6 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 	}
 
 	methodType := rpcDesc.MethodType
-	// TODO: check method flags with clientid
 	if clientid == "" {
 		// rpc call from server
 		if rpcDesc.Flags&RF_SERVER == 0 {

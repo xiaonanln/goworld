@@ -63,14 +63,17 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 	olddcp := service.clients[serverid-1] // should be nil, unless reconnect
 	service.clients[serverid-1] = dcp
 	// notify all servers that all servers connected to dispatcher now!
-	if olddcp == nil && service.isAllClientsConnected() {
-		// for the first time that all servers connected to dispatcher, notify all servers
-		gwlog.Info("All servers(%d) are connected", len(service.clients))
+	if service.isAllClientsConnected() {
 		pkt.ClearPayload() // reuse this packet
-		pkt.AppendUint16(proto.MT_NOTIFY_ALL_SERVERS_CONNECTED_TO_DISPATCHER)
-		service.broadcastToDispatcherClients(pkt)
+		pkt.AppendUint16(proto.MT_NOTIFY_ALL_SERVERS_CONNECTED)
+		if olddcp == nil {
+			// for the first time that all servers connected to dispatcher, notify all servers
+			gwlog.Info("All servers(%d) are connected", len(service.clients))
+			service.broadcastToDispatcherClients(pkt)
+		} else {
+			dcp.SendPacket(pkt)
+		}
 	}
-
 	pkt.Release()
 	return
 }
