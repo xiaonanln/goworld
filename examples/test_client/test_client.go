@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	NR_CLIENTS = 3
+	NR_CLIENTS = 1
 )
 
 var (

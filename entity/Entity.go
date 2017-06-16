@@ -116,10 +116,12 @@ func (e *Entity) setupSaveTimer() {
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
 	e.aoi.interest(other)
+	e.client.SendCreateEntity(other)
 }
 
 func (e *Entity) uninterest(other *Entity) {
 	e.aoi.uninterest(other)
+	e.client.SendDestroyEntity(other)
 }
 
 func (e *Entity) Neighbors() EntitySet {
@@ -278,7 +280,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 
 	if client != nil {
-		// send create entity to client
+		// send create entity to new client
 		client.SendCreateEntity(e)
 	}
 
@@ -311,7 +313,7 @@ func (e *Entity) GiveClientTo(other *Entity) {
 
 func (e *Entity) OnClientConnected() {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.OnClientConnected: %s", e, e.client)
+		gwlog.Debug("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors()))
 	}
 }
 

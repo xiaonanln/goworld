@@ -20,17 +20,29 @@ func MakeGameClient(clientid common.ClientID, sid uint16) *GameClient {
 }
 
 func (client *GameClient) String() string {
+	if client == nil {
+		return "GameClient<nil>"
+	}
 	return fmt.Sprintf("GameClient<%s@%d>", client.clientid, client.serverid)
 }
 
 func (client *GameClient) SendCreateEntity(entity *Entity) {
+	if client == nil {
+		return
+	}
 	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID)
 }
 
 func (client *GameClient) SendDestroyEntity(entity *Entity) {
+	if client == nil {
+		return
+	}
 	dispatcher_client.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID)
 }
 
 func (client *GameClient) Call(method string, args ...interface{}) {
+	if client == nil {
+		return
+	}
 
 }

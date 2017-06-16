@@ -77,14 +77,19 @@ func GetServer(serverid uint16) *ServerConfig {
 	return Get().Servers[int(serverid)]
 }
 
-func GetServerIDs() []int {
+func GetServerIDs() []uint16 {
 	cfg := Get()
 	serverIDs := make([]int, 0, len(cfg.Servers))
 	for id, _ := range cfg.Servers {
 		serverIDs = append(serverIDs, id)
 	}
 	sort.Ints(serverIDs)
-	return serverIDs
+
+	res := make([]uint16, len(serverIDs))
+	for i, id := range serverIDs {
+		res[i] = uint16(id)
+	}
+	return res
 }
 
 func GetDispatcher() *DispatcherConfig {

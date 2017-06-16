@@ -12,6 +12,7 @@ import (
 var (
 	SERVICE_NAMES = []string{
 		"OnlineService",
+		"SpaceService",
 	}
 )
 
@@ -26,6 +27,7 @@ type serverDelegate struct {
 func main() {
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("OnlineService", &OnlineService{})
+	goworld.RegisterEntity("SpaceService", &SpaceService{})
 	goworld.RegisterEntity("Monster", &Monster{})
 	goworld.RegisterEntity("Avatar", &Avatar{})
 
@@ -68,6 +70,7 @@ func (server serverDelegate) checkServerStarted() {
 func (server serverDelegate) isAllServicesReady() bool {
 	for _, serviceName := range SERVICE_NAMES {
 		if len(goworld.GetServiceProviders(serviceName)) == 0 {
+			gwlog.Info("%s is not ready ...", serviceName)
 			return false
 		}
 	}

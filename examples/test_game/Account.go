@@ -29,6 +29,7 @@ func (a *Account) Login_Client(username string, password string) {
 	a.CallClient("OnLogin", true)
 
 	avatarID := goworld.CreateEntityLocally("Avatar")
+
 	a.Post(func() {
 		avatar := goworld.GetEntity(avatarID)
 		if avatar == nil {
