@@ -257,6 +257,10 @@ func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
 
+func (e *Entity) getClientData() map[string]interface{} {
+	return e.Attrs.ToMap()
+}
+
 func (e *Entity) isCrossServerCallable() bool {
 	return e.IsPersistent() || len(e.declaredServices) > 0
 }

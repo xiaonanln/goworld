@@ -30,7 +30,7 @@ func (client *GameClient) SendCreateEntity(entity *Entity) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID)
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, entity.getClientData())
 }
 
 func (client *GameClient) SendDestroyEntity(entity *Entity) {

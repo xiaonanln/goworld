@@ -1,45 +1,39 @@
 package main
 
 import (
-	"math/rand"
-
-	"fmt"
-
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
-	DEFAULT_SPACE_NO = 1
+	DEFAULT_SPACE_ID = 1
 )
 
 type Avatar struct {
 	entity.Entity
-	name  string
-	level int
-	money int
-
-	spaceId int
 }
 
 func (a *Avatar) OnInit() {
-	a.name = fmt.Sprintf("Avatar%d", rand.Intn(100))
-	a.level = 1 + rand.Intn(100)
-	a.money = rand.Intn(10000)
 }
 
 func (a *Avatar) OnCreated() {
 	a.Entity.OnCreated()
 
+	a.setDefaultAttrs()
+
 	onlineServiceEid := goworld.GetServiceProviders("OnlineService")[0]
 	gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
-	a.Call(onlineServiceEid, "CheckIn", a.ID, a.name, a.level)
+	a.Call(onlineServiceEid, "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 
-	if a.spaceId == 0 {
-		a.spaceId = DEFAULT_SPACE_NO
-	}
-	a.enterSpace(a.spaceId)
+	a.enterSpace(a.Attrs.GetInt("spaceId"))
+}
+func (a *Avatar) setDefaultAttrs() {
+	gwlog.Info("%s set default attrs: %s", a, a.Attrs.ToMap())
+	a.Attrs.SetDefault("name", "无名")
+	a.Attrs.SetDefault("level", 1)
+	a.Attrs.SetDefault("exp", 0)
+	a.Attrs.SetDefault("spaceId", DEFAULT_SPACE_ID)
 }
 
 func (a *Avatar) OnEnterSpace() {
@@ -51,8 +45,8 @@ func (a *Avatar) IsPersistent() bool {
 }
 
 func (a *Avatar) enterSpace(spaceId int) {
-	curspace := a.GetSpace()
-	if curspace.Attrs.GetInt("SpaceNo", 0) == spaceId {
-
-	}
+	//curspace := a.GetSpace()
+	//if curspace.Attrs.GetInt("spaceId") == spaceId {
+	//
+	//}
 }

@@ -1,6 +1,9 @@
 package attrs
 
-import "github.com/xiaonanln/goworld/common"
+import (
+	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/gwlog"
+)
 
 type MapAttr struct {
 	attrs     map[string]interface{}
@@ -28,23 +31,37 @@ func (ma *MapAttr) SetDefault(key string, val interface{}) {
 	}
 }
 
-func (ma *MapAttr) GetInt(key string, defaultVal int) int {
+func (ma *MapAttr) GetInt(key string) (iv int) {
 	val, ok := ma.attrs[key]
 	if !ok {
-		return defaultVal
-	}
-	i64, ok := val.(int64)
-	if ok {
-		return int(i64)
+		gwlog.Panicf("key not exists: %s", key)
 	}
 
-	return val.(int)
+	defer func() {
+		recover()
+		if i64, ok := val.(int64); ok {
+			iv = int(i64)
+			ma.attrs[key] = iv // fall back to int
+			return
+		}
+
+		if f, ok := val.(float64); ok {
+			iv = int(f)
+			ma.attrs[key] = iv // fall back to int
+			return
+		}
+
+		iv = val.(int) // will panic here
+	}()
+
+	iv = val.(int)
+	return
 }
 
-func (ma *MapAttr) GetStr(key string, defaultVal string) string {
+func (ma *MapAttr) GetStr(key string) string {
 	val, ok := ma.attrs[key]
 	if !ok {
-		return defaultVal
+		gwlog.Panicf("key not exists: %s", key)
 	}
 	return val.(string)
 }
@@ -83,18 +100,18 @@ func (ma *MapAttr) GetMap() map[string]interface{} {
 	return ma.attrs
 }
 
-func (ma *MapAttr) GetFloat(key string, defaultVal float64) float64 {
+func (ma *MapAttr) GetFloat(key string) float64 {
 	val, ok := ma.attrs[key]
 	if !ok {
-		return defaultVal
+		gwlog.Panicf("key not exists: %s", key)
 	}
 	return val.(float64)
 }
 
-func (ma *MapAttr) GetBool(key string, defaultVal bool) bool {
+func (ma *MapAttr) GetBool(key string) bool {
 	val, ok := ma.attrs[key]
 	if !ok {
-		return defaultVal
+		gwlog.Panicf("key not exists: %s", key)
 	}
 	return val.(bool)
 }

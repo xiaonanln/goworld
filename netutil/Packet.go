@@ -159,7 +159,7 @@ func (p *Packet) ReadVarBytes() []byte {
 	return p.ReadBytes(blen)
 }
 
-func (p *Packet) AppendMessage(msg interface{}) {
+func (p *Packet) AppendData(msg interface{}) {
 	freePayload := p.FreePayload()
 
 	argsData, err := MSG_PACKER.PackMsg(msg, freePayload[4:4])
@@ -171,7 +171,7 @@ func (p *Packet) AppendMessage(msg interface{}) {
 	p.SetPayloadLen(p.payloadLen + 4 + argsDataLen)
 }
 
-func (p *Packet) ReadMessage(msg interface{}) {
+func (p *Packet) ReadData(msg interface{}) {
 	b := p.ReadVarBytes()
 	err := MSG_PACKER.UnpackMsg(b, msg)
 	if err != nil {

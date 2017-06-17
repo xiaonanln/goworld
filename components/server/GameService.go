@@ -60,14 +60,14 @@ func (gs *GameService) run() {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
 				var args []interface{}
-				pkt.ReadMessage(&args)
+				pkt.ReadData(&args)
 				clientid := pkt.ReadClientID()
 				gs.HandleCallEntityMethod(eid, method, args, clientid)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
 				var args []interface{}
-				pkt.ReadMessage(&args)
+				pkt.ReadData(&args)
 				gs.HandleCallEntityMethod(eid, method, args, "")
 			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 				clientid := pkt.ReadClientID()

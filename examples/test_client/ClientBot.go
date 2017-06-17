@@ -76,7 +76,9 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
-		gwlog.Info("Create entity %s.%s", typeName, entityid)
+		var clientData map[string]interface{}
+		packet.ReadData(&clientData)
+		gwlog.Info("Create entity %s.%s: attrs=%v", typeName, entityid, clientData)
 		bot.createEntity(typeName, entityid)
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()

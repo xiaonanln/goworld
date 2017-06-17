@@ -221,7 +221,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 	entityid := pkt.ReadEntityID()
 	method := pkt.ReadVarStr()
 	var args []interface{}
-	pkt.ReadMessage(&args)
+	pkt.ReadData(&args)
 	clientid := pkt.ReadClientID()
 	sid := service.targetServerOfClient[clientid]
 	gwlog.Info("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
