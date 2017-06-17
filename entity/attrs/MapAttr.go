@@ -7,29 +7,29 @@ type MapAttr struct {
 	dirtyKeys common.StringSet
 }
 
-func (self *MapAttr) Size() int {
-	return len(self.attrs)
+func (ma *MapAttr) Size() int {
+	return len(ma.attrs)
 }
 
-func (self *MapAttr) HasKey(key string) bool {
-	_, ok := self.attrs[key]
+func (ma *MapAttr) HasKey(key string) bool {
+	_, ok := ma.attrs[key]
 	return ok
 }
 
-func (self *MapAttr) Set(key string, val interface{}) {
-	self.attrs[key] = val
-	self.dirtyKeys.Add(key)
+func (ma *MapAttr) Set(key string, val interface{}) {
+	ma.attrs[key] = val
+	ma.dirtyKeys.Add(key)
 }
 
-func (self *MapAttr) SetDefault(key string, val interface{}) {
-	if _, ok := self.attrs[key]; !ok {
-		self.attrs[key] = val
-		self.dirtyKeys.Add(key)
+func (ma *MapAttr) SetDefault(key string, val interface{}) {
+	if _, ok := ma.attrs[key]; !ok {
+		ma.attrs[key] = val
+		ma.dirtyKeys.Add(key)
 	}
 }
 
-func (self *MapAttr) GetInt(key string, defaultVal int) int {
-	val, ok := self.attrs[key]
+func (ma *MapAttr) GetInt(key string, defaultVal int) int {
+	val, ok := ma.attrs[key]
 	if !ok {
 		return defaultVal
 	}
@@ -41,67 +41,67 @@ func (self *MapAttr) GetInt(key string, defaultVal int) int {
 	return val.(int)
 }
 
-func (self *MapAttr) GetStr(key string, defaultVal string) string {
-	val, ok := self.attrs[key]
+func (ma *MapAttr) GetStr(key string, defaultVal string) string {
+	val, ok := ma.attrs[key]
 	if !ok {
 		return defaultVal
 	}
 	return val.(string)
 }
 
-func (self *MapAttr) GetMapAttr(key string) *MapAttr {
-	val, ok := self.attrs[key]
-	self.dirtyKeys.Add(key)
+func (ma *MapAttr) GetMapAttr(key string) *MapAttr {
+	val, ok := ma.attrs[key]
+	ma.dirtyKeys.Add(key)
 
 	if !ok {
 		attrs := NewMapAttr()
-		self.attrs[key] = attrs
+		ma.attrs[key] = attrs
 		return attrs
 	}
 	return val.(*MapAttr)
 }
 
-func (self *MapAttr) GetKeys() []string {
-	size := len(self.attrs)
+func (ma *MapAttr) GetKeys() []string {
+	size := len(ma.attrs)
 	keys := make([]string, 0, size)
-	for k, _ := range self.attrs {
+	for k, _ := range ma.attrs {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
-func (self *MapAttr) GetValues() []interface{} {
-	size := len(self.attrs)
+func (ma *MapAttr) GetValues() []interface{} {
+	size := len(ma.attrs)
 	vals := make([]interface{}, 0, size)
-	for _, v := range self.attrs {
+	for _, v := range ma.attrs {
 		vals = append(vals, v)
 	}
 	return vals
 }
 
-func (self *MapAttr) GetMap() map[string]interface{} {
-	return self.attrs
+func (ma *MapAttr) GetMap() map[string]interface{} {
+	return ma.attrs
 }
 
-func (self *MapAttr) GetFloat(key string, defaultVal float64) float64 {
-	val, ok := self.attrs[key]
+func (ma *MapAttr) GetFloat(key string, defaultVal float64) float64 {
+	val, ok := ma.attrs[key]
 	if !ok {
 		return defaultVal
 	}
 	return val.(float64)
 }
 
-func (self *MapAttr) GetBool(key string, defaultVal bool) bool {
-	val, ok := self.attrs[key]
+func (ma *MapAttr) GetBool(key string, defaultVal bool) bool {
+	val, ok := ma.attrs[key]
 	if !ok {
 		return defaultVal
 	}
 	return val.(bool)
 }
 
-func (self *MapAttr) ToMap() map[string]interface{} {
+func (ma *MapAttr) ToMap() map[string]interface{} {
 	doc := map[string]interface{}{}
-	for k, v := range self.attrs {
+	for k, v := range ma.attrs {
 		innerMapAttr, isInnerMapAttr := v.(*MapAttr)
 		if isInnerMapAttr {
 			doc[k] = innerMapAttr.ToMap()
@@ -112,18 +112,18 @@ func (self *MapAttr) ToMap() map[string]interface{} {
 	return doc
 }
 
-func (self *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
+func (ma *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
 	for k, v := range doc {
 		innerMap, ok := v.(map[string]interface{})
 		if ok {
 			innerMapAttr := NewMapAttr()
 			innerMapAttr.AssignMap(innerMap)
-			self.attrs[k] = innerMapAttr
+			ma.attrs[k] = innerMapAttr
 		} else {
-			self.attrs[k] = v
+			ma.attrs[k] = v
 		}
 	}
-	return self
+	return ma
 }
 
 func NewMapAttr() *MapAttr {
