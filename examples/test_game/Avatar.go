@@ -56,4 +56,11 @@ func (a *Avatar) OnClientConnected() {
 	a.Attrs.Set("testpop", 1)
 	v := a.Attrs.Pop("testpop")
 	gwlog.Info("Avatar pop testpop => %v", v)
+
+	a.Attrs.Set("subattr", goworld.MapAttr())
+	subattr := a.Attrs.GetMapAttr("subattr")
+	subattr.Set("a", 1)
+	subattr.Set("b", 1)
+	subattr = a.Attrs.PopMapAttr("subattr")
+	a.Attrs.Set("subattr", subattr)
 }

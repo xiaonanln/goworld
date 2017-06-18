@@ -103,7 +103,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.V
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
 
-	attrs := newMapAttr()
+	attrs := NewMapAttr()
 	attrs.owner = e
 	e.Attrs = attrs
 

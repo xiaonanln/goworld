@@ -144,6 +144,11 @@ func (ma *MapAttr) Del(key string) {
 	ma.Pop(key)
 }
 
+func (ma *MapAttr) PopMapAttr(key string) *MapAttr {
+	val := ma.Pop(key)
+	return val.(*MapAttr)
+}
+
 func (ma *MapAttr) GetKeys() []string {
 	size := len(ma.attrs)
 	keys := make([]string, 0, size)
@@ -179,7 +184,7 @@ func (ma *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
 	for k, v := range doc {
 		innerMap, ok := v.(map[string]interface{})
 		if ok {
-			innerMapAttr := newMapAttr()
+			innerMapAttr := NewMapAttr()
 			innerMapAttr.AssignMap(innerMap)
 			ma.Set(k, innerMapAttr)
 		} else {
@@ -189,7 +194,7 @@ func (ma *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
 	return ma
 }
 
-func newMapAttr() *MapAttr {
+func NewMapAttr() *MapAttr {
 	return &MapAttr{
 		attrs: make(map[string]interface{}),
 	}

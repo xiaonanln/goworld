@@ -64,10 +64,19 @@ func (e *ClientEntity) applyAttrChange(path []string, key string, val interface{
 	} else {
 		rootkey = key
 	}
+
+	if _, ok := val.(map[interface{}]interface{}); ok {
+		val = typeconv.MapStringAnything(val)
+	}
 	attr[key] = val
 
 	callbackFuncName := "OnAttrChange_" + rootkey
-	reflect.ValueOf(e).MethodByName(callbackFuncName).Call([]reflect.Value{}) // call the attr change callback func
+	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
+	if !callbackMethod.IsValid() {
+		gwlog.Warn("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
+		return
+	}
+	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
 }
 
 func (e *ClientEntity) applyAttrDel(path []string, key string) {
@@ -82,7 +91,12 @@ func (e *ClientEntity) applyAttrDel(path []string, key string) {
 	delete(attr, key)
 
 	callbackFuncName := "OnAttrChange_" + rootkey
-	reflect.ValueOf(e).MethodByName(callbackFuncName).Call([]reflect.Value{}) // call the attr change callback func
+	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
+	if !callbackMethod.IsValid() {
+		gwlog.Warn("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
+		return
+	}
+	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
 }
 
 func (entity *ClientEntity) findAttrByPath(path []string) map[string]interface{} {
@@ -112,4 +126,14 @@ func (entity *ClientEntity) OnAttrChange_testpop() {
 		v = -1
 	}
 	gwlog.Info("%s: attr testpop change to %d", entity, v)
+}
+
+func (entity *ClientEntity) OnAttrChange_subattr() {
+	var v interface{}
+	if entity.Attrs.HasKey("subattr") {
+		v = entity.Attrs["subattr"]
+	} else {
+		v = nil
+	}
+	gwlog.Info("%s: attr subattr change to %v", entity, v)
 }

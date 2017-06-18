@@ -63,3 +63,7 @@ func GetEntity(id EntityID) *entity.Entity {
 func GetServerID() uint16 {
 	return server.GetServerID()
 }
+
+func MapAttr() *entity.MapAttr {
+	return entity.NewMapAttr()
+}
