@@ -80,6 +80,6 @@ func (server serverDelegate) isAllServicesReady() bool {
 func (server serverDelegate) onAllServicesReady() {
 	gwlog.Info("All services are ready!")
 	if goworld.GetServerID() == 1 {
-		goworld.CreateSpaceAnywhere()
+		goworld.CreateSpaceAnywhere(1)
 	}
 }

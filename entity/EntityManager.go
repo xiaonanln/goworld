@@ -79,7 +79,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 }
 
 func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}, client *GameClient) EntityID {
-	gwlog.Debug("createEntity: %s in space %s", typeName, space)
+	gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
@@ -92,7 +92,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	entityPtrVal := reflect.New(entityType)
 	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.init(typeName, entityID, entityPtrVal)
-	entity.space = nilSpace
+	entity.Space = nilSpace
 
 	entityManager.put(entity)
 	if data != nil {
@@ -129,7 +129,7 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
 		}
 
 		if space != nil && space.IsDestroyed() {
-			// space might be destroy during the Load process, so cancel the entity creation
+			// Space might be destroy during the Load process, so cancel the entity creation
 			return
 		}
 
@@ -141,16 +141,16 @@ func loadEntityAnywhere(typeName string, entityID EntityID) {
 	dispatcher_client.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
 }
 
-func createEntityAnywhere(typeName string) {
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName)
+func createEntityAnywhere(typeName string, data map[string]interface{}) {
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName, data)
 }
 
-func CreateEntityLocally(typeName string, client *GameClient) EntityID {
-	return createEntity(typeName, nil, "", nil, client)
+func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
+	return createEntity(typeName, nil, "", data, client)
 }
 
 func CreateEntityAnywhere(typeName string) {
-	createEntityAnywhere(typeName)
+	createEntityAnywhere(typeName, nil)
 }
 
 func LoadEntityLocally(typeName string, entityID EntityID) {

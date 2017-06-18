@@ -41,7 +41,7 @@ func Run(delegate IServerDelegate) {
 	}
 
 	dispatcher_client.Initialize(serverid, &dispatcherClientDelegate{})
-	entity.CreateSpaceLocally() // create to be the nil space
+	entity.CreateSpaceLocally(0) // create to be the nil space
 
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine

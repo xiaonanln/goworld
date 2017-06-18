@@ -19,16 +19,16 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) {
 //	server.createEntity(typeName)
 //}
 
-func CreateSpaceAnywhere() {
-	entity.CreateSpaceAnywhere()
+func CreateSpaceAnywhere(kind int) {
+	entity.CreateSpaceAnywhere(kind)
 }
 
-func CreateSpaceLocally() {
-	entity.CreateSpaceLocally()
+func CreateSpaceLocally(kind int) {
+	entity.CreateSpaceLocally(kind)
 }
 
 func CreateEntityLocally(typeName string) EntityID {
-	return entity.CreateEntityLocally(typeName, nil)
+	return entity.CreateEntityLocally(typeName, nil, nil)
 }
 
 func CreateEntityAnywhere(typeName string) {

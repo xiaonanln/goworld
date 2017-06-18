@@ -1,7 +1,5 @@
-
-TODO: Handle Game Client Disconnect and notify it's own entity
 TODO: Use SpaceService to manager all spaces (test)
-TODO: Handle Server-Reconnect in Dispatcher (easily)
+    Each space has kind, and nil space's kind == 0
 TODO: Create/Destroy entities inside/outside AOI in client
 TODO: Determine how dispatcher know the target server of client packets
 TODO: Entity transfer among spaces

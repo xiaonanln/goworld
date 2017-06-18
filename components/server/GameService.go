@@ -82,7 +82,9 @@ func (gs *GameService) run() {
 				gs.HandleLoadEntityAnywhere(typeName, eid)
 			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 				typeName := pkt.ReadVarStr()
-				gs.HandleCreateEntityAnywhere(typeName)
+				var data map[string]interface{}
+				pkt.ReadData(&data)
+				gs.HandleCreateEntityAnywhere(typeName, data)
 			} else if msgtype == proto.MT_DECLARE_SERVICE {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
@@ -112,9 +114,9 @@ func (gs *GameService) String() string {
 	return fmt.Sprintf("GameService<%d>", gs.id)
 }
 
-func (gs *GameService) HandleCreateEntityAnywhere(typeName string) {
-	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s", gs, typeName)
-	entity.CreateEntityLocally(typeName, nil)
+func (gs *GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
+	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
+	entity.CreateEntityLocally(typeName, data, nil)
 }
 
 func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
@@ -157,7 +159,7 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid
 	gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
-	entity.CreateEntityLocally(gs.config.BootEntity, client)
+	entity.CreateEntityLocally(gs.config.BootEntity, nil, client)
 }
 
 func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {

@@ -24,7 +24,7 @@ type Entity struct {
 
 	destroyed        bool
 	rpcDescMap       RpcDescMap
-	space            *Space
+	Space            *Space
 	aoi              AOI
 	timers           map[*timer.Timer]struct{}
 	client           *GameClient
@@ -61,8 +61,8 @@ func (e *Entity) Destroy() {
 	gwlog.Info("%s.Destroy.", e)
 	e.SetClient(nil) // always set client to nil before destroy
 
-	if e.space != nil {
-		e.space.leave(e)
+	if e.Space != nil {
+		e.Space.leave(e)
 	}
 	e.clearTimers()
 	if e.isCrossServerCallable() {
@@ -228,13 +228,9 @@ func (e *Entity) OnCreated() {
 }
 
 // Space Utilities
-func (e *Entity) GetSpace() *Space {
-	return e.space
-}
-
 func (e *Entity) OnEnterSpace() {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.space)
+		gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.Space)
 	}
 }
 
@@ -357,4 +353,17 @@ func (e *Entity) sendAttrChangeToClients(ma *MapAttr, key string, val interface{
 func (e *Entity) sendAttrDelToClients(ma *MapAttr, key string) {
 	path := ma.getPathFromOwner()
 	e.client.SendNotifyAttrDel(e.ID, path, key)
+}
+
+// Fast access to attrs
+func (e *Entity) GetInt(key string) int {
+	return e.Attrs.GetInt(key)
+}
+
+func (e *Entity) GetStr(key string) string {
+	return e.Attrs.GetStr(key)
+}
+
+func (e *Entity) GetFloat(key string) float64 {
+	return e.Attrs.GetFloat(key)
 }

@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	SPACE_ENTITY_TYPE = "__space__"
+	SPACE_ENTITY_TYPE   = "__space__"
+	SPACE_KIND_ATTR_KEY = "_K"
 )
 
 var (
@@ -18,6 +19,7 @@ type Space struct {
 	Entity
 
 	entities EntitySet
+	Kind     int
 }
 
 func init() {
@@ -29,8 +31,12 @@ func (space *Space) OnInit() {
 }
 
 func (space *Space) OnCreated() {
-	if nilSpace == nil {
-		// first space created is considered as the nil space
+	space.Kind = space.GetInt(SPACE_KIND_ATTR_KEY)
+
+	if space.Kind == 0 {
+		if nilSpace != nil {
+			gwlog.Panicf("duplicate nil space: %s && %s", nilSpace, space)
+		}
 		nilSpace = space
 		return
 	}
@@ -54,11 +60,11 @@ func (space *Space) enter(entity *Entity) {
 		gwlog.Debug("%s.enter <<< %s", space, entity)
 	}
 
-	if entity.space != nilSpace {
-		gwlog.Panicf("%s.enter(%s): current space is not nil", space, entity)
+	if entity.Space != nilSpace {
+		gwlog.Panicf("%s.enter(%s): current Space is not nil", space, entity)
 	}
 
-	entity.space = space
+	entity.Space = space
 	for other := range space.entities {
 		entity.interest(other)
 		other.interest(entity)
@@ -69,12 +75,12 @@ func (space *Space) enter(entity *Entity) {
 }
 
 func (space *Space) leave(entity *Entity) {
-	if entity.space != space {
-		gwlog.Panicf("%s.leave(%s): entity is not in this space", space, entity)
+	if entity.Space != space {
+		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
 	}
 
-	entity.space = nilSpace
-	// remove from space entities
+	entity.Space = nilSpace
+	// remove from Space entities
 	space.entities.Del(entity)
 	for other := range space.entities {
 		entity.uninterest(other)

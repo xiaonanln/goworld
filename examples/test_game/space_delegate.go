@@ -18,10 +18,10 @@ func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 		gwlog.Info("Loading avatar %s", avatarID)
 		space.LoadEntity("Avatar", avatarID)
 	}
-	N := 20 - len(avatarIds)
-	for i := 0; i < N; i++ {
-		space.CreateEntity("Avatar")
-	}
+	//N := 20 - len(avatarIds)
+	//for i := 0; i < N; i++ {
+	//	space.CreateEntity("Avatar")
+	//}
 
 	M := 10
 	for i := 0; i < M; i++ {

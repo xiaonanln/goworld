@@ -64,7 +64,7 @@ func (ma *MapAttr) sendAttrDelToClients(key string) {
 }
 
 func (ma *MapAttr) getPathFromOwner() []string {
-	path := make([]string, 0, 4) // preallocate some space
+	path := make([]string, 0, 4) // preallocate some Space
 	for {
 		if ma.parent != nil {
 			path = append(path, ma.pkey)

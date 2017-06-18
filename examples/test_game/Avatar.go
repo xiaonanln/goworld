@@ -25,15 +25,14 @@ func (a *Avatar) OnCreated() {
 	onlineServiceEid := goworld.GetServiceProviders("OnlineService")[0]
 	gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
 	a.Call(onlineServiceEid, "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
-
-	a.enterSpace(a.Attrs.GetInt("spaceId"))
 }
+
 func (a *Avatar) setDefaultAttrs() {
-	gwlog.Info("%s set default attrs: %s", a, a.Attrs.ToMap())
+	gwlog.Info("%s set default attrs: %v", a, a.Attrs.ToMap())
 	a.Attrs.SetDefault("name", "无名")
 	a.Attrs.SetDefault("level", 1)
 	a.Attrs.SetDefault("exp", 0)
-	a.Attrs.SetDefault("spaceId", DEFAULT_SPACE_ID)
+	a.Attrs.SetDefault("spaceno", DEFAULT_SPACE_ID)
 }
 
 func (a *Avatar) OnEnterSpace() {
@@ -44,11 +43,12 @@ func (a *Avatar) IsPersistent() bool {
 	return true
 }
 
-func (a *Avatar) enterSpace(spaceId int) {
-	//curspace := a.GetSpace()
-	//if curspace.Attrs.GetInt("spaceId") == spaceId {
-	//
-	//}
+func (a *Avatar) enterSpace(spaceno int) {
+	if a.Space.Kind == spaceno {
+		return
+	}
+	gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceno)
+	a.Call(goworld.GetServiceProviders("SpaceService")[0], "EnterSpace", a.ID, spaceno)
 }
 
 func (a *Avatar) OnClientConnected() {
