@@ -371,3 +371,20 @@ func (e *Entity) GetStr(key string) string {
 func (e *Entity) GetFloat(key string) float64 {
 	return e.Attrs.GetFloat(key)
 }
+
+// Enter Space
+
+// Enter target space
+func (e *Entity) EnterSpace(spaceID EntityID) {
+	space := entityManager.get(spaceID)
+	if space != nil {
+		// space on the same server
+		space.enter(e)
+	}
+
+	e.migrateTo(spaceID)
+}
+
+// Migrate to the server of space
+func (e *Entity) migrateTo(spaceID EntityID) {
+}

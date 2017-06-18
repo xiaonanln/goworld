@@ -73,5 +73,6 @@ func (a *Avatar) OnClientDisconnected() {
 }
 
 func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
-
+	// let the avatar enter space with spaceID
+	a.EnterSpace(spaceID)
 }
