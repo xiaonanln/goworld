@@ -12,6 +12,8 @@ type ClientEntity struct {
 	owner    *ClientBot
 	TypeName string
 	ID       EntityID
+
+	Attrs map[string]interface{}
 }
 
 func newClientEntity(owner *ClientBot, typeName string, entityid EntityID) *ClientEntity {
@@ -19,6 +21,7 @@ func newClientEntity(owner *ClientBot, typeName string, entityid EntityID) *Clie
 		owner:    owner,
 		TypeName: typeName,
 		ID:       entityid,
+		Attrs:    make(map[string]interface{}),
 	}
 
 	e.OnCreated()
@@ -41,4 +44,20 @@ func (e *ClientEntity) OnCreated() {
 
 func (e *ClientEntity) CallServer(method string, args ...interface{}) {
 	e.owner.CallServer(e.ID, method, args)
+}
+
+func (e *ClientEntity) applyAttrChange(path []string, key string, val interface{}) {
+	attr := e.findAttrByPath(path)
+	attr[key] = val
+}
+
+func (entity *ClientEntity) findAttrByPath(path []string) map[string]interface{} {
+	// note that path is reversed
+	attr := entity.Attrs // root attr
+	plen := len(path)
+	for i := plen - 1; i >= 0; i-- {
+		name := path[i]
+		attr = attr[name].(map[string]interface{})
+	}
+	return attr
 }

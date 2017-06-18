@@ -50,3 +50,7 @@ func (a *Avatar) enterSpace(spaceId int) {
 	//
 	//}
 }
+
+func (a *Avatar) OnClientConnected() {
+	a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
+}

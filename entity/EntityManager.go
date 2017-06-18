@@ -142,7 +142,7 @@ func LoadEntityAnywhere(typeName string, entityID EntityID) {
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {
-	gwlog.Info("dispatcher_client.GetDispatcherClientForSend(): %v", dispatcher_client.GetDispatcherClientForSend())
+	//gwlog.Info("dispatcher_client.GetDispatcherClientForSend(): %v", dispatcher_client.GetDispatcherClientForSend())
 	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 

@@ -179,6 +179,22 @@ func (p *Packet) ReadData(msg interface{}) {
 	}
 }
 
+func (p *Packet) AppendStringList(list []string) {
+	p.AppendUint16(uint16(len(list)))
+	for _, s := range list {
+		p.AppendVarStr(s)
+	}
+}
+
+func (p *Packet) ReadStringList() []string {
+	listlen := int(p.ReadUint16())
+	list := make([]string, listlen)
+	for i := 0; i < listlen; i++ {
+		list[i] = p.ReadVarStr()
+	}
+	return list
+}
+
 func (p *Packet) GetPayloadLen() uint32 {
 	return p.payloadLen
 }

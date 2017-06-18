@@ -241,6 +241,11 @@ func (service *DispatcherService) HandleDestroyEntityOnClient(dcp *DispatcherCli
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
 
+func (service *DispatcherService) HandleNotifyAttrChangeOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+}
+
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
 	for _, dcp := range service.clients {
 		dcp.SendPacket(pkt)

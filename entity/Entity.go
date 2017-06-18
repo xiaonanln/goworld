@@ -12,7 +12,6 @@ import (
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
-	"github.com/xiaonanln/goworld/entity/attrs"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage"
 )
@@ -31,7 +30,7 @@ type Entity struct {
 	client           *GameClient
 	declaredServices StringSet
 
-	Attrs *attrs.MapAttr
+	Attrs *MapAttr
 }
 
 // Functions declared by IEntity can be override in Entity subclasses
@@ -103,7 +102,10 @@ func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.V
 
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
-	e.Attrs = attrs.NewMapAttr()
+
+	attrs := newMapAttr()
+	attrs.owner = e
+	e.Attrs = attrs
 
 	initAOI(&e.aoi)
 	e.I.OnInit()
@@ -332,4 +334,9 @@ func (e *Entity) OnClientDisconnected() {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.OnClientDisconnected: %s", e, e.client)
 	}
+}
+
+func (e *Entity) sendAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
+	path := ma.getPathFromOwner()
+	e.client.SendNotifyAttrChange(e.ID, path, key, val) // TODO: send to all client for all client attributes
 }

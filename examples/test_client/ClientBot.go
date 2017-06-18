@@ -73,7 +73,15 @@ func (bot *ClientBot) loop() {
 func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
 	_ = packet.ReadUint16()
 	_ = packet.ReadClientID()
-	if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
+	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
+		entityid := packet.ReadEntityID()
+		path := packet.ReadStringList()
+		key := packet.ReadVarStr()
+		var val interface{}
+		packet.ReadData(&val)
+		gwlog.Info("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
+		bot.applyAttrChange(entityid, path, key, val)
+	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
 		var clientData map[string]interface{}
@@ -85,7 +93,16 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		entityid := packet.ReadEntityID()
 		gwlog.Info("Destroy entity %s.%s", typeName, entityid)
 		bot.destroyEntity(typeName, entityid)
+	} else {
+		gwlog.Panicf("unknown msgtype: %v", msgtype)
 	}
+}
+func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, key string, val interface{}) {
+	if bot.entities[entityid] == nil {
+		gwlog.Warn("entity %s not found")
+	}
+	entity := bot.entities[entityid]
+	entity.applyAttrChange(path, key, val)
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID) {

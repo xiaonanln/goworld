@@ -5,6 +5,7 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 type GameClient struct {
@@ -44,5 +45,12 @@ func (client *GameClient) Call(method string, args ...interface{}) {
 	if client == nil {
 		return
 	}
+}
 
+func (client *GameClient) SendNotifyAttrChange(entityID common.EntityID, path []string, key string, val interface{}) {
+	if client == nil {
+		return
+	}
+	gwlog.Debug("%s.SendNotifyAttrChange: entityID=%s, path=%s, %s=%v", client, entityID, path, key, val)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrChangeOnClient(client.serverid, client.clientid, entityID, path, key, val)
 }
