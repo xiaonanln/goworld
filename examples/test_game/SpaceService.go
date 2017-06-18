@@ -5,6 +5,7 @@ import (
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/vacuum/ext/entity"
 )
 
 type enterSpaceReq struct {
@@ -39,12 +40,43 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	spaceId := s.spaces[kind]
 	if !spaceId.IsNil() {
 		// space already exists, tell the avatar
-		s.Call(avatarId, "OnEnterSpace", kind, spaceId)
+		s.Call(avatarId, "DoEnterSpace", kind, spaceId)
 	} else {
 		s.pendingRequests = append(s.pendingRequests, enterSpaceReq{
 			avatarId, kind,
 		})
 		// create the space
 		goworld.CreateSpaceAnywhere(kind)
+	}
+}
+
+func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID e.EntityID) {
+	gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
+	spaceID := s.spaces[loadKind]
+	if !spaceID.IsNil() {
+		// duplicate space created ... can happen, solve it later ...
+		gwlog.Panicf("duplicate space created: kind=%d, spaceID=%s", loadKind, loadSpaceID)
+	}
+
+	s.spaces[loadKind] = spaceID
+	// notify all pending requests
+	leftPendingReqs := []enterSpaceReq{}
+	satisfyingReqs := []enterSpaceReq{}
+	for _, req := range s.pendingRequests {
+		if req.kind == loadKind {
+			// this req can be satisfied
+			satisfyingReqs = append(satisfyingReqs, req)
+		} else {
+			// this req can not be satisfied
+			leftPendingReqs = append(leftPendingReqs, req)
+		}
+	}
+
+	if len(satisfyingReqs) > 0 {
+		// if some req is satisfied
+		s.pendingRequests = leftPendingReqs
+		for _, req := range satisfyingReqs {
+			s.Call(req.avatarId, "DoEnterSpace", loadKind, loadSpaceID)
+		}
 	}
 }

@@ -20,6 +20,7 @@ func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 	//}
 
 	// notify the SpaceService that it's ok
+	space.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 
 	M := 10
 	for i := 0; i < M; i++ {

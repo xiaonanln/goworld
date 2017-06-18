@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/xiaonanln/goworld"
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -69,4 +70,8 @@ func (a *Avatar) OnClientConnected() {
 
 func (a *Avatar) OnClientDisconnected() {
 	gwlog.Info("%s client disconnected", a)
+}
+
+func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
+
 }

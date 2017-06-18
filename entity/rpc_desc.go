@@ -29,7 +29,7 @@ func (rdm RpcDescMap) visit(method reflect.Method) {
 		flag |= RF_SERVER
 		rpcName = methodName[:len(methodName)-7]
 	} else if strings.HasSuffix(methodName, "_Client") {
-		flag |= (RF_SERVER + RF_OTHER_CLIENT)
+		flag |= (RF_SERVER + RF_OWN_CLIENT)
 		rpcName = methodName[:len(methodName)-7]
 	} else if strings.HasSuffix(methodName, "_AllClient") {
 		flag |= (RF_SERVER + RF_OWN_CLIENT + RF_OTHER_CLIENT)

@@ -142,7 +142,7 @@ func (gs *GameService) HandleNotifyAllServersConnected() {
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}, clientid common.ClientID) {
-	gwlog.Debug("%s.HandleCallEntityMethod: %s.%s()", gs, entityID, method)
+	gwlog.Debug("%s.HandleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	entity.OnCall(entityID, method, args, clientid)
 }
 

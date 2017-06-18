@@ -182,7 +182,7 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 	rpcDesc := e.rpcDescMap[methodName]
 	if rpcDesc == nil {
 		// rpc not found
-		gwlog.Error("%s.onCall: Method %s is not a valid RPC", e, methodName)
+		gwlog.Error("%s.onCall: Method %s is not a valid RPC, args=%v", e, methodName, args)
 		return
 	}
 
@@ -191,15 +191,14 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 		// rpc call from server
 		if rpcDesc.Flags&RF_SERVER == 0 {
 			// can not call from server
-			gwlog.Error("%s.onCall: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
-			return
+			gwlog.Panicf("%s.onCall: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 		}
 	} else {
 		isFromOwnClient := clientid == e.getClientID()
 		if rpcDesc.Flags&RF_OWN_CLIENT == 0 && isFromOwnClient {
-			gwlog.Error("%s.onCall: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
+			gwlog.Panicf("%s.onCall: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
 		} else if rpcDesc.Flags&RF_OTHER_CLIENT == 0 && !isFromOwnClient {
-			gwlog.Error("%s.onCall: Method %s can not be called from OtherClient: flags=%v", e, methodName, rpcDesc.Flags)
+			gwlog.Panicf("%s.onCall: Method %s can not be called from OtherClient: flags=%v", e, methodName, rpcDesc.Flags)
 		}
 	}
 
