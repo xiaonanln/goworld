@@ -64,3 +64,7 @@ func (a *Avatar) OnClientConnected() {
 	subattr = a.Attrs.PopMapAttr("subattr")
 	a.Attrs.Set("subattr", subattr)
 }
+
+func (a *Avatar) OnClientDisconnected() {
+	gwlog.Info("%s client disconnected", a)
+}

@@ -59,6 +59,8 @@ func (e *Entity) Destroy() {
 	}
 
 	gwlog.Info("%s.Destroy.", e)
+	e.SetClient(nil) // always set client to nil before destroy
+
 	if e.space != nil {
 		e.space.leave(e)
 	}
@@ -289,11 +291,13 @@ func (e *Entity) SetClient(client *GameClient) {
 	e.client = client
 	if oldClient != nil {
 		// send destroy entity to client
+		entityManager.onClientLoseOwner(oldClient.clientid)
 		oldClient.SendDestroyEntity(e)
 	}
 
 	if client != nil {
 		// send create entity to new client
+		entityManager.onClientSetOwner(client.clientid, e.ID)
 		client.SendCreateEntity(e)
 	}
 
@@ -322,6 +326,15 @@ func (e *Entity) GiveClientTo(other *Entity) {
 	}
 
 	other.SetClient(client)
+}
+
+func (e *Entity) notifyClientDisconnected() {
+	// called when client disconnected
+	if e.client == nil {
+		gwlog.Panic(e.client)
+	}
+	e.client = nil
+	e.I.OnClientDisconnected()
 }
 
 func (e *Entity) OnClientConnected() {

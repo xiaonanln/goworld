@@ -16,12 +16,14 @@ var (
 )
 
 type EntityManager struct {
-	entities EntityMap
+	entities      EntityMap
+	ownerOfClient map[ClientID]EntityID
 }
 
 func newEntityManager() *EntityManager {
 	return &EntityManager{
-		entities: EntityMap{},
+		entities:      EntityMap{},
+		ownerOfClient: map[ClientID]EntityID{},
 	}
 }
 
@@ -35,6 +37,24 @@ func (em *EntityManager) del(entityID EntityID) {
 
 func (em *EntityManager) get(id EntityID) *Entity {
 	return em.entities.Get(id)
+}
+
+func (em *EntityManager) onClientLoseOwner(clientid ClientID) {
+	delete(em.ownerOfClient, clientid)
+}
+
+func (em *EntityManager) onClientSetOwner(clientid ClientID, eid EntityID) {
+	em.ownerOfClient[clientid] = eid
+}
+
+func (em *EntityManager) onClientDisconnected(clientid ClientID) {
+	eid := em.ownerOfClient[clientid]
+	delete(em.ownerOfClient, clientid)
+
+	if !eid.IsNil() { // should always true
+		owner := em.entities[eid]
+		owner.notifyClientDisconnected()
+	}
 }
 
 func RegisterEntity(typeName string, entityPtr IEntity) {
@@ -139,6 +159,10 @@ func LoadEntityLocally(typeName string, entityID EntityID) {
 
 func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	loadEntityAnywhere(typeName, entityID)
+}
+
+func OnClientDisconnected(clientid ClientID) {
+	entityManager.onClientDisconnected(clientid) // pop the owner eid
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {

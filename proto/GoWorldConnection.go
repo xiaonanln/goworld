@@ -39,9 +39,16 @@ func (gwc *GoWorldConnection) SendNotifyDestroyEntity(id EntityID) error {
 	return gwc.SendPacketRelease(packet)
 }
 
-func (gwc *GoWorldConnection) SendNotifyNewClient(id ClientID) error {
+func (gwc *GoWorldConnection) SendNotifyClientConnected(id ClientID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CLIENT_CONNECTED)
+	packet.AppendClientID(id)
+	return gwc.SendPacketRelease(packet)
+}
+
+func (gwc *GoWorldConnection) SendNotifyClientDisconnected(id ClientID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_NOTIFY_CLIENT_DISCONNECTED)
 	packet.AppendClientID(id)
 	return gwc.SendPacketRelease(packet)
 }

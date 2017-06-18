@@ -9,6 +9,10 @@ const ENTITYID_LENGTH = uuid.UUID_LENGTH
 
 type EntityID string
 
+func (id EntityID) IsNil() bool {
+	return id == ""
+}
+
 func GenEntityID() EntityID {
 	return EntityID(uuid.GenUUID())
 }
@@ -24,6 +28,10 @@ type ClientID string
 
 func GenClientID() ClientID {
 	return ClientID(uuid.GenUUID())
+}
+
+func (id ClientID) IsNil() bool {
+	return id == ""
 }
 
 const CLIENTID_LENGTH = uuid.UUID_LENGTH

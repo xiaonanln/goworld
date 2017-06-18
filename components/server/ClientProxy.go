@@ -31,6 +31,8 @@ func (cp *ClientProxy) String() string {
 func (cp *ClientProxy) serve() {
 	defer func() {
 		cp.Close()
+		// tell the gate service that this client is down
+		gateService.onClientProxyClose(cp)
 		if err := recover(); err != nil && !netutil.IsConnectionClosed(err) {
 			gwlog.Error("%s error: %s", cp, err)
 		} else {

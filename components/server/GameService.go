@@ -73,6 +73,9 @@ func (gs *GameService) run() {
 				clientid := pkt.ReadClientID()
 				sid := pkt.ReadUint16()
 				gs.HandleNotifyClientConnected(clientid, sid)
+			} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
+				clientid := pkt.ReadClientID()
+				gs.HandleNotifyClientDisconnected(clientid)
 			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 				eid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
@@ -155,4 +158,10 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
 	entity.CreateEntityLocally(gs.config.BootEntity, client)
+}
+
+func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
+	gwlog.Debug("%s.HandleNotifyClientDisconnected: %s", gs, clientid)
+	// find the owner of the client, and notify lose client
+	entity.OnClientDisconnected(clientid)
 }

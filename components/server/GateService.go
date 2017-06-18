@@ -45,11 +45,22 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	gs.clientProxiesLock.Lock()
 	gs.clientProxies[cp.clientid] = cp
 	gs.clientProxiesLock.Unlock()
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyNewClient(cp.clientid)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyClientConnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.ServeTCPConnection: new client %s", gs, cp)
+		gwlog.Debug("%s.ServeTCPConnection: client %s connected", gs, cp)
 	}
 	cp.serve()
+}
+
+func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
+	gs.clientProxiesLock.Lock()
+	delete(gs.clientProxies, cp.clientid)
+	gs.clientProxiesLock.Unlock()
+
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(cp.clientid)
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("%s.onClientProxyClose: client %s disconnected", gs, cp)
+	}
 }
 
 func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {

@@ -1,22 +1,19 @@
 
-TODO: Entity Attribute Mechanism, MapAttr, ListAttr, ... Combined with Storage Save/Load
-    TODO: Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
-TODO: clear entity created by the server when the server disconnects
-    1. Do not destroy entity info when server disconnects
-    2. Reset entity infos when server reconnect, and server carries initial informations when connected
-
 TODO: Handle Game Client Disconnect and notify it's own entity
-TODO: Use SpaceService to manager all spaces
+TODO: Use SpaceService to manager all spaces (test)
 TODO: Handle Server-Reconnect in Dispatcher (easily)
 TODO: Create/Destroy entities inside/outside AOI in client
 TODO: Determine how dispatcher know the target server of client packets
 TODO: Entity transfer among spaces
+TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
+
 
 # Subsystem to be implemented
 TODO: Entity Attributes
 TODO: Example chatrooms with multiple channels: world, prof, club, ...
 
 # Future works
+TODO: ListAttr
 TODO: remove if ... else if ... else if ... else if ...
 TODO: make sure entity is destroyed if creation fails
 TODO: Entity Client Reconnect Mechianism

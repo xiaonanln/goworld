@@ -150,6 +150,15 @@ func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherCli
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 
+func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	clientid := pkt.ReadClientID() // client disconnected
+	service.RLock()
+	sid := service.targetServerOfClient[clientid] // target server of client
+	service.RUnlock()
+
+	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt) // tell the server that the client is down
+}
+
 func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	//typeName := pkt.ReadVarStr()
 	//eid := pkt.ReadEntityID()
@@ -226,7 +235,9 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 	var args []interface{}
 	pkt.ReadData(&args)
 	clientid := pkt.ReadClientID()
+	service.RLock()
 	sid := service.targetServerOfClient[clientid]
+	service.RUnlock()
 	gwlog.Info("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
@@ -234,7 +245,9 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	clientid := pkt.ReadClientID()
+	service.Lock()
 	service.targetServerOfClient[clientid] = sid
+	service.Unlock()
 	// Server <sid> is creating entity on client <clientid>, so we can safely assumes that target entity of
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
