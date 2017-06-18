@@ -52,6 +52,7 @@ func (a *Avatar) enterSpace(spaceno int) {
 }
 
 func (a *Avatar) OnClientConnected() {
+	gwlog.Info("%s.OnClientConnected: current space = %s", a, a.Space)
 	a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
 	a.Attrs.Set("testpop", 1)
 	v := a.Attrs.Pop("testpop")
@@ -63,6 +64,8 @@ func (a *Avatar) OnClientConnected() {
 	subattr.Set("b", 1)
 	subattr = a.Attrs.PopMapAttr("subattr")
 	a.Attrs.Set("subattr", subattr)
+
+	a.enterSpace(a.GetInt("spaceno"))
 }
 
 func (a *Avatar) OnClientDisconnected() {

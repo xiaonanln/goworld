@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"fmt"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -24,6 +26,14 @@ type Space struct {
 
 func init() {
 	RegisterEntity(SPACE_ENTITY_TYPE, &Space{})
+}
+
+func (space *Space) String() string {
+	if space.Kind != 0 {
+		return fmt.Sprintf("Space<%d|%s>", space.Kind, space.ID)
+	} else {
+		return "Space<nil>"
+	}
 }
 
 func (space *Space) OnInit() {
