@@ -9,6 +9,7 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -22,7 +23,7 @@ type DispatcherService struct {
 	chooseClientIndex int
 
 	entityLocs           map[common.EntityID]uint16
-	registeredServices   map[string]common.EntityID
+	registeredServices   map[string]entity.EntityIDSet
 	targetServerOfClient map[common.ClientID]uint16
 }
 
@@ -35,7 +36,7 @@ func newDispatcherService() *DispatcherService {
 		chooseClientIndex: 0,
 
 		entityLocs:           map[common.EntityID]uint16{},
-		registeredServices:   map[string]common.EntityID{},
+		registeredServices:   map[string]entity.EntityIDSet{},
 		targetServerOfClient: map[common.ClientID]uint16{},
 	}
 }
@@ -54,8 +55,8 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 	client.serve()
 }
 
-func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid uint16) {
-	gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d", service, dcp, serverid)
+func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid uint16, isReconnect bool) {
+	gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d, isReconnect=%v", service, dcp, serverid, isReconnect)
 	if serverid <= 0 {
 		gwlog.Panicf("invalid serverid: %d", serverid)
 	}
@@ -70,11 +71,17 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 			// for the first time that all servers connected to dispatcher, notify all servers
 			gwlog.Info("All servers(%d) are connected", len(service.clients))
 			service.broadcastToDispatcherClients(pkt)
-		} else {
+		} else { // dispatcher reconnected, only notify this server
 			dcp.SendPacket(pkt)
 		}
 	}
 	pkt.Release()
+
+	if olddcp != nil && !isReconnect {
+		// server was connected, but a new instance is replaced, so we need to wipe the entities on that server
+		service.cleanupEntitiesOfServer(serverid)
+	}
+
 	return
 }
 
@@ -116,28 +123,9 @@ func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProx
 	//}
 }
 
-//
-//func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *DispatcherClientProxy) {
-//	gwlog.Panic(service, dcp)
-//	service.Lock()
-//	sid := dcp.serverid
-//	if service.clients[sid] != dcp {
-//		// should never happen
-//		service.Unlock()
-//		return
-//	}
-//	service.clients[sid] = nil
-//	remove := entity.EntityIDSet{}
-//	for eid, loc := range service.entityLocs {
-//		if loc == sid {
-//			remove.Add(eid)
-//		}
-//	}
-//
-//	for eid := range remove {
-//		service.entityLocs[eid]
-//	}
-//}
+func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *DispatcherClientProxy) {
+	// nothing to do when client disconnected
+}
 
 // Entity is create on the target server
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
@@ -185,10 +173,16 @@ func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClie
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 
-func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
-	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s", service, dcp, entityID)
+func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	entityID := pkt.ReadEntityID()
+	serviceName := pkt.ReadVarStr()
+	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
 	service.Lock()
 	service.entityLocs[entityID] = dcp.serverid
+	if _, ok := service.registeredServices[serviceName]; !ok {
+		service.registeredServices[serviceName] = entity.EntityIDSet{}
+	}
+	service.registeredServices[serviceName].Add(entityID)
 	service.Unlock()
 	service.broadcastToDispatcherClients(pkt)
 	pkt.Release()
@@ -200,6 +194,15 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 	//}
 	//service.registeredServices[serviceName] = entityID
 	//dcp.SendDeclareServiceReply(entityID, serviceName, true)
+}
+
+func (service *DispatcherService) handleServiceDown(serviceName string, eid common.EntityID) {
+	pkt := netutil.NewPacket()
+	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
+	pkt.AppendEntityID(eid)
+	pkt.AppendVarStr(serviceName)
+
+	service.broadcastToDispatcherClients(pkt)
 }
 
 func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, method string) {
@@ -255,4 +258,30 @@ func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Pack
 	for _, dcp := range service.clients {
 		dcp.SendPacket(pkt)
 	}
+}
+
+func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
+	cleanEids := entity.EntityIDSet{} // get all clean eids
+	for eid, sid := range service.entityLocs {
+		if sid == targetServer {
+			cleanEids.Add(eid)
+		}
+	}
+
+	// for all services whose entity is cleaned, notify all servers that the service is down
+	undeclaredServices := common.StringSet{}
+	for serviceName, serviceEids := range service.registeredServices {
+		for serviceEid := range serviceEids {
+			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other servers
+				undeclaredServices.Add(serviceName)
+				service.handleServiceDown(serviceName, serviceEid)
+			}
+		}
+	}
+
+	for eid := range cleanEids {
+		delete(service.entityLocs, eid)
+	}
+
+	gwlog.Info("Server %d is rebooted, %d entities cleaned, undeclare services: %s", targetServer, len(cleanEids), undeclaredServices)
 }

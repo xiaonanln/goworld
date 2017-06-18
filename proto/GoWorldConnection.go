@@ -18,10 +18,11 @@ func NewGoWorldConnection(conn net.Conn) GoWorldConnection {
 	}
 }
 
-func (gwc *GoWorldConnection) SendSetServerID(id uint16) error {
+func (gwc *GoWorldConnection) SendSetServerID(id uint16, isReconnect bool) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_SERVER_ID)
 	packet.AppendUint16(id)
+	packet.AppendBool(isReconnect)
 	return gwc.SendPacketRelease(packet)
 }
 

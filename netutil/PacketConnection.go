@@ -46,6 +46,10 @@ func allocPacket() *Packet {
 	return pkt
 }
 
+func NewPacket() *Packet {
+	return allocPacket()
+}
+
 func (pc PacketConnection) NewPacket() *Packet {
 	return allocPacket()
 }

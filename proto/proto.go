@@ -13,6 +13,7 @@ const (
 	MT_NOTIFY_CREATE_ENTITY           = iota
 	MT_NOTIFY_DESTROY_ENTITY          = iota
 	MT_DECLARE_SERVICE                = iota
+	MT_UNDECLARE_SERVICE              = iota
 	MT_CALL_ENTITY_METHOD             = iota
 	MT_CREATE_ENTITY_ANYWHERE         = iota
 	MT_LOAD_ENTITY_ANYWHERE           = iota

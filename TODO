@@ -1,8 +1,11 @@
 
 TODO: Entity Attribute Mechanism, MapAttr, ListAttr, ... Combined with Storage Save/Load
-    TODO: Remove Key in Attrs and sync to client
     TODO: Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 TODO: clear entity created by the server when the server disconnects
+    1. Do not destroy entity info when server disconnects
+    2. Reset entity infos when server reconnect, and server carries initial informations when connected
+
+TODO: Handle Game Client Disconnect and notify it's own entity
 TODO: Use SpaceService to manager all spaces
 TODO: Handle Server-Reconnect in Dispatcher (easily)
 TODO: Create/Destroy entities inside/outside AOI in client

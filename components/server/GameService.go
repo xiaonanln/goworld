@@ -84,6 +84,10 @@ func (gs *GameService) run() {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
 				gs.HandleDeclareService(eid, serviceName)
+			} else if msgtype == proto.MT_UNDECLARE_SERVICE {
+				eid := pkt.ReadEntityID()
+				serviceName := pkt.ReadVarStr()
+				gs.HandleUndeclareService(eid, serviceName)
 			} else if msgtype == proto.MT_NOTIFY_ALL_SERVERS_CONNECTED {
 				gs.HandleNotifyAllServersConnected()
 			} else {
@@ -124,6 +128,15 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 		gs.registeredServices[serviceName] = eids
 	}
 	eids.Add(entityID)
+}
+
+func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
+	// tell the entity that it is registered successfully
+	gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
+	eids, ok := gs.registeredServices[serviceName]
+	if ok {
+		eids.Del(entityID)
+	}
 }
 
 func (gs *GameService) HandleNotifyAllServersConnected() {

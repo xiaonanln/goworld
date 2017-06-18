@@ -21,6 +21,8 @@ const (
 )
 
 var (
+	serverid                  uint16
+	isReconnect               = false
 	_dispatcherClient         *DispatcherClient // DO NOT access it directly
 	dispatcherClientDelegate  IDispatcherClientDelegate
 	errDispatcherNotConnected = errors.New("dispatcher not connected")
@@ -47,8 +49,10 @@ func assureConnectedDispatcherClient() *DispatcherClient {
 			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
-		setDispatcherClient(dispatcherClient)
+		dispatcherClient.SendSetServerID(serverid, isReconnect)
+		isReconnect = true
 		dispatcherClientDelegate.OnDispatcherClientConnect()
+		setDispatcherClient(dispatcherClient)
 
 		gwlog.Info("dispatcher_client: connected to dispatcher: %s", dispatcherClient)
 	}
@@ -72,7 +76,8 @@ type IDispatcherClientDelegate interface {
 	//HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }
 
-func Initialize(delegate IDispatcherClientDelegate) {
+func Initialize(_serverid uint16, delegate IDispatcherClientDelegate) {
+	serverid = _serverid
 	dispatcherClientDelegate = delegate
 
 	assureConnectedDispatcherClient()

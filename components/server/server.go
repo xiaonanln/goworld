@@ -40,7 +40,7 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
-	dispatcher_client.Initialize(&dispatcherClientDelegate{})
+	dispatcher_client.Initialize(serverid, &dispatcherClientDelegate{})
 	entity.CreateSpaceLocally() // create to be the nil space
 
 	gateService = newGateService()
@@ -58,7 +58,7 @@ type dispatcherClientDelegate struct {
 }
 
 func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
-	dispatcher_client.GetDispatcherClientForSend().SendSetServerID(serverid)
+	// called when connected / reconnected to dispatcher (not in main routine)
 
 }
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {

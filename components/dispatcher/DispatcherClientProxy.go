@@ -28,7 +28,7 @@ func (dcp *DispatcherClientProxy) serve() {
 	// Serve the dispatcher client from server / gate
 	defer func() {
 		dcp.Close()
-		//dcp.owner.HandleDispatcherClientDisconnect(dcp)
+		dcp.owner.HandleDispatcherClientDisconnect(dcp)
 		err := recover()
 		if err != nil && !netutil.IsConnectionClosed(err) {
 			gwlog.Error("Client %s paniced with error: %v", dcp, err)
@@ -74,12 +74,12 @@ func (dcp *DispatcherClientProxy) serve() {
 		} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
-			eid := pkt.ReadEntityID()
-			dcp.owner.HandleDeclareService(dcp, pkt, eid)
+			dcp.owner.HandleDeclareService(dcp, pkt)
 		} else if msgtype == proto.MT_SET_SERVER_ID {
 			serverid := pkt.ReadUint16()
+			isReconnect := pkt.ReadBool()
 			dcp.serverid = serverid
-			dcp.owner.HandleSetServerID(dcp, pkt, serverid)
+			dcp.owner.HandleSetServerID(dcp, pkt, serverid, isReconnect)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 		}
