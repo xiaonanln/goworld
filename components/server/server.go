@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
@@ -40,18 +39,14 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
-	dispatcher_client.Initialize(serverid, &dispatcherClientDelegate{})
 	entity.CreateSpaceLocally(0) // create to be the nil space
+	dispatcher_client.Initialize(serverid, &dispatcherClientDelegate{})
 
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine
 
 	gameService = newGameService(serverid, delegate)
 	gameService.run()
-}
-
-func GetServiceProviders(serviceName string) []common.EntityID {
-	return gameService.registeredServices[serviceName].ToList()
 }
 
 type dispatcherClientDelegate struct {

@@ -22,9 +22,8 @@ func (a *Avatar) OnCreated() {
 
 	a.setDefaultAttrs()
 
-	onlineServiceEid := goworld.GetServiceProviders("OnlineService")[0]
-	gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
-	a.Call(onlineServiceEid, "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
+	//gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
+	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 }
 
 func (a *Avatar) setDefaultAttrs() {
@@ -48,7 +47,7 @@ func (a *Avatar) enterSpace(spaceno int) {
 		return
 	}
 	gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceno)
-	a.Call(goworld.GetServiceProviders("SpaceService")[0], "EnterSpace", a.ID, spaceno)
+	a.CallService("SpaceService", "EnterSpace", a.ID, spaceno)
 }
 
 func (a *Avatar) OnClientConnected() {

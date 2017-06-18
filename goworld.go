@@ -47,8 +47,8 @@ func SetSpaceDelegate(delegate entity.ISpaceDelegate) {
 	entity.SetSpaceDelegate(delegate)
 }
 
-func GetServiceProviders(serviceName string) []EntityID {
-	return server.GetServiceProviders(serviceName)
+func GetServiceProviders(serviceName string) entity.EntityIDSet {
+	return entity.GetServiceProviders(serviceName)
 }
 
 // Get all saved entity ids in storage, may take long time and block the main routine

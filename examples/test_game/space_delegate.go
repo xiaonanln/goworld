@@ -19,6 +19,8 @@ func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 	//	space.CreateEntity("Avatar")
 	//}
 
+	// notify the SpaceService that it's ok
+
 	M := 10
 	for i := 0; i < M; i++ {
 		space.CreateEntity("Monster")

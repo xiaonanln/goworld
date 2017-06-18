@@ -23,10 +23,10 @@ type packetQueueItem struct { // packet queue from dispatcher client
 }
 
 type GameService struct {
-	config             *config.ServerConfig
-	id                 uint16
-	serverDelegate     IServerDelegate
-	registeredServices map[string]entity.EntityIDSet
+	config         *config.ServerConfig
+	id             uint16
+	serverDelegate IServerDelegate
+	//registeredServices map[string]entity.EntityIDSet
 
 	packetQueue           chan packetQueueItem
 	isAllServersConnected bool
@@ -34,10 +34,10 @@ type GameService struct {
 
 func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
 	return &GameService{
-		id:                 serverid,
-		serverDelegate:     delegate,
-		registeredServices: map[string]entity.EntityIDSet{},
-		packetQueue:        make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
+		id:             serverid,
+		serverDelegate: delegate,
+		//registeredServices: map[string]entity.EntityIDSet{},
+		packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 	}
 }
 
@@ -127,21 +127,13 @@ func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common
 func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	gwlog.Debug("%s.HandleDeclareService: %s declares %s", gs, entityID, serviceName)
-	eids, ok := gs.registeredServices[serviceName]
-	if !ok {
-		eids = entity.EntityIDSet{}
-		gs.registeredServices[serviceName] = eids
-	}
-	eids.Add(entityID)
+	entity.OnDeclareService(serviceName, entityID)
 }
 
 func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
-	eids, ok := gs.registeredServices[serviceName]
-	if ok {
-		eids.Del(entityID)
-	}
+	entity.OnUndeclareService(serviceName, entityID)
 }
 
 func (gs *GameService) HandleNotifyAllServersConnected() {

@@ -3,6 +3,8 @@ package entity
 import (
 	"reflect"
 
+	"math/rand"
+
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -16,14 +18,16 @@ var (
 )
 
 type EntityManager struct {
-	entities      EntityMap
-	ownerOfClient map[ClientID]EntityID
+	entities           EntityMap
+	ownerOfClient      map[ClientID]EntityID
+	registeredServices map[string]EntityIDSet
 }
 
 func newEntityManager() *EntityManager {
 	return &EntityManager{
-		entities:      EntityMap{},
-		ownerOfClient: map[ClientID]EntityID{},
+		entities:           EntityMap{},
+		ownerOfClient:      map[ClientID]EntityID{},
+		registeredServices: map[string]EntityIDSet{},
 	}
 }
 
@@ -55,6 +59,39 @@ func (em *EntityManager) onClientDisconnected(clientid ClientID) {
 		owner := em.entities[eid]
 		owner.notifyClientDisconnected()
 	}
+}
+
+func (em *EntityManager) onDeclareService(serviceName string, eid EntityID) {
+	eids, ok := em.registeredServices[serviceName]
+	if !ok {
+		eids = EntityIDSet{}
+		em.registeredServices[serviceName] = eids
+	}
+	eids.Add(eid)
+}
+
+func (em *EntityManager) onUndeclareService(serviceName string, eid EntityID) {
+	eids, ok := em.registeredServices[serviceName]
+	if ok {
+		eids.Del(eid)
+	}
+}
+
+func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
+	// choose one entity ID of service providers randomly
+	eids, ok := em.registeredServices[serviceName]
+	if !ok {
+		gwlog.Panicf("service not found: %s", serviceName)
+	}
+
+	r := rand.Intn(len(eids)) // get a random one
+	for eid := range eids {
+		if r == 0 {
+			return eid
+		}
+		r -= 1
+	}
+	return "" // never goes here
 }
 
 func RegisterEntity(typeName string, entityPtr IEntity) {
@@ -163,6 +200,18 @@ func LoadEntityAnywhere(typeName string, entityID EntityID) {
 
 func OnClientDisconnected(clientid ClientID) {
 	entityManager.onClientDisconnected(clientid) // pop the owner eid
+}
+
+func OnDeclareService(serviceName string, entityid EntityID) {
+	entityManager.onDeclareService(serviceName, entityid)
+}
+
+func OnUndeclareService(serviceName string, entityid EntityID) {
+	entityManager.onUndeclareService(serviceName, entityid)
+}
+
+func GetServiceProviders(serviceName string) EntityIDSet {
+	return entityManager.registeredServices[serviceName]
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {

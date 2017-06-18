@@ -166,6 +166,11 @@ func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
 	callRemote(id, method, args)
 }
 
+func (e *Entity) CallService(serviceName string, method string, args ...interface{}) {
+	serviceEid := entityManager.chooseServiceProvider(serviceName)
+	callRemote(serviceEid, method, args)
+}
+
 func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
