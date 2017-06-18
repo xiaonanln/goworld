@@ -338,5 +338,10 @@ func (e *Entity) OnClientDisconnected() {
 
 func (e *Entity) sendAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
 	path := ma.getPathFromOwner()
-	e.client.SendNotifyAttrChange(e.ID, path, key, val) // TODO: send to all client for all client attributes
+	e.client.SendNotifyAttrChange(e.ID, path, key, val)
+}
+
+func (e *Entity) sendAttrDelToClients(ma *MapAttr, key string) {
+	path := ma.getPathFromOwner()
+	e.client.SendNotifyAttrDel(e.ID, path, key)
 }

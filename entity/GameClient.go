@@ -54,3 +54,11 @@ func (client *GameClient) SendNotifyAttrChange(entityID common.EntityID, path []
 	gwlog.Debug("%s.SendNotifyAttrChange: entityID=%s, path=%s, %s=%v", client, entityID, path, key, val)
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrChangeOnClient(client.serverid, client.clientid, entityID, path, key, val)
 }
+
+func (client *GameClient) SendNotifyAttrDel(entityID common.EntityID, path []string, key string) {
+	if client == nil {
+		return
+	}
+	gwlog.Debug("%s.SendNotifyAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelnClient(client.serverid, client.clientid, entityID, path, key)
+}

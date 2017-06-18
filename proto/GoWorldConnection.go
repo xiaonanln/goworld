@@ -119,6 +119,17 @@ func (gwc *GoWorldConnection) SendNotifyAttrChangeOnClient(sid uint16, clientid 
 	return gwc.SendPacketRelease(packet)
 }
 
+func (gwc *GoWorldConnection) SendNotifyAttrDelnClient(sid uint16, clientid ClientID, entityid EntityID, path []string, key string) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_NOTIFY_ATTR_DEL_ON_CLIENT)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendEntityID(entityid)
+	packet.AppendStringList(path)
+	packet.AppendVarStr(key)
+	return gwc.SendPacketRelease(packet)
+}
+
 //func (gwc *GoWorldConnection) SendDeclareServiceReply(id EntityID, serviceName string, success bool) error {
 //	packet := gwc.packetConn.NewPacket()
 //	packet.AppendUint16(MT_DECLARE_SERVICE_REPLY)

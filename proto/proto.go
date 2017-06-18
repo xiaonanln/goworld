@@ -26,6 +26,7 @@ const ( // Message types that should be handled by GateService
 	MT_CREATE_ENTITY_ON_CLIENT      = 1000 + iota
 	MT_DESTROY_ENTITY_ON_CLIENT     = 1000 + iota
 	MT_NOTIFY_ATTR_CHANGE_ON_CLIENT = 1000 + iota
+	MT_NOTIFY_ATTR_DEL_ON_CLIENT    = 1000 + iota
 )
 
 //const ( // Message types that can be received from client

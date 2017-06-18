@@ -53,4 +53,7 @@ func (a *Avatar) enterSpace(spaceId int) {
 
 func (a *Avatar) OnClientConnected() {
 	a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
+	a.Attrs.Set("testpop", 1)
+	v := a.Attrs.Pop("testpop")
+	gwlog.Info("Avatar pop testpop => %v", v)
 }

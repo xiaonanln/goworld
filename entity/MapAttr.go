@@ -37,9 +37,9 @@ func (ma *MapAttr) Set(key string, val interface{}) {
 		subma.owner = ma.owner
 		subma.pkey = key
 
-		ma.sendAttrChangeToClient(key, subma.ToMap())
+		ma.sendAttrChangeToClients(key, subma.ToMap())
 	} else {
-		ma.sendAttrChangeToClient(key, val)
+		ma.sendAttrChangeToClients(key, val)
 	}
 }
 func (ma *MapAttr) SetDefault(key string, val interface{}) {
@@ -48,11 +48,18 @@ func (ma *MapAttr) SetDefault(key string, val interface{}) {
 	}
 }
 
-func (ma *MapAttr) sendAttrChangeToClient(key string, val interface{}) {
+func (ma *MapAttr) sendAttrChangeToClients(key string, val interface{}) {
 	owner := ma.getOwner()
 	if owner != nil {
 		// send the change to owner's client
 		owner.sendAttrChangeToClients(ma, key, val)
+	}
+}
+
+func (ma *MapAttr) sendAttrDelToClients(key string) {
+	owner := ma.getOwner()
+	if owner != nil {
+		owner.sendAttrDelToClients(ma, key)
 	}
 }
 
@@ -113,6 +120,28 @@ func (ma *MapAttr) GetBool(key string) bool {
 func (ma *MapAttr) GetMapAttr(key string) *MapAttr {
 	val := ma.Get(key)
 	return val.(*MapAttr)
+}
+
+// Delete a key in attrs
+func (ma *MapAttr) Pop(key string) interface{} {
+	val, ok := ma.attrs[key]
+	if !ok {
+		gwlog.Panicf("key not exists: %s", key)
+	}
+
+	delete(ma.attrs, key)
+	if subma, ok := val.(*MapAttr); ok {
+		subma.parent = nil // clear parent and owner when attribute is poped
+		subma.pkey = ""
+		subma.owner = nil
+	}
+
+	ma.sendAttrDelToClients(key)
+	return val
+}
+
+func (ma *MapAttr) Del(key string) {
+	ma.Pop(key)
 }
 
 func (ma *MapAttr) GetKeys() []string {

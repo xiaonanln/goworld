@@ -81,6 +81,12 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		packet.ReadData(&val)
 		gwlog.Info("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
 		bot.applyAttrChange(entityid, path, key, val)
+	} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
+		entityid := packet.ReadEntityID()
+		path := packet.ReadStringList()
+		key := packet.ReadVarStr()
+		gwlog.Info("Entity %s Attribute %v deleted %s", entityid, path, key)
+		bot.applyAttrDel(entityid, path, key)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
@@ -103,6 +109,14 @@ func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, k
 	}
 	entity := bot.entities[entityid]
 	entity.applyAttrChange(path, key, val)
+}
+
+func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key string) {
+	if bot.entities[entityid] == nil {
+		gwlog.Warn("entity %s not found")
+	}
+	entity := bot.entities[entityid]
+	entity.applyAttrDel(path, key)
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID) {
