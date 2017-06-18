@@ -1,6 +1,9 @@
 package entity
 
-import "github.com/xiaonanln/goworld/gwlog"
+import (
+	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/typeconv"
+)
 
 type MapAttr struct {
 	owner  *Entity
@@ -77,27 +80,19 @@ func (ma *MapAttr) Get(key string) interface{} {
 	return val
 }
 
-func (ma *MapAttr) GetInt(key string) (iv int) {
+func (ma *MapAttr) GetInt(key string) int {
 	val := ma.Get(key)
-	defer func() {
-		recover()
-		if i64, ok := val.(int64); ok {
-			iv = int(i64)
-			ma.attrs[key] = iv // fall back to int
-			return
-		}
+	return int(typeconv.Int(val))
+}
 
-		if f, ok := val.(float64); ok {
-			iv = int(f)
-			ma.attrs[key] = iv // fall back to int
-			return
-		}
+func (ma *MapAttr) GetInt64(key string) int64 {
+	val := ma.Get(key)
+	return typeconv.Int(val)
+}
 
-		iv = val.(int) // will panic here
-	}()
-
-	iv = val.(int)
-	return
+func (ma *MapAttr) GetUint64(key string) uint64 {
+	val := ma.Get(key)
+	return uint64(typeconv.Int(val))
 }
 
 func (ma *MapAttr) GetStr(key string) string {
