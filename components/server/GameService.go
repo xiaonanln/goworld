@@ -69,6 +69,8 @@ func (gs *GameService) run() {
 				var args []interface{}
 				pkt.ReadData(&args)
 				gs.HandleCallEntityMethod(eid, method, args, "")
+			} else if msgtype == proto.MT_MIGRATE_REQUEST { // migrate request sent to dispatcher is sent back
+				gs.HandleMigrateRequestAck(pkt)
 			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 				clientid := pkt.ReadClientID()
 				sid := pkt.ReadUint16()
@@ -115,14 +117,14 @@ func (gs *GameService) String() string {
 }
 
 func (gs *GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
 	}
 	entity.CreateEntityLocally(typeName, data, nil)
 }
 
 func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
 	}
 	entity.LoadEntityLocally(typeName, entityID)
@@ -130,7 +132,7 @@ func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common
 
 func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDeclareService: %s declares %s", gs, entityID, serviceName)
 	}
 	entity.OnDeclareService(serviceName, entityID)
@@ -138,7 +140,7 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 
 func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
 	}
 	entity.OnUndeclareService(serviceName, entityID)
@@ -150,7 +152,7 @@ func (gs *GameService) HandleNotifyAllServersConnected() {
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}, clientid common.ClientID) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	}
 	entity.OnCall(entityID, method, args, clientid)
@@ -158,7 +160,7 @@ func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method s
 
 func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid uint16) {
 	client := entity.MakeGameClient(clientid, sid)
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
 	}
 
@@ -167,9 +169,22 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid
 }
 
 func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyClientDisconnected: %s", gs, clientid)
 	}
 	// find the owner of the client, and notify lose client
 	entity.OnClientDisconnected(clientid)
+}
+
+func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
+	eid := pkt.ReadEntityID()
+	spaceid := pkt.ReadEntityID()
+	spaceLoc := pkt.ReadUint16()
+
+	if consts.DEBUG_PACKETS {
+		gwlog.Debug("Entity %s is migrating to space %s at server %d", eid, spaceid, spaceLoc)
+	}
+
+	// TODO: handle when spaceLoc == 0, which indicates space already destroyed
+	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)
 }

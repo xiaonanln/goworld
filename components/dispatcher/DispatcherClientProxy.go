@@ -31,7 +31,7 @@ func (dcp *DispatcherClientProxy) serve() {
 		dcp.owner.HandleDispatcherClientDisconnect(dcp)
 		err := recover()
 		if err != nil && !netutil.IsConnectionClosed(err) {
-			gwlog.Error("Client %s paniced with error: %v", dcp, err)
+			gwlog.TraceError("Client %s paniced with error: %v", dcp, err)
 		}
 	}()
 
@@ -61,6 +61,8 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleNotifyAttrDelOnClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
+		} else if msgtype == proto.MT_MIGRATE_REQUEST {
+			dcp.owner.HandleMigrateRequest(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {

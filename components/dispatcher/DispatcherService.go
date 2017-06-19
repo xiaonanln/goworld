@@ -7,13 +7,15 @@ import (
 
 	"sync"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/goworld/consts"
 )
 
 type DispatcherService struct {
@@ -24,6 +26,7 @@ type DispatcherService struct {
 	chooseClientIndex int
 
 	entityLocs           map[common.EntityID]uint16
+	entityMigrateTime    map[common.EntityID]int64
 	registeredServices   map[string]entity.EntityIDSet
 	targetServerOfClient map[common.ClientID]uint16
 }
@@ -37,6 +40,7 @@ func newDispatcherService() *DispatcherService {
 		chooseClientIndex: 0,
 
 		entityLocs:           map[common.EntityID]uint16{},
+		entityMigrateTime:    map[common.EntityID]int64{},
 		registeredServices:   map[string]entity.EntityIDSet{},
 		targetServerOfClient: map[common.ClientID]uint16{},
 	}
@@ -57,7 +61,7 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 }
 
 func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid uint16, isReconnect bool) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d, isReconnect=%v", service, dcp, serverid, isReconnect)
 	}
 	if serverid <= 0 {
@@ -132,7 +136,7 @@ func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *Dispatch
 
 // Entity is create on the target server
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
 	service.Lock()
@@ -142,7 +146,7 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 }
 
 func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
 	service.Lock()
@@ -169,7 +173,7 @@ func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *Dispatcher
 func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	//typeName := pkt.ReadVarStr()
 	//eid := pkt.ReadEntityID()
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
 	}
 	eid := pkt.ReadEntityID() // field 1
@@ -187,7 +191,7 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 }
 
 func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
@@ -196,7 +200,7 @@ func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClie
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
 	serviceName := pkt.ReadVarStr()
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
 	}
 	service.Lock()
@@ -253,7 +257,9 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 	service.RLock()
 	sid := service.targetServerOfClient[clientid]
 	service.RUnlock()
-	gwlog.Info("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
+	if consts.DEBUG_PACKETS {
+		gwlog.Debug("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
+	}
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
 
@@ -280,6 +286,21 @@ func (service *DispatcherService) HandleNotifyAttrChangeOnClient(dcp *Dispatcher
 func (service *DispatcherService) HandleNotifyAttrDelOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+}
+
+func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	entityID := pkt.ReadEntityID()
+	spaceID := pkt.ReadEntityID() // TODO: no need spaceID?
+	if consts.DEBUG_PACKETS {
+		gwlog.Debug("Entity %s is migrating to space %s", entityID, spaceID)
+	}
+	// mark the entity as migrating
+	service.Lock()
+	spaceLoc := service.entityLocs[spaceID]
+	service.entityMigrateTime[entityID] = time.Now().Unix() // TODO: handle multiple duplicate request?
+	service.Unlock()
+	pkt.AppendUint16(spaceLoc)
+	dcp.SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {

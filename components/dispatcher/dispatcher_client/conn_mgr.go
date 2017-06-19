@@ -97,7 +97,7 @@ func serveDispatcherClient() {
 		var msgtype proto.MsgType_t
 		pkt, err := dispatcherClient.Recv(&msgtype)
 		if err != nil {
-			gwlog.Error("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
+			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
 			setDispatcherClient(nil)
 			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)

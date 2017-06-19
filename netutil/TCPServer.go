@@ -2,7 +2,6 @@ package netutil
 
 import (
 	"net"
-	"runtime/debug"
 	"time"
 
 	"github.com/xiaonanln/goworld/gwlog"
@@ -27,8 +26,7 @@ func ServeTCPForever(listenAddr string, delegate TCPServerDelegate) {
 func serveTCPForeverOnce(listenAddr string, delegate TCPServerDelegate) error {
 	defer func() {
 		if err := recover(); err != nil {
-			gwlog.Error("serveTCPImpl: paniced with error %s", err)
-			debug.PrintStack()
+			gwlog.TraceError("serveTCPImpl: paniced with error %s", err)
 		}
 	}()
 

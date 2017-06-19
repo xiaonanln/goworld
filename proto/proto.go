@@ -21,6 +21,10 @@ const (
 	MT_NOTIFY_CLIENT_DISCONNECTED     = iota
 	MT_CALL_ENTITY_METHOD_FROM_CLIENT = iota
 	MT_NOTIFY_ALL_SERVERS_CONNECTED   = iota
+
+	// Message types for migrating
+	MT_MIGRATE_REQUEST = iota
+	MT_REAL_MIGRATE    = iota
 )
 
 const ( // Message types that should be handled by GateService

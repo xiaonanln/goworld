@@ -139,6 +139,23 @@ func (gwc *GoWorldConnection) SendNotifyAttrDelnClient(sid uint16, clientid Clie
 	return gwc.SendPacketRelease(packet)
 }
 
+func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_MIGRATE_REQUEST)
+	packet.AppendEntityID(entityID)
+	packet.AppendEntityID(spaceID)
+	return gwc.SendPacketRelease(packet)
+}
+
+func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, typeName string, migrateData map[string]interface{}) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_REAL_MIGRATE)
+	packet.AppendEntityID(eid)
+	packet.AppendVarStr(typeName)
+	packet.AppendData(migrateData)
+	return gwc.SendPacketRelease(packet)
+}
+
 //func (gwc *GoWorldConnection) SendDeclareServiceReply(id EntityID, serviceName string, success bool) error {
 //	packet := gwc.packetConn.NewPacket()
 //	packet.AppendUint16(MT_DECLARE_SERVICE_REPLY)

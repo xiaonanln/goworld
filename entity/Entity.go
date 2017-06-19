@@ -59,21 +59,22 @@ func (e *Entity) Destroy() {
 	}
 
 	gwlog.Info("%s.Destroy.", e)
-	e.SetClient(nil) // always set client to nil before destroy
-
-	if e.Space != nil {
-		e.Space.leave(e)
-	}
-	e.clearTimers()
-	if e.isCrossServerCallable() {
-		dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
-	}
-
-	defer func() { // make sure always run after OnDestroy
-		entityManager.del(e.ID)
-		e.destroyed = true
+	defer func() {
+		e.SetClient(nil) // always set client to nil before destroy
+		if e.isCrossServerCallable() {
+			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
+		}
+		e.destroyEntity()
 	}()
+
 	e.I.OnDestroy()
+}
+
+func (e *Entity) destroyEntity() {
+	e.Space.leave(e)
+	e.clearTimers()
+	entityManager.del(e.ID)
+	e.destroyed = true
 }
 
 func (e *Entity) IsDestroyed() bool {
@@ -262,7 +263,11 @@ func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 }
 
 func (e *Entity) getClientData() map[string]interface{} {
-	return e.Attrs.ToMap()
+	return e.Attrs.ToMap() // TODO: only returns client data
+}
+
+func (e *Entity) getMigrateData() map[string]interface{} {
+	return e.Attrs.ToMap() // TODO: return all data (client, all_client, server, etc)
 }
 
 func (e *Entity) isCrossServerCallable() bool {
@@ -384,10 +389,31 @@ func (e *Entity) EnterSpace(spaceID EntityID) {
 	//	return
 	//}
 
-	e.migrateTo(spaceID)
+	e.requestMigrateTo(spaceID)
 }
 
 // Migrate to the server of space
-func (e *Entity) migrateTo(spaceID EntityID) {
-	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(e.ID)
+func (e *Entity) requestMigrateTo(spaceID EntityID) {
+	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
+}
+
+func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
+	entity := entityManager.get(entityID)
+	if entity == nil {
+		// entity might already be destroyed, TODO cancel migrate
+		return
+	}
+
+	if entity == nil {
+		// entity already destroyed, migrate should cancel TODO: need send cancel migrate to dispatcher?
+		return
+	}
+
+	entity.realMigrateTo(spaceID, spaceLoc)
+}
+
+func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
+	migrateData := e.getMigrateData()
+	e.destroyEntity() // disable the entity
+	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, e.TypeName, migrateData)
 }
