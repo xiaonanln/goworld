@@ -63,6 +63,8 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {
 			dcp.owner.HandleMigrateRequest(dcp, pkt)
+		} else if msgtype == proto.MT_REAL_MIGRATE {
+			dcp.owner.HandleRealMigrate(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {

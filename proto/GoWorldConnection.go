@@ -147,10 +147,12 @@ func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID Enti
 	return gwc.SendPacketRelease(packet)
 }
 
-func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, typeName string, migrateData map[string]interface{}) error {
+func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16, targetSpace EntityID, typeName string, migrateData map[string]interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)
+	packet.AppendUint16(targetServer)
+	packet.AppendEntityID(targetSpace)
 	packet.AppendVarStr(typeName)
 	packet.AppendData(migrateData)
 	return gwc.SendPacketRelease(packet)

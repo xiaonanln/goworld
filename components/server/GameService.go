@@ -71,6 +71,8 @@ func (gs *GameService) run() {
 				gs.HandleCallEntityMethod(eid, method, args, "")
 			} else if msgtype == proto.MT_MIGRATE_REQUEST { // migrate request sent to dispatcher is sent back
 				gs.HandleMigrateRequestAck(pkt)
+			} else if msgtype == proto.MT_REAL_MIGRATE {
+				gs.HandleRealMigrate(pkt)
 			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 				clientid := pkt.ReadClientID()
 				sid := pkt.ReadUint16()
@@ -187,4 +189,19 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 
 	// TODO: handle when spaceLoc == 0, which indicates space already destroyed
 	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)
+}
+
+func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
+	eid := pkt.ReadEntityID()
+	_ = pkt.ReadUint16()          // targetServer is not userful
+	spaceID := pkt.ReadEntityID() // target space
+	typeName := pkt.ReadVarStr()
+	var migrateData map[string]interface{}
+	pkt.ReadData(&migrateData)
+
+	if consts.DEBUG_PACKETS {
+		gwlog.Debug("%s.HandleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v", gs, eid, spaceID, typeName, migrateData)
+	}
+
+	entity.OnRealMigrate(eid, spaceID, typeName, migrateData)
 }

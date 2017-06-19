@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -52,6 +53,7 @@ func (space *Space) OnCreated() {
 		return
 	}
 
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	gwlog.Debug("%s.OnCreated", space)
 	space.Post(func() {
 		spaceDelegate.OnSpaceCreated(space)
@@ -67,7 +69,7 @@ func (space *Space) IsNil() bool {
 }
 
 func (space *Space) CreateEntity(typeName string) {
-	createEntity(typeName, space, "", nil, nil)
+	createEntity(typeName, space, "", nil, nil, false)
 }
 
 func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
@@ -99,7 +101,7 @@ func (space *Space) enter(entity *Entity) {
 
 func (space *Space) leave(entity *Entity) {
 	if entity.Space != space {
-		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
+		gwlog.Panicf("%s.leave(%s): e is not in this Space", space, entity)
 	}
 
 	if space.IsNil() { // leave from nil space do nothing

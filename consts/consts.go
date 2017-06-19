@@ -15,8 +15,9 @@ const (
 
 // Debug Options
 const (
-	DEBUG_PACKETS   = false
+	DEBUG_PACKETS   = true
 	DEBUG_SPACES    = true
 	DEBUG_SAVE_LOAD = true
 	DEBUG_CLIENTS   = true
+	DEBUG_MIGRATE   = true
 )

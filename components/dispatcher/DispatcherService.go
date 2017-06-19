@@ -299,8 +299,25 @@ func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProx
 	spaceLoc := service.entityLocs[spaceID]
 	service.entityMigrateTime[entityID] = time.Now().Unix() // TODO: handle multiple duplicate request?
 	service.Unlock()
+	if spaceLoc == 0 {
+		gwlog.Panic(spaceID, spaceLoc)
+	}
 	pkt.AppendUint16(spaceLoc)
 	dcp.SendPacketRelease(pkt)
+}
+
+func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	// get spaceID and make sure it exists
+	eid := pkt.ReadEntityID()
+	targetServer := pkt.ReadUint16() // target server of migration
+	// target space is not checked for existence, because we relay the packet anyway
+	// mark the eid as migrating done
+	service.Lock()
+	service.entityMigrateTime[eid] = 0 // mark the entity as NOT migrating
+	service.entityLocs[eid] = targetServer
+	service.Unlock()
+
+	service.dispatcherClientOfServer(targetServer).SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {

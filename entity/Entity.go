@@ -9,6 +9,8 @@ import (
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/typeconv"
 
+	"unsafe"
+
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
@@ -39,6 +41,9 @@ type IEntity interface {
 	OnInit()
 	OnCreated()
 	OnDestroy()
+	// Migration
+	OnMigrateOut()
+	OnMigrateIn()
 	// Space Operations
 	OnEnterSpace()
 	OnLeaveSpace(space *Space)
@@ -58,15 +63,12 @@ func (e *Entity) Destroy() {
 		return
 	}
 
-	gwlog.Info("%s.Destroy.", e)
-	defer func() {
-		e.SetClient(nil) // always set client to nil before destroy
-		if e.isCrossServerCallable() {
-			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
-		}
-		e.destroyEntity()
-	}()
-
+	gwlog.Info("%s.Destroy ...", e)
+	e.SetClient(nil) // always set client to nil before destroy
+	if e.isCrossServerCallable() {
+		dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
+	}
+	e.destroyEntity()
 	e.I.OnDestroy()
 }
 
@@ -95,6 +97,19 @@ func (e *Entity) Save() {
 	storage.Save(e.TypeName, e.ID, data)
 }
 
+func (e *Entity) IsSpaceEntity() bool {
+	return e.TypeName == SPACE_ENTITY_TYPE
+}
+
+// Convert entity to space (only works for space entity)
+func (e *Entity) ToSpace() *Space {
+	if !e.IsSpaceEntity() {
+		gwlog.Panicf("%s is not a space", e)
+	}
+
+	return (*Space)(unsafe.Pointer(e))
+}
+
 func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.Value) {
 	e.ID = entityID
 	e.IV = entityPtrVal
@@ -119,7 +134,7 @@ func (e *Entity) setupSaveTimer() {
 	e.AddTimer(consts.SAVE_INTERVAL, e.Save)
 }
 
-// Space Operations related to entity
+// Space Operations related to e
 
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
@@ -271,7 +286,16 @@ func (e *Entity) getMigrateData() map[string]interface{} {
 }
 
 func (e *Entity) isCrossServerCallable() bool {
-	return e.IsPersistent() || len(e.declaredServices) > 0
+	if e.IsPersistent() {
+		return true
+	}
+	if e.IsSpaceEntity() && !e.ToSpace().IsNil() {
+		return true
+	}
+	if len(e.declaredServices) > 0 {
+		return true
+	}
+	return false
 }
 
 // Client related utilities
@@ -295,13 +319,13 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	e.client = client
 	if oldClient != nil {
-		// send destroy entity to client
+		// send destroy e to client
 		entityManager.onClientLoseOwner(oldClient.clientid)
 		oldClient.SendDestroyEntity(e)
 	}
 
 	if client != nil {
-		// send create entity to new client
+		// send create e to new client
 		entityManager.onClientSetOwner(client.clientid, e.ID)
 		client.SendCreateEntity(e)
 	}
@@ -400,12 +424,12 @@ func (e *Entity) requestMigrateTo(spaceID EntityID) {
 func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 	entity := entityManager.get(entityID)
 	if entity == nil {
-		// entity might already be destroyed, TODO cancel migrate
+		// e might already be destroyed, TODO cancel migrate
 		return
 	}
 
 	if entity == nil {
-		// entity already destroyed, migrate should cancel TODO: need send cancel migrate to dispatcher?
+		// e already destroyed, migrate should cancel TODO: need send cancel migrate to dispatcher?
 		return
 	}
 
@@ -413,7 +437,30 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 }
 
 func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
-	migrateData := e.getMigrateData()
 	e.destroyEntity() // disable the entity
-	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, e.TypeName, migrateData)
+	e.I.OnMigrateOut()
+	migrateData := e.getMigrateData()
+	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData)
+}
+
+func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrateData map[string]interface{}) {
+	if entityManager.get(entityID) != nil {
+		gwlog.Panicf("entity %s already exists", entityID)
+	}
+
+	// try to find the target space, but might be nil
+	space := spaceManager.getSpace(spaceID)
+	createEntity(typeName, space, entityID, migrateData, nil, true)
+}
+
+func (e *Entity) OnMigrateOut() {
+	if consts.DEBUG_MIGRATE {
+		gwlog.Debug("%s.OnMigrateOut, space=%s, client=%s", e, e.Space, e.client)
+	}
+}
+
+func (e *Entity) OnMigrateIn() {
+	if consts.DEBUG_MIGRATE {
+		gwlog.Debug("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
+	}
 }

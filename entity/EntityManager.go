@@ -78,7 +78,7 @@ func (em *EntityManager) onUndeclareService(serviceName string, eid EntityID) {
 }
 
 func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
-	// choose one entity ID of service providers randomly
+	// choose one e ID of service providers randomly
 	eids, ok := em.registeredServices[serviceName]
 	if !ok {
 		gwlog.Panicf("service not found: %s", serviceName)
@@ -101,7 +101,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	entityVal := reflect.Indirect(reflect.ValueOf(entityPtr))
 	entityType := entityVal.Type()
 
-	// register the string of entity
+	// register the string of e
 	registeredEntityTypes[typeName] = entityType
 	entityType2RpcDescMap[typeName] = RpcDescMap{}
 
@@ -115,11 +115,11 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
 
-func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}, client *GameClient) EntityID {
+func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
 	gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
-		gwlog.Panicf("unknown entity type: %s", typeName)
+		gwlog.Panicf("unknown e type: %s", typeName)
 	}
 
 	if entityID == "" {
@@ -138,15 +138,22 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 		entity.Save() // save immediately after creation
 	}
 
-	if entity.I.IsPersistent() { // startup the periodical timer for saving entity
+	isPersistent := entity.I.IsPersistent()
+	if isPersistent { // startup the periodical timer for saving e
 		entity.setupSaveTimer()
-		dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
+		if !isMigrate {
+			dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
+		}
 	}
 
-	entity.I.OnCreated()
+	if !isMigrate {
+		entity.I.OnCreated()
+	} else {
+		entity.I.OnMigrateIn()
+	}
 
 	if client != nil {
-		// assign client to the newly created entity
+		// assign client to the newly created e
 		entity.SetClient(client)
 	}
 
@@ -162,15 +169,15 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
 	storage.Load(typeName, entityID, func(data interface{}, err error) {
 		// callback runs in main routine
 		if err != nil {
-			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
+			gwlog.Panicf("load e %s.%s failed: %s", typeName, entityID, err)
 		}
 
 		if space != nil && space.IsDestroyed() {
-			// Space might be destroy during the Load process, so cancel the entity creation
+			// Space might be destroy during the Load process, so cancel the e creation
 			return
 		}
 
-		createEntity(typeName, space, entityID, data.(map[string]interface{}), nil)
+		createEntity(typeName, space, entityID, data.(map[string]interface{}), nil, false)
 	})
 }
 
@@ -183,7 +190,7 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 }
 
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
-	return createEntity(typeName, nil, "", data, client)
+	return createEntity(typeName, nil, "", data, client, false)
 }
 
 func CreateEntityAnywhere(typeName string) {
@@ -222,7 +229,7 @@ func callRemote(id EntityID, method string, args []interface{}) {
 func OnCall(id EntityID, method string, args []interface{}, clientID ClientID) {
 	e := entityManager.get(id)
 	if e == nil {
-		// entity not found, may destroyed before call
+		// e not found, may destroyed before call
 		gwlog.Warn("Entity %s is not found while calling %s%v", id, method, args)
 		return
 	}
