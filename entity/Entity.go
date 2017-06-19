@@ -376,15 +376,18 @@ func (e *Entity) GetFloat(key string) float64 {
 
 // Enter target space
 func (e *Entity) EnterSpace(spaceID EntityID) {
-	space := entityManager.get(spaceID)
-	if space != nil {
-		// space on the same server
-		space.enter(e)
-	}
+	//space := spaceManager.getSpace(spaceID)
+	//if space != nil {
+	//	// space on the same server
+	//	e.Space.leave(e)
+	//	space.enter(e)
+	//	return
+	//}
 
 	e.migrateTo(spaceID)
 }
 
 // Migrate to the server of space
 func (e *Entity) migrateTo(spaceID EntityID) {
+	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(e.ID)
 }

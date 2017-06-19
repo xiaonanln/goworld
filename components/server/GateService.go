@@ -64,7 +64,9 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 }
 
 func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
-	gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet=%v", gs, msgtype, packet.Payload())
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet=%v", gs, msgtype, packet.Payload())
+	}
 	_ = packet.ReadUint16() // sid
 	clientid := packet.ReadClientID()
 	clientproxy := gs.clientProxies[clientid]

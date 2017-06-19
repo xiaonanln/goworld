@@ -5,7 +5,6 @@ import (
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/vacuum/ext/entity"
 )
 
 type enterSpaceReq struct {
@@ -50,7 +49,7 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	}
 }
 
-func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID e.EntityID) {
+func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common.EntityID) {
 	gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
 	spaceID := s.spaces[loadKind]
 	if !spaceID.IsNil() {

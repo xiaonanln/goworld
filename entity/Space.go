@@ -42,6 +42,7 @@ func (space *Space) OnInit() {
 
 func (space *Space) OnCreated() {
 	space.Kind = space.GetInt(SPACE_KIND_ATTR_KEY)
+	spaceManager.putSpace(space)
 
 	if space.Kind == 0 {
 		if nilSpace != nil {
@@ -55,6 +56,14 @@ func (space *Space) OnCreated() {
 	space.Post(func() {
 		spaceDelegate.OnSpaceCreated(space)
 	})
+}
+
+func (space *Space) OnDestroy() {
+	spaceManager.delSpace(space.ID)
+}
+
+func (space *Space) IsNil() bool {
+	return space.Kind == 0
 }
 
 func (space *Space) CreateEntity(typeName string) {
@@ -74,6 +83,10 @@ func (space *Space) enter(entity *Entity) {
 		gwlog.Panicf("%s.enter(%s): current Space is not nil", space, entity)
 	}
 
+	if space.IsNil() { // enter nil space does nothing
+		return
+	}
+
 	entity.Space = space
 	for other := range space.entities {
 		entity.interest(other)
@@ -87,6 +100,10 @@ func (space *Space) enter(entity *Entity) {
 func (space *Space) leave(entity *Entity) {
 	if entity.Space != space {
 		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
+	}
+
+	if space.IsNil() { // leave from nil space do nothing
+		return
 	}
 
 	entity.Space = nilSpace

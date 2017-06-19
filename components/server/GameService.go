@@ -115,24 +115,32 @@ func (gs *GameService) String() string {
 }
 
 func (gs *GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
-	gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
+	}
 	entity.CreateEntityLocally(typeName, data, nil)
 }
 
 func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
-	gwlog.Debug("%s.HandleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
+	}
 	entity.LoadEntityLocally(typeName, entityID)
 }
 
 func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
-	gwlog.Debug("%s.HandleDeclareService: %s declares %s", gs, entityID, serviceName)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleDeclareService: %s declares %s", gs, entityID, serviceName)
+	}
 	entity.OnDeclareService(serviceName, entityID)
 }
 
 func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
-	gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
+	}
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
@@ -142,20 +150,26 @@ func (gs *GameService) HandleNotifyAllServersConnected() {
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}, clientid common.ClientID) {
-	gwlog.Debug("%s.HandleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
+	}
 	entity.OnCall(entityID, method, args, clientid)
 }
 
 func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid uint16) {
 	client := entity.MakeGameClient(clientid, sid)
-	gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
+	}
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
 	entity.CreateEntityLocally(gs.config.BootEntity, nil, client)
 }
 
 func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
-	gwlog.Debug("%s.HandleNotifyClientDisconnected: %s", gs, clientid)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleNotifyClientDisconnected: %s", gs, clientid)
+	}
 	// find the owner of the client, and notify lose client
 	entity.OnClientDisconnected(clientid)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/consts"
 )
 
 type DispatcherService struct {
@@ -56,7 +57,9 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 }
 
 func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, serverid uint16, isReconnect bool) {
-	gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d, isReconnect=%v", service, dcp, serverid, isReconnect)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleSetServerID: dcp=%s, serverid=%d, isReconnect=%v", service, dcp, serverid, isReconnect)
+	}
 	if serverid <= 0 {
 		gwlog.Panicf("invalid serverid: %d", serverid)
 	}
@@ -129,7 +132,9 @@ func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *Dispatch
 
 // Entity is create on the target server
 func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
-	gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	}
 	service.Lock()
 	service.entityLocs[entityID] = dcp.serverid
 	service.Unlock()
@@ -137,7 +142,9 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 }
 
 func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
-	gwlog.Debug("%s.HandleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
+	}
 	service.Lock()
 	delete(service.entityLocs, entityID)
 	service.Unlock()
@@ -162,7 +169,9 @@ func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *Dispatcher
 func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	//typeName := pkt.ReadVarStr()
 	//eid := pkt.ReadEntityID()
-	gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
+	}
 	eid := pkt.ReadEntityID() // field 1
 	service.Lock()
 	sid := service.entityLocs[eid]
@@ -178,14 +187,18 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 }
 
 func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
+	}
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
 
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
 	serviceName := pkt.ReadVarStr()
-	gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
+	if consts.DEBUG_PACKETS{
+		gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
+	}
 	service.Lock()
 	service.entityLocs[entityID] = dcp.serverid
 	if _, ok := service.registeredServices[serviceName]; !ok {
@@ -215,7 +228,9 @@ func (service *DispatcherService) handleServiceDown(serviceName string, eid comm
 }
 
 func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, method string) {
-	gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s, method=%s", service, dcp, entityID, method)
+	if consts.DEBUG_PACKETS {
+		gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s, method=%s", service, dcp, entityID, method)
+	}
 
 	service.RLock()
 	serverid := service.entityLocs[entityID]
