@@ -440,7 +440,12 @@ func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 	e.destroyEntity() // disable the entity
 	e.I.OnMigrateOut()
 	migrateData := e.getMigrateData()
-	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData)
+
+	if e.client {
+		clientid = e.client.clientid
+		clientsrv = e.client.serverid
+	}
+	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, e.client.clientid)
 }
 
 func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrateData map[string]interface{}) {
