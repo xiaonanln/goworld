@@ -441,11 +441,13 @@ func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 	e.I.OnMigrateOut()
 	migrateData := e.getMigrateData()
 
-	if e.client {
+	var clientid ClientID
+	var clientsrv uint16
+	if e.client != nil {
 		clientid = e.client.clientid
 		clientsrv = e.client.serverid
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, e.client.clientid)
+	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, clientid, clientsrv)
 }
 
 func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrateData map[string]interface{}) {

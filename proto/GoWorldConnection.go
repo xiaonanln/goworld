@@ -147,7 +147,8 @@ func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID Enti
 	return gwc.SendPacketRelease(packet)
 }
 
-func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16, targetSpace EntityID, typeName string, migrateData map[string]interface{}) error {
+func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16, targetSpace EntityID, typeName string,
+	migrateData map[string]interface{}, clientid ClientID, clientsrv uint16) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)
@@ -155,17 +156,10 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 	packet.AppendEntityID(targetSpace)
 	packet.AppendVarStr(typeName)
 	packet.AppendData(migrateData)
+	packet.AppendEntityID(clientid)
+	packet.AppendUint16(clientsrv)
 	return gwc.SendPacketRelease(packet)
 }
-
-//func (gwc *GoWorldConnection) SendDeclareServiceReply(id EntityID, serviceName string, success bool) error {
-//	packet := gwc.packetConn.NewPacket()
-//	packet.AppendUint16(MT_DECLARE_SERVICE_REPLY)
-//	packet.AppendEntityID(id)
-//	packet.AppendVarStr(serviceName)
-//	packet.AppendBool(success)
-//	return gwc.packetConn.SendPacket(packet)
-//}
 
 func (gwc *GoWorldConnection) SendPacket(pkt *netutil.Packet) error {
 	return gwc.packetConn.SendPacket(pkt)
