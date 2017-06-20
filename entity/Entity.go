@@ -458,6 +458,11 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 		return
 	}
 
+	if !entity.isEnteringSpace() {
+		// replay from dispatcher is too late ?
+		return
+	}
+
 	entity.realMigrateTo(spaceID, spaceLoc)
 }
 
