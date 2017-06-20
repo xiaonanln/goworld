@@ -1,9 +1,6 @@
-
-TODO: Entity Migration
-    TODO: cancel migration if entity is destroyed after migrate request ack
-
 TODO: Use SpaceService to manager all spaces (test)
-    Each space has kind, and nil space's kind == 0
+    TODO destroy space when there is no one in it
+    
 TODO: Create/Destroy entities inside/outside AOI in client
 TODO: Determine how dispatcher know the target server of client packets
 TODO: Entity transfer among spaces

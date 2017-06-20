@@ -15,12 +15,12 @@ type enterSpaceReq struct {
 type SpaceService struct {
 	entity.Entity
 
-	spaces          map[int]common.EntityID
+	spaceKindToId   map[int]common.EntityID
 	pendingRequests []enterSpaceReq
 }
 
 func (s *SpaceService) OnInit() {
-	s.spaces = map[int]common.EntityID{}
+	s.spaceKindToId = map[int]common.EntityID{}
 	s.pendingRequests = []enterSpaceReq{}
 }
 
@@ -36,7 +36,7 @@ func (s *SpaceService) IsPersistent() bool {
 func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
 
-	spaceId := s.spaces[kind]
+	spaceId := s.spaceKindToId[kind]
 	if !spaceId.IsNil() {
 		// space already exists, tell the avatar
 		s.Call(avatarId, "DoEnterSpace", kind, spaceId)
@@ -51,13 +51,13 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 
 func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common.EntityID) {
 	gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
-	spaceID := s.spaces[loadKind]
+	spaceID := s.spaceKindToId[loadKind]
 	if !spaceID.IsNil() {
 		// duplicate space created ... can happen, solve it later ...
 		gwlog.Panicf("duplicate space created: kind=%d, spaceID=%s", loadKind, loadSpaceID)
 	}
 
-	s.spaces[loadKind] = spaceID
+	s.spaceKindToId[loadKind] = spaceID
 	// notify all pending requests
 	leftPendingReqs := []enterSpaceReq{}
 	satisfyingReqs := []enterSpaceReq{}
