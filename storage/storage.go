@@ -92,7 +92,7 @@ func storageRoutine() {
 				err := storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)
 				if err != nil {
 					// save failed ?
-					gwlog.Error("storage: save failed: %s", err)
+					gwlog.Error("storage: save failed: %s\nData: %v", err, saveReq.Data)
 					continue // always retry if fail
 				} else {
 					break

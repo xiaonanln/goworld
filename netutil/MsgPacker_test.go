@@ -1,0 +1,73 @@
+package netutil
+
+import (
+	"testing"
+
+	"github.com/xiaonanln/vacuum/uuid"
+)
+
+type testMsg struct {
+	ID        string
+	F1        float64
+	F2        int
+	ListField []interface{}
+	MapField  map[string]interface{}
+}
+
+func BenchmarkJSONMsgPacker(b *testing.B) {
+	benchmarkMsgPacker(b, &JSONMsgPacker{})
+}
+
+func BenchmarkMessagePackMsgPacker(b *testing.B) {
+	benchmarkMsgPacker(b, &MessagePackMsgPacker{})
+}
+
+func BenchmarkGobMsgPacker(b *testing.B) {
+	benchmarkMsgPacker(b, &GobMsgPacker{})
+}
+
+func benchmarkMsgPacker(b *testing.B, packer MsgPacker) {
+	b.Logf("Testing MsgPacker %T ...", packer)
+	msg := testMsg{
+		ID:        "abc",
+		F1:        0.123124234,
+		ListField: []interface{}{1, 2, 3, "abc", "def"},
+		MapField:  map[string]interface{}{},
+	}
+	for i := 0; i < 100; i++ {
+		msg.MapField[uuid.GenUUID()] = uuid.GenUUID()
+	}
+
+	for i := 0; i < b.N; i++ {
+
+		buf := make([]byte, 0, 100)
+		buf, _ = packer.PackMsg(msg, buf)
+
+		var restoreMsg map[string]interface{}
+		_ = packer.UnpackMsg(buf, &restoreMsg)
+		//if msg.ID != restoreMsg.ID {
+		//	b.Fail()
+		//}
+	}
+}
+
+func TestMessagePackMsgPacker_UnpackMsg(t *testing.T) {
+	msg := map[string]interface{}{
+		"a": 1,
+		"b": 2,
+		"c": map[string]interface{}{
+			"d": 1,
+		},
+	}
+	buf := make([]byte, 0)
+	buf, err := MessagePackMsgPacker{}.PackMsg(msg, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	var outmsg map[string]interface{}
+	MessagePackMsgPacker{}.UnpackMsg(buf, &outmsg)
+	t.Logf("outmsg %T %v", outmsg, outmsg)
+	if _, ok := outmsg["c"].(map[interface{}]interface{}); ok {
+		t.Errorf("should not unpack with type map[interface{}]interface{}")
+	}
+}
