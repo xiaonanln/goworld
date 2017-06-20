@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
@@ -32,23 +34,19 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("name", "无名")
 	a.Attrs.SetDefault("level", 1)
 	a.Attrs.SetDefault("exp", 0)
-	a.Attrs.SetDefault("spaceno", DEFAULT_SPACE_ID)
-}
-
-func (a *Avatar) OnEnterSpace() {
-	a.Entity.OnEnterSpace()
+	a.Attrs.SetDefault("spaceKind", DEFAULT_SPACE_ID)
 }
 
 func (a *Avatar) IsPersistent() bool {
 	return true
 }
 
-func (a *Avatar) enterSpace(spaceno int) {
-	if a.Space.Kind == spaceno {
+func (a *Avatar) enterSpace(spaceKind int) {
+	if a.Space.Kind == spaceKind {
 		return
 	}
-	gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceno)
-	a.CallService("SpaceService", "EnterSpace", a.ID, spaceno)
+	gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
+	a.CallService("SpaceService", "EnterSpace", a.ID, spaceKind)
 }
 
 func (a *Avatar) OnClientConnected() {
@@ -65,7 +63,7 @@ func (a *Avatar) OnClientConnected() {
 	subattr = a.Attrs.PopMapAttr("subattr")
 	a.Attrs.Set("subattr", subattr)
 
-	a.enterSpace(a.GetInt("spaceno"))
+	a.enterSpace(a.GetInt("spaceKind"))
 }
 
 func (a *Avatar) OnClientDisconnected() {
@@ -75,4 +73,11 @@ func (a *Avatar) OnClientDisconnected() {
 func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
 	a.EnterSpace(spaceID)
+}
+
+func (a *Avatar) OnEnterSpace() {
+	gwlog.Info("%s ENTER SPACE %s", a, a.Space)
+	a.AddCallback(time.Second*5, func() {
+		a.enterSpace(a.Space.Kind + 1)
+	})
 }
