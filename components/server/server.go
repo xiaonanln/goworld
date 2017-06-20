@@ -33,7 +33,7 @@ func parseArgs() {
 }
 
 func Run(delegate IServerDelegate) {
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)

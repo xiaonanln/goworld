@@ -187,7 +187,6 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 		gwlog.Debug("Entity %s is migrating to space %s at server %d", eid, spaceid, spaceLoc)
 	}
 
-	// TODO: handle when spaceLoc == 0, which indicates space already destroyed
 	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)
 }
 

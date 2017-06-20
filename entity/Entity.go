@@ -33,6 +33,11 @@ type Entity struct {
 	declaredServices StringSet
 
 	Attrs *MapAttr
+
+	enterSpaceRequest struct {
+		SpaceID     EntityID
+		RequestTime int64
+	}
 }
 
 // Functions declared by IEntity can be override in Entity subclasses
@@ -413,23 +418,43 @@ func (e *Entity) EnterSpace(spaceID EntityID) {
 	//	return
 	//}
 
+	if e.isEnteringSpace() {
+		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enterSpaceRequest.SpaceID, spaceID)
+		return
+	}
+
 	e.requestMigrateTo(spaceID)
+}
+
+func (e *Entity) isEnteringSpace() bool {
+	now := time.Now().UnixNano()
+	return now >= (e.enterSpaceRequest.RequestTime + int64(consts.ENTER_SPACE_REQUEST_TIMEOUT))
+}
+
+func (e *Entity) clearMigrateRequest() {
+	e.enterSpaceRequest.SpaceID = ""
+	e.enterSpaceRequest.RequestTime = 0
 }
 
 // Migrate to the server of space
 func (e *Entity) requestMigrateTo(spaceID EntityID) {
+	e.enterSpaceRequest.SpaceID = spaceID
+	e.enterSpaceRequest.RequestTime = time.Now().UnixNano()
 	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
 }
 
 func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 	entity := entityManager.get(entityID)
 	if entity == nil {
-		// e might already be destroyed, TODO cancel migrate
+		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityID)
+		gwlog.Warn("Migrate failed since entity is not found: spaceID=%s, entityID=%s", spaceID, entityID)
 		return
 	}
 
-	if entity == nil {
-		// e already destroyed, migrate should cancel TODO: need send cancel migrate to dispatcher?
+	if spaceLoc == 0 {
+		// target space not found, migrate not started
+		gwlog.Warn("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
+		entity.clearMigrateRequest()
 		return
 	}
 

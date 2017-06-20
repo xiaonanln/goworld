@@ -237,7 +237,7 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	}
 
 	service.RLock()
-	serverid := service.entityLocs[entityID]
+	serverid := service.entityLocs[entityID] // TODO CACHE WHILE MIGRATING
 	service.RUnlock()
 	if serverid == 0 {
 		// server not found
@@ -297,12 +297,12 @@ func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProx
 	// mark the entity as migrating
 	service.Lock()
 	spaceLoc := service.entityLocs[spaceID]
-	service.entityMigrateTime[entityID] = time.Now().Unix() // TODO: handle multiple duplicate request?
-	service.Unlock()
-	if spaceLoc == 0 {
-		gwlog.Panic(spaceID, spaceLoc)
+	if spaceLoc > 0 {
+		service.entityMigrateTime[entityID] = time.Now().UnixNano() // TODO: handle multiple duplicate request?
 	}
-	pkt.AppendUint16(spaceLoc)
+	service.Unlock()
+
+	pkt.AppendUint16(spaceLoc) // append the space server location to the packet
 	dcp.SendPacketRelease(pkt)
 }
 

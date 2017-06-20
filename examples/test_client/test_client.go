@@ -26,7 +26,7 @@ func parseArgs() {
 }
 
 func main() {
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	parseArgs()
 	if configFile != "" {
 		config.SetConfigFile(configFile)
