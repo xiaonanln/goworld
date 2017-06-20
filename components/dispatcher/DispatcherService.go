@@ -18,6 +18,11 @@ import (
 	"github.com/xiaonanln/goworld/proto"
 )
 
+type EntityDispatchInfo struct {
+	serverid    uint16
+	migrateTime int64
+}
+
 type DispatcherService struct {
 	sync.RWMutex
 
@@ -25,8 +30,7 @@ type DispatcherService struct {
 	clients           []*DispatcherClientProxy
 	chooseClientIndex int
 
-	entityLocs           map[common.EntityID]uint16
-	entityMigrateTime    map[common.EntityID]int64
+	entityDispatchInfo   map[common.EntityID]*EntityDispatchInfo
 	registeredServices   map[string]entity.EntityIDSet
 	targetServerOfClient map[common.ClientID]uint16
 }
@@ -39,15 +43,14 @@ func newDispatcherService() *DispatcherService {
 		clients:           make([]*DispatcherClientProxy, serverCount),
 		chooseClientIndex: 0,
 
-		entityLocs:           map[common.EntityID]uint16{},
-		entityMigrateTime:    map[common.EntityID]int64{},
+		entityDispatchInfo:   map[common.EntityID]*EntityDispatchInfo{},
 		registeredServices:   map[string]entity.EntityIDSet{},
 		targetServerOfClient: map[common.ClientID]uint16{},
 	}
 }
 
 func (service *DispatcherService) String() string {
-	return fmt.Sprintf("DispatcherService<C%d|E%d>", len(service.clients), len(service.entityLocs))
+	return fmt.Sprintf("DispatcherService<C%d|E%d>", len(service.clients), len(service.entityDispatchInfo))
 }
 
 func (service *DispatcherService) run() {
