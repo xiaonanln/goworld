@@ -450,14 +450,18 @@ func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, clientid, clientsrv)
 }
 
-func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrateData map[string]interface{}) {
+func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrateData map[string]interface{}, clientid ClientID, clientsrv uint16) {
 	if entityManager.get(entityID) != nil {
 		gwlog.Panicf("entity %s already exists", entityID)
 	}
 
 	// try to find the target space, but might be nil
 	space := spaceManager.getSpace(spaceID)
-	createEntity(typeName, space, entityID, migrateData, nil, true)
+	var client *GameClient
+	if !clientid.IsNil() {
+		client = MakeGameClient(clientid, clientsrv)
+	}
+	createEntity(typeName, space, entityID, migrateData, client, true)
 }
 
 func (e *Entity) OnMigrateOut() {

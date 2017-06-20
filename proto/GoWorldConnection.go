@@ -156,7 +156,7 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 	packet.AppendEntityID(targetSpace)
 	packet.AppendVarStr(typeName)
 	packet.AppendData(migrateData)
-	packet.AppendEntityID(clientid)
+	packet.AppendClientID(clientid)
 	packet.AppendUint16(clientsrv)
 	return gwc.SendPacketRelease(packet)
 }

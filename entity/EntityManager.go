@@ -146,15 +146,19 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 		}
 	}
 
+	if client != nil {
+		// assign client to the newly created
+		if !isMigrate {
+			entity.SetClient(client)
+		} else {
+			entity.client = client // assign client quietly if migrate
+		}
+	}
+
 	if !isMigrate {
 		entity.I.OnCreated()
 	} else {
 		entity.I.OnMigrateIn()
-	}
-
-	if client != nil {
-		// assign client to the newly created e
-		entity.SetClient(client)
 	}
 
 	if space != nil {
