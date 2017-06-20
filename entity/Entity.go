@@ -428,7 +428,7 @@ func (e *Entity) EnterSpace(spaceID EntityID) {
 
 func (e *Entity) isEnteringSpace() bool {
 	now := time.Now().UnixNano()
-	return now >= (e.enterSpaceRequest.RequestTime + int64(consts.ENTER_SPACE_REQUEST_TIMEOUT))
+	return now < (e.enterSpaceRequest.RequestTime + int64(consts.ENTER_SPACE_REQUEST_TIMEOUT))
 }
 
 func (e *Entity) clearMigrateRequest() {
