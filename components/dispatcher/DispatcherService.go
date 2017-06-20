@@ -9,6 +9,7 @@ import (
 
 	"time"
 
+	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
@@ -18,9 +19,23 @@ import (
 	"github.com/xiaonanln/goworld/proto"
 )
 
+type callQueueItem struct {
+	entityID common.EntityID
+	packet   *netutil.Packet
+}
+
 type EntityDispatchInfo struct {
 	serverid    uint16
 	migrateTime int64
+	callQueue   sync_queue.SyncQueue
+}
+
+func (info *EntityDispatchInfo) startMigrate() {
+	info.migrateTime = time.Now().UnixNano()
+}
+
+func (info *EntityDispatchInfo) isMigrating() bool {
+	return time.Now().UnixNano() < info.migrateTime+int64(consts.DISPATCHER_MIGRATE_TIMEOUT)
 }
 
 type DispatcherService struct {
@@ -56,7 +71,9 @@ func (service *DispatcherService) getEntityDispatcherInfo(entityID common.Entity
 func (service *DispatcherService) setEntityDispatcherInfo(entityID common.EntityID) *EntityDispatchInfo {
 	info := service.entityDispatchInfos[entityID]
 	if info == nil {
-		info = &EntityDispatchInfo{}
+		info = &EntityDispatchInfo{
+			callQueue: sync_queue.NewSyncQueue(),
+		}
 		service.entityDispatchInfos[entityID] = info
 	}
 	return info
@@ -247,22 +264,38 @@ func (service *DispatcherService) handleServiceDown(serviceName string, eid comm
 	service.broadcastToDispatcherClients(pkt)
 }
 
-func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID, method string) {
+func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	entityID := pkt.ReadEntityID()
+
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s, method=%s", service, dcp, entityID, method)
+		gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
 
 	service.RLock()
 	dispatchInfo := service.getEntityDispatcherInfo(entityID)
 	var serverid uint16
+	var migrating bool
 	if dispatchInfo != nil {
 		serverid = dispatchInfo.serverid
+		migrating = dispatchInfo.isMigrating()
+		if migrating {
+			// if migrating, just put the call to wait
+			dispatchInfo.callQueue.Push(callQueueItem{
+				entityID: entityID,
+				packet:   pkt,
+			})
+		}
 	}
 	// TODO CACHE WHILE MIGRATING
 	service.RUnlock()
+
+	if migrating { // packet already cached if migrating
+		return
+	}
+
 	if serverid == 0 {
 		// server not found
-		gwlog.Warn("Entity %s not found when calling method %s", entityID, method)
+		gwlog.Warn("Entity %s not found when calling method", entityID)
 		return
 	}
 
@@ -324,8 +357,8 @@ func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProx
 	}
 
 	if spaceLoc > 0 { // almost true
-		service.setEntityDispatcherInfo(entityID).migrateTime = time.Now().UnixNano()
-		// TODO: handle multiple duplicate request?
+		// TODO: what if migrate time is already set?
+		service.setEntityDispatcherInfo(entityID).startMigrate()
 	}
 	service.Unlock()
 
@@ -340,12 +373,20 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	// target space is not checked for existence, because we relay the packet anyway
 	// mark the eid as migrating done
 	service.Lock()
+	defer service.Unlock() // TODO: optimize locks, this lock is so big
 	entityDispatchInfo := service.setEntityDispatcherInfo(eid)
 	entityDispatchInfo.migrateTime = 0 // mark the entity as NOT migrating
 	entityDispatchInfo.serverid = targetServer
-	service.Unlock()
 
 	service.dispatcherClientOfServer(targetServer).SendPacketRelease(pkt)
+	item, ok := entityDispatchInfo.callQueue.TryPop()
+	for ok {
+		service.dispatcherClientOfServer(targetServer).SendPacketRelease(item.(callQueueItem).packet)
+		item, ok = entityDispatchInfo.callQueue.TryPop()
+	}
+
+	// send the cached calls to target server
+
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
