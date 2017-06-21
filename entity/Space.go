@@ -95,7 +95,7 @@ func (space *Space) enter(entity *Entity) {
 		other.interest(entity)
 	}
 	space.entities.Add(entity)
-
+	spaceDelegate.OnEntityEnterSpace(space, entity)
 	entity.I.OnEnterSpace()
 }
 
@@ -116,5 +116,16 @@ func (space *Space) leave(entity *Entity) {
 		other.uninterest(entity)
 	}
 
+	spaceDelegate.OnEntityLeaveSpace(space, entity)
 	entity.I.OnLeaveSpace(space)
+}
+
+func (space *Space) CountEntities(typeName string) int {
+	count := 0
+	for e, _ := range space.entities {
+		if e.TypeName == typeName {
+			count += 1
+		}
+	}
+	return count
 }

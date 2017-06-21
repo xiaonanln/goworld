@@ -1,12 +1,15 @@
 package main
 
-import "github.com/xiaonanln/goworld/entity"
+import (
+	. "github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/gwlog"
+)
 
 type SpaceDelegate struct {
-	entity.DefaultSpaceDelegate // override from default space delegate
+	DefaultSpaceDelegate // override from default space delegate
 }
 
-func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
+func (delegate *SpaceDelegate) OnSpaceCreated(space *Space) {
 	delegate.DefaultSpaceDelegate.OnSpaceCreated(space)
 
 	//avatarIds := goworld.ListEntityIDs("Avatar")[:1]
@@ -27,4 +30,14 @@ func (delegate *SpaceDelegate) OnSpaceCreated(space *entity.Space) {
 		space.CreateEntity("Monster")
 	}
 
+}
+
+func (delegate *SpaceDelegate) OnEntityLeaveSpace(space *Space, entity *Entity) {
+	if entity.TypeName == "Avatar" {
+		delegate.onAvatarLeaveSpace(space, entity)
+	}
+}
+
+func (delegate *SpaceDelegate) onAvatarLeaveSpace(space *Space, entity *Entity) {
+	gwlog.Info("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
 }
