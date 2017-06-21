@@ -332,6 +332,11 @@ func (e *Entity) SetClient(client *GameClient) {
 	if oldClient != nil {
 		// send destroy e to client
 		entityManager.onClientLoseOwner(oldClient.clientid)
+
+		for neighbor := range e.Neighbors() {
+			oldClient.SendDestroyEntity(neighbor)
+		}
+
 		oldClient.SendDestroyEntity(e)
 	}
 
@@ -339,6 +344,9 @@ func (e *Entity) SetClient(client *GameClient) {
 		// send create e to new client
 		entityManager.onClientSetOwner(client.clientid, e.ID)
 		client.SendCreateEntity(e)
+		for neighbor := range e.Neighbors() {
+			client.SendCreateEntity(neighbor)
+		}
 	}
 
 	if oldClient == nil && client != nil {
