@@ -94,7 +94,13 @@ func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common
 func (s *SpaceService) RequestDestroy_Server(kind int, spaceID common.EntityID) {
 	gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
 	spaceKindInfo := s.spaceKinds[kind]
-	if spaceKindInfo == nil || spaceKindInfo.EntityID != spaceID || time.Now().After(spaceKindInfo.LastEnterTime.Add(time.Second*5)) {
+	if spaceKindInfo == nil || spaceKindInfo.EntityID != spaceID {
 		s.Call(spaceID, "ConfirmRequestDestroy", true)
+		return
+	}
+	if time.Now().After(spaceKindInfo.LastEnterTime.Add(time.Second * 5)) {
+		delete(s.spaceKinds, kind)
+		s.Call(spaceID, "ConfirmRequestDestroy", true)
+		return
 	}
 }
