@@ -29,7 +29,12 @@ func (delegate *SpaceDelegate) OnSpaceCreated(space *Space) {
 	for i := 0; i < M; i++ {
 		space.CreateEntity("Monster")
 	}
+}
 
+func (delegate *SpaceDelegate) OnEntityEnterSpace(space *Space, entity *Entity) {
+	if entity.TypeName == "Avatar" {
+		space.clearCheckDestroyTimer()
+	}
 }
 
 func (delegate *SpaceDelegate) OnEntityLeaveSpace(space *Space, entity *Entity) {
@@ -40,4 +45,8 @@ func (delegate *SpaceDelegate) OnEntityLeaveSpace(space *Space, entity *Entity) 
 
 func (delegate *SpaceDelegate) onAvatarLeaveSpace(space *Space, entity *Entity) {
 	gwlog.Info("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
+	if space.CountEntities("Avatar") == 0 {
+		// no avatar left, start destroying space
+		space.CallService("SpaceService", "RequestDestroy", space.ID)
+	}
 }

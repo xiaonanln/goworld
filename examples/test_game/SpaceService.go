@@ -79,3 +79,7 @@ func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common
 		}
 	}
 }
+
+func (s *SpaceService) RequestDestroy_Server(spaceID common.EntityID) {
+
+}
