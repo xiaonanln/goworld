@@ -1,8 +1,6 @@
-TODO: Create/Destroy entities inside/outside AOI in client
 TODO: Determine how dispatcher know the target server of client packets
-TODO: Entity transfer among spaces
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
-
+TODO: Efficient AOI Algorithm
 
 # Subsystem to be implemented
 TODO: Entity Attributes

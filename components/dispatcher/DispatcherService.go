@@ -286,7 +286,6 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 			})
 		}
 	}
-	// TODO CACHE WHILE MIGRATING
 	service.RUnlock()
 
 	if migrating { // packet already cached if migrating
