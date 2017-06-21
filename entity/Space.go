@@ -27,7 +27,7 @@ type Space struct {
 }
 
 func init() {
-	RegisterEntity(SPACE_ENTITY_TYPE, &Space{})
+
 }
 
 func (space *Space) String() string {
@@ -113,6 +113,7 @@ func (space *Space) enter(entity *Entity) {
 		other.interest(entity)
 	}
 	space.entities.Add(entity)
+	space.I.OnEntityEnterSpace(entity)
 	entity.I.OnEnterSpace()
 }
 
@@ -132,6 +133,7 @@ func (space *Space) leave(entity *Entity) {
 		entity.uninterest(other)
 		other.uninterest(entity)
 	}
+	space.I.OnEntityLeaveSpace(entity)
 	entity.I.OnLeaveSpace(space)
 }
 

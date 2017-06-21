@@ -155,23 +155,30 @@ func (e *Entity) Neighbors() EntitySet {
 	return e.aoi.neighbors
 }
 
-// Timer & Callback Management
-func (e *Entity) AddCallback(d time.Duration, cb timer.CallbackFunc) {
+// Timer & Callback Management TODO: better management, maybe use Integer to indicate timer ?
+func (e *Entity) AddCallback(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
 	var t *timer.Timer
 	t = timer.AddCallback(d, func() {
 		delete(e.timers, t)
 		cb()
 	})
 	e.timers[t] = struct{}{}
+	return t
 }
 
 func (e *Entity) Post(cb timer.CallbackFunc) {
 	e.AddCallback(0, cb)
 }
 
-func (e *Entity) AddTimer(d time.Duration, cb timer.CallbackFunc) {
+func (e *Entity) AddTimer(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
 	t := timer.AddTimer(d, cb)
 	e.timers[t] = struct{}{}
+	return t
+}
+
+func (e *Entity) CancelTimer(t *timer.Timer) {
+	delete(e.timers, t)
+	t.Cancel()
 }
 
 func (e *Entity) clearTimers() {

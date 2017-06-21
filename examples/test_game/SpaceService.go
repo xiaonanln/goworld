@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
@@ -12,15 +14,20 @@ type enterSpaceReq struct {
 	kind     int
 }
 
+type _SpaceKindInfo struct {
+	EntityID      common.EntityID
+	LastEnterTime time.Time
+}
+
 type SpaceService struct {
 	entity.Entity
 
-	spaceKindToId   map[int]common.EntityID
+	spaceKinds      map[int]*_SpaceKindInfo
 	pendingRequests []enterSpaceReq
 }
 
 func (s *SpaceService) OnInit() {
-	s.spaceKindToId = map[int]common.EntityID{}
+	s.spaceKinds = map[int]*_SpaceKindInfo{}
 	s.pendingRequests = []enterSpaceReq{}
 }
 
@@ -36,10 +43,11 @@ func (s *SpaceService) IsPersistent() bool {
 func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
 
-	spaceId := s.spaceKindToId[kind]
-	if !spaceId.IsNil() {
+	spaceKindInfo := s.spaceKinds[kind]
+	if spaceKindInfo != nil {
 		// space already exists, tell the avatar
-		s.Call(avatarId, "DoEnterSpace", kind, spaceId)
+		s.Call(avatarId, "DoEnterSpace", kind, spaceKindInfo.EntityID)
+		spaceKindInfo.LastEnterTime = time.Now()
 	} else {
 		s.pendingRequests = append(s.pendingRequests, enterSpaceReq{
 			avatarId, kind,
@@ -51,13 +59,16 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 
 func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common.EntityID) {
 	gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
-	spaceID := s.spaceKindToId[loadKind]
-	if !spaceID.IsNil() {
+	spaceKindInfo := s.spaceKinds[loadKind]
+	if spaceKindInfo != nil {
 		// duplicate space created ... can happen, solve it later ...
 		gwlog.Panicf("duplicate space created: kind=%d, spaceID=%s", loadKind, loadSpaceID)
 	}
 
-	s.spaceKindToId[loadKind] = spaceID
+	s.spaceKinds[loadKind] = &_SpaceKindInfo{
+		EntityID:      loadSpaceID,
+		LastEnterTime: time.Now(),
+	}
 	// notify all pending requests
 	leftPendingReqs := []enterSpaceReq{}
 	satisfyingReqs := []enterSpaceReq{}
@@ -80,6 +91,10 @@ func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common
 	}
 }
 
-func (s *SpaceService) RequestDestroy_Server(spaceID common.EntityID) {
-
+func (s *SpaceService) RequestDestroy_Server(kind int, spaceID common.EntityID) {
+	gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
+	spaceKindInfo := s.spaceKinds[kind]
+	if spaceKindInfo == nil || spaceKindInfo.EntityID != spaceID || time.Now().After(spaceKindInfo.LastEnterTime.Add(time.Second*5)) {
+		s.Call(spaceID, "ConfirmRequestDestroy", true)
+	}
 }

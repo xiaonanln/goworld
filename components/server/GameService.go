@@ -197,8 +197,13 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	typeName := pkt.ReadVarStr()
 	var migrateData map[string]interface{}
 	pkt.ReadData(&migrateData)
-	clientid := pkt.ReadClientID()
-	clientsrv := pkt.ReadUint16()
+	hasClient := pkt.ReadBool()
+	var clientid common.ClientID
+	var clientsrv uint16
+	if hasClient {
+		clientid = pkt.ReadClientID()
+		clientsrv = pkt.ReadUint16()
+	}
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, clientid, clientsrv)
 	}
