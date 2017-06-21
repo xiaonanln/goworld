@@ -43,10 +43,6 @@ func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	entity.LoadEntityAnywhere(typeName, entityID)
 }
 
-func SetSpaceDelegate(delegate entity.ISpaceDelegate) {
-	entity.SetSpaceDelegate(delegate)
-}
-
 func GetServiceProviders(serviceName string) entity.EntityIDSet {
 	return entity.GetServiceProviders(serviceName)
 }
@@ -66,4 +62,8 @@ func GetServerID() uint16 {
 
 func MapAttr() *entity.MapAttr {
 	return entity.NewMapAttr()
+}
+
+func RegisterSpace(spacePtr entity.ISpace) {
+	entity.RegisterSpace(spacePtr)
 }

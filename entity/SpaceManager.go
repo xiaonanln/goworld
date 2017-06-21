@@ -1,9 +1,14 @@
 package entity
 
-import . "github.com/xiaonanln/goworld/common"
+import (
+	"reflect"
+
+	. "github.com/xiaonanln/goworld/common"
+)
 
 var (
 	spaceManager = newSpaceManager()
+	spaceType    reflect.Type
 )
 
 type SpaceManager struct {
@@ -26,4 +31,12 @@ func (spmgr *SpaceManager) delSpace(id EntityID) {
 
 func (spmgr *SpaceManager) getSpace(id EntityID) *Space {
 	return spmgr.spaces[id]
+}
+
+func RegisterSpace(spacePtr ISpace) {
+	//if spaceType == nil {
+	//	gwlog.Panicf("RegisterSpace: Space already registered")
+	//}
+	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
+	spaceType = spaceVal.Type()
 }

@@ -126,9 +126,16 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 		entityID = GenEntityID()
 	}
 
-	entityPtrVal := reflect.New(entityType)
-	entity := reflect.Indirect(entityPtrVal).FieldByName("Entity").Addr().Interface().(*Entity)
-	entity.init(typeName, entityID, entityPtrVal)
+	var entity *Entity
+	var entityInstance reflect.Value
+
+	if typeName != SPACE_ENTITY_TYPE {
+		entityInstance = reflect.New(entityType)
+	} else {
+		entityInstance = reflect.New(spaceType)
+	}
+	entity = reflect.Indirect(entityInstance).FieldByName("Entity").Addr().Interface().(*Entity)
+	entity.init(typeName, entityID, entityInstance)
 	entity.Space = nilSpace
 
 	entityManager.put(entity)

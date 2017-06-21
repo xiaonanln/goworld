@@ -25,13 +25,13 @@ type serverDelegate struct {
 }
 
 func main() {
+	goworld.RegisterSpace(&MySpace{})
+
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("OnlineService", &OnlineService{})
 	goworld.RegisterEntity("SpaceService", &SpaceService{})
 	goworld.RegisterEntity("Monster", &Monster{})
 	goworld.RegisterEntity("Avatar", &Avatar{})
-
-	goworld.SetSpaceDelegate(&SpaceDelegate{})
 
 	goworld.Run(&serverDelegate{})
 }

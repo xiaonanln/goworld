@@ -115,10 +115,10 @@ func (e *Entity) ToSpace() *Space {
 	return (*Space)(unsafe.Pointer(e))
 }
 
-func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.Value) {
+func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect.Value) {
 	e.ID = entityID
-	e.IV = entityPtrVal
-	e.I = entityPtrVal.Interface().(IEntity)
+	e.IV = entityInstance
+	e.I = entityInstance.Interface().(IEntity)
 	e.TypeName = typeName
 
 	e.rpcDescMap = entityType2RpcDescMap[typeName]
@@ -132,7 +132,6 @@ func (e *Entity) init(typeName string, entityID EntityID, entityPtrVal reflect.V
 
 	initAOI(&e.aoi)
 	e.I.OnInit()
-
 }
 
 func (e *Entity) setupSaveTimer() {

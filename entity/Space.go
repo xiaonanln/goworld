@@ -23,6 +23,7 @@ type Space struct {
 
 	entities EntitySet
 	Kind     int
+	I        ISpace
 }
 
 func init() {
@@ -39,6 +40,12 @@ func (space *Space) String() string {
 
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
+	space.I = space.Entity.I.(ISpace)
+	space.I.OnSpaceInit()
+}
+
+func (space *Space) OnSpaceInit() {
+
 }
 
 func (space *Space) OnCreated() {
@@ -55,13 +62,24 @@ func (space *Space) OnCreated() {
 
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	gwlog.Debug("%s.OnCreated", space)
-	space.Post(func() {
-		spaceDelegate.OnSpaceCreated(space)
-	})
+	space.I.OnSpaceCreated()
+}
+
+func (space *Space) OnSpaceCreated() {
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("Space %s created", space)
+	}
 }
 
 func (space *Space) OnDestroy() {
+	space.I.OnSpaceDestroy()
 	spaceManager.delSpace(space.ID)
+}
+
+func (space *Space) OnSpaceDestroy() {
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("Space %s created", space)
+	}
 }
 
 func (space *Space) IsNil() bool {
@@ -95,7 +113,6 @@ func (space *Space) enter(entity *Entity) {
 		other.interest(entity)
 	}
 	space.entities.Add(entity)
-	spaceDelegate.OnEntityEnterSpace(space, entity)
 	entity.I.OnEnterSpace()
 }
 
@@ -115,9 +132,19 @@ func (space *Space) leave(entity *Entity) {
 		entity.uninterest(other)
 		other.uninterest(entity)
 	}
-
-	spaceDelegate.OnEntityLeaveSpace(space, entity)
 	entity.I.OnLeaveSpace(space)
+}
+
+func (space *Space) OnEntityEnterSpace(entity *Entity) {
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s ENTER SPACE %s", entity, space)
+	}
+}
+
+func (space *Space) OnEntityLeaveSpace(entity *Entity) {
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s LEAVE SPACE %s", entity, space)
+	}
 }
 
 func (space *Space) CountEntities(typeName string) int {
