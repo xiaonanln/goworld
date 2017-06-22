@@ -1,6 +1,11 @@
 TODO: Determine how dispatcher know the target server of client packets
+
+TODO: [test_game]
+    TODO: Spaces with multiple threads
+    TODO: Chat system
+    TODO: Entity movement in space, AOI
+
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
-TODO: Efficient AOI Algorithm
 
 # Subsystem to be implemented
 TODO: Entity Attributes

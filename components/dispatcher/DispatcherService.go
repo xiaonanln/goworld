@@ -189,7 +189,11 @@ func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClien
 }
 
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	//clientid := pkt.ReadClientID()
+	clientid := pkt.ReadClientID()
+	targetServer := service.chooseDispatcherClient()
+	service.Lock()
+	service.targetServerOfClient[clientid] = targetServer.serverid
+	service.Unlock()
 	pkt.AppendUint16(dcp.serverid)
 	service.chooseDispatcherClient().SendPacketRelease(pkt)
 }
@@ -198,6 +202,7 @@ func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *Dispatcher
 	clientid := pkt.ReadClientID() // client disconnected
 	service.RLock()
 	sid := service.targetServerOfClient[clientid] // target server of client
+	delete(service.targetServerOfClient, clientid)
 	service.RUnlock()
 
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt) // tell the server that the client is down
@@ -318,10 +323,6 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
-	clientid := pkt.ReadClientID()
-	service.Lock()
-	service.targetServerOfClient[clientid] = sid
-	service.Unlock()
 	// Server <sid> is creating entity on client <clientid>, so we can safely assumes that target entity of
 	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
 }
@@ -370,21 +371,30 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	eid := pkt.ReadEntityID()
 	targetServer := pkt.ReadUint16() // target server of migration
 	// target space is not checked for existence, because we relay the packet anyway
+
+	hasClient := pkt.ReadBool()
+	var clientid common.ClientID
+	if hasClient {
+		clientid = pkt.ReadClientID()
+	}
+
 	// mark the eid as migrating done
 	service.Lock()
 	defer service.Unlock() // TODO: optimize locks, this lock is so big
+
 	entityDispatchInfo := service.setEntityDispatcherInfo(eid)
 	entityDispatchInfo.migrateTime = 0 // mark the entity as NOT migrating
 	entityDispatchInfo.serverid = targetServer
+	service.targetServerOfClient[clientid] = targetServer // migrating also change target server of client
 
 	service.dispatcherClientOfServer(targetServer).SendPacketRelease(pkt)
+
+	// send the cached calls to target server
 	item, ok := entityDispatchInfo.callQueue.TryPop()
 	for ok {
 		service.dispatcherClientOfServer(targetServer).SendPacketRelease(item.(callQueueItem).packet)
 		item, ok = entityDispatchInfo.callQueue.TryPop()
 	}
-
-	// send the cached calls to target server
 
 }
 

@@ -192,11 +192,8 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 
 func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
-	_ = pkt.ReadUint16()          // targetServer is not userful
-	spaceID := pkt.ReadEntityID() // target space
-	typeName := pkt.ReadVarStr()
-	var migrateData map[string]interface{}
-	pkt.ReadData(&migrateData)
+	_ = pkt.ReadUint16() // targetServer is not userful
+
 	hasClient := pkt.ReadBool()
 	var clientid common.ClientID
 	var clientsrv uint16
@@ -204,6 +201,11 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 		clientid = pkt.ReadClientID()
 		clientsrv = pkt.ReadUint16()
 	}
+
+	spaceID := pkt.ReadEntityID() // target space
+	typeName := pkt.ReadVarStr()
+	var migrateData map[string]interface{}
+	pkt.ReadData(&migrateData)
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, clientid, clientsrv)
 	}

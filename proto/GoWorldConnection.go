@@ -153,9 +153,7 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)
 	packet.AppendUint16(targetServer)
-	packet.AppendEntityID(targetSpace)
-	packet.AppendVarStr(typeName)
-	packet.AppendData(migrateData)
+
 	if !clientid.IsNil() {
 		packet.AppendBool(true)
 		packet.AppendClientID(clientid)
@@ -163,6 +161,11 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 	} else {
 		packet.AppendBool(false)
 	}
+
+	packet.AppendEntityID(targetSpace)
+	packet.AppendVarStr(typeName)
+	packet.AppendData(migrateData)
+
 	return gwc.SendPacketRelease(packet)
 }
 
