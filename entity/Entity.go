@@ -67,19 +67,27 @@ func (e *Entity) Destroy() {
 	if e.destroyed {
 		return
 	}
-
 	gwlog.Info("%s.Destroy ...", e)
-	e.SetClient(nil) // always set client to nil before destroy
-	if e.isCrossServerCallable() {
+	isCrossServerCallable := e.isCrossServerCallable()
+	e.destroyEntity(false)
+	if isCrossServerCallable {
 		dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
 	}
-	e.destroyEntity()
-	e.I.OnDestroy()
 }
 
-func (e *Entity) destroyEntity() {
+func (e *Entity) destroyEntity(isMigrate bool) {
 	e.Space.leave(e)
 	e.clearTimers()
+	e.timers = nil // prohibit further use
+
+	if !isMigrate {
+		e.I.OnDestroy()
+		e.SetClient(nil) // always set client to nil before destroy
+		e.Save()
+	} else {
+		e.I.OnMigrateOut()
+	}
+
 	entityManager.del(e.ID)
 	e.destroyed = true
 }
@@ -143,7 +151,7 @@ func (e *Entity) setupSaveTimer() {
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
 	e.aoi.interest(other)
-	e.client.SendCreateEntity(other)
+	e.client.SendCreateEntity(other, false)
 }
 
 func (e *Entity) uninterest(other *Entity) {
@@ -343,9 +351,9 @@ func (e *Entity) SetClient(client *GameClient) {
 	if client != nil {
 		// send create e to new client
 		entityManager.onClientSetOwner(client.clientid, e.ID)
-		client.SendCreateEntity(e)
+		client.SendCreateEntity(e, true)
 		for neighbor := range e.Neighbors() {
-			client.SendCreateEntity(neighbor)
+			client.SendCreateEntity(neighbor, false)
 		}
 	}
 
@@ -481,7 +489,7 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 }
 
 func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
-	e.destroyEntity() // disable the entity
+	e.destroyEntity(true) // disable the entity
 	e.I.OnMigrateOut()
 	migrateData := e.getMigrateData()
 

@@ -31,15 +31,17 @@ type ClientEntity struct {
 	ID       EntityID
 
 	Attrs     ClientAttrs
+	IsPlayer  bool
 	destroyed bool
 }
 
-func newClientEntity(owner *ClientBot, typeName string, entityid EntityID) *ClientEntity {
+func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool) *ClientEntity {
 	e := &ClientEntity{
 		owner:    owner,
 		TypeName: typeName,
 		ID:       entityid,
 		Attrs:    make(ClientAttrs),
+		IsPlayer: isPlayer,
 	}
 
 	e.OnCreated()
@@ -58,7 +60,11 @@ func (e *ClientEntity) Destroy() {
 }
 
 func (e *ClientEntity) OnCreated() {
-	gwlog.Info("%s.OnCreated ", e)
+	gwlog.Info("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
+	if !e.IsPlayer {
+		return
+	}
+
 	if e.TypeName == "Avatar" {
 		e.onAvatarCreated()
 	} else if e.TypeName == "Account" {

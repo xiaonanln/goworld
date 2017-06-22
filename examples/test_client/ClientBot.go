@@ -19,8 +19,8 @@ type ClientBot struct {
 	waiter   *sync.WaitGroup
 	conn     proto.GoWorldConnection
 	entities map[common.EntityID]*ClientEntity
-
-	logined bool
+	player   *ClientEntity
+	logined  bool
 }
 
 func newClientBot(id int, waiter *sync.WaitGroup) *ClientBot {
@@ -72,7 +72,7 @@ func (bot *ClientBot) loop() {
 }
 func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
 	_ = packet.ReadUint16()
-	_ = packet.ReadClientID()
+	_ = packet.ReadClientID() // TODO: strip these two fields ?
 	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
 		entityid := packet.ReadEntityID()
 		path := packet.ReadStringList()
@@ -90,10 +90,11 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
+		isPlayer := packet.ReadBool()
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
-		gwlog.Info("Create entity %s.%s: attrs=%v", typeName, entityid, clientData)
-		bot.createEntity(typeName, entityid)
+		gwlog.Info("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityid, isPlayer, clientData)
+		bot.createEntity(typeName, entityid, isPlayer)
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
@@ -123,10 +124,16 @@ func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key 
 	entity.applyAttrDel(path, key)
 }
 
-func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID) {
+func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, isPlayer bool) {
 	if bot.entities[entityid] == nil {
-		e := newClientEntity(bot, typeName, entityid)
+		e := newClientEntity(bot, typeName, entityid, isPlayer)
 		bot.entities[entityid] = e
+		if isPlayer {
+			if bot.player != nil {
+				gwlog.TraceError("%s.createEntity: creating player %S, but player is already set to %s", bot, e, bot.player)
+			}
+			bot.player = e
+		}
 	}
 }
 
@@ -136,6 +143,9 @@ func (bot *ClientBot) destroyEntity(typeName string, entityid common.EntityID) {
 		entity.Lock()
 		defer entity.Unlock()
 		entity.Destroy()
+		if entity == bot.player {
+			bot.player = nil
+		}
 		delete(bot.entities, entityid)
 	}
 }

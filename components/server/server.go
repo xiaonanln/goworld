@@ -9,6 +9,7 @@ import (
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
@@ -58,10 +59,12 @@ func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
 }
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
 	if msgtype < proto.MT_GATE_SERVICE_MSG_TYPE_START {
+		gwlog.Info("HandleDispatcherClientPacket: append packet queue")
 		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
 			msgtype: msgtype,
 			pkt:     packet,
 		}
+		gwlog.Info("HandleDispatcherClientPacket: append packet queue DONE")
 	} else {
 		gateService.HandleDispatcherClientPacket(msgtype, packet)
 	}

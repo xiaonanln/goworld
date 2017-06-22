@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -49,23 +48,24 @@ func (a *Avatar) enterSpace(spaceKind int) {
 
 func (a *Avatar) OnClientConnected() {
 	gwlog.Info("%s.OnClientConnected: current space = %s", a, a.Space)
-	a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
-	a.Attrs.Set("testpop", 1)
-	v := a.Attrs.Pop("testpop")
-	gwlog.Info("Avatar pop testpop => %v", v)
-
-	a.Attrs.Set("subattr", goworld.MapAttr())
-	subattr := a.Attrs.GetMapAttr("subattr")
-	subattr.Set("a", 1)
-	subattr.Set("b", 1)
-	subattr = a.Attrs.PopMapAttr("subattr")
-	a.Attrs.Set("subattr", subattr)
+	//a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
+	//a.Attrs.Set("testpop", 1)
+	//v := a.Attrs.Pop("testpop")
+	//gwlog.Info("Avatar pop testpop => %v", v)
+	//
+	//a.Attrs.Set("subattr", goworld.MapAttr())
+	//subattr := a.Attrs.GetMapAttr("subattr")
+	//subattr.Set("a", 1)
+	//subattr.Set("b", 1)
+	//subattr = a.Attrs.PopMapAttr("subattr")
+	//a.Attrs.Set("subattr", subattr)
 
 	a.enterSpace(a.GetInt("spaceKind"))
 }
 
 func (a *Avatar) OnClientDisconnected() {
 	gwlog.Info("%s client disconnected", a)
+	a.Destroy()
 }
 
 func (a *Avatar) EnterSpace_Client(kind int) {

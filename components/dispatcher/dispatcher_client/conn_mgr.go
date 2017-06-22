@@ -9,6 +9,8 @@ import (
 
 	"errors"
 
+	"net"
+
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -66,6 +68,8 @@ func connectDispatchClient() (*DispatcherClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024)
+	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024)
 	return newDispatcherClient(conn), nil
 }
 

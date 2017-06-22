@@ -27,11 +27,11 @@ func (client *GameClient) String() string {
 	return fmt.Sprintf("GameClient<%s@%d>", client.clientid, client.serverid)
 }
 
-func (client *GameClient) SendCreateEntity(entity *Entity) {
+func (client *GameClient) SendCreateEntity(entity *Entity, isPlayer bool) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, entity.getClientData())
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer, entity.getClientData())
 }
 
 func (client *GameClient) SendDestroyEntity(entity *Entity) {

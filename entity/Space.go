@@ -96,7 +96,7 @@ func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
 
 func (space *Space) enter(entity *Entity) {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.enter <<< %s", space, entity)
+		gwlog.Debug("%s.enter <<< %s, entity count=%d", space, entity, space.GetEntityCount())
 	}
 
 	if entity.Space != nilSpace {
@@ -157,4 +157,8 @@ func (space *Space) CountEntities(typeName string) int {
 		}
 	}
 	return count
+}
+
+func (space *Space) GetEntityCount() int {
+	return len(space.entities)
 }

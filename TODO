@@ -1,4 +1,5 @@
-TODO: Determine how dispatcher know the target server of client packets
+TODO: destroy avatar when lose client
+TODO: destroy entities when space is destroyed
 
 TODO: [test_game]
     TODO: Spaces with multiple threads

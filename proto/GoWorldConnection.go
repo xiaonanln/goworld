@@ -94,14 +94,14 @@ func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method
 	packet.AppendData(args)
 	return gwc.SendPacketRelease(packet)
 }
-
-func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID, clientData map[string]interface{}) error {
+func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CREATE_ENTITY_ON_CLIENT)
 	packet.AppendUint16(sid)
 	packet.AppendClientID(clientid)
 	packet.AppendVarStr(typeName)
 	packet.AppendEntityID(entityid)
+	packet.AppendBool(isPlayer)
 	packet.AppendData(clientData)
 	return gwc.SendPacketRelease(packet)
 }
