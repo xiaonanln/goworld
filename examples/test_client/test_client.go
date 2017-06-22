@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	NR_CLIENTS = 1
+	NR_CLIENTS     = 1
+	SPACE_KIND_MIN = 1
+	SPACE_KIND_MAX = 100
 )
 
 var (

@@ -225,7 +225,7 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 		if rpcDesc.Flags&RF_OWN_CLIENT == 0 && isFromOwnClient {
 			gwlog.Panicf("%s.onCall: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
 		} else if rpcDesc.Flags&RF_OTHER_CLIENT == 0 && !isFromOwnClient {
-			gwlog.Panicf("%s.onCall: Method %s can not be called from OtherClient: flags=%v", e, methodName, rpcDesc.Flags)
+			gwlog.Panicf("%s.onCall: Method %s can not be called from OtherClient: flags=%v, OwnClient=%s, OtherClient=%s", e, methodName, rpcDesc.Flags, e.getClientID(), clientid)
 		}
 	}
 

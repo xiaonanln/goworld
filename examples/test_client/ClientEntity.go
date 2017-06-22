@@ -5,6 +5,11 @@ import (
 
 	"reflect"
 
+	"math/rand"
+	"time"
+
+	"sync"
+
 	"github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -19,11 +24,14 @@ func (attrs ClientAttrs) HasKey(key string) bool {
 }
 
 type ClientEntity struct {
+	sync.Mutex
+
 	owner    *ClientBot
 	TypeName string
 	ID       EntityID
 
-	Attrs ClientAttrs
+	Attrs     ClientAttrs
+	destroyed bool
 }
 
 func newClientEntity(owner *ClientBot, typeName string, entityid EntityID) *ClientEntity {
@@ -41,15 +49,78 @@ func newClientEntity(owner *ClientBot, typeName string, entityid EntityID) *Clie
 func (e *ClientEntity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
+
+func (e *ClientEntity) Destroy() {
+	if e.destroyed {
+		return
+	}
+	e.destroyed = true
+}
+
 func (e *ClientEntity) OnCreated() {
 	gwlog.Info("%s.OnCreated ", e)
-	if e.TypeName == "Account" {
-		timer.AddCallback(0, func() {
-			username := e.owner.username()
-			password := e.owner.password()
-			e.CallServer("Login", username, password)
-		})
+	if e.TypeName == "Avatar" {
+		e.onAvatarCreated()
+	} else if e.TypeName == "Account" {
+		e.onAccountCreated()
 	}
+
+}
+
+func (e *ClientEntity) onAvatarCreated() {
+	e.doSomethingLater()
+}
+
+func (e *ClientEntity) doSomethingLater() {
+	randomDelay := time.Second * time.Duration(1+rand.Intn(10))
+	timer.AddCallback(randomDelay, func() {
+
+		e.Lock()
+		defer e.Unlock()
+
+		if e.destroyed {
+			return
+		}
+		e.doSomething()
+		e.doSomethingLater()
+	})
+}
+
+type _Something struct {
+	Method string
+	Weight int
+}
+
+var (
+	DO_THINGS = []_Something{
+		{"DoEnterRandomSpace", 100},
+	}
+)
+
+func (e *ClientEntity) doSomething() {
+	thing := e.chooseThingByWeight()
+	reflect.ValueOf(e).MethodByName(thing).Call(nil)
+}
+
+func (e *ClientEntity) chooseThingByWeight() string {
+	return "DoEnterRandomSpace"
+}
+
+func (e *ClientEntity) DoEnterRandomSpace() {
+	spaceKind := SPACE_KIND_MIN + rand.Intn(SPACE_KIND_MAX-SPACE_KIND_MIN+1)
+	e.CallServer("EnterSpace", spaceKind)
+}
+
+func (e *ClientEntity) onAccountCreated() {
+	timer.AddCallback(0, func() {
+
+		e.Lock()
+		defer e.Unlock()
+
+		username := e.owner.username()
+		password := e.owner.password()
+		e.CallServer("Login", username, password)
+	})
 }
 
 func (e *ClientEntity) CallServer(method string, args ...interface{}) {
