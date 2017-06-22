@@ -19,7 +19,7 @@ import (
 type GateService struct {
 	listenAddr        string
 	clientProxies     map[common.ClientID]*ClientProxy
-	clientProxiesLock sync.Mutex
+	clientProxiesLock sync.RWMutex
 	//packetQueue chan packetQueueItem
 }
 
@@ -64,12 +64,14 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 }
 
 func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
-	if consts.DEBUG_PACKETS{
+	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet=%v", gs, msgtype, packet.Payload())
 	}
 	_ = packet.ReadUint16() // sid
 	clientid := packet.ReadClientID()
+	gs.clientProxiesLock.RLock()
 	clientproxy := gs.clientProxies[clientid]
+	gs.clientProxiesLock.RUnlock()
 	clientproxy.SendPacketRelease(packet)
 
 	//typeName := packet.ReadVarStr()

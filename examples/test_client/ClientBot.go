@@ -108,6 +108,8 @@ func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, k
 		gwlog.Warn("entity %s not found")
 	}
 	entity := bot.entities[entityid]
+	entity.Lock()
+	defer entity.Unlock()
 	entity.applyAttrChange(path, key, val)
 }
 
@@ -116,6 +118,8 @@ func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key 
 		gwlog.Warn("entity %s not found")
 	}
 	entity := bot.entities[entityid]
+	entity.Lock()
+	defer entity.Unlock()
 	entity.applyAttrDel(path, key)
 }
 
@@ -127,7 +131,11 @@ func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID) {
 }
 
 func (bot *ClientBot) destroyEntity(typeName string, entityid common.EntityID) {
-	if bot.entities[entityid] != nil {
+	entity := bot.entities[entityid]
+	if entity != nil {
+		entity.Lock()
+		defer entity.Unlock()
+		entity.Destroy()
 		delete(bot.entities, entityid)
 	}
 }

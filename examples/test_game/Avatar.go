@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
@@ -70,6 +68,10 @@ func (a *Avatar) OnClientDisconnected() {
 	gwlog.Info("%s client disconnected", a)
 }
 
+func (a *Avatar) EnterSpace_Client(kind int) {
+	a.enterSpace(kind)
+}
+
 func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
 	a.EnterSpace(spaceID)
@@ -77,7 +79,4 @@ func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
 
 func (a *Avatar) OnEnterSpace() {
 	gwlog.Info("%s ENTER SPACE %s", a, a.Space)
-	a.AddCallback(time.Second*5, func() {
-		a.enterSpace(a.Space.Kind + 1)
-	})
 }
