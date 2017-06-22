@@ -23,6 +23,10 @@ type Packet struct {
 	bytes    [MAX_PACKET_SIZE]byte
 }
 
+func (packet *Packet) AddRefCount(add int64) {
+	atomic.AddInt64(&packet.refcount, add)
+}
+
 func (p *Packet) Payload() []byte {
 	return p.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }

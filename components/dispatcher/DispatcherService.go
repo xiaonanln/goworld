@@ -399,6 +399,7 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
+	pkt.AddRefCount(int64(len(service.clients)))
 	for _, dcp := range service.clients {
 		dcp.SendPacket(pkt)
 	}

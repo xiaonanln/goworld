@@ -62,6 +62,9 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
+	if packet.refcount <= 0 {
+		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
+	}
 	err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	return err
 }
