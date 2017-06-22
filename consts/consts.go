@@ -9,6 +9,10 @@ const (
 	// For Server
 	SERVER_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affects timer resolution
 	SAVE_INTERVAL        = time.Minute * 1       // TODO: config save interval by goworld.ini
+
+	DISPATCHER_CLIENT_WRITE_BUFFER_SIZE = 1024 * 8
+	DISPATCHER_CLIENT_READ_BUFFER_SIZE  = 1024 * 8
+
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
 	ENTER_SPACE_REQUEST_TIMEOUT = DISPATCHER_MIGRATE_TIMEOUT + time.Second*5 // enter space should finish in limited seconds

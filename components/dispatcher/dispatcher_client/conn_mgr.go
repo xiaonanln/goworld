@@ -68,8 +68,9 @@ func connectDispatchClient() (*DispatcherClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024)
-	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024)
+	tcpConn := conn.(*net.TCPConn)
+	tcpConn.SetReadBuffer(consts.DISPATCHER_CLIENT_READ_BUFFER_SIZE)
+	tcpConn.SetWriteBuffer(consts.DISPATCHER_CLIENT_WRITE_BUFFER_SIZE)
 	return newDispatcherClient(conn), nil
 }
 

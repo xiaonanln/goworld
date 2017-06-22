@@ -23,7 +23,9 @@ var (
 	NETWORK_ENDIAN = binary.LittleEndian
 	messagePool    = sync.Pool{
 		New: func() interface{} {
-			return &Packet{released: true}
+			return &Packet{
+				refcount: 0,
+			}
 		},
 	}
 )
@@ -33,16 +35,18 @@ type PacketConnection struct {
 }
 
 func NewPacketConnection(conn net.Conn) PacketConnection {
-	return PacketConnection{binconn: NewBinaryConnection(conn)}
+	return PacketConnection{
+		binconn: NewBinaryConnection(conn),
+	}
 }
 
 func allocPacket() *Packet {
 	pkt := messagePool.Get().(*Packet)
 	//gwlog.Debug("ALLOC %p", pkt)
-	if !pkt.released {
-		gwlog.Panicf("packet must be released when allocated from pool")
+	if pkt.refcount != 0 {
+		gwlog.Panicf("packet must be released when allocated from pool, but refcount=%d", pkt.refcount)
 	}
-	pkt.released = false
+	pkt.refcount = 1
 	return pkt
 }
 
@@ -55,12 +59,10 @@ func (pc PacketConnection) NewPacket() *Packet {
 }
 
 func (pc PacketConnection) SendPacket(packet *Packet) error {
-	packet.prepareSend()
-
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.payloadLen])
+		gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
-	err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.payloadLen])
+	err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	return err
 }
 
@@ -75,7 +77,6 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	}
 
 	var payloadLen uint32 = NETWORK_ENDIAN.Uint32(payloadLenBuf)
-	packet.payloadLen = payloadLen
 
 	if payloadLen > MAX_PAYLOAD_LENGTH {
 		// p size is too large
@@ -108,3 +109,37 @@ func (pc PacketConnection) LocalAddr() net.Addr {
 func (pc PacketConnection) String() string {
 	return fmt.Sprintf("[%s >>> %s]", pc.LocalAddr(), pc.RemoteAddr())
 }
+
+//type PacketConnectionWithQueue struct {
+//	PacketConnection
+//	queue sync_queue.SyncQueue
+//}
+//
+//func NewPacketConnectionWithQueue(conn net.Conn) PacketConnectionWithQueue {
+//	pc := PacketConnectionWithQueue{
+//		PacketConnection: NewPacketConnection(conn),
+//		queue:            sync_queue.NewSyncQueue(),
+//	}
+//
+//	go pc.sendRoutine()
+//	return pc
+//}
+//
+//func (pc PacketConnectionWithQueue) PushPacket(packet *Packet) {
+//	pc.queue.Push(packet)
+//}
+//
+//func (pc PacketConnectionWithQueue) SendInstantPacket(packet *Packet) error {
+//	return pc.PacketConnection.SendPacket(packet)
+//}
+//
+//func (pc PacketConnectionWithQueue) SendPacket(packet *Packet) {
+//	gwlog.Panicf("DO NOT USE SendPacket")
+//}
+//
+//func (pc PacketConnectionWithQueue) sendRoutine() {
+//	for {
+//		packet := pc.queue.Pop().(*Packet)
+//		pc.PacketConnection.SendPacket(packet)
+//	}
+//}

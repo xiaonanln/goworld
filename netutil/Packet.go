@@ -4,6 +4,10 @@ import (
 	"encoding/binary"
 	"log"
 
+	"unsafe"
+
+	"sync/atomic"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -13,40 +17,41 @@ var (
 )
 
 type Packet struct {
-	released   bool
-	payloadLen uint32
 	readCursor uint32
-	bytes      [MAX_PACKET_SIZE]byte
+
+	refcount int64
+	bytes    [MAX_PACKET_SIZE]byte
 }
 
 func (p *Packet) Payload() []byte {
-	return p.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+p.payloadLen]
+	return p.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }
 
 func (p *Packet) FreePayload() []byte {
-	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	return p.bytes[payloadEnd:]
 }
 
 func (p *Packet) Release() {
-	if p.released {
-		gwlog.Panicf("packet must not be released multiple times!")
-	}
+	refcount := atomic.AddInt64(&p.refcount, -1)
+	if refcount == 0 {
+		p.SetPayloadLen(0)
+		p.readCursor = 0
 
-	p.payloadLen = 0
-	p.readCursor = 0
-	p.released = true
-	messagePool.Put(p)
+		messagePool.Put(p)
+	} else if refcount < 0 {
+		gwlog.Panicf("releasing packet with refcount=%d", p.refcount)
+	}
 }
 
 func (p *Packet) ClearPayload() {
 	p.readCursor = 0
-	p.payloadLen = 0
+	p.SetPayloadLen(0)
 }
 
 func (p *Packet) AppendByte(b byte) {
-	p.bytes[PREPAYLOAD_SIZE+p.payloadLen] = b
-	p.payloadLen += 1
+	p.bytes[PREPAYLOAD_SIZE+p.GetPayloadLen()] = b
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 1
 }
 
 func (p *Packet) ReadByte() (v byte) {
@@ -68,33 +73,29 @@ func (p *Packet) ReadBool() (v bool) {
 	return p.ReadByte() != 0
 }
 
-func (p *Packet) prepareSend() {
-	NETWORK_ENDIAN.PutUint32(p.bytes[:SIZE_FIELD_SIZE], p.payloadLen)
-}
-
 func (p *Packet) AppendUint16(v uint16) {
-	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint16(p.bytes[payloadEnd:payloadEnd+2], v)
-	p.payloadLen += 2
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 2
 }
 
 func (p *Packet) AppendUint32(v uint32) {
-	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint32(p.bytes[payloadEnd:payloadEnd+4], v)
-	p.payloadLen += 4
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 4
 }
 
 func (p *Packet) AppendUint64(v uint64) {
-	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint64(p.bytes[payloadEnd:payloadEnd+8], v)
-	p.payloadLen += 8
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 8
 }
 
 func (p *Packet) AppendBytes(v []byte) {
-	payloadEnd := PREPAYLOAD_SIZE + p.payloadLen
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	bytesLen := uint32(len(v))
 	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
-	p.payloadLen += bytesLen
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += bytesLen
 }
 
 func (p *Packet) AppendVarStr(s string) {
@@ -168,7 +169,7 @@ func (p *Packet) AppendData(msg interface{}) {
 	}
 	argsDataLen := uint32(len(argsData))
 	PACKET_ENDIAN.PutUint32(freePayload[:4], argsDataLen)
-	p.SetPayloadLen(p.payloadLen + 4 + argsDataLen)
+	p.SetPayloadLen(p.GetPayloadLen() + 4 + argsDataLen)
 }
 
 func (p *Packet) ReadData(msg interface{}) {
@@ -196,7 +197,7 @@ func (p *Packet) ReadStringList() []string {
 }
 
 func (p *Packet) GetPayloadLen() uint32 {
-	return p.payloadLen
+	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))
 }
 
 func (p *Packet) SetPayloadLen(plen uint32) {
@@ -204,5 +205,5 @@ func (p *Packet) SetPayloadLen(plen uint32) {
 		log.Panicf("payload length too long: %d", plen)
 	}
 
-	p.payloadLen = plen
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) = plen
 }
