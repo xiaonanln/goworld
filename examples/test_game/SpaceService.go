@@ -9,14 +9,43 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
+const (
+	MAX_AVATAR_COUNT_PER_SPACE = 100
+)
+
 type enterSpaceReq struct {
 	avatarId common.EntityID
 	kind     int
 }
 
 type _SpaceKindInfo struct {
+	spaceEntities map[common.EntityID]*_SpaceEntityInfo
+}
+
+func (ki *_SpaceKindInfo) choose() *_SpaceEntityInfo {
+	var best *_SpaceEntityInfo
+
+	for _, ei := range ki.spaceEntities {
+		if ei.AvatarNum >= MAX_AVATAR_COUNT_PER_SPACE { // space is full
+			continue
+		}
+
+		if best == nil || best.AvatarNum < ei.AvatarNum { // choose the space with more avatars
+			best = ei
+		}
+	}
+	return best
+}
+
+func (ki *_SpaceKindInfo) remove(spaceID common.EntityID) {
+	delete(ki.spaceEntities, spaceID)
+}
+
+type _SpaceEntityInfo struct {
 	EntityID      common.EntityID
+	Kind          int
 	LastEnterTime time.Time
+	AvatarNum     int
 }
 
 type SpaceService struct {
@@ -24,6 +53,22 @@ type SpaceService struct {
 
 	spaceKinds      map[int]*_SpaceKindInfo
 	pendingRequests []enterSpaceReq
+}
+
+func (s *SpaceService) getSpaceKindInfo(kind int) *_SpaceKindInfo {
+	ki := s.spaceKinds[kind]
+	if ki == nil {
+		ki = &_SpaceKindInfo{
+			spaceEntities: map[common.EntityID]*_SpaceEntityInfo{},
+		}
+		s.spaceKinds[kind] = ki
+	}
+	return ki
+}
+
+func (s *SpaceService) getSpaceEntityInfo(kind int, spaceID common.EntityID) *_SpaceEntityInfo {
+	kindinfo := s.getSpaceKindInfo(kind)
+	return kindinfo.spaceEntities[spaceID]
 }
 
 func (s *SpaceService) OnInit() {
@@ -43,11 +88,12 @@ func (s *SpaceService) IsPersistent() bool {
 func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
 
-	spaceKindInfo := s.spaceKinds[kind]
-	if spaceKindInfo != nil {
+	spaceKindInfo := s.getSpaceKindInfo(kind)
+	spaceInfo := spaceKindInfo.choose()
+	if spaceInfo != nil {
 		// space already exists, tell the avatar
-		s.Call(avatarId, "DoEnterSpace", kind, spaceKindInfo.EntityID)
-		spaceKindInfo.LastEnterTime = time.Now()
+		spaceInfo.LastEnterTime = time.Now()
+		s.Call(avatarId, "DoEnterSpace", kind, spaceInfo.EntityID)
 	} else {
 		s.pendingRequests = append(s.pendingRequests, enterSpaceReq{
 			avatarId, kind,
@@ -59,16 +105,14 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 
 func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common.EntityID) {
 	gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
-	spaceKindInfo := s.spaceKinds[loadKind]
-	if spaceKindInfo != nil {
-		// duplicate space created ... can happen, solve it later ...
-		gwlog.Panicf("duplicate space created: kind=%d, spaceID=%s", loadKind, loadSpaceID)
-	}
+	spaceKindInfo := s.getSpaceKindInfo(loadKind)
 
-	s.spaceKinds[loadKind] = &_SpaceKindInfo{
+	spaceKindInfo.spaceEntities[loadSpaceID] = &_SpaceEntityInfo{
+		Kind:          loadKind,
 		EntityID:      loadSpaceID,
 		LastEnterTime: time.Now(),
 	}
+
 	// notify all pending requests
 	leftPendingReqs := []enterSpaceReq{}
 	satisfyingReqs := []enterSpaceReq{}
@@ -93,13 +137,16 @@ func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common
 
 func (s *SpaceService) RequestDestroy_Server(kind int, spaceID common.EntityID) {
 	gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
-	spaceKindInfo := s.spaceKinds[kind]
-	if spaceKindInfo == nil || spaceKindInfo.EntityID != spaceID {
+	//spaceKindInfo := s.getSpaceKindInfo(kind)
+	spaceInfo := s.getSpaceEntityInfo(kind, spaceID)
+
+	if spaceInfo == nil { // You don't exists
 		s.Call(spaceID, "ConfirmRequestDestroy", true)
 		return
 	}
-	if time.Now().After(spaceKindInfo.LastEnterTime.Add(time.Second * 5)) {
-		delete(s.spaceKinds, kind)
+
+	if time.Now().After(spaceInfo.LastEnterTime.Add(time.Second * 5)) {
+		s.getSpaceKindInfo(kind).remove(spaceID)
 		s.Call(spaceID, "ConfirmRequestDestroy", true)
 		return
 	}
