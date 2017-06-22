@@ -395,7 +395,6 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 		service.dispatcherClientOfServer(targetServer).SendPacketRelease(item.(callQueueItem).packet)
 		item, ok = entityDispatchInfo.callQueue.TryPop()
 	}
-
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {

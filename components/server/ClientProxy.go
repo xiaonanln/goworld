@@ -19,7 +19,7 @@ type ClientProxy struct {
 
 func newClientProxy(conn net.Conn) *ClientProxy {
 	return &ClientProxy{
-		GoWorldConnection: proto.NewGoWorldConnection(conn),
+		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
 		clientid:          common.GenClientID(), // each client has its unique clientid
 	}
 }

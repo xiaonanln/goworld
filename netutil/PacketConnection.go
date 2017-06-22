@@ -8,12 +8,13 @@ import (
 
 	"sync"
 
+	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
-	MAX_PACKET_SIZE    = 1 * 1024 * 1024
+	MAX_PACKET_SIZE    = 64 * 1024
 	SIZE_FIELD_SIZE    = 4
 	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
 	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
@@ -31,13 +32,21 @@ var (
 )
 
 type PacketConnection struct {
-	binconn BinaryConnection
+	binconn      BinaryConnection
+	useSendQueue bool
+	sendQueue    sync_queue.SyncQueue
 }
 
-func NewPacketConnection(conn net.Conn) PacketConnection {
-	return PacketConnection{
-		binconn: NewBinaryConnection(conn),
+func NewPacketConnection(conn net.Conn, useSendQueue bool) PacketConnection {
+	pc := PacketConnection{
+		binconn:      NewBinaryConnection(conn),
+		useSendQueue: useSendQueue,
 	}
+	if useSendQueue {
+		pc.sendQueue = sync_queue.NewSyncQueue()
+		go pc.sendRoutine()
+	}
+	return pc
 }
 
 func allocPacket() *Packet {
@@ -65,8 +74,14 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if packet.refcount <= 0 {
 		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
 	}
-	err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
-	return err
+	if pc.useSendQueue {
+		packet.AddRefCount(1) // will be released when pop from queue
+		pc.sendQueue.Push(packet)
+		return nil
+	} else {
+		err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+		return err
+	}
 }
 
 func (pc PacketConnection) RecvPacket() (*Packet, error) {
@@ -140,9 +155,10 @@ func (pc PacketConnection) String() string {
 //	gwlog.Panicf("DO NOT USE SendPacket")
 //}
 //
-//func (pc PacketConnectionWithQueue) sendRoutine() {
-//	for {
-//		packet := pc.queue.Pop().(*Packet)
-//		pc.PacketConnection.SendPacket(packet)
-//	}
-//}
+func (pc PacketConnection) sendRoutine() {
+	for {
+		packet := pc.sendQueue.Pop().(*Packet)
+		pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+		packet.Release()
+	}
+}

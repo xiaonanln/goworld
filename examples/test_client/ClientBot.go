@@ -53,7 +53,7 @@ func (bot *ClientBot) run() {
 		return
 	}
 	gwlog.Info("connected: %s", conn.RemoteAddr())
-	bot.conn = proto.NewGoWorldConnection(conn)
+	bot.conn = proto.NewGoWorldConnection(conn, false)
 	defer bot.conn.Close()
 
 	bot.loop()
