@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"sync"
 
 	"fmt"
@@ -52,8 +53,10 @@ func (bot *ClientBot) run() {
 		gwlog.Error("Connect failed: %s", err)
 		return
 	}
+	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024)
+	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024)
 	gwlog.Info("connected: %s", conn.RemoteAddr())
-	bot.conn = proto.NewGoWorldConnection(conn, false)
+	bot.conn = proto.NewGoWorldConnection(conn, true)
 	defer bot.conn.Close()
 
 	bot.loop()
@@ -81,13 +84,17 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		key := packet.ReadVarStr()
 		var val interface{}
 		packet.ReadData(&val)
-		gwlog.Info("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
+		if !quiet {
+			gwlog.Info("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
+		}
 		bot.applyAttrChange(entityid, path, key, val)
 	} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
 		entityid := packet.ReadEntityID()
 		path := packet.ReadStringList()
 		key := packet.ReadVarStr()
-		gwlog.Info("Entity %s Attribute %v deleted %s", entityid, path, key)
+		if !quiet {
+			gwlog.Info("Entity %s Attribute %v deleted %s", entityid, path, key)
+		}
 		bot.applyAttrDel(entityid, path, key)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
@@ -95,12 +102,16 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		isPlayer := packet.ReadBool()
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
-		gwlog.Info("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityid, isPlayer, clientData)
+		if !quiet {
+			gwlog.Info("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityid, isPlayer, clientData)
+		}
 		bot.createEntity(typeName, entityid, isPlayer)
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
-		gwlog.Info("Destroy entity %s.%s", typeName, entityid)
+		if !quiet {
+			gwlog.Info("Destroy entity %s.%s", typeName, entityid)
+		}
 		bot.destroyEntity(typeName, entityid)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
@@ -161,6 +172,8 @@ func (bot *ClientBot) password() string {
 }
 
 func (bot *ClientBot) CallServer(id common.EntityID, method string, args []interface{}) {
-	gwlog.Info("%s call server: %s.%s%v", bot, id, method, args)
+	if !quiet {
+		gwlog.Info("%s call server: %s.%s%v", bot, id, method, args)
+	}
 	bot.conn.SendCallEntityMethodFromClient(id, method, args)
 }

@@ -12,3 +12,12 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+*~
+*.log
+.*.swp
+
+_entity_storage/
+components/dispatcher/dispatcher
+examples/test_client/test_client
+examples/test_game/test_game

@@ -13,17 +13,20 @@ import (
 )
 
 const (
-	NR_CLIENTS     = 1000
 	SPACE_KIND_MIN = 1
 	SPACE_KIND_MAX = 100
 )
 
 var (
+	quiet      bool
 	configFile string
+	N          int
 )
 
 func parseArgs() {
+	flag.BoolVar(&quiet, "quiet", false, "run client quietly with much less output")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
+	flag.IntVar(&N, "N", 1000, "Number of clients")
 	flag.Parse()
 }
 
@@ -35,8 +38,8 @@ func main() {
 	}
 
 	var wait sync.WaitGroup
-	wait.Add(NR_CLIENTS)
-	for i := 0; i < NR_CLIENTS; i++ {
+	wait.Add(N)
+	for i := 0; i < N; i++ {
 		bot := newClientBot(i+1, &wait)
 		go bot.run()
 	}

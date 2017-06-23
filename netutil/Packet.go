@@ -33,6 +33,10 @@ var (
 			}
 			if consts.DEBUG_PACKET_ALLOC {
 				atomic.AddInt64(&debugInfo.NewCount, 1)
+				gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
+					atomic.LoadInt64(&debugInfo.AllocCount),
+					atomic.LoadInt64(&debugInfo.ReleaseCount),
+					atomic.LoadInt64(&debugInfo.NewCount))
 			}
 			return p
 		},
@@ -55,11 +59,6 @@ func allocPacket() *Packet {
 	pkt.refcount = 1
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
-		gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
-			atomic.LoadInt64(&debugInfo.AllocCount),
-			atomic.LoadInt64(&debugInfo.ReleaseCount),
-			atomic.LoadInt64(&debugInfo.NewCount),
-		)
 	}
 	return pkt
 }

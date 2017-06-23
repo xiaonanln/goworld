@@ -18,7 +18,7 @@ const ( // Three different level of packet size
 )
 
 const (
-	MAX_PACKET_SIZE    = 1024 * 1024
+	MAX_PACKET_SIZE    = 4 * 1024
 	SIZE_FIELD_SIZE    = 4
 	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
 	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
@@ -64,7 +64,10 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if pc.useSendQueue {
 		packet.AddRefCount(1) // will be released when pop from queue
 		pc.sendQueue.Push(packet)
-		gwlog.Info("%s: send queue length = %d", pc, pc.sendQueue.Len())
+		sendQueueLen := pc.sendQueue.Len()
+		if sendQueueLen >= 1000 && sendQueueLen%1000 == 0 {
+			gwlog.Warn("%s: send queue length = %d", pc, pc.sendQueue.Len())
+		}
 		return nil
 	} else {
 		err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])

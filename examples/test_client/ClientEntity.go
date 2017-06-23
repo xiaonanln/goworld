@@ -16,6 +16,10 @@ import (
 	"github.com/xiaonanln/typeconv"
 )
 
+const (
+	AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
+)
+
 type ClientAttrs map[string]interface{}
 
 func (attrs ClientAttrs) HasKey(key string) bool {
@@ -60,7 +64,9 @@ func (e *ClientEntity) Destroy() {
 }
 
 func (e *ClientEntity) OnCreated() {
-	gwlog.Info("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
+	if !quiet {
+		gwlog.Info("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
+	}
 	if !e.IsPlayer {
 		return
 	}
@@ -78,9 +84,8 @@ func (e *ClientEntity) onAvatarCreated() {
 }
 
 func (e *ClientEntity) doSomethingLater() {
-	randomDelay := time.Second * time.Duration(1+rand.Intn(10))
+	randomDelay := time.Duration(rand.Int63n(int64(AVERAGE_DO_SOMETHING_INTERVAL * 2)))
 	timer.AddCallback(randomDelay, func() {
-
 		e.Lock()
 		defer e.Unlock()
 
@@ -192,7 +197,9 @@ func (attrs ClientAttrs) GetInt(key string) int {
 }
 
 func (entity *ClientEntity) OnAttrChange_exp() {
-	gwlog.Info("%s: attr exp change to %d", entity, entity.Attrs.GetInt("exp"))
+	if !quiet {
+		gwlog.Info("%s: attr exp change to %d", entity, entity.Attrs.GetInt("exp"))
+	}
 }
 
 func (entity *ClientEntity) OnAttrChange_testpop() {
@@ -202,7 +209,9 @@ func (entity *ClientEntity) OnAttrChange_testpop() {
 	} else {
 		v = -1
 	}
-	gwlog.Info("%s: attr testpop change to %d", entity, v)
+	if !quiet {
+		gwlog.Info("%s: attr testpop change to %d", entity, v)
+	}
 }
 
 func (entity *ClientEntity) OnAttrChange_subattr() {
@@ -212,5 +221,7 @@ func (entity *ClientEntity) OnAttrChange_subattr() {
 	} else {
 		v = nil
 	}
-	gwlog.Info("%s: attr subattr change to %v", entity, v)
+	if !quiet {
+		gwlog.Info("%s: attr subattr change to %v", entity, v)
+	}
 }

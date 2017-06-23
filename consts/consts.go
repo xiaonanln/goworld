@@ -10,8 +10,8 @@ const (
 	SERVER_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affects timer resolution
 	SAVE_INTERVAL        = time.Minute * 1       // TODO: config save interval by goworld.ini
 
-	DISPATCHER_CLIENT_WRITE_BUFFER_SIZE = 1024 * 512
-	DISPATCHER_CLIENT_READ_BUFFER_SIZE  = 1024 * 512
+	DISPATCHER_CLIENT_WRITE_BUFFER_SIZE = 1024 * 1024 * 2
+	DISPATCHER_CLIENT_READ_BUFFER_SIZE  = 1024 * 1024 * 2
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
@@ -23,7 +23,7 @@ const (
 // Debug Options
 const (
 	DEBUG_PACKETS      = false
-	DEBUG_SPACES       = true
+	DEBUG_SPACES       = false
 	DEBUG_SAVE_LOAD    = false
 	DEBUG_CLIENTS      = false
 	DEBUG_MIGRATE      = false
