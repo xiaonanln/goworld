@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goworld/consts"
 	. "github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -45,7 +46,9 @@ func (space *MySpace) OnEntityLeaveSpace(entity *Entity) {
 }
 
 func (space *MySpace) onAvatarLeaveSpace(entity *Entity) {
-	gwlog.Info("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
+	if consts.DEBUG_SPACES {
+		gwlog.Info("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
+	}
 	if space.CountEntities("Avatar") == 0 {
 		// no avatar left, start destroying space
 		space.setDestroyCheckTimer()

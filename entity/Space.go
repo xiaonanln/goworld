@@ -7,6 +7,7 @@ import (
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/gwutils"
 )
 
 const (
@@ -41,7 +42,7 @@ func (space *Space) String() string {
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
-	space.I.OnSpaceInit()
+	gwutils.RunPanicless(space.I.OnSpaceInit)
 }
 
 func (space *Space) OnSpaceInit() {
@@ -62,7 +63,7 @@ func (space *Space) OnCreated() {
 
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	gwlog.Debug("%s.OnCreated", space)
-	space.I.OnSpaceCreated()
+	gwutils.RunPanicless(space.I.OnSpaceCreated)
 }
 
 func (space *Space) OnSpaceCreated() {
@@ -72,7 +73,12 @@ func (space *Space) OnSpaceCreated() {
 }
 
 func (space *Space) OnDestroy() {
-	space.I.OnSpaceDestroy()
+	gwutils.RunPanicless(space.I.OnSpaceDestroy)
+	// destroy all entities
+	for e := range space.entities {
+		e.Destroy()
+	}
+
 	spaceManager.delSpace(space.ID)
 }
 
@@ -113,7 +119,10 @@ func (space *Space) enter(entity *Entity) {
 		other.interest(entity)
 	}
 	space.entities.Add(entity)
-	space.I.OnEntityEnterSpace(entity)
+	gwutils.RunPanicless(func() {
+		space.I.OnEntityEnterSpace(entity)
+	})
+
 	entity.I.OnEnterSpace()
 }
 
@@ -133,7 +142,10 @@ func (space *Space) leave(entity *Entity) {
 		entity.uninterest(other)
 		other.uninterest(entity)
 	}
-	space.I.OnEntityLeaveSpace(entity)
+	gwutils.RunPanicless(func() {
+		space.I.OnEntityLeaveSpace(entity)
+	})
+
 	entity.I.OnLeaveSpace(space)
 }
 

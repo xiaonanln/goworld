@@ -3,6 +3,8 @@ package gwlog
 import (
 	"runtime/debug"
 
+	"io"
+
 	sublog "github.com/Sirupsen/logrus"
 )
 
@@ -38,4 +40,8 @@ func SetLevel(lv sublog.Level) {
 func TraceError(format string, args ...interface{}) {
 	debug.PrintStack()
 	Error(format, args...)
+}
+
+func SetOutput(out io.Writer) {
+	sublog.SetOutput(out)
 }

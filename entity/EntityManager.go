@@ -8,6 +8,7 @@ import (
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/storage"
 )
 
@@ -116,7 +117,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 }
 
 func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
-	gwlog.Debug("createEntity: %s in Space %s", typeName, space)
+	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown e type: %s", typeName)
@@ -163,9 +164,9 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	}
 
 	if !isMigrate {
-		entity.I.OnCreated()
+		gwutils.RunPanicless(entity.I.OnCreated)
 	} else {
-		entity.I.OnMigrateIn()
+		gwutils.RunPanicless(entity.I.OnMigrateIn)
 	}
 
 	if space != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -42,7 +43,9 @@ func (a *Avatar) enterSpace(spaceKind int) {
 	if a.Space.Kind == spaceKind {
 		return
 	}
-	gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
+	if consts.DEBUG_SPACES {
+		gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
+	}
 	a.CallService("SpaceService", "EnterSpace", a.ID, spaceKind)
 }
 
@@ -78,5 +81,7 @@ func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
 }
 
 func (a *Avatar) OnEnterSpace() {
-	gwlog.Info("%s ENTER SPACE %s", a, a.Space)
+	if consts.DEBUG_SPACES {
+		gwlog.Info("%s ENTER SPACE %s", a, a.Space)
+	}
 }

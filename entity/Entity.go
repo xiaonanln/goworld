@@ -15,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/storage"
 )
 
@@ -81,11 +82,11 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.timers = nil // prohibit further use
 
 	if !isMigrate {
-		e.I.OnDestroy()
+		gwutils.RunPanicless(e.I.OnDestroy)
 		e.SetClient(nil) // always set client to nil before destroy
 		e.Save()
 	} else {
-		e.I.OnMigrateOut()
+		gwutils.RunPanicless(e.I.OnMigrateOut)
 	}
 
 	entityManager.del(e.ID)
@@ -139,7 +140,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 	e.Attrs = attrs
 
 	initAOI(&e.aoi)
-	e.I.OnInit()
+	gwutils.RunPanicless(e.I.OnInit)
 }
 
 func (e *Entity) setupSaveTimer() {
@@ -259,11 +260,11 @@ func (e *Entity) DeclareService(serviceName string) {
 
 // Default Handlers
 func (e *Entity) OnInit() {
-	gwlog.Warn("%s.OnInit not implemented", e)
+	//gwlog.Warn("%s.OnInit not implemented", e)
 }
 
 func (e *Entity) OnCreated() {
-	gwlog.Debug("%s.OnCreated", e)
+	//gwlog.Debug("%s.OnCreated", e)
 }
 
 // Space Utilities
@@ -359,9 +360,9 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	if oldClient == nil && client != nil {
 		// got net client
-		e.I.OnClientConnected()
+		gwutils.RunPanicless(e.I.OnClientConnected)
 	} else if oldClient != nil && client == nil {
-		e.I.OnClientDisconnected()
+		gwutils.RunPanicless(e.I.OnClientDisconnected)
 	}
 }
 
@@ -395,7 +396,7 @@ func (e *Entity) notifyClientDisconnected() {
 		gwlog.Panic(e.client)
 	}
 	e.client = nil
-	e.I.OnClientDisconnected()
+	gwutils.RunPanicless(e.I.OnClientDisconnected)
 }
 
 func (e *Entity) OnClientConnected() {
@@ -495,7 +496,7 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 
 func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 	e.destroyEntity(true) // disable the entity
-	e.I.OnMigrateOut()
+	gwutils.RunPanicless(e.I.OnMigrateOut)
 	migrateData := e.getMigrateData()
 
 	var clientid ClientID

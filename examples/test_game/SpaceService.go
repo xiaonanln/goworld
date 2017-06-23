@@ -5,6 +5,7 @@ import (
 
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -86,7 +87,9 @@ func (s *SpaceService) IsPersistent() bool {
 }
 
 func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
-	gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
+	if consts.DEBUG_SPACES {
+		gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
+	}
 
 	spaceKindInfo := s.getSpaceKindInfo(kind)
 	spaceInfo := spaceKindInfo.choose()
@@ -104,7 +107,9 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 }
 
 func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common.EntityID) {
-	gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
+	if consts.DEBUG_SPACES {
+		gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
+	}
 	spaceKindInfo := s.getSpaceKindInfo(loadKind)
 
 	spaceKindInfo.spaceEntities[loadSpaceID] = &_SpaceEntityInfo{
@@ -136,7 +141,9 @@ func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common
 }
 
 func (s *SpaceService) RequestDestroy_Server(kind int, spaceID common.EntityID) {
-	gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
+	if consts.DEBUG_SPACES {
+		gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
+	}
 	//spaceKindInfo := s.getSpaceKindInfo(kind)
 	spaceInfo := s.getSpaceEntityInfo(kind, spaceID)
 
