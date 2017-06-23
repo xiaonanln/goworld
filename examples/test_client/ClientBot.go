@@ -71,6 +71,7 @@ func (bot *ClientBot) loop() {
 		pkt.Release()
 	}
 }
+
 func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
 	_ = packet.ReadUint16()
 	_ = packet.ReadClientID() // TODO: strip these two fields ?

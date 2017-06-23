@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	NR_CLIENTS     = 300
+	NR_CLIENTS     = 1000
 	SPACE_KIND_MIN = 1
 	SPACE_KIND_MAX = 100
 )
