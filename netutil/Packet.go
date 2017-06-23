@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	INITIAL_PACKET_CAPACITY = 4
+	INITIAL_PACKET_CAPACITY = 128
 )
 
 var (
