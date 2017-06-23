@@ -222,10 +222,11 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 		dcp := service.chooseDispatcherClient()
 		entityDispatchInfo.serverid = dcp.serverid
 		service.Unlock()
-		dcp.SendPacketRelease(pkt)
+		dcp.SendPacket(pkt)
 	} else { // entity already loaded
 		service.Unlock()
 	}
+	pkt.Release()
 }
 
 func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -267,6 +268,7 @@ func (service *DispatcherService) handleServiceDown(serviceName string, eid comm
 	pkt.AppendVarStr(serviceName)
 
 	service.broadcastToDispatcherClients(pkt)
+	pkt.Release()
 }
 
 func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -398,7 +400,6 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 }
 
 func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
-	pkt.AddRefCount(int64(len(service.clients)))
 	for _, dcp := range service.clients {
 		dcp.SendPacket(pkt)
 	}

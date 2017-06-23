@@ -68,6 +68,7 @@ func (bot *ClientBot) loop() {
 		}
 		//gwlog.Info("recv packet: msgtype=%v, packet=%v", msgtype, pkt.Payload())
 		bot.handlePacket(msgtype, pkt)
+		pkt.Release()
 	}
 }
 func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {

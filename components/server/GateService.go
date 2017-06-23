@@ -73,8 +73,9 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	clientproxy := gs.clientProxies[clientid]
 	gs.clientProxiesLock.RUnlock()
 	if clientproxy != nil {
-		clientproxy.SendPacketRelease(packet)
+		clientproxy.SendPacket(packet)
 	}
+	packet.Release()
 
 	//typeName := packet.ReadVarStr()
 	//entityid := packet.ReadEntityID()

@@ -8,7 +8,10 @@ import (
 
 	"sync/atomic"
 
+	"sync"
+
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -16,11 +19,49 @@ var (
 	PACKET_ENDIAN = binary.LittleEndian
 )
 
+var (
+	debugInfo struct {
+		NewCount     int64
+		AllocCount   int64
+		ReleaseCount int64
+	}
+
+	messagePool = sync.Pool{
+		New: func() interface{} {
+			p := &Packet{
+				refcount: 0,
+			}
+			if consts.DEBUG_PACKET_ALLOC {
+				atomic.AddInt64(&debugInfo.NewCount, 1)
+			}
+			return p
+		},
+	}
+)
+
 type Packet struct {
 	readCursor uint32
 
 	refcount int64
 	bytes    [MAX_PACKET_SIZE]byte
+}
+
+func allocPacket() *Packet {
+	pkt := messagePool.Get().(*Packet)
+	//gwlog.Debug("ALLOC %p", pkt)
+	if pkt.refcount != 0 {
+		gwlog.Panicf("packet must be released when allocated from pool, but refcount=%d", pkt.refcount)
+	}
+	pkt.refcount = 1
+	if consts.DEBUG_PACKET_ALLOC {
+		atomic.AddInt64(&debugInfo.AllocCount, 1)
+		gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
+			atomic.LoadInt64(&debugInfo.AllocCount),
+			atomic.LoadInt64(&debugInfo.ReleaseCount),
+			atomic.LoadInt64(&debugInfo.NewCount),
+		)
+	}
+	return pkt
 }
 
 func (packet *Packet) AddRefCount(add int64) {
@@ -43,6 +84,10 @@ func (p *Packet) Release() {
 		p.readCursor = 0
 
 		messagePool.Put(p)
+
+		if consts.DEBUG_PACKET_ALLOC {
+			atomic.AddInt64(&debugInfo.ReleaseCount, 1)
+		}
 	} else if refcount < 0 {
 		gwlog.Panicf("releasing packet with refcount=%d", p.refcount)
 	}

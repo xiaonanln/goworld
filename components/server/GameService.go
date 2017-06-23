@@ -37,7 +37,7 @@ func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
 		id:             serverid,
 		serverDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
-		packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
+		packetQueue: make(chan packetQueueItem, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
 	}
 }
 

@@ -12,6 +12,6 @@ type DispatcherClient struct {
 
 func newDispatcherClient(conn net.Conn) *DispatcherClient {
 	return &DispatcherClient{
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
+		GoWorldConnection: proto.NewGoWorldConnection(conn, true), // useSendQueue=true
 	}
 }

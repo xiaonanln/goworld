@@ -6,15 +6,19 @@ import (
 
 	"encoding/binary"
 
-	"sync"
-
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
+const ( // Three different level of packet size
+	PACKET_SIZE_TINY   = 1024
+	PACKET_SIZE_NORMAL = 1024 * 64
+	PACKET_SIZE_HUGE   = 1024 * 1024 * 4
+)
+
 const (
-	MAX_PACKET_SIZE    = 4 * 1024
+	MAX_PACKET_SIZE    = 1024 * 1024
 	SIZE_FIELD_SIZE    = 4
 	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
 	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
@@ -22,13 +26,6 @@ const (
 
 var (
 	NETWORK_ENDIAN = binary.LittleEndian
-	messagePool    = sync.Pool{
-		New: func() interface{} {
-			return &Packet{
-				refcount: 0,
-			}
-		},
-	}
 )
 
 type PacketConnection struct {
@@ -49,16 +46,6 @@ func NewPacketConnection(conn net.Conn, useSendQueue bool) PacketConnection {
 	return pc
 }
 
-func allocPacket() *Packet {
-	pkt := messagePool.Get().(*Packet)
-	//gwlog.Debug("ALLOC %p", pkt)
-	if pkt.refcount != 0 {
-		gwlog.Panicf("packet must be released when allocated from pool, but refcount=%d", pkt.refcount)
-	}
-	pkt.refcount = 1
-	return pkt
-}
-
 func NewPacket() *Packet {
 	return allocPacket()
 }
@@ -77,6 +64,7 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if pc.useSendQueue {
 		packet.AddRefCount(1) // will be released when pop from queue
 		pc.sendQueue.Push(packet)
+		gwlog.Info("%s: send queue length = %d", pc, pc.sendQueue.Len())
 		return nil
 	} else {
 		err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])

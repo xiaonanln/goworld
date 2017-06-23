@@ -5,7 +5,7 @@ import "time"
 // Tunable Options
 const (
 	// For Server & Gate
-	DISPATCHER_CLIENT_PACKET_QUEUE_SIZE = 1000 // packet queue size
+	GAME_SERVICE_PACKET_QUEUE_SIZE = 10000 // packet queue size
 	// For Server
 	SERVER_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affects timer resolution
 	SAVE_INTERVAL        = time.Minute * 1       // TODO: config save interval by goworld.ini
@@ -22,9 +22,10 @@ const (
 
 // Debug Options
 const (
-	DEBUG_PACKETS   = false
-	DEBUG_SPACES    = true
-	DEBUG_SAVE_LOAD = false
-	DEBUG_CLIENTS   = true
-	DEBUG_MIGRATE   = true
+	DEBUG_PACKETS      = false
+	DEBUG_SPACES       = true
+	DEBUG_SAVE_LOAD    = false
+	DEBUG_CLIENTS      = false
+	DEBUG_MIGRATE      = false
+	DEBUG_PACKET_ALLOC = true
 )
