@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	SPACE_DESTROY_CHECK_INTERVAL = time.Second * 10
+	SPACE_DESTROY_CHECK_INTERVAL = time.Minute * 5
 )
 
 type MySpace struct {

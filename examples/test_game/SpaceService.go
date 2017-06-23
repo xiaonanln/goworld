@@ -145,7 +145,7 @@ func (s *SpaceService) RequestDestroy_Server(kind int, spaceID common.EntityID) 
 		return
 	}
 
-	if time.Now().After(spaceInfo.LastEnterTime.Add(time.Second * 5)) {
+	if time.Now().After(spaceInfo.LastEnterTime.Add(time.Second * 60)) {
 		s.getSpaceKindInfo(kind).remove(spaceID)
 		s.Call(spaceID, "ConfirmRequestDestroy", true)
 		return
