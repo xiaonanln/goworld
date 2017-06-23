@@ -2,6 +2,7 @@ package server
 
 import (
 	"flag"
+	"os"
 
 	"math/rand"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
+	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
@@ -39,11 +41,11 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
-	//f, err := os.OpenFile("server.log", os.O_APPEND|os.O_CREATE, 0644)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//gwlog.SetOutput(f)
+	f, err := os.OpenFile("server.log", os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		panic(err)
+	}
+	gwlog.SetOutput(f)
 
 	entity.CreateSpaceLocally(0) // create to be the nil space
 	gameService = newGameService(serverid, delegate)
