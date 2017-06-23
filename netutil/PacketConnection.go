@@ -18,7 +18,7 @@ const ( // Three different level of packet size
 )
 
 const (
-	MAX_PACKET_SIZE    = 1024 * 1024
+	MAX_PACKET_SIZE    = 4 * 1024 * 1024
 	SIZE_FIELD_SIZE    = 4
 	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
 	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
@@ -46,12 +46,16 @@ func NewPacketConnection(conn net.Conn, useSendQueue bool) PacketConnection {
 	return pc
 }
 
+func NewPacketWithPayloadLen(payloadLen uint32) *Packet {
+	return allocPacket(payloadLen)
+}
+
 func NewPacket() *Packet {
-	return allocPacket()
+	return allocPacket(INITIAL_PACKET_CAPACITY)
 }
 
 func (pc PacketConnection) NewPacket() *Packet {
-	return allocPacket()
+	return allocPacket(INITIAL_PACKET_CAPACITY)
 }
 
 func (pc PacketConnection) SendPacket(packet *Packet) error {
@@ -59,7 +63,7 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 		gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
 	if packet.refcount <= 0 {
-		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
+		gwlog.Panicf("sending p with refcount=%d", packet.refcount)
 	}
 	if pc.useSendQueue {
 		packet.AddRefCount(1) // will be released when pop from queue
@@ -70,18 +74,17 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 		}
 		return nil
 	} else {
-		err := pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+		err := pc.binconn.SendAll(packet.data())
 		return err
 	}
 }
 
 func (pc PacketConnection) RecvPacket() (*Packet, error) {
-	packet := allocPacket()
+	var _payloadLenBuf [SIZE_FIELD_SIZE]byte
+	payloadLenBuf := _payloadLenBuf[:]
 
-	payloadLenBuf := packet.bytes[:SIZE_FIELD_SIZE]
 	err := pc.binconn.RecvAll(payloadLenBuf)
 	if err != nil {
-		packet.Release()
 		return nil, err
 	}
 
@@ -89,17 +92,19 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 
 	if payloadLen > MAX_PAYLOAD_LENGTH {
 		// p size is too large
-		packet.Release()
-		return nil, fmt.Errorf("message packet too large: %v", payloadLen)
+		// todo: reset the connection when p size is invalid
+		return nil, fmt.Errorf("message p too large: %v", payloadLen)
 	}
 
-	err = pc.binconn.RecvAll(packet.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+payloadLen]) // receive the packet type and payload
+	packet := NewPacketWithPayloadLen(payloadLen)
+	err = pc.binconn.RecvAll(packet.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+payloadLen]) // receive the p type and payload
 	if err != nil {
 		packet.Release()
 		return nil, err
 	}
 
-	//gwlog.Debug("<<< RecvMsg: payloadLen=%v, packet=%v", payloadLen, packet.bytes[:PREPAYLOAD_SIZE+payloadLen])
+	//gwlog.Debug("<<< RecvMsg: payloadLen=%v, p=%v", payloadLen, p.bytes[:PREPAYLOAD_SIZE+payloadLen])
+	packet.SetPayloadLen(payloadLen)
 	return packet, nil
 }
 
@@ -134,22 +139,22 @@ func (pc PacketConnection) String() string {
 //	return pc
 //}
 //
-//func (pc PacketConnectionWithQueue) PushPacket(packet *Packet) {
-//	pc.queue.Push(packet)
+//func (pc PacketConnectionWithQueue) PushPacket(p *Packet) {
+//	pc.queue.Push(p)
 //}
 //
-//func (pc PacketConnectionWithQueue) SendInstantPacket(packet *Packet) error {
-//	return pc.PacketConnection.SendPacket(packet)
+//func (pc PacketConnectionWithQueue) SendInstantPacket(p *Packet) error {
+//	return pc.PacketConnection.SendPacket(p)
 //}
 //
-//func (pc PacketConnectionWithQueue) SendPacket(packet *Packet) {
+//func (pc PacketConnectionWithQueue) SendPacket(p *Packet) {
 //	gwlog.Panicf("DO NOT USE SendPacket")
 //}
 //
 func (pc PacketConnection) sendRoutine() {
 	for {
 		packet := pc.sendQueue.Pop().(*Packet)
-		pc.binconn.SendAll(packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+		pc.binconn.SendAll(packet.data())
 		packet.Release()
 	}
 }

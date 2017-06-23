@@ -8,54 +8,59 @@ import (
 
 	"sync/atomic"
 
-	"sync"
-
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
-var (
-	PACKET_ENDIAN = binary.LittleEndian
+const (
+	INITIAL_PACKET_CAPACITY = 4
 )
 
 var (
+	PACKET_ENDIAN = binary.LittleEndian
+
 	debugInfo struct {
 		NewCount     int64
 		AllocCount   int64
 		ReleaseCount int64
 	}
 
-	messagePool = sync.Pool{
-		New: func() interface{} {
-			p := &Packet{
-				refcount: 0,
-			}
-			if consts.DEBUG_PACKET_ALLOC {
-				atomic.AddInt64(&debugInfo.NewCount, 1)
-				gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
-					atomic.LoadInt64(&debugInfo.AllocCount),
-					atomic.LoadInt64(&debugInfo.ReleaseCount),
-					atomic.LoadInt64(&debugInfo.NewCount))
-			}
-			return p
-		},
-	}
+	//messagePool = sync.Pool{
+	//	New: func() interface{} {
+	//		p := &Packet{
+	//			refcount: 0,
+	//			bytes:    make([]byte, PREPAYLOAD_SIZE+INITIAL_PACKET_CAPACITY), // 4 for the uint32 payload len
+	//		}
+	//		if consts.DEBUG_PACKET_ALLOC {
+	//			atomic.AddInt64(&debugInfo.NewCount, 1)
+	//			gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
+	//				atomic.LoadInt64(&debugInfo.AllocCount),
+	//				atomic.LoadInt64(&debugInfo.ReleaseCount),
+	//				atomic.LoadInt64(&debugInfo.NewCount))
+	//		}
+	//		return p
+	//	},
+	//}
 )
 
 type Packet struct {
 	readCursor uint32
 
 	refcount int64
-	bytes    [MAX_PACKET_SIZE]byte
+	bytes    []byte
 }
 
-func allocPacket() *Packet {
-	pkt := messagePool.Get().(*Packet)
-	//gwlog.Debug("ALLOC %p", pkt)
-	if pkt.refcount != 0 {
-		gwlog.Panicf("packet must be released when allocated from pool, but refcount=%d", pkt.refcount)
+func allocPacket(payloadCap uint32) *Packet {
+	pkt := &Packet{
+		refcount: 0,
+		bytes:    make([]byte, PREPAYLOAD_SIZE+payloadCap), // 4 for the uint32 payload len
 	}
+	//pkt := messagePool.Get().(*Packet)
+	////gwlog.Debug("ALLOC %p", pkt)
+	//if pkt.refcount != 0 {
+	//	gwlog.Panicf("p must be released when allocated from pool, but refcount=%d", pkt.refcount)
+	//}
 	pkt.refcount = 1
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
@@ -63,18 +68,40 @@ func allocPacket() *Packet {
 	return pkt
 }
 
-func (packet *Packet) AddRefCount(add int64) {
-	atomic.AddInt64(&packet.refcount, add)
+func (p *Packet) assureCapacity(need uint32) {
+	requireCap := PREPAYLOAD_SIZE + p.GetPayloadLen() + need
+	curcap := uint32(len(p.bytes))
+
+	if requireCap <= curcap {
+		return
+	}
+
+	resizeToCap := curcap << 1
+	for resizeToCap < requireCap {
+		resizeToCap <<= 1
+	}
+
+	newbytes := make([]byte, resizeToCap)
+	copy(newbytes, p.data())
+	p.bytes = newbytes
+}
+
+func (p *Packet) AddRefCount(add int64) {
+	atomic.AddInt64(&p.refcount, add)
 }
 
 func (p *Packet) Payload() []byte {
 	return p.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }
 
-func (p *Packet) FreePayload() []byte {
-	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
-	return p.bytes[payloadEnd:]
+func (p *Packet) data() []byte {
+	return p.bytes[0 : PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }
+
+//func (p *Packet) FreePayload() []byte {
+//	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
+//	return p.bytes[payloadEnd:]
+//}
 
 func (p *Packet) Release() {
 	refcount := atomic.AddInt64(&p.refcount, -1)
@@ -82,13 +109,13 @@ func (p *Packet) Release() {
 		p.SetPayloadLen(0)
 		p.readCursor = 0
 
-		messagePool.Put(p)
+		//messagePool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
 			atomic.AddInt64(&debugInfo.ReleaseCount, 1)
 		}
 	} else if refcount < 0 {
-		gwlog.Panicf("releasing packet with refcount=%d", p.refcount)
+		gwlog.Panicf("releasing p with refcount=%d", p.refcount)
 	}
 }
 
@@ -98,6 +125,7 @@ func (p *Packet) ClearPayload() {
 }
 
 func (p *Packet) AppendByte(b byte) {
+	p.assureCapacity(1)
 	p.bytes[PREPAYLOAD_SIZE+p.GetPayloadLen()] = b
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 1
 }
@@ -122,24 +150,28 @@ func (p *Packet) ReadBool() (v bool) {
 }
 
 func (p *Packet) AppendUint16(v uint16) {
+	p.assureCapacity(2)
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint16(p.bytes[payloadEnd:payloadEnd+2], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 2
 }
 
 func (p *Packet) AppendUint32(v uint32) {
+	p.assureCapacity(4)
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint32(p.bytes[payloadEnd:payloadEnd+4], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 4
 }
 
 func (p *Packet) AppendUint64(v uint64) {
+	p.assureCapacity(8)
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint64(p.bytes[payloadEnd:payloadEnd+8], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 8
 }
 
 func (p *Packet) AppendBytes(v []byte) {
+	p.assureCapacity(uint32(len(v)))
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	bytesLen := uint32(len(v))
 	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
@@ -209,15 +241,18 @@ func (p *Packet) ReadVarBytes() []byte {
 }
 
 func (p *Packet) AppendData(msg interface{}) {
-	freePayload := p.FreePayload()
-
-	argsData, err := MSG_PACKER.PackMsg(msg, freePayload[4:4])
+	oldPayloadLen := p.GetPayloadLen() // save payload len before pack msg
+	p.AppendUint32(0)                  // uint32 for data length
+	newData, err := MSG_PACKER.PackMsg(msg, p.data())
 	if err != nil {
 		gwlog.Panic(err)
 	}
-	argsDataLen := uint32(len(argsData))
-	PACKET_ENDIAN.PutUint32(freePayload[:4], argsDataLen)
-	p.SetPayloadLen(p.GetPayloadLen() + 4 + argsDataLen)
+
+	p.bytes = newData
+	newPayloadLen := uint32(len(newData) - PREPAYLOAD_SIZE)
+	dataLen := newPayloadLen - oldPayloadLen - 4
+	PACKET_ENDIAN.PutUint32(p.bytes[PREPAYLOAD_SIZE+oldPayloadLen:PREPAYLOAD_SIZE+oldPayloadLen+4], dataLen)
+	p.SetPayloadLen(newPayloadLen)
 }
 
 func (p *Packet) ReadData(msg interface{}) {

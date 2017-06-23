@@ -23,7 +23,7 @@ const (
 // Debug Options
 const (
 	DEBUG_PACKETS      = false
-	DEBUG_SPACES       = false
+	DEBUG_SPACES       = true
 	DEBUG_SAVE_LOAD    = false
 	DEBUG_CLIENTS      = false
 	DEBUG_MIGRATE      = false
