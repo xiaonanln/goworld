@@ -385,6 +385,11 @@ func (e *Entity) GiveClientTo(other *Entity) {
 }
 
 func (e *Entity) notifyClientDisconnected() {
+	if e == nil {
+		// FIXME: might happen due to a bug
+		return
+	}
+
 	// called when client disconnected
 	if e.client == nil {
 		gwlog.Panic(e.client)

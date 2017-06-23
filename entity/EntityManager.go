@@ -56,7 +56,7 @@ func (em *EntityManager) onClientDisconnected(clientid ClientID) {
 	delete(em.ownerOfClient, clientid)
 
 	if !eid.IsNil() { // should always true
-		owner := em.entities[eid]
+		owner := em.entities[eid] // FIXME: owner should not be nil
 		owner.notifyClientDisconnected()
 	}
 }

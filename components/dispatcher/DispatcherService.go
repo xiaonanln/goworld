@@ -189,6 +189,7 @@ func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClien
 }
 
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	// TODO: wait until client's owner entity migration is done
 	clientid := pkt.ReadClientID()
 	targetServer := service.chooseDispatcherClient()
 	service.Lock()
@@ -199,6 +200,7 @@ func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherCli
 }
 
 func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	// TODO: wait until client's owner entity migration is done
 	clientid := pkt.ReadClientID() // client disconnected
 	service.RLock()
 	sid := service.targetServerOfClient[clientid] // target server of client

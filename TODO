@@ -1,5 +1,7 @@
 TODO: destroy avatar when lose client
 TODO: destroy entities when space is destroyed
+TODO: use log file, do not write to stdout
+
 
 TODO: [test_game]
     TODO: Spaces with multiple threads
