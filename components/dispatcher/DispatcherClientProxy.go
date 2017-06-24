@@ -19,7 +19,7 @@ type DispatcherClientProxy struct {
 
 func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *DispatcherClientProxy {
 	return &DispatcherClientProxy{
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false), // TODO: USE SEND QUEUE
+		GoWorldConnection: proto.NewGoWorldConnection(conn, false), // Using send queue slows down dispatcher performance
 		owner:             owner,
 	}
 }

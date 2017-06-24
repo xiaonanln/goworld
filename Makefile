@@ -12,10 +12,10 @@ test_client:
 	cd examples/test_client && go build
 
 rundispatcher: dispatcher
-	components/dispatcher/dispatcher 2>&1 | tee dispatcher.log
+	components/dispatcher/dispatcher
 
 runserver: test_server
-	examples/test_game/test_game -sid=1 2>&1 | tee server.log
+	examples/test_game/test_game -sid=1
 
 runclient: test_client
-	examples/test_client/test_client 2>&1 | tee client.log
+	examples/test_client/test_client 2>&1

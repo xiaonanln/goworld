@@ -41,7 +41,7 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
-	f, err := os.OpenFile("server.log", os.O_APPEND|os.O_CREATE, 0644)
+	f, err := os.OpenFile("server.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
 	}
