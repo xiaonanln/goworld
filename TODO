@@ -1,8 +1,6 @@
 TODO: Cache the message from the clients to their owners if the owner is migrating
-TODO: Notify client the enter and leave of space
-
+TODO: AOI with specified range, entities go in / out AOI
 TODO: [test_game]
-    TODO: Measure the time spent during operations for different kind of operations
     TODO: Chat system [chat]
     TODO: Entity movement in space, AOI [move]
 

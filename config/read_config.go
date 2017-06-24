@@ -48,9 +48,10 @@ type DispatcherConfig struct {
 }
 
 type GoWorldConfig struct {
-	Dispatcher DispatcherConfig
-	Servers    map[int]*ServerConfig
-	Storage    StorageConfig
+	Dispatcher   DispatcherConfig
+	ServerCommon ServerConfig
+	Servers      map[int]*ServerConfig
+	Storage      StorageConfig
 }
 
 type StorageConfig struct {
@@ -123,6 +124,9 @@ func readGoWorldConfig() *GoWorldConfig {
 	gwlog.Info("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
+	serverCommonSec := iniFile.Section("server_common")
+	readServerCommonConfig(serverCommonSec, &config.ServerCommon)
+
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()
 		if secName == "DEFAULT" {
@@ -134,11 +138,13 @@ func readGoWorldConfig() *GoWorldConfig {
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.Dispatcher)
+		} else if secName == "server_common" {
+			// ignore server_common here
 		} else if secName[:6] == "server" {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
-			config.Servers[id] = readServerConfig(sec)
+			config.Servers[id] = readServerConfig(sec, &config.ServerCommon)
 		} else if secName == "storage" {
 			// storage config
 			readStorageConfig(sec, &config.Storage)
@@ -150,21 +156,35 @@ func readGoWorldConfig() *GoWorldConfig {
 	return &config
 }
 
-func readServerConfig(sec *ini.Section) *ServerConfig {
-	sc := &ServerConfig{
-		Ip:           DEFAULT_LOCALHOST_IP,
-		SaveInterval: DEFAULT_SAVE_ITNERVAL,
-		LogFile:      "",
-		LogStderr:    true,
+func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
+	scc.BootEntity = "Boot"
+	scc.Ip = "0.0.0.0"
+	scc.LogFile = "server.log"
+	scc.LogStderr = true
+	scc.SaveInterval = DEFAULT_SAVE_ITNERVAL
+
+	_readServerConfig(section, scc)
+}
+
+func readServerConfig(sec *ini.Section, serverCommonConfig *ServerConfig) *ServerConfig {
+	var sc ServerConfig = *serverCommonConfig // copy from server_common
+	_readServerConfig(sec, &sc)
+	// validate game config
+	if sc.BootEntity == "" {
+		panic("boot_entity is not set in server config")
 	}
+	return &sc
+}
+
+func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
-			sc.Ip = key.MustString(DEFAULT_LOCALHOST_IP)
+			sc.Ip = key.MustString(sc.Ip)
 		} else if name == "port" {
-			sc.Port = key.MustInt(0)
+			sc.Port = key.MustInt(sc.Port)
 		} else if name == "boot_entity" {
-			sc.BootEntity = key.MustString("")
+			sc.BootEntity = key.MustString(sc.BootEntity)
 		} else if name == "save_interval" {
 			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
 		} else if name == "log_file" {
@@ -173,11 +193,6 @@ func readServerConfig(sec *ini.Section) *ServerConfig {
 			sc.LogStderr = key.MustBool(sc.LogStderr)
 		}
 	}
-	// validate game config
-	if sc.BootEntity == "" {
-		panic("boot_entity is not set in server config")
-	}
-	return sc
 }
 
 func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
