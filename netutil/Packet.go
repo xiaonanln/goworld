@@ -8,6 +8,8 @@ import (
 
 	"sync/atomic"
 
+	"sync"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -26,22 +28,22 @@ var (
 		ReleaseCount int64
 	}
 
-	//messagePool = sync.Pool{
-	//	New: func() interface{} {
-	//		p := &Packet{
-	//			refcount: 0,
-	//			bytes:    make([]byte, PREPAYLOAD_SIZE+INITIAL_PACKET_CAPACITY), // 4 for the uint32 payload len
-	//		}
-	//		if consts.DEBUG_PACKET_ALLOC {
-	//			atomic.AddInt64(&debugInfo.NewCount, 1)
-	//			gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
-	//				atomic.LoadInt64(&debugInfo.AllocCount),
-	//				atomic.LoadInt64(&debugInfo.ReleaseCount),
-	//				atomic.LoadInt64(&debugInfo.NewCount))
-	//		}
-	//		return p
-	//	},
-	//}
+	packetPool = sync.Pool{
+		New: func() interface{} {
+			p := &Packet{
+				refcount: 0,
+				bytes:    make([]byte, PREPAYLOAD_SIZE+INITIAL_PACKET_CAPACITY), // 4 for the uint32 payload len
+			}
+			if consts.DEBUG_PACKET_ALLOC {
+				atomic.AddInt64(&debugInfo.NewCount, 1)
+				gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
+					atomic.LoadInt64(&debugInfo.AllocCount),
+					atomic.LoadInt64(&debugInfo.ReleaseCount),
+					atomic.LoadInt64(&debugInfo.NewCount))
+			}
+			return p
+		},
+	}
 )
 
 type Packet struct {
@@ -52,16 +54,14 @@ type Packet struct {
 }
 
 func allocPacket(payloadCap uint32) *Packet {
-	pkt := &Packet{
-		refcount: 0,
-		bytes:    make([]byte, PREPAYLOAD_SIZE+payloadCap), // 4 for the uint32 payload len
-	}
-	//pkt := messagePool.Get().(*Packet)
-	////gwlog.Debug("ALLOC %p", pkt)
-	//if pkt.refcount != 0 {
-	//	gwlog.Panicf("p must be released when allocated from pool, but refcount=%d", pkt.refcount)
+	//pkt := &Packet{
+	//	refcount: 0,
+	//	bytes:    make([]byte, PREPAYLOAD_SIZE+payloadCap), // 4 for the uint32 payload len
 	//}
+	pkt := packetPool.Get().(*Packet)
+	pkt.assureCapacity(payloadCap)
 	pkt.refcount = 1
+
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
 	}
@@ -109,7 +109,7 @@ func (p *Packet) Release() {
 		p.SetPayloadLen(0)
 		p.readCursor = 0
 
-		//messagePool.Put(p)
+		packetPool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
 			atomic.AddInt64(&debugInfo.ReleaseCount, 1)
@@ -248,7 +248,9 @@ func (p *Packet) AppendData(msg interface{}) {
 		gwlog.Panic(err)
 	}
 
-	p.bytes = newData
+	if len(newData) > len(p.bytes) { // slice shold be replaced
+		p.bytes = newData
+	}
 	newPayloadLen := uint32(len(newData) - PREPAYLOAD_SIZE)
 	dataLen := newPayloadLen - oldPayloadLen - 4
 	PACKET_ENDIAN.PutUint32(p.bytes[PREPAYLOAD_SIZE+oldPayloadLen:PREPAYLOAD_SIZE+oldPayloadLen+4], dataLen)

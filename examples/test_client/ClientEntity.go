@@ -8,8 +8,6 @@ import (
 	"math/rand"
 	"time"
 
-	"sync"
-
 	"github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -28,8 +26,6 @@ func (attrs ClientAttrs) HasKey(key string) bool {
 }
 
 type ClientEntity struct {
-	sync.Mutex
-
 	owner    *ClientBot
 	TypeName string
 	ID       EntityID
@@ -37,6 +33,11 @@ type ClientEntity struct {
 	Attrs     ClientAttrs
 	IsPlayer  bool
 	destroyed bool
+	timers    map[*timer.Timer]bool
+
+	currentThing          string
+	currentThingStartTime time.Time
+	currentTimeoutTimer   *timer.Timer
 }
 
 func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool) *ClientEntity {
@@ -46,6 +47,7 @@ func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPla
 		ID:       entityid,
 		Attrs:    make(ClientAttrs),
 		IsPlayer: isPlayer,
+		timers:   map[*timer.Timer]bool{},
 	}
 
 	e.OnCreated()
@@ -80,41 +82,115 @@ func (e *ClientEntity) OnCreated() {
 }
 
 func (e *ClientEntity) onAvatarCreated() {
-	e.doSomethingLater()
 }
 
 func (e *ClientEntity) doSomethingLater() {
 	randomDelay := time.Duration(rand.Int63n(int64(AVERAGE_DO_SOMETHING_INTERVAL * 2)))
-	timer.AddCallback(randomDelay, func() {
-		e.Lock()
-		defer e.Unlock()
-
-		if e.destroyed {
-			return
-		}
+	e.AddCallback(randomDelay, func() {
 		e.doSomething()
-		e.doSomethingLater()
 	})
 }
 
+func (e *ClientEntity) AddCallback(d time.Duration, callback timer.CallbackFunc) *timer.Timer {
+	var t *timer.Timer
+	t = timer.AddCallback(d, func() {
+		e.owner.Lock()
+		defer e.owner.Unlock()
+
+		if !e.timers[t] {
+			// timer is cancelled
+			return
+		}
+
+		delete(e.timers, t)
+		if e.destroyed {
+			return
+		}
+
+		callback()
+	})
+	e.timers[t] = true
+	return t
+}
+
+func (e *ClientEntity) AddTimer(d time.Duration, callback timer.CallbackFunc) *timer.Timer {
+	var t *timer.Timer
+	t = timer.AddTimer(d, func() {
+		e.owner.Lock()
+		defer e.owner.Unlock()
+
+		if !e.timers[t] {
+			// timer is cancelled
+			return
+		}
+
+		if e.destroyed {
+			t.Cancel()
+			delete(e.timers, t)
+			return
+		}
+
+		callback()
+	})
+	e.timers[t] = true
+	return t
+}
+
+func (e *ClientEntity) CancelTimer(t *timer.Timer) {
+	t.Cancel()
+	delete(e.timers, t)
+}
+
 type _Something struct {
-	Method string
-	Weight int
+	Method  string
+	Weight  int
+	Timeout time.Duration
 }
 
 var (
-	DO_THINGS = []_Something{
-		{"DoEnterRandomSpace", 100},
+	DO_THINGS = []*_Something{
+		{"DoEnterRandomSpace", 100, time.Minute},
 	}
 )
 
 func (e *ClientEntity) doSomething() {
+	if e.currentThing != "" {
+		gwlog.Panicf("%s can not do something while doing %s", e, e.currentThing)
+	}
+
 	thing := e.chooseThingByWeight()
-	reflect.ValueOf(e).MethodByName(thing).Call(nil)
+	e.currentThing = thing.Method
+	e.currentThingStartTime = time.Now()
+	e.currentTimeoutTimer = e.AddCallback(thing.Timeout, func() {
+		gwlog.Warn("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
+
+		e.currentThing = ""
+		e.currentThingStartTime = time.Time{}
+		e.currentTimeoutTimer = nil
+
+		e.doSomethingLater()
+	})
+
+	gwlog.Debug("[%s] %s STARTS %s", e.currentThingStartTime, e, e.currentThing)
+	reflect.ValueOf(e).MethodByName(thing.Method).Call(nil)
 }
 
-func (e *ClientEntity) chooseThingByWeight() string {
-	return "DoEnterRandomSpace"
+func (e *ClientEntity) notifyThingDone(thing string) {
+	if e.currentThing == thing {
+		now := time.Now()
+		gwlog.Info("[%s] %s FINISHES %s, TAKES %s", now, e, thing, now.Sub(e.currentThingStartTime))
+
+		e.currentThing = ""
+		e.currentThingStartTime = time.Time{}
+		e.currentTimeoutTimer.Cancel()
+		e.currentTimeoutTimer = nil
+
+		e.doSomethingLater()
+	}
+}
+
+func (e *ClientEntity) chooseThingByWeight() *_Something {
+	return DO_THINGS[0]
 }
 
 func (e *ClientEntity) DoEnterRandomSpace() {
@@ -124,9 +200,6 @@ func (e *ClientEntity) DoEnterRandomSpace() {
 
 func (e *ClientEntity) onAccountCreated() {
 	timer.AddCallback(0, func() {
-
-		e.Lock()
-		defer e.Unlock()
 
 		username := e.owner.username()
 		password := e.owner.password()

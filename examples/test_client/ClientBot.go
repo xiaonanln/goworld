@@ -8,6 +8,8 @@ import (
 
 	"math/rand"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
@@ -17,13 +19,16 @@ import (
 )
 
 type ClientBot struct {
-	id           int
-	waiter       *sync.WaitGroup
-	conn         proto.GoWorldConnection
-	entities     map[common.EntityID]*ClientEntity
-	player       *ClientEntity
-	currentSpace *ClientSpace
-	logined      bool
+	sync.Mutex
+
+	id                 int
+	waiter             *sync.WaitGroup
+	conn               proto.GoWorldConnection
+	entities           map[common.EntityID]*ClientEntity
+	player             *ClientEntity
+	currentSpace       *ClientSpace
+	logined            bool
+	startedDoingThings bool
 }
 
 func newClientBot(id int, waiter *sync.WaitGroup) *ClientBot {
@@ -50,10 +55,17 @@ func (bot *ClientBot) run() {
 	gwlog.Debug("%s is connecting to server %d", bot, serverID)
 	cfg := config.GetServer(serverID)
 	cfg = cfg
-	conn, err := netutil.ConnectTCP(cfg.Ip, cfg.Port)
-	if err != nil {
-		gwlog.Error("Connect failed: %s", err)
-		return
+	var conn net.Conn
+	var err error
+	for { // retry for ever
+		conn, err = netutil.ConnectTCP(cfg.Ip, cfg.Port)
+		if err != nil {
+			gwlog.Error("Connect failed: %s", err)
+			time.Sleep(time.Second)
+			continue
+		}
+		// connected , ok
+		break
 	}
 	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024)
 	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024)
@@ -78,6 +90,9 @@ func (bot *ClientBot) loop() {
 }
 
 func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+	bot.Lock()
+	defer bot.Unlock()
+
 	_ = packet.ReadUint16()
 	_ = packet.ReadClientID() // TODO: strip these two fields ?
 	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
@@ -135,8 +150,6 @@ func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, k
 		gwlog.Warn("entity %s not found")
 	}
 	entity := bot.entities[entityid]
-	entity.Lock()
-	defer entity.Unlock()
 	entity.applyAttrChange(path, key, val)
 }
 
@@ -145,8 +158,6 @@ func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key 
 		gwlog.Warn("entity %s not found")
 	}
 	entity := bot.entities[entityid]
-	entity.Lock()
-	defer entity.Unlock()
 	entity.applyAttrDel(path, key)
 }
 
@@ -166,8 +177,6 @@ func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, is
 func (bot *ClientBot) destroyEntity(typeName string, entityid common.EntityID) {
 	entity := bot.entities[entityid]
 	if entity != nil {
-		entity.Lock()
-		defer entity.Unlock()
 		entity.Destroy()
 		if entity == bot.player {
 			bot.player = nil
@@ -183,6 +192,7 @@ func (bot *ClientBot) createSpace(spaceID common.EntityID, data map[string]inter
 	space := newClientSpace(bot, spaceID, data)
 	bot.currentSpace = space
 	gwlog.Debug("%s current space change to %s", bot, space)
+	bot.OnEnterSpace()
 }
 
 func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
@@ -190,8 +200,10 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 		gwlog.TraceError("%s.destroySpace: space %s not exists, current space is %s", bot, spaceID, bot.currentSpace)
 		return
 	}
+	oldSpace := bot.currentSpace
 	bot.currentSpace = nil
 	gwlog.Debug("%s: leave current space %s", bot, spaceID)
+	bot.OnLeaveSpace(oldSpace)
 }
 
 func (bot *ClientBot) username() string {
@@ -204,7 +216,22 @@ func (bot *ClientBot) password() string {
 
 func (bot *ClientBot) CallServer(id common.EntityID, method string, args []interface{}) {
 	if !quiet {
-		gwlog.Info("%s call server: %s.%s%v", bot, id, method, args)
+		gwlog.Debug("%s call server: %s.%s%v", bot, id, method, args)
 	}
 	bot.conn.SendCallEntityMethodFromClient(id, method, args)
+}
+
+func (bot *ClientBot) OnEnterSpace() {
+	gwlog.Debug("%s.OnEnterSpace, player=%s", bot, bot.player)
+	player := bot.player
+	if !bot.startedDoingThings {
+		bot.startedDoingThings = true
+		player.doSomethingLater()
+	} else {
+		player.notifyThingDone("DoEnterRandomSpace")
+	}
+}
+
+func (bot *ClientBot) OnLeaveSpace(oldSpace *ClientSpace) {
+	gwlog.Debug("%s.OnLeaveSpace, player=%s", bot, bot.player)
 }

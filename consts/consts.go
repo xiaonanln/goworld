@@ -26,5 +26,5 @@ const (
 	DEBUG_SAVE_LOAD    = false
 	DEBUG_CLIENTS      = false
 	DEBUG_MIGRATE      = false
-	DEBUG_PACKET_ALLOC = true
+	DEBUG_PACKET_ALLOC = false
 )

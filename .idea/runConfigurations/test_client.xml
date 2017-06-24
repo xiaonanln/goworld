@@ -3,6 +3,7 @@
     <module name="goworld" />
     <working_directory value="$PROJECT_DIR$" />
     <go_parameters value=" -race  -gcflags &quot;-N -l&quot;" />
+    <parameters value="-N 10" />
     <filePath value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />
     <package value="github.com/xiaonanln/goworld/examples/test_client" />

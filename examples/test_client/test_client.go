@@ -10,6 +10,7 @@ import (
 
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
@@ -36,7 +37,7 @@ func main() {
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
-
+	gwlog.SetLevel(gwlog.INFO)
 	var wait sync.WaitGroup
 	wait.Add(N)
 	for i := 0; i < N; i++ {
