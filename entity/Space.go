@@ -114,6 +114,7 @@ func (space *Space) enter(entity *Entity) {
 	}
 
 	entity.Space = space
+	entity.interest(&space.Entity) // interest the Space entity before every other entities
 	for other := range space.entities {
 		entity.interest(other)
 		other.interest(entity)
@@ -142,6 +143,8 @@ func (space *Space) leave(entity *Entity) {
 		entity.uninterest(other)
 		other.uninterest(entity)
 	}
+	entity.uninterest(&space.Entity)
+
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityLeaveSpace(entity)
 	})

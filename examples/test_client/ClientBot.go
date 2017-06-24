@@ -10,18 +10,20 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
 
 type ClientBot struct {
-	id       int
-	waiter   *sync.WaitGroup
-	conn     proto.GoWorldConnection
-	entities map[common.EntityID]*ClientEntity
-	player   *ClientEntity
-	logined  bool
+	id           int
+	waiter       *sync.WaitGroup
+	conn         proto.GoWorldConnection
+	entities     map[common.EntityID]*ClientEntity
+	player       *ClientEntity
+	currentSpace *ClientSpace
+	logined      bool
 }
 
 func newClientBot(id int, waiter *sync.WaitGroup) *ClientBot {
@@ -55,7 +57,7 @@ func (bot *ClientBot) run() {
 	}
 	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024)
 	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024)
-	gwlog.Info("connected: %s", conn.RemoteAddr())
+	gwlog.Debug("connected: %s", conn.RemoteAddr())
 	bot.conn = proto.NewGoWorldConnection(conn, true)
 	defer bot.conn.Close()
 
@@ -85,7 +87,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		var val interface{}
 		packet.ReadData(&val)
 		if !quiet {
-			gwlog.Info("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
+			gwlog.Debug("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
 		}
 		bot.applyAttrChange(entityid, path, key, val)
 	} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
@@ -93,7 +95,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		path := packet.ReadStringList()
 		key := packet.ReadVarStr()
 		if !quiet {
-			gwlog.Info("Entity %s Attribute %v deleted %s", entityid, path, key)
+			gwlog.Debug("Entity %s Attribute %v deleted %s", entityid, path, key)
 		}
 		bot.applyAttrDel(entityid, path, key)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
@@ -103,16 +105,27 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
 		if !quiet {
-			gwlog.Info("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityid, isPlayer, clientData)
+			gwlog.Debug("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityid, isPlayer, clientData)
 		}
-		bot.createEntity(typeName, entityid, isPlayer)
+
+		if typeName == entity.SPACE_ENTITY_TYPE {
+			// this is a space
+			bot.createSpace(entityid, clientData)
+		} else {
+			// this is a entity
+			bot.createEntity(typeName, entityid, isPlayer)
+		}
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityid := packet.ReadEntityID()
 		if !quiet {
-			gwlog.Info("Destroy entity %s.%s", typeName, entityid)
+			gwlog.Debug("Destroy entity %s.%s", typeName, entityid)
 		}
-		bot.destroyEntity(typeName, entityid)
+		if typeName == entity.SPACE_ENTITY_TYPE {
+			bot.destroySpace(entityid)
+		} else {
+			bot.destroyEntity(typeName, entityid)
+		}
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
 	}
@@ -161,6 +174,24 @@ func (bot *ClientBot) destroyEntity(typeName string, entityid common.EntityID) {
 		}
 		delete(bot.entities, entityid)
 	}
+}
+
+func (bot *ClientBot) createSpace(spaceID common.EntityID, data map[string]interface{}) {
+	if bot.currentSpace != nil {
+		gwlog.TraceError("%s.createSpace: duplicate space: %s and %s", bot, bot.currentSpace, spaceID)
+	}
+	space := newClientSpace(bot, spaceID, data)
+	bot.currentSpace = space
+	gwlog.Debug("%s current space change to %s", bot, space)
+}
+
+func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
+	if bot.currentSpace == nil || bot.currentSpace.ID != spaceID {
+		gwlog.TraceError("%s.destroySpace: space %s not exists, current space is %s", bot, spaceID, bot.currentSpace)
+		return
+	}
+	bot.currentSpace = nil
+	gwlog.Debug("%s: leave current space %s", bot, spaceID)
 }
 
 func (bot *ClientBot) username() string {

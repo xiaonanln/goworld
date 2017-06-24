@@ -65,7 +65,7 @@ func (e *ClientEntity) Destroy() {
 
 func (e *ClientEntity) OnCreated() {
 	if !quiet {
-		gwlog.Info("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
+		gwlog.Debug("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
 	}
 	if !e.IsPlayer {
 		return
@@ -198,7 +198,7 @@ func (attrs ClientAttrs) GetInt(key string) int {
 
 func (entity *ClientEntity) OnAttrChange_exp() {
 	if !quiet {
-		gwlog.Info("%s: attr exp change to %d", entity, entity.Attrs.GetInt("exp"))
+		gwlog.Debug("%s: attr exp change to %d", entity, entity.Attrs.GetInt("exp"))
 	}
 }
 
@@ -210,7 +210,7 @@ func (entity *ClientEntity) OnAttrChange_testpop() {
 		v = -1
 	}
 	if !quiet {
-		gwlog.Info("%s: attr testpop change to %d", entity, v)
+		gwlog.Debug("%s: attr testpop change to %d", entity, v)
 	}
 }
 
@@ -222,6 +222,6 @@ func (entity *ClientEntity) OnAttrChange_subattr() {
 		v = nil
 	}
 	if !quiet {
-		gwlog.Info("%s: attr subattr change to %v", entity, v)
+		gwlog.Debug("%s: attr subattr change to %v", entity, v)
 	}
 }

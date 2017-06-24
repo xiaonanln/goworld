@@ -1,11 +1,11 @@
-TODO: Save log to file, control by config file (server, dispatcher)
-TODO: destroy entities when space is destroyed
-
+TODO: Cache the message from the clients to their owners if the owner is migrating
+TODO: Notify client the enter and leave of space
 
 TODO: [test_game]
-    TODO: Spaces with multiple threads
-    TODO: Chat system
-    TODO: Entity movement in space, AOI
+    TODO: Measure the time spent during operations for different kind of operations
+    TODO: Chat system [chat]
+    TODO: Entity movement in space, AOI [move]
+
 
 TODO: Add a common server section in goworld.ini to merge common configs of may servers
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
