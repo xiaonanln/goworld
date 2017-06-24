@@ -1,3 +1,4 @@
+TODO: Save log to file, control by config file
 TODO: destroy entities when space is destroyed
 TODO: use log file, do not write to stdout
 

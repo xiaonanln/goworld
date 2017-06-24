@@ -41,6 +41,8 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
+	entity.SetSaveInterval(config.GetServer(serverid).SaveInterval)
+
 	f, err := os.OpenFile("server.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)

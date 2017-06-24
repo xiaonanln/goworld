@@ -13,13 +13,16 @@ import (
 
 	"sort"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
 )
 
 const (
-	DEFAULT_CONFIG_FILE  = "goworld.ini"
-	DEFAULT_LOCALHOST_IP = "127.0.0.1"
+	DEFAULT_CONFIG_FILE   = "goworld.ini"
+	DEFAULT_LOCALHOST_IP  = "127.0.0.1"
+	DEFAULT_SAVE_ITNERVAL = time.Minute * 5
 )
 
 var (
@@ -29,9 +32,10 @@ var (
 )
 
 type ServerConfig struct {
-	Ip         string
-	Port       int
-	BootEntity string
+	Ip           string
+	Port         int
+	BootEntity   string
+	SaveInterval time.Duration
 }
 
 type DispatcherConfig struct {
@@ -144,7 +148,8 @@ func readGoWorldConfig() *GoWorldConfig {
 
 func readServerConfig(sec *ini.Section) *ServerConfig {
 	sc := &ServerConfig{
-		Ip: DEFAULT_LOCALHOST_IP,
+		Ip:           DEFAULT_LOCALHOST_IP,
+		SaveInterval: DEFAULT_SAVE_ITNERVAL,
 	}
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
@@ -154,6 +159,8 @@ func readServerConfig(sec *ini.Section) *ServerConfig {
 			sc.Port = key.MustInt(0)
 		} else if name == "boot_entity" {
 			sc.BootEntity = key.MustString("")
+		} else if name == "save_interval" {
+			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
 		}
 	}
 	// validate game config

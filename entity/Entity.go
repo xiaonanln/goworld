@@ -19,6 +19,10 @@ import (
 	"github.com/xiaonanln/goworld/storage"
 )
 
+var (
+	saveInterval time.Duration
+)
+
 type Entity struct {
 	ID       EntityID
 	TypeName string
@@ -144,7 +148,12 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 }
 
 func (e *Entity) setupSaveTimer() {
-	e.AddTimer(consts.SAVE_INTERVAL, e.Save)
+	e.AddTimer(saveInterval, e.Save)
+}
+
+func SetSaveInterval(duration time.Duration) {
+	saveInterval = duration
+	gwlog.Info("Save interval set to %s", saveInterval)
 }
 
 // Space Operations related to e

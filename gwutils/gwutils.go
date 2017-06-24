@@ -1,6 +1,10 @@
 package gwutils
 
-import "github.com/xiaonanln/goworld/gwlog"
+import (
+	"io"
+
+	"github.com/xiaonanln/goworld/gwlog"
+)
 
 func RunPanicless(f func()) {
 	defer func() {
@@ -11,4 +15,23 @@ func RunPanicless(f func()) {
 	}()
 
 	f()
+}
+
+type MultiWriter struct {
+	subwriters []io.Writer
+}
+
+func NewMultiWriter(writers ...io.Writer) io.Writer {
+	mw := &MultiWriter{
+		subwriters: writers,
+	}
+	return mw
+}
+
+func (mw *MultiWriter) Write(p []byte) (n int, err error) {
+	n = len(p)
+	for _, subwriter := range mw.subwriters {
+		subwriter.Write(p)
+	}
+	return
 }
