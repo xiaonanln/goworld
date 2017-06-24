@@ -1,11 +1,10 @@
+TODO: Optimize Dispatcher Lock Mechianism
 TODO: Cache the message from the clients to their owners if the owner is migrating
 TODO: AOI with specified range, entities go in / out AOI
 TODO: [test_game]
     TODO: Chat system [chat]
     TODO: Entity movement in space, AOI [move]
 
-
-TODO: Add a common server section in goworld.ini to merge common configs of may servers
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 
 # Subsystem to be implemented
