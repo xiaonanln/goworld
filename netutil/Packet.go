@@ -55,7 +55,7 @@ type Packet struct {
 
 func allocPacket(payloadCap uint32) *Packet {
 	//pkt := &Packet{
-	//	refcount: 0,
+	//	refcount: 1,
 	//	bytes:    make([]byte, PREPAYLOAD_SIZE+payloadCap), // 4 for the uint32 payload len
 	//}
 	pkt := packetPool.Get().(*Packet)

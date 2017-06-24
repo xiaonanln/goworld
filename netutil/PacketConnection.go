@@ -69,8 +69,8 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 		packet.AddRefCount(1) // will be released when pop from queue
 		pc.sendQueue.Push(packet)
 		sendQueueLen := pc.sendQueue.Len()
-		if sendQueueLen >= 1000 && sendQueueLen%1000 == 0 {
-			gwlog.Warn("%s: send queue length = %d", pc, pc.sendQueue.Len())
+		if sendQueueLen >= 10000 && sendQueueLen%10000 == 0 {
+			gwlog.Warn("%s: send queue length = %d", pc, sendQueueLen)
 		}
 		return nil
 	} else {
