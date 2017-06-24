@@ -41,8 +41,10 @@ type ServerConfig struct {
 }
 
 type DispatcherConfig struct {
-	Ip   string
-	Port int
+	Ip        string
+	Port      int
+	LogFile   string
+	LogStderr bool
 }
 
 type GoWorldConfig struct {
@@ -180,12 +182,19 @@ func readServerConfig(sec *ini.Section) *ServerConfig {
 
 func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	config.Ip = DEFAULT_LOCALHOST_IP
+	config.LogFile = ""
+	config.LogStderr = true
+
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
 			config.Ip = key.MustString(DEFAULT_LOCALHOST_IP)
 		} else if name == "port" {
 			config.Port = key.MustInt(0)
+		} else if name == "log_file" {
+			config.LogFile = key.MustString(config.LogFile)
+		} else if name == "log_stderr" {
+			config.LogStderr = key.MustBool(config.LogStderr)
 		}
 	}
 	return
