@@ -1,6 +1,5 @@
 TODO: Save log to file, control by config file
 TODO: destroy entities when space is destroyed
-TODO: use log file, do not write to stdout
 
 
 TODO: [test_game]
@@ -8,6 +7,7 @@ TODO: [test_game]
     TODO: Chat system
     TODO: Entity movement in space, AOI
 
+TODO: Add a common server section in goworld.ini to merge common configs of may servers
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 
 # Subsystem to be implemented

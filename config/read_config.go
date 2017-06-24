@@ -36,6 +36,8 @@ type ServerConfig struct {
 	Port         int
 	BootEntity   string
 	SaveInterval time.Duration
+	LogFile      string
+	LogStderr    bool
 }
 
 type DispatcherConfig struct {
@@ -150,6 +152,8 @@ func readServerConfig(sec *ini.Section) *ServerConfig {
 	sc := &ServerConfig{
 		Ip:           DEFAULT_LOCALHOST_IP,
 		SaveInterval: DEFAULT_SAVE_ITNERVAL,
+		LogFile:      "",
+		LogStderr:    true,
 	}
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
@@ -161,6 +165,10 @@ func readServerConfig(sec *ini.Section) *ServerConfig {
 			sc.BootEntity = key.MustString("")
 		} else if name == "save_interval" {
 			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
+		} else if name == "log_file" {
+			sc.LogFile = key.MustString(sc.LogFile)
+		} else if name == "log_stderr" {
+			sc.LogStderr = key.MustBool(sc.LogStderr)
 		}
 	}
 	// validate game config

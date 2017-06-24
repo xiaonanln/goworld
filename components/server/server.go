@@ -2,15 +2,19 @@ package server
 
 import (
 	"flag"
-	"os"
 
 	"math/rand"
 	"time"
+
+	"os"
+
+	"io"
 
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
@@ -40,14 +44,9 @@ func Run(delegate IServerDelegate) {
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
-
-	entity.SetSaveInterval(config.GetServer(serverid).SaveInterval)
-
-	f, err := os.OpenFile("server.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-	if err != nil {
-		panic(err)
-	}
-	gwlog.SetOutput(f)
+	serverConfig := config.GetServer(serverid)
+	entity.SetSaveInterval(serverConfig.SaveInterval)
+	setupLogOutput(serverConfig)
 
 	entity.CreateSpaceLocally(0) // create to be the nil space
 	gameService = newGameService(serverid, delegate)
@@ -58,6 +57,26 @@ func Run(delegate IServerDelegate) {
 	go gateService.run() // run gate service in another goroutine
 
 	gameService.run()
+}
+
+func setupLogOutput(serverConfig *config.ServerConfig) {
+	outputWriters := make([]io.Writer, 0, 2)
+	if serverConfig.LogFile != "" {
+		f, err := os.OpenFile("server.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		if err != nil {
+			panic(err)
+		}
+		outputWriters = append(outputWriters, f)
+	}
+	if serverConfig.LogStderr {
+		outputWriters = append(outputWriters, os.Stderr)
+	}
+
+	if len(outputWriters) == 1 {
+		gwlog.SetOutput(outputWriters[0])
+	} else {
+		gwlog.SetOutput(gwutils.NewMultiWriter(outputWriters...))
+	}
 }
 
 type dispatcherClientDelegate struct {

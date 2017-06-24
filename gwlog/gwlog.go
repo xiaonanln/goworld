@@ -5,6 +5,8 @@ import (
 
 	"io"
 
+	"os"
+
 	sublog "github.com/Sirupsen/logrus"
 )
 
@@ -23,9 +25,14 @@ var (
 	Panic  = sublog.Panic
 	Panicf = sublog.Panicf
 	Fatal  = sublog.Fatalf
+
+	outputWriter io.Writer
 )
 
 func init() {
+	outputWriter = os.Stderr
+	sublog.SetOutput(outputWriter)
+
 	sublog.SetLevel(sublog.DebugLevel)
 }
 
@@ -38,10 +45,11 @@ func SetLevel(lv sublog.Level) {
 }
 
 func TraceError(format string, args ...interface{}) {
-	debug.PrintStack()
+	outputWriter.Write(debug.Stack())
 	Error(format, args...)
 }
 
 func SetOutput(out io.Writer) {
-	sublog.SetOutput(out)
+	outputWriter = out
+	sublog.SetOutput(outputWriter)
 }
