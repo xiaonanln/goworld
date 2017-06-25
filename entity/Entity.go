@@ -112,7 +112,7 @@ func (e *Entity) Save() {
 
 	data := e.GetPersistentData()
 
-	storage.Save(e.TypeName, e.ID, data)
+	storage.Save(e.TypeName, e.ID, data, nil)
 }
 
 func (e *Entity) IsSpaceEntity() bool {

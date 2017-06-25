@@ -48,8 +48,12 @@ func GetServiceProviders(serviceName string) entity.EntityIDSet {
 }
 
 // Get all saved entity ids in storage, may take long time and block the main routine
-func ListEntityIDs(typeName string) []EntityID {
-	return storage.ListEntityIDs(typeName)
+func ListEntityIDs(typeName string, callback storage.ListCallbackFunc) {
+	storage.ListEntityIDs(typeName, callback)
+}
+
+func Exists(typeName string, entityID EntityID, callback storage.ExistsCallbackFunc) {
+	storage.Exists(typeName, entityID, callback)
 }
 
 func GetEntity(id EntityID) *entity.Entity {

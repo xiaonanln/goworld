@@ -26,8 +26,12 @@ func getFileName(name string, entityID common.EntityID) string {
 	return name + "$" + base64.URLEncoding.EncodeToString([]byte(entityID))
 }
 
-func (ss *FileSystemEntityStorage) Write(name string, entityID common.EntityID, data interface{}) error {
-	stringSaveFile := filepath.Join(ss.directory, getFileName(name, entityID))
+func (ss *FileSystemEntityStorage) getFilePath(typeName string, entityID common.EntityID) string {
+	return filepath.Join(ss.directory, getFileName(typeName, entityID))
+}
+
+func (ss *FileSystemEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
+	stringSaveFile := ss.getFilePath(typeName, entityID)
 	dataBytes, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
@@ -40,7 +44,7 @@ func (ss *FileSystemEntityStorage) Write(name string, entityID common.EntityID, 
 }
 
 func (ss *FileSystemEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
-	stringSaveFile := filepath.Join(ss.directory, getFileName(typeName, entityID))
+	stringSaveFile := ss.getFilePath(typeName, entityID)
 	dataBytes, err := ioutil.ReadFile(stringSaveFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -57,6 +61,13 @@ func (ss *FileSystemEntityStorage) Read(typeName string, entityID common.EntityI
 		return nil, err
 	}
 	return data, nil
+}
+
+func (ss *FileSystemEntityStorage) Exists(typeName string, entityID common.EntityID) (exists bool, err error) {
+	stringSaveFile := ss.getFilePath(typeName, entityID)
+	_, err = os.Stat(stringSaveFile)
+	exists = err == nil || os.IsExist(err)
+	return
 }
 
 func (ss *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, error) {

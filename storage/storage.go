@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"time"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
@@ -25,6 +27,7 @@ type saveRequest struct {
 	TypeName string
 	EntityID common.EntityID
 	Data     interface{}
+	Callback SaveCallbackFunc
 }
 
 type loadRequest struct {
@@ -33,13 +36,28 @@ type loadRequest struct {
 	Callback LoadCallbackFunc
 }
 
-type LoadCallbackFunc func(data interface{}, err error)
+type existsRequest struct {
+	TypeName string
+	EntityID common.EntityID
+	Callback ExistsCallbackFunc
+}
 
-func Save(typeName string, entityID common.EntityID, data interface{}) {
+type listEntityIDsRequest struct {
+	TypeName string
+	Callback ListCallbackFunc
+}
+
+type SaveCallbackFunc func()
+type LoadCallbackFunc func(data interface{}, err error)
+type ExistsCallbackFunc func(exists bool, err error)
+type ListCallbackFunc func([]common.EntityID, error)
+
+func Save(typeName string, entityID common.EntityID, data interface{}, callback SaveCallbackFunc) {
 	operationQueue.Push(saveRequest{
 		TypeName: typeName,
 		EntityID: entityID,
 		Data:     data,
+		Callback: callback,
 	})
 }
 
@@ -51,12 +69,19 @@ func Load(typeName string, entityID common.EntityID, callback LoadCallbackFunc) 
 	})
 }
 
-func ListEntityIDs(typeName string) []common.EntityID {
-	eids, err := storageEngine.List(typeName)
-	if err != nil {
-		gwlog.TraceError("ListEntityIDs %s failed: %s", typeName, err)
-	}
-	return eids
+func Exists(typeName string, entityID common.EntityID, callback ExistsCallbackFunc) {
+	operationQueue.Push(existsRequest{
+		TypeName: typeName,
+		EntityID: entityID,
+		Callback: callback,
+	})
+}
+
+func ListEntityIDs(typeName string, callback ListCallbackFunc) {
+	operationQueue.Push(listEntityIDsRequest{
+		TypeName: typeName,
+		Callback: callback,
+	})
 }
 
 func Initialize() {
@@ -93,8 +118,14 @@ func storageRoutine() {
 				if err != nil {
 					// save failed ?
 					gwlog.Error("storage: save failed: %s\nData: %v", err, saveReq.Data)
-					continue // always retry if fail
+					time.Sleep(time.Second) // wait for 1 second to retry
+					continue                // always retry if fail
 				} else {
+					if saveReq.Callback != nil {
+						timer.AddCallback(0, func() {
+							saveReq.Callback()
+						})
+					}
 					break
 				}
 			}
@@ -108,9 +139,24 @@ func storageRoutine() {
 				data = nil
 			}
 
-			timer.AddCallback(0, func() {
-				loadReq.Callback(data, err)
-			})
+			if loadReq.Callback != nil {
+				timer.AddCallback(0, func() {
+					loadReq.Callback(data, err)
+				})
+			}
+		} else if existsReq, ok := op.(existsRequest); ok {
+			exists, err := storageEngine.Exists(existsReq.TypeName, existsReq.EntityID)
+			if existsReq.Callback != nil {
+				existsReq.Callback(exists, err)
+			}
+		} else if listReq, ok := op.(listEntityIDsRequest); ok {
+			eids, err := storageEngine.List(listReq.TypeName)
+			if err != nil {
+				gwlog.TraceError("ListEntityIDs %s failed: %s", listReq.TypeName, err)
+			}
+			if listReq.Callback != nil {
+				listReq.Callback(eids, err)
+			}
 		} else {
 			gwlog.Panicf("storage: unknown operation: %v", op)
 		}

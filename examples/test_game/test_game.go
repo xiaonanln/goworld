@@ -5,6 +5,7 @@ import (
 
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/server"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -41,16 +42,18 @@ func (server serverDelegate) OnServerReady() {
 
 	if goworld.GetServerID() == 1 { // Create services on just 1 server
 		for _, serviceName := range SERVICE_NAMES {
-			eids := goworld.ListEntityIDs(serviceName)
-			gwlog.Info("Found saved %s ids: %v", serviceName, eids)
+			serviceName := serviceName
+			goworld.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
+				gwlog.Info("Found saved %s ids: %v", serviceName, eids)
 
-			if len(eids) == 0 {
-				goworld.CreateEntityAnywhere(serviceName)
-			} else {
-				// already exists
-				serviceID := eids[0]
-				goworld.LoadEntityAnywhere(serviceName, serviceID)
-			}
+				if len(eids) == 0 {
+					goworld.CreateEntityAnywhere(serviceName)
+				} else {
+					// already exists
+					serviceID := eids[0]
+					goworld.LoadEntityAnywhere(serviceName, serviceID)
+				}
+			})
 		}
 	}
 
