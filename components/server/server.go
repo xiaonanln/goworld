@@ -63,7 +63,7 @@ func Run(delegate IServerDelegate) {
 func setupLogOutput(serverConfig *config.ServerConfig) {
 	outputWriters := make([]io.Writer, 0, 2)
 	if serverConfig.LogFile != "" {
-		f, err := os.OpenFile("server.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		f, err := os.OpenFile(serverConfig.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 		if err != nil {
 			panic(err)
 		}

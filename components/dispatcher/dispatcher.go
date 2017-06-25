@@ -29,7 +29,7 @@ func parseArgs() {
 func setupLogOutput(dispatcherConfig *config.DispatcherConfig) {
 	outputWriters := make([]io.Writer, 0, 2)
 	if dispatcherConfig.LogFile != "" {
-		f, err := os.OpenFile("server.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		f, err := os.OpenFile(dispatcherConfig.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 		if err != nil {
 			panic(err)
 		}

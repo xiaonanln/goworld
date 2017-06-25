@@ -194,7 +194,20 @@ func (e *ClientEntity) chooseThingByWeight() *_Something {
 }
 
 func (e *ClientEntity) DoEnterRandomSpace() {
+	curSpaceKind := 0
+	if e.owner.currentSpace != nil {
+		curSpaceKind = e.owner.currentSpace.Kind
+	}
+
 	spaceKind := SPACE_KIND_MIN + rand.Intn(SPACE_KIND_MAX-SPACE_KIND_MIN+1)
+	for spaceKind == curSpaceKind {
+		if spaceKind == SPACE_KIND_MAX {
+			spaceKind = SPACE_KIND_MIN
+		} else {
+			spaceKind += 1
+		}
+	}
+
 	e.CallServer("EnterSpace", spaceKind)
 }
 
