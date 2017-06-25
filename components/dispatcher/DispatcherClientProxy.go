@@ -87,6 +87,8 @@ func (dcp *DispatcherClientProxy) serve() {
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 		}
+
+		pkt.Release()
 	}
 }
 

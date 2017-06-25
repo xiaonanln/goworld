@@ -114,9 +114,10 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		}
 		bot.applyAttrDel(entityid, path, key)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
-		typeName := packet.ReadVarStr()
-		entityid := packet.ReadEntityID()
 		isPlayer := packet.ReadBool()
+		entityid := packet.ReadEntityID()
+		typeName := packet.ReadVarStr()
+
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
 		if !quiet {
@@ -147,7 +148,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 }
 func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, key string, val interface{}) {
 	if bot.entities[entityid] == nil {
-		gwlog.Warn("entity %s not found")
+		gwlog.Error("entity %s not found")
 	}
 	entity := bot.entities[entityid]
 	entity.applyAttrChange(path, key, val)
@@ -155,7 +156,7 @@ func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, k
 
 func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key string) {
 	if bot.entities[entityid] == nil {
-		gwlog.Warn("entity %s not found")
+		gwlog.Error("entity %s not found")
 	}
 	entity := bot.entities[entityid]
 	entity.applyAttrDel(path, key)

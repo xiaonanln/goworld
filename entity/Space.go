@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
@@ -61,7 +60,7 @@ func (space *Space) OnCreated() {
 		return
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
+	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	gwlog.Debug("%s.OnCreated", space)
 	gwutils.RunPanicless(space.I.OnSpaceCreated)
 }

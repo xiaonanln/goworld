@@ -149,9 +149,10 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	isPersistent := entity.I.IsPersistent()
 	if isPersistent { // startup the periodical timer for saving e
 		entity.setupSaveTimer()
-		if !isMigrate {
-			dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
-		}
+	}
+
+	if !isMigrate {
+		dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 	}
 
 	if client != nil {
@@ -242,7 +243,7 @@ func OnCall(id EntityID, method string, args []interface{}, clientID ClientID) {
 	e := entityManager.get(id)
 	if e == nil {
 		// e not found, may destroyed before call
-		gwlog.Warn("Entity %s is not found while calling %s%v", id, method, args)
+		gwlog.Error("Entity %s is not found while calling %s%v", id, method, args)
 		return
 	}
 

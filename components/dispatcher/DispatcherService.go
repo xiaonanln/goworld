@@ -20,14 +20,21 @@ import (
 )
 
 type callQueueItem struct {
-	entityID common.EntityID
-	packet   *netutil.Packet
+	packet *netutil.Packet
 }
 
 type EntityDispatchInfo struct {
+	sync.RWMutex
+
 	serverid    uint16
 	migrateTime int64
 	callQueue   sync_queue.SyncQueue
+}
+
+func newEntityDispatchInfo() *EntityDispatchInfo {
+	return &EntityDispatchInfo{
+		callQueue: sync_queue.NewSyncQueue(),
+	}
 }
 
 func (info *EntityDispatchInfo) startMigrate() {
@@ -39,14 +46,17 @@ func (info *EntityDispatchInfo) isMigrating() bool {
 }
 
 type DispatcherService struct {
-	sync.RWMutex
-
 	config            *config.DispatcherConfig
 	clients           []*DispatcherClientProxy
 	chooseClientIndex int
 
-	entityDispatchInfos  map[common.EntityID]*EntityDispatchInfo
-	registeredServices   map[string]entity.EntityIDSet
+	entityDispatchInfosLock sync.RWMutex
+	entityDispatchInfos     map[common.EntityID]*EntityDispatchInfo
+
+	servicesLock       sync.Mutex
+	registeredServices map[string]entity.EntityIDSet
+
+	clientsLock          sync.RWMutex
 	targetServerOfClient map[common.ClientID]uint16
 }
 
@@ -64,19 +74,85 @@ func newDispatcherService() *DispatcherService {
 	}
 }
 
-func (service *DispatcherService) getEntityDispatcherInfo(entityID common.EntityID) *EntityDispatchInfo {
-	return service.entityDispatchInfos[entityID] // can be nil
+func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common.EntityID) (info *EntityDispatchInfo) {
+	service.entityDispatchInfosLock.RLock()
+	info = service.entityDispatchInfos[entityID] // can be nil
+	if info != nil {
+		info.RLock()
+	}
+	service.entityDispatchInfosLock.RUnlock()
+	return
 }
 
-func (service *DispatcherService) setEntityDispatcherInfo(entityID common.EntityID) *EntityDispatchInfo {
-	info := service.entityDispatchInfos[entityID]
-	if info == nil {
-		info = &EntityDispatchInfo{
-			callQueue: sync_queue.NewSyncQueue(),
-		}
-		service.entityDispatchInfos[entityID] = info
+func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID common.EntityID) (info *EntityDispatchInfo) {
+	service.entityDispatchInfosLock.RLock()
+	info = service.entityDispatchInfos[entityID] // can be nil
+	if info != nil {
+		info.Lock()
 	}
-	return info
+	service.entityDispatchInfosLock.RUnlock()
+	return
+}
+
+func (service *DispatcherService) newEntityDispatcherInfo(entityID common.EntityID) (info *EntityDispatchInfo) {
+	info = newEntityDispatchInfo()
+	service.entityDispatchInfosLock.Lock()
+	service.entityDispatchInfos[entityID] = info
+	service.entityDispatchInfosLock.Unlock()
+	return
+}
+
+func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID) {
+	service.entityDispatchInfosLock.Lock()
+	delete(service.entityDispatchInfos, entityID)
+	service.entityDispatchInfosLock.Unlock()
+}
+
+//func (service *DispatcherService) setEntityDispatcherInfo(entityID common.EntityID) (info *EntityDispatchInfo) {
+//	service.entityDispatchInfosLock.RUnlock()
+//	info = service.entityDispatchInfos[entityID]
+//	service.entityDispatchInfosLock.RUnlock()
+//
+//	if info == nil {
+//		service.entityDispatchInfosLock.Lock()
+//		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
+//		if info == nil {
+//			info = &EntityDispatchInfo{
+//				callQueue: sync_queue.NewSyncQueue(),
+//			}
+//			service.entityDispatchInfos[entityID] = info
+//		}
+//		service.entityDispatchInfosLock.Unlock()
+//	}
+//	return
+//}
+
+func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID common.EntityID) (info *EntityDispatchInfo) {
+	service.entityDispatchInfosLock.RLock()
+	info = service.entityDispatchInfos[entityID]
+
+	if info != nil {
+		info.Lock()
+	}
+
+	service.entityDispatchInfosLock.RUnlock()
+
+	if info == nil {
+		service.entityDispatchInfosLock.Lock()
+		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
+		if info == nil {
+			info = &EntityDispatchInfo{
+				callQueue: sync_queue.NewSyncQueue(),
+			}
+			service.entityDispatchInfos[entityID] = info
+		}
+
+		info.Lock()
+
+		service.entityDispatchInfosLock.Unlock()
+	}
+
+	return
 }
 
 func (service *DispatcherService) String() string {
@@ -115,7 +191,6 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 			dcp.SendPacket(pkt)
 		}
 	}
-	pkt.Release()
 
 	if olddcp != nil && !isReconnect {
 		// server was connected, but a new instance is replaced, so we need to wipe the entities on that server
@@ -172,42 +247,42 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
-	service.Lock()
-	service.setEntityDispatcherInfo(entityID).serverid = dcp.serverid
-	service.Unlock()
-	pkt.Release()
+	entityDispatchInfo := service.newEntityDispatcherInfo(entityID)
+	//entityDispatchInfo.Lock() // no other server can access this entity at this point, lock is not required
+	entityDispatchInfo.serverid = dcp.serverid
+	//entityDispatchInfo.Unlock()
 }
 
 func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
-	service.Lock()
-	delete(service.entityDispatchInfos, entityID)
-	service.Unlock()
-	pkt.Release()
+	service.delEntityDispatchInfo(entityID)
 }
 
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	// TODO: wait until client's owner entity migration is done
 	clientid := pkt.ReadClientID()
 	targetServer := service.chooseDispatcherClient()
-	service.Lock()
-	service.targetServerOfClient[clientid] = targetServer.serverid
-	service.Unlock()
+
+	service.clientsLock.Lock()
+	service.targetServerOfClient[clientid] = targetServer.serverid // owner is not determined yet, set to "" as placeholder
+	service.clientsLock.Unlock()
+
 	pkt.AppendUint16(dcp.serverid)
-	service.chooseDispatcherClient().SendPacketRelease(pkt)
+	targetServer.SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	// TODO: wait until client's owner entity migration is done
 	clientid := pkt.ReadClientID() // client disconnected
-	service.RLock()
-	sid := service.targetServerOfClient[clientid] // target server of client
-	delete(service.targetServerOfClient, clientid)
-	service.RUnlock()
 
-	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt) // tell the server that the client is down
+	service.clientsLock.Lock()
+	targetSid := service.targetServerOfClient[clientid]
+	delete(service.targetServerOfClient, clientid)
+	service.clientsLock.Unlock()
+
+	if targetSid != 0 { // if found the owner, tell it
+		service.dispatcherClientOfServer(targetSid).SendPacket(pkt) // tell the server that the client is down
+	}
 }
 
 func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -217,25 +292,24 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 		gwlog.Debug("%s.HandleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
 	}
 	eid := pkt.ReadEntityID() // field 1
-	service.Lock()
-	entityDispatchInfo := service.setEntityDispatcherInfo(eid)
+
+	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
+	defer entityDispatchInfo.Unlock()
 
 	if entityDispatchInfo.serverid == 0 { // entity not loaded, try load now
 		dcp := service.chooseDispatcherClient()
 		entityDispatchInfo.serverid = dcp.serverid
-		service.Unlock()
 		dcp.SendPacket(pkt)
-	} else { // entity already loaded
-		service.Unlock()
+	} else {
+		// entity already loaded
 	}
-	pkt.Release()
 }
 
 func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
-	service.chooseDispatcherClient().SendPacketRelease(pkt)
+	service.chooseDispatcherClient().SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -244,15 +318,19 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
 	}
-	service.Lock()
-	service.setEntityDispatcherInfo(entityID).serverid = dcp.serverid
+
+	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
+	entityDispatchInfo.serverid = dcp.serverid
+	entityDispatchInfo.Unlock()
+
+	service.servicesLock.Lock()
 	if _, ok := service.registeredServices[serviceName]; !ok {
 		service.registeredServices[serviceName] = entity.EntityIDSet{}
 	}
+
 	service.registeredServices[serviceName].Add(entityID)
-	service.Unlock()
 	service.broadcastToDispatcherClients(pkt)
-	pkt.Release()
+	service.servicesLock.Unlock()
 	//_, ok := service.registeredServices[serviceName]
 	//if ok {
 	//	// already registered
@@ -280,70 +358,83 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 		gwlog.Debug("%s.HandleCallEntityMethod: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
 
-	service.RLock()
-	dispatchInfo := service.getEntityDispatcherInfo(entityID)
-	var serverid uint16
-	var migrating bool
-	if dispatchInfo != nil {
-		serverid = dispatchInfo.serverid
-		migrating = dispatchInfo.isMigrating()
-		if migrating {
-			// if migrating, just put the call to wait
-			dispatchInfo.callQueue.Push(callQueueItem{
-				entityID: entityID,
-				packet:   pkt,
-			})
-		}
-	}
-	service.RUnlock()
-
-	if migrating { // packet already cached if migrating
+	entityDispatchInfo := service.getEntityDispatcherInfoForRead(entityID)
+	if entityDispatchInfo == nil {
+		// entity not exists ?
+		gwlog.Error("%s.HandleCallEntityMethod: entity %s not found", entityID)
 		return
 	}
 
-	if serverid == 0 {
-		// server not found
-		gwlog.Warn("Entity %s not found when calling method", entityID)
-		return
-	}
+	defer entityDispatchInfo.RUnlock()
 
-	service.dispatcherClientOfServer(serverid).SendPacketRelease(pkt)
+	if !entityDispatchInfo.isMigrating() {
+		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
+	} else {
+		// if migrating, just put the call to wait
+		pkt.AddRefCount(1)
+		entityDispatchInfo.callQueue.Push(callQueueItem{
+			packet: pkt,
+		})
+	}
 }
 
 func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	entityid := pkt.ReadEntityID()
-	method := pkt.ReadVarStr()
-	var args []interface{}
-	pkt.ReadData(&args)
-	clientid := pkt.ReadClientID()
-	service.RLock()
-	sid := service.targetServerOfClient[clientid]
-	service.RUnlock()
+	entityID := pkt.ReadEntityID()
+	//method := pkt.ReadVarStr() // TODO: optimize CallEntityMethodFromClient packet structure
+	//var args []interface{}
+	//pkt.ReadData(&args)
+	//clientid := pkt.ReadClientID()
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.HandleCallEntityMethodFromClient: %s.%s %v, clientid=%s, sid=%d", service, entityid, method, args, clientid, sid)
+		gwlog.Debug("%s.HandleCallEntityMethodFromClient: entityID=%s, payload=%v", service, entityID, pkt.Payload())
 	}
-	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+
+	entityDispatchInfo := service.getEntityDispatcherInfoForRead(entityID)
+	if entityDispatchInfo == nil {
+		gwlog.Error("%s.HandleCallEntityMethodFromClient: entity %s is not found: %v", service, entityID, service.entityDispatchInfos)
+		return
+	}
+
+	defer entityDispatchInfo.RUnlock()
+
+	// TODO handle entity migrating
+	if !entityDispatchInfo.isMigrating() {
+		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
+	} else {
+		// if migrating, just put the call to wait
+		pkt.AddRefCount(1)
+		entityDispatchInfo.callQueue.Push(callQueueItem{
+			packet: pkt,
+		})
+	}
+
+	// TODO: is it necessary to prohibit client from calling entities on every server
+	//service.clientsLock.RLock()
+	//sid := service.targetServerOfClient[clientid]
+	//service.clientsLock.RUnlock()
+
 }
 
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
+	//clientid := pkt.ReadClientID()
+
 	// Server <sid> is creating entity on client <clientid>, so we can safely assumes that target entity of
-	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleDestroyEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
-	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleNotifyAttrChangeOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
-	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleNotifyAttrDelOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
-	service.dispatcherClientOfServer(sid).SendPacketRelease(pkt)
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -352,22 +443,26 @@ func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProx
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("Entity %s is migrating to space %s", entityID, spaceID)
 	}
+
 	// mark the entity as migrating
-	service.Lock()
-	spaceDispatchInfo := service.getEntityDispatcherInfo(spaceID)
+
+	spaceDispatchInfo := service.getEntityDispatcherInfoForRead(spaceID)
 	var spaceLoc uint16
 	if spaceDispatchInfo != nil {
 		spaceLoc = spaceDispatchInfo.serverid
 	}
-
-	if spaceLoc > 0 { // almost true
-		// TODO: what if migrate time is already set?
-		service.setEntityDispatcherInfo(entityID).startMigrate()
-	}
-	service.Unlock()
+	spaceDispatchInfo.RUnlock()
 
 	pkt.AppendUint16(spaceLoc) // append the space server location to the packet
-	dcp.SendPacketRelease(pkt)
+
+	if spaceLoc > 0 { // almost true
+		entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
+		defer entityDispatchInfo.Unlock()
+
+		entityDispatchInfo.startMigrate()
+	}
+
+	dcp.SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -383,20 +478,23 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	}
 
 	// mark the eid as migrating done
-	service.Lock()
-	defer service.Unlock() // TODO: optimize locks, this lock is so big
+	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
+	defer entityDispatchInfo.Unlock()
 
-	entityDispatchInfo := service.setEntityDispatcherInfo(eid)
 	entityDispatchInfo.migrateTime = 0 // mark the entity as NOT migrating
 	entityDispatchInfo.serverid = targetServer
+
 	service.targetServerOfClient[clientid] = targetServer // migrating also change target server of client
 
-	service.dispatcherClientOfServer(targetServer).SendPacketRelease(pkt)
+	service.dispatcherClientOfServer(targetServer).SendPacket(pkt)
 
 	// send the cached calls to target server
 	item, ok := entityDispatchInfo.callQueue.TryPop()
 	for ok {
-		service.dispatcherClientOfServer(targetServer).SendPacketRelease(item.(callQueueItem).packet)
+		cachedPkt := item.(callQueueItem).packet
+		service.dispatcherClientOfServer(targetServer).SendPacket(cachedPkt)
+		cachedPkt.Release()
+
 		item, ok = entityDispatchInfo.callQueue.TryPop()
 	}
 }
@@ -408,6 +506,12 @@ func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Pack
 }
 
 func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
+	service.entityDispatchInfosLock.Lock()
+	defer service.entityDispatchInfosLock.Unlock()
+
+	service.servicesLock.Lock()
+	defer service.servicesLock.Unlock()
+
 	cleanEids := entity.EntityIDSet{} // get all clean eids
 	for eid, dispatchInfo := range service.entityDispatchInfos {
 		if dispatchInfo.serverid == targetServer {
@@ -418,11 +522,17 @@ func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
 	// for all services whose entity is cleaned, notify all servers that the service is down
 	undeclaredServices := common.StringSet{}
 	for serviceName, serviceEids := range service.registeredServices {
+		var cleanEidsOfServer []common.EntityID
 		for serviceEid := range serviceEids {
 			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other servers
 				undeclaredServices.Add(serviceName)
+				cleanEidsOfServer = append(cleanEidsOfServer, serviceEid)
 				service.handleServiceDown(serviceName, serviceEid)
 			}
+		}
+
+		for _, eid := range cleanEidsOfServer {
+			serviceEids.Del(eid)
 		}
 	}
 

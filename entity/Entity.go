@@ -73,11 +73,11 @@ func (e *Entity) Destroy() {
 		return
 	}
 	gwlog.Info("%s.Destroy ...", e)
-	isCrossServerCallable := e.isCrossServerCallable()
+	//isCrossServerCallable := e.isCrossServerCallable()
 	e.destroyEntity(false)
-	if isCrossServerCallable {
-		dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
-	}
+	//if isCrossServerCallable {
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
+	//}
 }
 
 func (e *Entity) destroyEntity(isMigrate bool) {
@@ -314,18 +314,19 @@ func (e *Entity) getMigrateData() map[string]interface{} {
 	return e.Attrs.ToMap() // TODO: return all data (client, all_client, server, etc)
 }
 
-func (e *Entity) isCrossServerCallable() bool {
-	if e.IsPersistent() {
-		return true
-	}
-	if e.IsSpaceEntity() && !e.ToSpace().IsNil() {
-		return true
-	}
-	if len(e.declaredServices) > 0 {
-		return true
-	}
-	return false
-}
+//func (e *Entity) isCrossServerCallable() bool {
+//	// find a better rule to determine if entity is cross server callable
+//	if e.IsPersistent() {
+//		return true
+//	}
+//	if e.IsSpaceEntity() && !e.ToSpace().IsNil() {
+//		return true
+//	}
+//	if len(e.declaredServices) > 0 {
+//		return true
+//	}
+//	return false
+//}
 
 // Client related utilities
 func (e *Entity) GetClient() *GameClient {
@@ -484,13 +485,13 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 	entity := entityManager.get(entityID)
 	if entity == nil {
 		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityID)
-		gwlog.Warn("Migrate failed since entity is not found: spaceID=%s, entityID=%s", spaceID, entityID)
+		gwlog.Error("Migrate failed since entity is destroyed: spaceID=%s, entityID=%s", spaceID, entityID)
 		return
 	}
 
 	if spaceLoc == 0 {
 		// target space not found, migrate not started
-		gwlog.Warn("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
+		gwlog.Error("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
 		entity.clearMigrateRequest()
 		return
 	}

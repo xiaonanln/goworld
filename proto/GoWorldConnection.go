@@ -23,34 +23,44 @@ func (gwc *GoWorldConnection) SendSetServerID(id uint16, isReconnect bool) error
 	packet.AppendUint16(MT_SET_SERVER_ID)
 	packet.AppendUint16(id)
 	packet.AppendBool(isReconnect)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendNotifyCreateEntity(id EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CREATE_ENTITY)
 	packet.AppendEntityID(id)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 func (gwc *GoWorldConnection) SendNotifyDestroyEntity(id EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_DESTROY_ENTITY)
 	packet.AppendEntityID(id)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendNotifyClientConnected(id ClientID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CLIENT_CONNECTED)
 	packet.AppendClientID(id)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendNotifyClientDisconnected(id ClientID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CLIENT_DISCONNECTED)
 	packet.AppendClientID(id)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string, data map[string]interface{}) error {
@@ -58,7 +68,9 @@ func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string, data map
 	packet.AppendUint16(MT_CREATE_ENTITY_ANYWHERE)
 	packet.AppendVarStr(typeName)
 	packet.AppendData(data)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID EntityID) error {
@@ -66,7 +78,9 @@ func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID E
 	packet.AppendUint16(MT_LOAD_ENTITY_ANYWHERE)
 	packet.AppendEntityID(entityID)
 	packet.AppendVarStr(typeName)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string) error {
@@ -74,7 +88,9 @@ func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string
 	packet.AppendUint16(MT_DECLARE_SERVICE)
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(serviceName)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, args []interface{}) error {
@@ -83,7 +99,9 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, a
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(method)
 	packet.AppendData(args)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method string, args []interface{}) error {
@@ -92,18 +110,22 @@ func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(method)
 	packet.AppendData(args)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CREATE_ENTITY_ON_CLIENT)
 	packet.AppendUint16(sid)
 	packet.AppendClientID(clientid)
-	packet.AppendVarStr(typeName)
-	packet.AppendEntityID(entityid)
 	packet.AppendBool(isPlayer)
+	packet.AppendEntityID(entityid)
+	packet.AppendVarStr(typeName)
 	packet.AppendData(clientData)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendDestroyEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID) error {
@@ -113,7 +135,9 @@ func (gwc *GoWorldConnection) SendDestroyEntityOnClient(sid uint16, clientid Cli
 	packet.AppendClientID(clientid)
 	packet.AppendVarStr(typeName)
 	packet.AppendEntityID(entityid)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendNotifyAttrChangeOnClient(sid uint16, clientid ClientID, entityid EntityID, path []string, key string, val interface{}) error {
@@ -125,7 +149,9 @@ func (gwc *GoWorldConnection) SendNotifyAttrChangeOnClient(sid uint16, clientid 
 	packet.AppendStringList(path)
 	packet.AppendVarStr(key)
 	packet.AppendData(val)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendNotifyAttrDelnClient(sid uint16, clientid ClientID, entityid EntityID, path []string, key string) error {
@@ -136,7 +162,9 @@ func (gwc *GoWorldConnection) SendNotifyAttrDelnClient(sid uint16, clientid Clie
 	packet.AppendEntityID(entityid)
 	packet.AppendStringList(path)
 	packet.AppendVarStr(key)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID EntityID) error {
@@ -144,7 +172,9 @@ func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID Enti
 	packet.AppendUint16(MT_MIGRATE_REQUEST)
 	packet.AppendEntityID(entityID)
 	packet.AppendEntityID(spaceID)
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16, targetSpace EntityID, typeName string,
@@ -166,18 +196,20 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 	packet.AppendVarStr(typeName)
 	packet.AppendData(migrateData)
 
-	return gwc.SendPacketRelease(packet)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
 }
 
 func (gwc *GoWorldConnection) SendPacket(pkt *netutil.Packet) error {
 	return gwc.packetConn.SendPacket(pkt)
 }
 
-func (gwc *GoWorldConnection) SendPacketRelease(pkt *netutil.Packet) error {
-	err := gwc.packetConn.SendPacket(pkt)
-	pkt.Release()
-	return err
-}
+//func (gwc *GoWorldConnection) SendPacketRelease(pkt *netutil.Packet) error {
+//	err := gwc.packetConn.SendPacket(pkt)
+//	pkt.Release()
+//	return err
+//}
 
 //func (gwc *GoWorldConnection) RecvPacket() (*netutil.Packet, error) {
 //	return gwc.packetConn.RecvPacket()

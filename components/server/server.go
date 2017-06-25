@@ -48,10 +48,11 @@ func Run(delegate IServerDelegate) {
 	entity.SetSaveInterval(serverConfig.SaveInterval)
 	setupLogOutput(serverConfig)
 
-	entity.CreateSpaceLocally(0) // create to be the nil space
 	gameService = newGameService(serverid, delegate)
 
 	dispatcher_client.Initialize(serverid, &dispatcherClientDelegate{})
+
+	entity.CreateSpaceLocally(0) // create to be the nil space
 
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine

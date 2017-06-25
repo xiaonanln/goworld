@@ -149,7 +149,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			// storage config
 			readStorageConfig(sec, &config.Storage)
 		} else {
-			gwlog.Warn("unknown section: %s", secName)
+			gwlog.Error("unknown section: %s", secName)
 		}
 
 	}

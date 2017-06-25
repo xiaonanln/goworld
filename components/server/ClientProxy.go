@@ -53,10 +53,11 @@ func (cp *ClientProxy) serve() {
 			gwlog.Panicf("unknown message type from client: %d", msgtype)
 		}
 
+		pkt.Release()
 	}
 }
 
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
 	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	dispatcher_client.GetDispatcherClientForSend().SendPacketRelease(pkt)
+	dispatcher_client.GetDispatcherClientForSend().SendPacket(pkt)
 }
