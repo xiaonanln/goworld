@@ -26,14 +26,14 @@ type callQueueItem struct {
 type EntityDispatchInfo struct {
 	sync.RWMutex
 
-	serverid    uint16
-	migrateTime int64
-	callQueue   sync_queue.SyncQueue
+	serverid           uint16
+	migrateTime        int64
+	pendingPacketQueue sync_queue.SyncQueue
 }
 
 func newEntityDispatchInfo() *EntityDispatchInfo {
 	return &EntityDispatchInfo{
-		callQueue: sync_queue.NewSyncQueue(),
+		pendingPacketQueue: sync_queue.NewSyncQueue(),
 	}
 }
 
@@ -118,7 +118,7 @@ func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID
 //		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
 //		if info == nil {
 //			info = &EntityDispatchInfo{
-//				callQueue: sync_queue.NewSyncQueue(),
+//				pendingPacketQueue: sync_queue.NewSyncQueue(),
 //			}
 //			service.entityDispatchInfos[entityID] = info
 //		}
@@ -142,7 +142,7 @@ func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID commo
 		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
 		if info == nil {
 			info = &EntityDispatchInfo{
-				callQueue: sync_queue.NewSyncQueue(),
+				pendingPacketQueue: sync_queue.NewSyncQueue(),
 			}
 			service.entityDispatchInfos[entityID] = info
 		}
@@ -165,6 +165,10 @@ func (service *DispatcherService) run() {
 }
 
 func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
+	tcpConn := conn.(*net.TCPConn)
+	tcpConn.SetReadBuffer(consts.DISPATCHER_CLIENT_PROXY_READ_BUFFER_SIZE)
+	tcpConn.SetWriteBuffer(consts.DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE)
+
 	client := newDispatcherClientProxy(service, conn)
 	client.serve()
 }
@@ -361,7 +365,7 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	entityDispatchInfo := service.getEntityDispatcherInfoForRead(entityID)
 	if entityDispatchInfo == nil {
 		// entity not exists ?
-		gwlog.Error("%s.HandleCallEntityMethod: entity %s not found", entityID)
+		gwlog.Error("%s.HandleCallEntityMethod: entity %s not found", service, entityID)
 		return
 	}
 
@@ -372,7 +376,7 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	} else {
 		// if migrating, just put the call to wait
 		pkt.AddRefCount(1)
-		entityDispatchInfo.callQueue.Push(callQueueItem{
+		entityDispatchInfo.pendingPacketQueue.Push(callQueueItem{
 			packet: pkt,
 		})
 	}
@@ -402,7 +406,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 	} else {
 		// if migrating, just put the call to wait
 		pkt.AddRefCount(1)
-		entityDispatchInfo.callQueue.Push(callQueueItem{
+		entityDispatchInfo.pendingPacketQueue.Push(callQueueItem{
 			packet: pkt,
 		})
 	}
@@ -489,13 +493,13 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	service.dispatcherClientOfServer(targetServer).SendPacket(pkt)
 
 	// send the cached calls to target server
-	item, ok := entityDispatchInfo.callQueue.TryPop()
+	item, ok := entityDispatchInfo.pendingPacketQueue.TryPop()
 	for ok {
 		cachedPkt := item.(callQueueItem).packet
 		service.dispatcherClientOfServer(targetServer).SendPacket(cachedPkt)
 		cachedPkt.Release()
 
-		item, ok = entityDispatchInfo.callQueue.TryPop()
+		item, ok = entityDispatchInfo.pendingPacketQueue.TryPop()
 	}
 }
 

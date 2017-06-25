@@ -61,7 +61,7 @@ func (bot *ClientBot) run() {
 		conn, err = netutil.ConnectTCP(cfg.Ip, cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
-			time.Sleep(time.Second)
+			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
 			continue
 		}
 		// connected , ok

@@ -61,7 +61,9 @@ func (space *Space) OnCreated() {
 	}
 
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
-	gwlog.Debug("%s.OnCreated", space)
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s.OnCreated", space)
+	}
 	gwutils.RunPanicless(space.I.OnSpaceCreated)
 }
 

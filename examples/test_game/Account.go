@@ -16,7 +16,7 @@ func (a *Account) OnInit() {
 }
 
 func (a *Account) OnCreated() {
-	gwlog.Info("%s created: client=%v", a, a.GetClient())
+	//gwlog.Info("%s created: client=%v", a, a.GetClient())
 }
 
 func (a *Account) Login_Client(username string, password string) {

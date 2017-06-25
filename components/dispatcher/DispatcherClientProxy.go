@@ -17,7 +17,11 @@ type DispatcherClientProxy struct {
 	serverid uint16
 }
 
-func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *DispatcherClientProxy {
+func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *DispatcherClientProxy {
+	conn := netutil.Connection(_conn)
+	if consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY > 0 {
+		conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
+	}
 	return &DispatcherClientProxy{
 		GoWorldConnection: proto.NewGoWorldConnection(conn, false), // Using send queue slows down dispatcher performance
 		owner:             owner,

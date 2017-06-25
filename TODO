@@ -1,7 +1,9 @@
-TODO: Optimize Dispatcher Lock Mechianism
-TODO: Cache the message from the clients to their owners if the owner is migrating
+
 TODO: AOI with specified range, entities go in / out AOI
+
 TODO: [test_game]
+    TODO: Accout save and load existing avatar
+    TODO: Create or load Avatar anywhere, and migrate account to it
     TODO: Chat system [chat]
     TODO: Entity movement in space, AOI [move]
 

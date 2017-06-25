@@ -4,6 +4,11 @@ import "time"
 
 // Tunable Options
 const (
+	// For Dispatcher
+	DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024 * 2
+	DISPATCHER_CLIENT_PROXY_READ_BUFFER_SIZE  = 1024 * 1024 * 2
+	DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY    = 10 * time.Millisecond
+
 	// For Server & Gate
 	GAME_SERVICE_PACKET_QUEUE_SIZE = 10000 // packet queue size
 	// For Server
@@ -11,6 +16,7 @@ const (
 
 	DISPATCHER_CLIENT_WRITE_BUFFER_SIZE = 1024 * 1024 * 2
 	DISPATCHER_CLIENT_READ_BUFFER_SIZE  = 1024 * 1024 * 2
+	DISPATCHER_CLIENT_BUFFERED_DELAY    = 10 * time.Millisecond
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 

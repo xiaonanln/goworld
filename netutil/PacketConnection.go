@@ -29,14 +29,14 @@ var (
 )
 
 type PacketConnection struct {
-	binconn      BinaryConnection
+	conn         Connection
 	useSendQueue bool
 	sendQueue    sync_queue.SyncQueue
 }
 
-func NewPacketConnection(conn net.Conn, useSendQueue bool) PacketConnection {
+func NewPacketConnection(conn Connection, useSendQueue bool) PacketConnection {
 	pc := PacketConnection{
-		binconn:      NewBinaryConnection(conn),
+		conn:         conn,
 		useSendQueue: useSendQueue,
 	}
 	if useSendQueue {
@@ -74,8 +74,7 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 		}
 		return nil
 	} else {
-		err := pc.binconn.SendAll(packet.data())
-		return err
+		return SendAll(pc.conn, packet.data())
 	}
 }
 
@@ -83,7 +82,7 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	var _payloadLenBuf [SIZE_FIELD_SIZE]byte
 	payloadLenBuf := _payloadLenBuf[:]
 
-	err := pc.binconn.RecvAll(payloadLenBuf)
+	err := RecvAll(pc.conn, payloadLenBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +96,7 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	}
 
 	packet := NewPacketWithPayloadLen(payloadLen)
-	err = pc.binconn.RecvAll(packet.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+payloadLen]) // receive the p type and payload
+	err = RecvAll(pc.conn, packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+payloadLen]) // receive the p type and payload
 	if err != nil {
 		packet.Release()
 		return nil, err
@@ -109,15 +108,15 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 }
 
 func (pc PacketConnection) Close() {
-	pc.binconn.Close()
+	pc.conn.Close()
 }
 
 func (pc PacketConnection) RemoteAddr() net.Addr {
-	return pc.binconn.RemoteAddr()
+	return pc.conn.RemoteAddr()
 }
 
 func (pc PacketConnection) LocalAddr() net.Addr {
-	return pc.binconn.LocalAddr()
+	return pc.conn.LocalAddr()
 }
 
 func (pc PacketConnection) String() string {
@@ -154,7 +153,7 @@ func (pc PacketConnection) String() string {
 func (pc PacketConnection) sendRoutine() {
 	for {
 		packet := pc.sendQueue.Pop().(*Packet)
-		pc.binconn.SendAll(packet.data())
+		SendAll(pc.conn, packet.data())
 		packet.Release()
 	}
 }
