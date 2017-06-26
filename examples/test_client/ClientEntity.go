@@ -178,7 +178,8 @@ func (e *ClientEntity) doSomething() {
 func (e *ClientEntity) notifyThingDone(thing string) {
 	if e.currentThing == thing {
 		now := time.Now()
-		gwlog.Info("[%s] %s FINISHES %s, TAKES %s", now, e, thing, now.Sub(e.currentThingStartTime))
+		//gwlog.Info("[%s] %s FINISHES %s, TAKES %s", now, e, thing, now.Sub(e.currentThingStartTime))
+		recordThingTime(thing, now.Sub(e.currentThingStartTime))
 
 		e.currentThing = ""
 		e.currentThingStartTime = time.Time{}
