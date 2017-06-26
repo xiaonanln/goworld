@@ -82,3 +82,7 @@ func (a *Avatar) OnEnterSpace() {
 		gwlog.Info("%s ENTER SPACE %s", a, a.Space)
 	}
 }
+
+func (a *Avatar) GetSpaceID_Server(callerID common.EntityID) {
+	a.Call(callerID, "OnGetAvatarSpaceID", a.Space.ID)
+}

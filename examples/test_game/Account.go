@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
@@ -51,18 +49,21 @@ func (a *Account) Login_Client(username string, password string) {
 			// avatar not found, create new avatar
 			avatarID = goworld.CreateEntityLocally("Avatar")
 			a.setAvatarID(username, avatarID)
+
+			avatar := goworld.GetEntity(avatarID)
+			if avatar != nil {
+				a.onAvatarEntityFound(avatar)
+			}
 		} else {
 			goworld.LoadEntityAnywhere("Avatar", avatarID)
+			// ask the avatar: where are you
+			a.Call(avatarID, "GetSpaceID", a.ID)
 		}
 
-		a.AddCallback(time.Second, func() {
-			avatar := goworld.GetEntity(avatarID)
-			if avatar == nil {
-				// login fail
-				gwlog.Panicf("avatar %s not found", avatarID)
-			}
-			a.GiveClientTo(avatar)
-		})
 	})
 
+}
+
+func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
+	a.GiveClientTo(avatar)
 }
