@@ -10,6 +10,9 @@ import (
 
 	"io"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
@@ -40,6 +43,10 @@ func parseArgs() {
 
 func Run(delegate IServerDelegate) {
 	rand.Seed(time.Now().UnixNano())
+
+	go func() {
+		http.ListenAndServe("0.0.0.0:6060", nil)
+	}()
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)

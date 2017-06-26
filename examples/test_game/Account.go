@@ -67,15 +67,17 @@ func (a *Account) Login_Client(username string, password string) {
 
 	a.CallClient("OnLogin", true)
 
-	avatarID := a.getAvatarID(username)
-	gwlog.Info("Username %s get avatar id = %s", username, avatarID)
-	if avatarID.IsNil() {
-		// avatar not found, create new avatar
-		avatarID = goworld.CreateEntityLocally("Avatar")
-		a.setAvatarID(username, avatarID)
-	} else {
-		goworld.LoadEntityAnywhere("Avatar", avatarID)
-	}
+	//	avatarID := a.getAvatarID(username)
+	//	gwlog.Info("Username %s get avatar id = %s", username, avatarID)
+	//	if avatarID.IsNil() {
+	//		// avatar not found, create new avatar
+	//		avatarID = goworld.CreateEntityLocally("Avatar")
+	//		a.setAvatarID(username, avatarID)
+	//	} else {
+	//		goworld.LoadEntityAnywhere("Avatar", avatarID)
+	//	}
+
+	avatarID := goworld.CreateEntityLocally("Avatar")
 
 	a.Post(func() {
 		avatar := goworld.GetEntity(avatarID)
