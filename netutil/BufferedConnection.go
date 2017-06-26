@@ -31,7 +31,7 @@ func (bc *BufferedConnection) sendRoutine() {
 	ticker := time.Tick(bc.delay)
 	for {
 		<-ticker
-		bc.Lock()
+		bc.Lock() // TODO: handle network error
 		bc.writeBuffer.WriteTo(bc.Connection)
 		bc.Unlock()
 	}
