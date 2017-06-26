@@ -5,6 +5,8 @@ import (
 
 	"fmt"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -19,7 +21,7 @@ type ClientProxy struct {
 
 func newClientProxy(conn net.Conn) *ClientProxy {
 	return &ClientProxy{
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
+		GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*10), false),
 		clientid:          common.GenClientID(), // each client has its unique clientid
 	}
 }

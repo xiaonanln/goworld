@@ -13,6 +13,9 @@ TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 TODO: Entity Attributes
 TODO: Example chatrooms with multiple channels: world, prof, club, ...
 
+# Optimizations
+TODO: Merge all goroutine of BufferedConnections to One Goroutine (need benchmark)
+
 # Future works
 TODO: ListAttr
 TODO: remove if ... else if ... else if ... else if ...

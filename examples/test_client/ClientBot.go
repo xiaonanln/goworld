@@ -70,7 +70,7 @@ func (bot *ClientBot) run() {
 	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024)
 	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024)
 	gwlog.Debug("connected: %s", conn.RemoteAddr())
-	bot.conn = proto.NewGoWorldConnection(conn, true)
+	bot.conn = proto.NewGoWorldConnection(conn, false)
 	defer bot.conn.Close()
 
 	bot.loop()
