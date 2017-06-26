@@ -74,7 +74,7 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 		}
 		return nil
 	} else {
-		return SendAll(pc.conn, packet.data())
+		return WriteAll(pc.conn, packet.data())
 	}
 }
 
@@ -82,7 +82,7 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	var _payloadLenBuf [SIZE_FIELD_SIZE]byte
 	payloadLenBuf := _payloadLenBuf[:]
 
-	err := RecvAll(pc.conn, payloadLenBuf)
+	err := ReadAll(pc.conn, payloadLenBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	}
 
 	packet := NewPacketWithPayloadLen(payloadLen)
-	err = RecvAll(pc.conn, packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+payloadLen]) // receive the p type and payload
+	err = ReadAll(pc.conn, packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+payloadLen]) // receive the p type and payload
 	if err != nil {
 		packet.Release()
 		return nil, err
@@ -153,7 +153,7 @@ func (pc PacketConnection) String() string {
 func (pc PacketConnection) sendRoutine() {
 	for {
 		packet := pc.sendQueue.Pop().(*Packet)
-		SendAll(pc.conn, packet.data())
+		WriteAll(pc.conn, packet.data())
 		packet.Release()
 	}
 }

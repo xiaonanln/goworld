@@ -42,7 +42,7 @@ func IsConnectionClosed(_err interface{}) bool {
 	return true
 }
 
-func WriteAll(conn net.Conn, data []byte) error {
+func WriteAll(conn io.Writer, data []byte) error {
 	for len(data) > 0 {
 		n, err := conn.Write(data)
 		if n > 0 {
@@ -59,7 +59,7 @@ func WriteAll(conn net.Conn, data []byte) error {
 	return nil
 }
 
-func ReadAll(conn net.Conn, data []byte) error {
+func ReadAll(conn io.Reader, data []byte) error {
 	for len(data) > 0 {
 		n, err := conn.Read(data)
 		if n > 0 {
@@ -132,34 +132,4 @@ func runServe(f reflect.Value, args []reflect.Value) {
 
 	rets := f.Call(args)
 	gwlog.Debug("ServeForever: func %v returns %v", f, rets)
-}
-
-func RecvAll(conn io.Reader, buf []byte) error {
-	for len(buf) > 0 {
-		n, err := conn.Read(buf)
-		if err != nil {
-			if IsTemporaryNetError(err) {
-				continue
-			}
-
-			return err
-		}
-		buf = buf[n:]
-	}
-	return nil
-}
-
-func SendAll(conn io.Writer, data []byte) error {
-	for len(data) > 0 {
-		n, err := conn.Write(data)
-		if err != nil {
-			if IsTemporaryNetError(err) {
-				continue
-			}
-
-			return err
-		}
-		data = data[n:]
-	}
-	return nil
 }
