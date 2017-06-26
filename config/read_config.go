@@ -48,6 +48,8 @@ type DispatcherConfig struct {
 	Port      int
 	LogFile   string
 	LogStderr bool
+	PProfIp   string
+	PProfPort int
 }
 
 type GoWorldConfig struct {
@@ -208,6 +210,8 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	config.Ip = DEFAULT_LOCALHOST_IP
 	config.LogFile = ""
 	config.LogStderr = true
+	config.PProfIp = DEFAULT_PPROF_IP
+	config.PProfPort = 0
 
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
@@ -219,6 +223,10 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 			config.LogFile = key.MustString(config.LogFile)
 		} else if name == "log_stderr" {
 			config.LogStderr = key.MustBool(config.LogStderr)
+		} else if name == "pprof_ip" {
+			config.PProfIp = key.MustString(config.PProfIp)
+		} else if name == "pprof_port" {
+			config.PProfPort = key.MustInt(config.PProfPort)
 		}
 	}
 	return

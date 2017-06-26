@@ -7,6 +7,8 @@ import (
 
 	"flag"
 
+	"net/http"
+
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
@@ -53,10 +55,26 @@ func main() {
 		config.SetConfigFile(configFile)
 	}
 
-	setupLogOutput(config.GetDispatcher())
-	//cfg := config.GetDispatcher()
-	//fmt.Fprintf(os.Stderr, "Read dispatcher config: \n%s\n", config.DumpPretty(cfg))
-	//host := fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
+	dispatcherConfig := config.GetDispatcher()
+	setupLogOutput(dispatcherConfig)
+	setupPprofServer(dispatcherConfig)
+
 	dispatcher := newDispatcherService()
 	dispatcher.run()
+}
+
+func setupPprofServer(cfg *config.DispatcherConfig) {
+	if cfg.PProfPort == 0 {
+		// pprof not enabled
+		gwlog.Info("pprof server not enabled")
+		return
+	}
+
+	pprofHost := fmt.Sprintf("%s:%d", cfg.PProfIp, cfg.PProfPort)
+	gwlog.Info("pprof server listening on http://%s/debug/pprof/ ... available commands: ", pprofHost)
+	gwlog.Info("    go tool pprof http://%s/debug/pprof/heap", pprofHost)
+	gwlog.Info("    go tool pprof http://%s/debug/pprof/profile", pprofHost)
+	go func() {
+		http.ListenAndServe(pprofHost, nil)
+	}()
 }
