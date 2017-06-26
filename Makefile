@@ -1,4 +1,4 @@
-.PHONY: dispatcher test_server test_client
+.PHONY: dispatcher test_server test_client runall rundispatcher runserver runclient killdispatcher killserver killclient killall
 
 all: dispatcher test_server test_client
 
@@ -18,4 +18,15 @@ runserver: test_server
 	examples/test_game/test_game -sid=1
 
 runclient: test_client
-	examples/test_client/test_client 2>&1
+	examples/test_client/test_client -N $(N)
+
+killall: killdispatcher killserver killclient
+
+killdispatcher:
+	killall dispatcher
+
+killserver:
+	killall test_game
+
+killclient:
+	killall test_client

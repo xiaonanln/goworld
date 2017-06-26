@@ -22,3 +22,4 @@ components/dispatcher/dispatcher
 examples/test_client/test_client
 examples/test_game/test_game
 fc
+*.db/
