@@ -1,29 +1,14 @@
 package main
 
 import (
-	"github.com/syndtr/goleveldb/leveldb"
+	"time"
+
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/kvdb"
 )
-
-const (
-	ACCOUNTS_DB_FILE = "accounts.db"
-)
-
-var (
-	db *leveldb.DB
-)
-
-func init() {
-	var err error
-	db, err = leveldb.OpenFile(ACCOUNTS_DB_FILE, nil)
-	if err != nil {
-		panic(err)
-	}
-	gwlog.Info("Account DB opened: %s", ACCOUNTS_DB_FILE)
-}
 
 type Account struct {
 	entity.Entity
@@ -38,24 +23,14 @@ func (a *Account) OnCreated() {
 	//gwlog.Info("%s created: client=%v", a, a.GetClient())
 }
 
-func (a *Account) getAvatarID(username string) common.EntityID {
-	data, err := db.Get([]byte(username), nil)
-
-	if err != nil {
-		if err == leveldb.ErrNotFound {
-			return ""
-		} else {
-			gwlog.Panic(err)
-		}
-	}
-	return common.EntityID(data)
+func (a *Account) getAvatarID(username string, callback func(entityID common.EntityID, err error)) {
+	kvdb.Get(username, func(val string, err error) {
+		callback(common.EntityID(val), err)
+	})
 }
 
 func (a Account) setAvatarID(username string, avatarID common.EntityID) {
-	err := db.Put([]byte(username), []byte(avatarID), nil)
-	if err != nil {
-		gwlog.Panic(err)
-	}
+	kvdb.Put(username, string(avatarID), nil)
 }
 
 func (a *Account) Login_Client(username string, password string) {
@@ -66,25 +41,28 @@ func (a *Account) Login_Client(username string, password string) {
 	}
 
 	a.CallClient("OnLogin", true)
-
-	//	avatarID := a.getAvatarID(username)
-	//	gwlog.Info("Username %s get avatar id = %s", username, avatarID)
-	//	if avatarID.IsNil() {
-	//		// avatar not found, create new avatar
-	//		avatarID = goworld.CreateEntityLocally("Avatar")
-	//		a.setAvatarID(username, avatarID)
-	//	} else {
-	//		goworld.LoadEntityAnywhere("Avatar", avatarID)
-	//	}
-
-	avatarID := goworld.CreateEntityLocally("Avatar")
-
-	a.Post(func() {
-		avatar := goworld.GetEntity(avatarID)
-		if avatar == nil {
-			// login fail
-			gwlog.Panicf("avatar %s not found", avatarID)
+	a.getAvatarID(username, func(avatarID common.EntityID, err error) {
+		if err != nil {
+			gwlog.Panic(err)
 		}
-		a.GiveClientTo(avatar)
+
+		gwlog.Info("Username %s get avatar id = %s", username, avatarID)
+		if avatarID.IsNil() {
+			// avatar not found, create new avatar
+			avatarID = goworld.CreateEntityLocally("Avatar")
+			a.setAvatarID(username, avatarID)
+		} else {
+			goworld.LoadEntityAnywhere("Avatar", avatarID)
+		}
+
+		a.AddCallback(time.Second, func() {
+			avatar := goworld.GetEntity(avatarID)
+			if avatar == nil {
+				// login fail
+				gwlog.Panicf("avatar %s not found", avatarID)
+			}
+			a.GiveClientTo(avatar)
+		})
 	})
+
 }

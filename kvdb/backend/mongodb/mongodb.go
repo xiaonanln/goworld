@@ -46,6 +46,9 @@ func (kvdb *MongoKVDB) Get(key string) (val string, err error) {
 	var doc map[string]string
 	err = q.One(&doc)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			err = nil
+		}
 		return
 	}
 	val = doc[VAL_KEY]

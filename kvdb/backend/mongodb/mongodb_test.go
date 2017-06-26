@@ -11,6 +11,11 @@ func TestMongoKVDB_Set(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	val, err := kvdb.Get("__key_not_exists__")
+	if err != nil || val != "" {
+		t.Fatal(err)
+	}
+
 	for i := 0; i < 10000; i++ {
 		key := strconv.Itoa(rand.Intn(10000))
 		val := strconv.Itoa(rand.Intn(10000))

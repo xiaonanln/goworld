@@ -2,6 +2,7 @@ package kvdb
 
 import (
 	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
@@ -73,12 +74,16 @@ func kvdbRoutine() {
 		if getReq, ok := req.(getReq); ok {
 			val, err := kvdbEngine.Get(getReq.key)
 			if getReq.callback != nil {
-				getReq.callback(val, err)
+				timer.AddCallback(0, func() {
+					getReq.callback(val, err)
+				})
 			}
 		} else if putReq, ok := req.(putReq); ok {
 			err := kvdbEngine.Put(putReq.key, putReq.val)
 			if putReq.callback != nil {
-				putReq.callback(err)
+				timer.AddCallback(0, func() {
+					putReq.callback(err)
+				})
 			}
 		}
 	}

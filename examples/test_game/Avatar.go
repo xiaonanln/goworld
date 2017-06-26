@@ -26,7 +26,6 @@ func (a *Avatar) OnCreated() {
 }
 
 func (a *Avatar) setDefaultAttrs() {
-	gwlog.Info("%s set default attrs: %v", a, a.Attrs.ToMap())
 	a.Attrs.SetDefault("name", "无名")
 	a.Attrs.SetDefault("level", 1)
 	a.Attrs.SetDefault("exp", 0)
@@ -48,7 +47,7 @@ func (a *Avatar) enterSpace(spaceKind int) {
 }
 
 func (a *Avatar) OnClientConnected() {
-	gwlog.Info("%s.OnClientConnected: current space = %s", a, a.Space)
+	//gwlog.Info("%s.OnClientConnected: current space = %s", a, a.Space)
 	//a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
 	//a.Attrs.Set("testpop", 1)
 	//v := a.Attrs.Pop("testpop")
