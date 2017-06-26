@@ -23,6 +23,7 @@ const (
 	DEFAULT_CONFIG_FILE   = "goworld.ini"
 	DEFAULT_LOCALHOST_IP  = "127.0.0.1"
 	DEFAULT_SAVE_ITNERVAL = time.Minute * 5
+	DEFAULT_PPROF_IP      = "127.0.0.1"
 )
 
 var (
@@ -38,6 +39,8 @@ type ServerConfig struct {
 	SaveInterval time.Duration
 	LogFile      string
 	LogStderr    bool
+	PProfIp      string
+	PProfPort    int
 }
 
 type DispatcherConfig struct {
@@ -162,6 +165,8 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
 	scc.SaveInterval = DEFAULT_SAVE_ITNERVAL
+	scc.PProfIp = DEFAULT_PPROF_IP
+	scc.PProfPort = 0 // pprof not enabled by default
 
 	_readServerConfig(section, scc)
 }
@@ -191,6 +196,10 @@ func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
 			sc.LogStderr = key.MustBool(sc.LogStderr)
+		} else if name == "pprof_ip" {
+			sc.PProfIp = key.MustString(sc.PProfIp)
+		} else if name == "pprof_port" {
+			sc.PProfPort = key.MustInt(sc.PProfPort)
 		}
 	}
 }

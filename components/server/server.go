@@ -10,8 +10,11 @@ import (
 
 	"io"
 
-	"net/http"
 	_ "net/http/pprof"
+
+	"net/http"
+
+	"fmt"
 
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
@@ -44,14 +47,13 @@ func parseArgs() {
 func Run(delegate IServerDelegate) {
 	rand.Seed(time.Now().UnixNano())
 
-	go func() {
-		http.ListenAndServe("0.0.0.0:6060", nil)
-	}()
-
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
 	serverConfig := config.GetServer(serverid)
+
+	setupPprofServer(serverConfig)
+
 	entity.SetSaveInterval(serverConfig.SaveInterval)
 	setupLogOutput(serverConfig)
 
@@ -65,6 +67,22 @@ func Run(delegate IServerDelegate) {
 	go gateService.run() // run gate service in another goroutine
 
 	gameService.run()
+}
+
+func setupPprofServer(serverConfig *config.ServerConfig) {
+	if serverConfig.PProfPort == 0 {
+		// pprof not enabled
+		gwlog.Info("pprof server not enabled")
+		return
+	}
+
+	pprofHost := fmt.Sprintf("%s:%d", serverConfig.PProfIp, serverConfig.PProfPort)
+	gwlog.Info("pprof server listening on http://%s/debug/pprof/ ... available commands: ", pprofHost)
+	gwlog.Info("    go tool pprof http://%s/debug/pprof/heap", pprofHost)
+	gwlog.Info("    go tool pprof http://%s/debug/pprof/profile", pprofHost)
+	go func() {
+		http.ListenAndServe(pprofHost, nil)
+	}()
 }
 
 func setupLogOutput(serverConfig *config.ServerConfig) {
