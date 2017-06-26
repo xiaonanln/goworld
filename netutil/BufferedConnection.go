@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"sync"
 	"time"
+
+	"github.com/xiaonanln/goworld/gwlog"
 )
 
 type BufferedConnection struct {
@@ -32,8 +34,14 @@ func (bc *BufferedConnection) sendRoutine() {
 	for {
 		<-ticker
 		bc.Lock() // TODO: handle network error
-		bc.writeBuffer.WriteTo(bc.Connection)
+		_, err := bc.writeBuffer.WriteTo(bc.Connection)
 		bc.Unlock()
+
+		if err != nil && !IsTemporaryNetError(err) {
+			// got bad error, stop the send routine
+			gwlog.Error("%s send routine quit due to error: %s", bc, err)
+			break
+		}
 	}
 }
 
