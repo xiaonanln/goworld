@@ -18,11 +18,6 @@ var (
 	operationQueue = sync_queue.NewSyncQueue()
 )
 
-const ( // storage request types
-	SR_SAVE = iota
-	SR_LOAD = iota
-)
-
 type saveRequest struct {
 	TypeName string
 	EntityID common.EntityID

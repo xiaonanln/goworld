@@ -21,8 +21,10 @@ import (
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
+	"github.com/xiaonanln/goworld/kvdb"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/storage"
 )
 
 var (
@@ -50,12 +52,16 @@ func Run(delegate IServerDelegate) {
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
+
 	serverConfig := config.GetServer(serverid)
+	setupLogOutput(serverConfig)
+
+	storage.Initialize()
+	kvdb.Initialize()
 
 	setupPprofServer(serverConfig)
 
 	entity.SetSaveInterval(serverConfig.SaveInterval)
-	setupLogOutput(serverConfig)
 
 	gameService = newGameService(serverid, delegate)
 

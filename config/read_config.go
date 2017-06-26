@@ -57,6 +57,7 @@ type GoWorldConfig struct {
 	ServerCommon ServerConfig
 	Servers      map[int]*ServerConfig
 	Storage      StorageConfig
+	KVDB         KVDBConfig
 }
 
 type StorageConfig struct {
@@ -64,6 +65,13 @@ type StorageConfig struct {
 	// Filesystem Storage Configs
 	Directory string // directory for filesystem storage
 	// MongoDB storage configs
+}
+
+type KVDBConfig struct {
+	Type       string
+	Url        string
+	DB         string
+	Collection string
 }
 
 func SetConfigFile(f string) {
@@ -114,6 +122,10 @@ func GetStorage() *StorageConfig {
 	return &Get().Storage
 }
 
+func GetKVDB() *KVDBConfig {
+	return &Get().KVDB
+}
+
 func DumpPretty(cfg interface{}) string {
 	s, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {
@@ -145,7 +157,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			readDispatcherConfig(sec, &config.Dispatcher)
 		} else if secName == "server_common" {
 			// ignore server_common here
-		} else if secName[:6] == "server" {
+		} else if len(secName) > 6 && secName[:6] == "server" {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
@@ -153,6 +165,9 @@ func readGoWorldConfig() *GoWorldConfig {
 		} else if secName == "storage" {
 			// storage config
 			readStorageConfig(sec, &config.Storage)
+		} else if secName == "kvdb" {
+			// kvdb config
+			readKVDBConfig(sec, &config.KVDB)
 		} else {
 			gwlog.Error("unknown section: %s", secName)
 		}
@@ -202,6 +217,8 @@ func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 			sc.PProfIp = key.MustString(sc.PProfIp)
 		} else if name == "pprof_port" {
 			sc.PProfPort = key.MustInt(sc.PProfPort)
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 }
@@ -227,6 +244,8 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 			config.PProfIp = key.MustString(config.PProfIp)
 		} else if name == "pprof_port" {
 			config.PProfPort = key.MustInt(config.PProfPort)
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 	return
@@ -240,13 +259,48 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "type" {
-			config.Type = key.MustString("filesystem")
+			config.Type = key.MustString(config.Type)
 		} else if name == "directory" {
-			config.Directory = key.MustString("_entity_storage")
+			config.Directory = key.MustString(config.Directory)
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 
 	validateStorageConfig(config)
+}
+
+func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
+	for _, key := range sec.Keys() {
+		name := strings.ToLower(key.Name())
+		if name == "type" {
+			config.Type = key.MustString(config.Type)
+		} else if name == "url" {
+			config.Url = key.MustString(config.Url)
+		} else if name == "db" {
+			config.DB = key.MustString(config.DB)
+		} else if name == "collection" {
+			config.Collection = key.MustString(config.Collection)
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+		}
+	}
+
+	validateKVDBConfig(config)
+}
+
+func validateKVDBConfig(config *KVDBConfig) {
+	if config.Type == "" {
+		// KVDB not enabled, it's OK
+	} else if config.Type == "mongodb" {
+		// must set DB and Collection for mongodb
+		if config.Url == "" || config.DB == "" || config.Collection == "" {
+			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
+			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+		}
+	} else {
+		gwlog.Panicf("unknown storage type: %s", config.Type)
+	}
 }
 
 func checkConfigError(err error, msg string) {

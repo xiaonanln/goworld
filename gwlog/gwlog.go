@@ -53,3 +53,7 @@ func SetOutput(out io.Writer) {
 	outputWriter = out
 	sublog.SetOutput(outputWriter)
 }
+
+func GetOutput() io.Writer {
+	return outputWriter
+}

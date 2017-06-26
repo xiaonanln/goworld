@@ -14,7 +14,6 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/goworld/storage"
 )
 
 type packetQueueItem struct { // packet queue from dispatcher client
@@ -45,9 +44,6 @@ func (gs *GameService) run() {
 	cfg := config.GetServer(serverid)
 	gs.config = cfg
 	fmt.Fprintf(os.Stderr, "Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))
-
-	// initializing storage
-	storage.Initialize()
 
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
 	// here begins the main loop of Server
