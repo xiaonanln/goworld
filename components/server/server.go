@@ -122,10 +122,13 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	if msgtype < proto.MT_GATE_SERVICE_MSG_TYPE_START {
 		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
 			msgtype: msgtype,
-			pkt:     packet,
+			packet:  packet,
 		}
 	} else {
-		gateService.HandleDispatcherClientPacket(msgtype, packet)
+		gateService.packetQueue.Push(packetQueueItem{
+			msgtype: msgtype,
+			packet:  packet,
+		})
 	}
 }
 

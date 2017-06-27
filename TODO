@@ -1,3 +1,4 @@
+
 TODO: use dedicated goroutine for sending packets to clients, avoiding client proxies halt dispatcher client
 TODO: set defautl logging level by config file, and can override logging level by command arguments
 TODO: AOI with specified range, entities go in / out AOI
@@ -17,6 +18,7 @@ TODO: Example chatrooms with multiple channels: world, prof, club, ...
 
 # Optimizations
 TODO: Merge all goroutine of BufferedConnections to One Goroutine (need benchmark)
+TODO: Merge multiple packets instead of Buffered Connection (need benchmark)
 
 # Future works
 TODO: ListAttr

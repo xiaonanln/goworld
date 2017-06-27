@@ -7,6 +7,7 @@ import (
 
 	"sync"
 
+	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
@@ -20,19 +21,21 @@ type GateService struct {
 	listenAddr        string
 	clientProxies     map[common.ClientID]*ClientProxy
 	clientProxiesLock sync.RWMutex
-	//packetQueue chan packetQueueItem
+	packetQueue       sync_queue.SyncQueue
 }
 
 func newGateService() *GateService {
 	return &GateService{
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies: map[common.ClientID]*ClientProxy{},
+		packetQueue:   sync_queue.NewSyncQueue(),
 	}
 }
 
 func (gs *GateService) run() {
 	cfg := config.GetServer(serverid)
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
+	go netutil.ServeForever(gs.handlePacketRoutine)
 	netutil.ServeTCPForever(gs.listenAddr, gs)
 }
 
@@ -76,9 +79,16 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	if clientproxy != nil {
 		clientproxy.SendPacket(packet)
 	}
-	packet.Release()
 
+	packet.Release()
 	//typeName := packet.ReadVarStr()
 	//entityid := packet.ReadEntityID()
 
+}
+
+func (gs *GateService) handlePacketRoutine() {
+	for {
+		item := gs.packetQueue.Pop().(packetQueueItem)
+		gs.HandleDispatcherClientPacket(item.msgtype, item.packet)
+	}
 }

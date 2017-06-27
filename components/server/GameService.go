@@ -18,7 +18,7 @@ import (
 
 type packetQueueItem struct { // packet queue from dispatcher client
 	msgtype proto.MsgType_t
-	pkt     *netutil.Packet
+	packet  *netutil.Packet
 }
 
 type GameService struct {
@@ -51,7 +51,7 @@ func (gs *GameService) run() {
 	for {
 		select {
 		case item := <-gs.packetQueue:
-			msgtype, pkt := item.msgtype, item.pkt
+			msgtype, pkt := item.msgtype, item.packet
 			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
