@@ -29,7 +29,10 @@ func parseArgs() {
 	flag.Parse()
 }
 
-func setupLogOutput(dispatcherConfig *config.DispatcherConfig) {
+func setupGWLog(dispatcherConfig *config.DispatcherConfig) {
+	gwlog.Info("Set log level to %s", dispatcherConfig.LogLevel)
+	gwlog.SetLevel(gwlog.StringToLevel(dispatcherConfig.LogLevel))
+
 	outputWriters := make([]io.Writer, 0, 2)
 	if dispatcherConfig.LogFile != "" {
 		f, err := os.OpenFile(dispatcherConfig.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
@@ -57,7 +60,7 @@ func main() {
 	}
 
 	dispatcherConfig := config.GetDispatcher()
-	setupLogOutput(dispatcherConfig)
+	setupGWLog(dispatcherConfig)
 	setupPprofServer(dispatcherConfig)
 
 	dispatcher := newDispatcherService()

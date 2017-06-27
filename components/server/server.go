@@ -92,6 +92,9 @@ func setupPprofServer(serverConfig *config.ServerConfig) {
 }
 
 func setupLogOutput(serverConfig *config.ServerConfig) {
+	gwlog.Info("Set log level to %s", serverConfig.LogLevel)
+	gwlog.SetLevel(gwlog.StringToLevel(serverConfig.LogLevel))
+
 	outputWriters := make([]io.Writer, 0, 2)
 	if serverConfig.LogFile != "" {
 		f, err := os.OpenFile(serverConfig.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)

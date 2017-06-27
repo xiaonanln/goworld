@@ -1,6 +1,3 @@
-
-TODO: use dedicated goroutine for sending packets to clients, avoiding client proxies halt dispatcher client
-TODO: set defautl logging level by config file, and can override logging level by command arguments
 TODO: AOI with specified range, entities go in / out AOI
 TODO: notify client disconnected might fail
 TODO: do client proxy use buffered connection ? if use, performance must be optimized because there are too many goroutines

@@ -7,16 +7,18 @@ import (
 
 	"os"
 
+	"strings"
+
 	sublog "github.com/Sirupsen/logrus"
 )
 
 var (
-	DEBUG = sublog.DebugLevel
-	INFO  = sublog.InfoLevel
-	WARN  = sublog.WarnLevel
-	ERROR = sublog.ErrorLevel
-	PANIC = sublog.PanicLevel
-	FATAL = sublog.FatalLevel
+	DEBUG Level = Level(sublog.DebugLevel)
+	INFO  Level = Level(sublog.InfoLevel)
+	WARN  Level = Level(sublog.WarnLevel)
+	ERROR Level = Level(sublog.ErrorLevel)
+	PANIC Level = Level(sublog.PanicLevel)
+	FATAL Level = Level(sublog.FatalLevel)
 
 	Debug  = sublog.Debugf
 	Info   = sublog.Infof
@@ -29,6 +31,8 @@ var (
 	outputWriter io.Writer
 )
 
+type Level uint8
+
 func init() {
 	outputWriter = os.Stderr
 	sublog.SetOutput(outputWriter)
@@ -40,8 +44,8 @@ func ParseLevel(lvl string) (sublog.Level, error) {
 	return sublog.ParseLevel(lvl)
 }
 
-func SetLevel(lv sublog.Level) {
-	sublog.SetLevel(lv)
+func SetLevel(lv Level) {
+	sublog.SetLevel(sublog.Level(lv))
 }
 
 func TraceError(format string, args ...interface{}) {
@@ -56,4 +60,22 @@ func SetOutput(out io.Writer) {
 
 func GetOutput() io.Writer {
 	return outputWriter
+}
+
+func StringToLevel(s string) Level {
+	if strings.ToLower(s) == "debug" {
+		return DEBUG
+	} else if strings.ToLower(s) == "info" {
+		return INFO
+	} else if strings.ToLower(s) == "warn" || strings.ToLower(s) == "warning" {
+		return WARN
+	} else if strings.ToLower(s) == "error" {
+		return ERROR
+	} else if strings.ToLower(s) == "panic" {
+		return PANIC
+	} else if strings.ToLower(s) == "fatal" {
+		return FATAL
+	}
+	Error("StringToLevel: unknown level: %s", s)
+	return DEBUG
 }

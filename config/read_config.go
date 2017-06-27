@@ -24,6 +24,7 @@ const (
 	DEFAULT_LOCALHOST_IP  = "127.0.0.1"
 	DEFAULT_SAVE_ITNERVAL = time.Minute * 5
 	DEFAULT_PPROF_IP      = "127.0.0.1"
+	DEFAULT_LOG_LEVEL     = "debug"
 )
 
 var (
@@ -41,6 +42,7 @@ type ServerConfig struct {
 	LogStderr    bool
 	PProfIp      string
 	PProfPort    int
+	LogLevel     string
 }
 
 type DispatcherConfig struct {
@@ -50,6 +52,7 @@ type DispatcherConfig struct {
 	LogStderr bool
 	PProfIp   string
 	PProfPort int
+	LogLevel  string
 }
 
 type GoWorldConfig struct {
@@ -181,6 +184,7 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.Ip = "0.0.0.0"
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
+	scc.LogLevel = DEFAULT_LOG_LEVEL
 	scc.SaveInterval = DEFAULT_SAVE_ITNERVAL
 	scc.PProfIp = DEFAULT_PPROF_IP
 	scc.PProfPort = 0 // pprof not enabled by default
@@ -217,6 +221,8 @@ func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 			sc.PProfIp = key.MustString(sc.PProfIp)
 		} else if name == "pprof_port" {
 			sc.PProfPort = key.MustInt(sc.PProfPort)
+		} else if name == "log_level" {
+			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -227,6 +233,7 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	config.Ip = DEFAULT_LOCALHOST_IP
 	config.LogFile = ""
 	config.LogStderr = true
+	config.LogLevel = DEFAULT_LOG_LEVEL
 	config.PProfIp = DEFAULT_PPROF_IP
 	config.PProfPort = 0
 
@@ -244,6 +251,8 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 			config.PProfIp = key.MustString(config.PProfIp)
 		} else if name == "pprof_port" {
 			config.PProfPort = key.MustInt(config.PProfPort)
+		} else if name == "log_level" {
+			config.LogLevel = key.MustString(config.LogLevel)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
