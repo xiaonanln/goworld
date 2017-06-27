@@ -66,9 +66,7 @@ func (a *Account) Login_Client(username string, password string) {
 			a.setAvatarID(username, avatarID)
 
 			avatar := goworld.GetEntity(avatarID)
-			if avatar != nil {
-				a.onAvatarEntityFound(avatar)
-			}
+			a.onAvatarEntityFound(avatar)
 		} else {
 			goworld.LoadEntityAnywhere("Avatar", avatarID)
 			// ask the avatar: where are you
@@ -77,6 +75,7 @@ func (a *Account) Login_Client(username string, password string) {
 				a.Call(avatarID, "GetSpaceID", a.ID) // request for avatar space ID
 
 				a.findAvatarTimer = a.AddTimer(time.Second, func() {
+					gwlog.Info("%s find avatar %s ...", a, avatarID)
 					a.Call(avatarID, "GetSpaceID", a.ID)
 				})
 			})
@@ -107,11 +106,13 @@ func (a *Account) OnMigrateIn() {
 	if avatar != nil {
 		a.onAvatarEntityFound(avatar)
 	} else {
+		goworld.LoadEntityAnywhere("Avatar", loginAvatarID)
 		a.AddCallback(time.Millisecond*200, func() {
 			// wait for the avatar to be loaded
 			a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
 
 			a.findAvatarTimer = a.AddTimer(time.Second, func() {
+				gwlog.Info("%s find avatar %s ...", a, loginAvatarID)
 				a.Call(loginAvatarID, "GetSpaceID", a.ID)
 			})
 		})
