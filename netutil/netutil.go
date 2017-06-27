@@ -43,41 +43,40 @@ func IsConnectionClosed(_err interface{}) bool {
 }
 
 func WriteAll(conn io.Writer, data []byte) error {
-	datalen := len(data)
-	for datalen > 0 {
+	left := len(data)
+	for left > 0 {
 		n, err := conn.Write(data)
-		if n == datalen && err == nil { // handle most common case first
+		if n == left && err == nil { // handle most common case first
 			return nil
 		}
 
 		if n > 0 {
 			data = data[n:]
-			datalen -= n
+			left -= n
 		}
 
-		if err != nil {
-			if IsTemporaryNetError(err) {
-				continue
-			} else {
-				return err
-			}
+		if err != nil && !IsTemporaryNetError(err) {
+			return err
 		}
 	}
 	return nil
 }
 
 func ReadAll(conn io.Reader, data []byte) error {
-	for len(data) > 0 {
+	left := len(data)
+	for left > 0 {
 		n, err := conn.Read(data)
+		if n == left && err == nil { // handle most common case first
+			return nil
+		}
+
 		if n > 0 {
 			data = data[n:]
+			left -= n
 		}
-		if err != nil {
-			if IsTemporaryNetError(err) {
-				continue
-			} else {
-				return err
-			}
+
+		if err != nil && !IsTemporaryNetError(err) {
+			return err
 		}
 	}
 	return nil

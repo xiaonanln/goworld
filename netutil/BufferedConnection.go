@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"fmt"
+	"sync/atomic"
 )
 
 type BufferedConnection struct {
@@ -15,7 +16,7 @@ type BufferedConnection struct {
 	delay       time.Duration
 	readBuffer  []byte
 	unreadBytes []byte
-	closed      bool
+	closed      int64
 }
 
 func NewBufferedConnection(conn Connection, delay time.Duration) *BufferedConnection {
@@ -36,7 +37,7 @@ func (bc *BufferedConnection) String() string {
 
 func (bc *BufferedConnection) sendRoutine() {
 sendRoutineLoop:
-	for !bc.closed {
+	for atomic.LoadInt64(&bc.closed) == 0 {
 		time.Sleep(bc.delay)
 
 		bc.Lock()
@@ -65,7 +66,7 @@ sendRoutineLoop:
 }
 
 func (bc *BufferedConnection) Close() error {
-	bc.closed = true
+	atomic.StoreInt64(&bc.closed, 1)
 	return bc.Connection.Close()
 }
 

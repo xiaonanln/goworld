@@ -9,6 +9,8 @@ import (
 
 	"time"
 
+	"sync/atomic"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
@@ -48,7 +50,7 @@ func (info *EntityDispatchInfo) isMigrating() bool {
 type DispatcherService struct {
 	config            *config.DispatcherConfig
 	clients           []*DispatcherClientProxy
-	chooseClientIndex int
+	chooseClientIndex int64
 
 	entityDispatchInfosLock sync.RWMutex
 	entityDispatchInfos     map[common.EntityID]*EntityDispatchInfo
@@ -156,7 +158,7 @@ func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID commo
 }
 
 func (service *DispatcherService) String() string {
-	return fmt.Sprintf("DispatcherService<C%d|E%d>", len(service.clients), len(service.entityDispatchInfos))
+	return "DispatcherService"
 }
 
 func (service *DispatcherService) run() {
@@ -219,8 +221,9 @@ func (service *DispatcherService) dispatcherClientOfServer(serverid uint16) *Dis
 
 // Choose a dispatcher client for sending Anywhere packets
 func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProxy {
-	client := service.clients[service.chooseClientIndex]
-	service.chooseClientIndex = (service.chooseClientIndex + 1) % len(service.clients)
+	index := atomic.LoadInt64(&service.chooseClientIndex)
+	client := service.clients[index]
+	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.clients)))
 	return client
 	//startIndex := service.chooseClientIndex
 	//clients := service.clients
@@ -487,8 +490,9 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 
 	entityDispatchInfo.migrateTime = 0 // mark the entity as NOT migrating
 	entityDispatchInfo.serverid = targetServer
-
+	service.clientsLock.Lock()
 	service.targetServerOfClient[clientid] = targetServer // migrating also change target server of client
+	service.clientsLock.Unlock()
 
 	service.dispatcherClientOfServer(targetServer).SendPacket(pkt)
 
