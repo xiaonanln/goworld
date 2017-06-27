@@ -8,7 +8,7 @@ import (
 )
 
 func TestMongoDBEntityStorage(t *testing.T) {
-	es, err := OpenMongoDB("mongodb://localhost:27017/", "goworld")
+	es, err := OpenMongoDB("mongodb://localhost:27017/goworld", "goworld")
 	if err != nil {
 		t.Error(err)
 	}

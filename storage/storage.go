@@ -10,6 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
+	"github.com/xiaonanln/goworld/storage/backend/mongodb"
 )
 
 type EntityStorage interface {
@@ -90,11 +91,14 @@ func Initialize() {
 	cfg := config.GetStorage()
 	if cfg.Type == "filesystem" {
 		storageEngine, err = entity_storage_filesystem.OpenDirectory(cfg.Directory)
-		if err != nil {
-			gwlog.Panic(err)
-		}
+	} else if cfg.Type == "mongodb" {
+		storageEngine, err = entity_storage_mongodb.OpenMongoDB(cfg.Url, cfg.DB)
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
+	}
+
+	if err != nil {
+		gwlog.Panic(err)
 	}
 
 	go storageRoutine()

@@ -25,6 +25,7 @@ const (
 	DEFAULT_SAVE_ITNERVAL = time.Minute * 5
 	DEFAULT_PPROF_IP      = "127.0.0.1"
 	DEFAULT_LOG_LEVEL     = "debug"
+	DEFAULT_STORAGE_DB    = "goworld"
 )
 
 var (
@@ -68,6 +69,8 @@ type StorageConfig struct {
 	// Filesystem Storage Configs
 	Directory string // directory for filesystem storage
 	// MongoDB storage configs
+	Url string
+	DB  string
 }
 
 type KVDBConfig struct {
@@ -264,6 +267,8 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 	// setup default values
 	config.Type = "filesystem"
 	config.Directory = "_entity_storage"
+	config.DB = DEFAULT_STORAGE_DB
+	config.Url = ""
 
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
@@ -271,6 +276,10 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 			config.Type = key.MustString(config.Type)
 		} else if name == "directory" {
 			config.Directory = key.MustString(config.Directory)
+		} else if name == "url" {
+			config.Url = key.MustString(config.Url)
+		} else if name == "db" {
+			config.DB = key.MustString(config.DB)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -324,6 +333,16 @@ func checkConfigError(err error, msg string) {
 func validateStorageConfig(config *StorageConfig) {
 	if config.Type == "filesystem" {
 		// directory must be set
+		if config.Directory == "" {
+			gwlog.Panicf("directory is not set in %s storage config", config.Type)
+		}
+	} else if config.Type == "mongodb" {
+		if config.Url == "" {
+			gwlog.Panicf("url is not set in %s storage config", config.Type)
+		}
+		if config.DB == "" {
+			gwlog.Panicf("db is not set in %s storage config", config.Type)
+		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
 	}
