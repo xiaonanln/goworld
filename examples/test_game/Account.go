@@ -23,6 +23,9 @@ func (a *Account) OnCreated() {
 
 func (a *Account) getAvatarID(username string, callback func(entityID common.EntityID, err error)) {
 	kvdb.Get(username, func(val string, err error) {
+		if a.IsDestroyed() {
+			return
+		}
 		callback(common.EntityID(val), err)
 	})
 }
