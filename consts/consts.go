@@ -20,8 +20,9 @@ const (
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
-	ENTER_SPACE_REQUEST_TIMEOUT = DISPATCHER_MIGRATE_TIMEOUT + time.Second*5 // enter space should finish in limited seconds
-	DISPATCHER_MIGRATE_TIMEOUT  = time.Second * 60
+	ENTER_SPACE_REQUEST_TIMEOUT = DISPATCHER_MIGRATE_TIMEOUT + time.Minute // enter space should finish in limited seconds
+	DISPATCHER_MIGRATE_TIMEOUT  = time.Minute * 5
+	DISPATCHER_LOAD_TIMEOUT     = time.Minute * 5
 	// For Storage
 )
 

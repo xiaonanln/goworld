@@ -79,7 +79,7 @@ func (em *EntityManager) onUndeclareService(serviceName string, eid EntityID) {
 }
 
 func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
-	// choose one e ID of service providers randomly
+	// choose one entity ID of service providers randomly
 	eids, ok := em.registeredServices[serviceName]
 	if !ok {
 		gwlog.Panicf("service not found: %s", serviceName)
@@ -120,7 +120,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
-		gwlog.Panicf("unknown e type: %s", typeName)
+		gwlog.Panicf("unknown entity type: %s", typeName)
 	}
 
 	if entityID == "" {
@@ -182,11 +182,14 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
 	storage.Load(typeName, entityID, func(data interface{}, err error) {
 		// callback runs in main routine
 		if err != nil {
-			gwlog.Panicf("load e %s.%s failed: %s", typeName, entityID, err)
+			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
+			// TODO: need to notify dispatcher that entity creation failed ?
+			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 		}
 
 		if space != nil && space.IsDestroyed() {
-			// Space might be destroy during the Load process, so cancel the e creation
+			// Space might be destroy during the Load process, so cancel the entity creation
+			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 			return
 		}
 
@@ -242,7 +245,7 @@ func callRemote(id EntityID, method string, args []interface{}) {
 func OnCall(id EntityID, method string, args []interface{}, clientID ClientID) {
 	e := entityManager.get(id)
 	if e == nil {
-		// e not found, may destroyed before call
+		// entity not found, may destroyed before call
 		gwlog.Error("Entity %s is not found while calling %s%v", id, method, args)
 		return
 	}

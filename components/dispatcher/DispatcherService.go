@@ -29,7 +29,8 @@ type EntityDispatchInfo struct {
 	sync.RWMutex
 
 	serverid           uint16
-	migrateTime        int64
+	loadTime           time.Time
+	migrateTime        time.Time
 	pendingPacketQueue sync_queue.SyncQueue
 }
 
@@ -40,11 +41,21 @@ func newEntityDispatchInfo() *EntityDispatchInfo {
 }
 
 func (info *EntityDispatchInfo) startMigrate() {
-	info.migrateTime = time.Now().UnixNano()
+	info.migrateTime = time.Now()
 }
 
-func (info *EntityDispatchInfo) isMigrating() bool {
-	return time.Now().UnixNano() < info.migrateTime+int64(consts.DISPATCHER_MIGRATE_TIMEOUT)
+func (info *EntityDispatchInfo) startLoad() {
+	info.loadTime = time.Now()
+}
+
+func (info *EntityDispatchInfo) isBlockingRPC() bool {
+	if info.migrateTime.IsZero() && info.loadTime.IsZero() {
+		// most common case
+		return false
+	}
+
+	now := time.Now()
+	return now.Before(info.migrateTime.Add(consts.DISPATCHER_MIGRATE_TIMEOUT)) || now.Before(info.loadTime.Add(consts.DISPATCHER_LOAD_TIMEOUT))
 }
 
 type DispatcherService struct {
@@ -254,10 +265,15 @@ func (service *DispatcherService) HandleNotifyCreateEntity(dcp *DispatcherClient
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
-	entityDispatchInfo := service.newEntityDispatcherInfo(entityID)
-	//entityDispatchInfo.Lock() // no other server can access this entity at this point, lock is not required
+	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
+	defer entityDispatchInfo.Unlock()
+
 	entityDispatchInfo.serverid = dcp.serverid
-	//entityDispatchInfo.Unlock()
+	if !entityDispatchInfo.loadTime.IsZero() { // entity is loading, it's done now
+		//gwlog.Info("entity is loaded now, clear loadTime")
+		entityDispatchInfo.loadTime = time.Time{}
+		service.sendPendingPackets(entityDispatchInfo)
+	}
 }
 
 func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
@@ -306,6 +322,7 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 	if entityDispatchInfo.serverid == 0 { // entity not loaded, try load now
 		dcp := service.chooseDispatcherClient()
 		entityDispatchInfo.serverid = dcp.serverid
+		entityDispatchInfo.startLoad()
 		dcp.SendPacket(pkt)
 	} else {
 		// entity already loaded
@@ -374,7 +391,7 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 
 	defer entityDispatchInfo.RUnlock()
 
-	if !entityDispatchInfo.isMigrating() {
+	if !entityDispatchInfo.isBlockingRPC() {
 		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
 	} else {
 		// if migrating, just put the call to wait
@@ -403,8 +420,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 
 	defer entityDispatchInfo.RUnlock()
 
-	// TODO handle entity migrating
-	if !entityDispatchInfo.isMigrating() {
+	if !entityDispatchInfo.isBlockingRPC() {
 		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
 	} else {
 		// if migrating, just put the call to wait
@@ -488,14 +504,19 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
 	defer entityDispatchInfo.Unlock()
 
-	entityDispatchInfo.migrateTime = 0 // mark the entity as NOT migrating
+	entityDispatchInfo.migrateTime = time.Time{} // mark the entity as NOT migrating
 	entityDispatchInfo.serverid = targetServer
 	service.clientsLock.Lock()
 	service.targetServerOfClient[clientid] = targetServer // migrating also change target server of client
 	service.clientsLock.Unlock()
 
 	service.dispatcherClientOfServer(targetServer).SendPacket(pkt)
+	// send the cached calls to target server
+	service.sendPendingPackets(entityDispatchInfo)
+}
 
+func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *EntityDispatchInfo) {
+	targetServer := entityDispatchInfo.serverid
 	// send the cached calls to target server
 	item, ok := entityDispatchInfo.pendingPacketQueue.TryPop()
 	for ok {

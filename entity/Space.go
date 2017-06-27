@@ -130,7 +130,7 @@ func (space *Space) enter(entity *Entity) {
 
 func (space *Space) leave(entity *Entity) {
 	if entity.Space != space {
-		gwlog.Panicf("%s.leave(%s): e is not in this Space", space, entity)
+		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
 	}
 
 	if space.IsNil() { // leave from nil space do nothing
