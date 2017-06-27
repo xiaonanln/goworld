@@ -20,7 +20,11 @@ runserver: test_server
 runclient: test_client
 	examples/test_client/test_client -N $(N)
 
-killall: killdispatcher killserver killclient
+killall:
+	-make killdispatcher
+	-make killserver
+	-make killclient
+
 
 killdispatcher:
 	killall dispatcher

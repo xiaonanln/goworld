@@ -8,6 +8,7 @@ import (
 	"flag"
 
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"

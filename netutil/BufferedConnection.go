@@ -35,6 +35,7 @@ func (bc *BufferedConnection) String() string {
 }
 
 func (bc *BufferedConnection) sendRoutine() {
+sendRoutineLoop:
 	for !bc.closed {
 		time.Sleep(bc.delay)
 
@@ -45,13 +46,20 @@ func (bc *BufferedConnection) sendRoutine() {
 			continue
 		}
 
-		_, err := bc.writeBuffer.WriteTo(bc.Connection)
+		writeBuffer := bc.writeBuffer
+		bc.writeBuffer = bytes.NewBuffer([]byte{}) // replace the write buffer with a new empty one
 		bc.Unlock()
 
-		if err != nil && !IsTemporaryNetError(err) {
-			// got bad error, stop the send routine
-			//gwlog.Error("%s send routine quit due to error: %s", bc, err)
-			break
+		for { // send data in write buffer until it's empty
+			_, err := writeBuffer.WriteTo(bc.Connection)
+			if err != nil && !IsTemporaryNetError(err) {
+				// got bad error, stop the send routine
+				break sendRoutineLoop
+			}
+
+			if writeBuffer.Len() == 0 {
+				break
+			}
 		}
 	}
 }
