@@ -43,11 +43,18 @@ func IsConnectionClosed(_err interface{}) bool {
 }
 
 func WriteAll(conn io.Writer, data []byte) error {
-	for len(data) > 0 {
+	datalen := len(data)
+	for datalen > 0 {
 		n, err := conn.Write(data)
+		if n == datalen && err == nil { // handle most common case first
+			return nil
+		}
+
 		if n > 0 {
 			data = data[n:]
+			datalen -= n
 		}
+
 		if err != nil {
 			if IsTemporaryNetError(err) {
 				continue

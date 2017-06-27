@@ -85,6 +85,9 @@ func (a *Account) Login_Client(username string, password string) {
 
 func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
 	a.GiveClientTo(avatar)
+}
+
+func (a *Account) OnClientDisconnected() {
 	a.Destroy()
 }
 

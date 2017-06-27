@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"fmt"
+
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -15,6 +17,7 @@ type BufferedConnection struct {
 	delay       time.Duration
 	readBuffer  []byte
 	unreadBytes []byte
+	closed      bool
 }
 
 func NewBufferedConnection(conn Connection, delay time.Duration) *BufferedConnection {
@@ -29,12 +32,26 @@ func NewBufferedConnection(conn Connection, delay time.Duration) *BufferedConnec
 	return bc
 }
 
+func (bc *BufferedConnection) String() string {
+	return fmt.Sprintf("BufferedConnection<%s>", bc.Connection.RemoteAddr())
+}
+
 func (bc *BufferedConnection) sendRoutine() {
-	ticker := time.Tick(bc.delay)
-	for {
-		<-ticker
+	for !bc.closed {
+		time.Sleep(bc.delay)
+
 		bc.Lock() // TODO: handle network error
-		_, err := bc.writeBuffer.WriteTo(bc.Connection)
+		writableLen := bc.writeBuffer.Len()
+		if writableLen == 0 {
+
+			bc.Unlock()
+			continue
+		}
+
+		n, err := bc.writeBuffer.WriteTo(bc.Connection)
+		if int(n) < writableLen || err != nil {
+			gwlog.Debug("%s: Write Buffer Write To: %d %v, writableLen=%v", bc, n, err, writableLen)
+		}
 		bc.Unlock()
 
 		if err != nil && !IsTemporaryNetError(err) {
@@ -43,6 +60,11 @@ func (bc *BufferedConnection) sendRoutine() {
 			break
 		}
 	}
+}
+
+func (bc *BufferedConnection) Close() error {
+	bc.closed = true
+	return bc.Connection.Close()
 }
 
 func (bc *BufferedConnection) Write(p []byte) (n int, err error) {
