@@ -35,3 +35,6 @@ func (id ClientID) IsNil() bool {
 }
 
 const CLIENTID_LENGTH = uuid.UUID_LENGTH
+
+//type DataMap map[string]interface{}
+//type DataList []interface{}

@@ -1,5 +1,5 @@
+TODO: MongoDB based storage
 TODO: AOI with specified range, entities go in / out AOI
-TODO: notify client disconnected might fail
 TODO: do client proxy use buffered connection ? if use, performance must be optimized because there are too many goroutines
 TODO: [test_game]
     TODO: Accout save and load existing avatar (use some DB)

@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/storage/common"
 )
 
 type FileSystemEntityStorage struct {
@@ -95,7 +94,7 @@ func (ss *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, err
 	return res, nil
 }
 
-func newFileSystemEntityStorage(directory string) (*FileSystemEntityStorage, error) {
+func OpenDirectory(directory string) (*FileSystemEntityStorage, error) {
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		return nil, err
 	}
@@ -103,8 +102,4 @@ func newFileSystemEntityStorage(directory string) (*FileSystemEntityStorage, err
 	return &FileSystemEntityStorage{
 		directory: directory,
 	}, nil
-}
-
-func OpenDirectory(directory string) (storage_common.EntityStorage, error) {
-	return newFileSystemEntityStorage(directory)
 }

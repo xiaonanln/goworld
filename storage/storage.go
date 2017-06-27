@@ -10,11 +10,17 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
-	"github.com/xiaonanln/goworld/storage/common"
 )
 
+type EntityStorage interface {
+	List(typeName string) ([]common.EntityID, error)
+	Write(typeName string, entityID common.EntityID, data interface{}) error
+	Read(typeName string, entityID common.EntityID) (interface{}, error)
+	Exists(typeName string, entityID common.EntityID) (bool, error)
+}
+
 var (
-	storageEngine  storage_common.EntityStorage
+	storageEngine  EntityStorage
 	operationQueue = sync_queue.NewSyncQueue()
 )
 
