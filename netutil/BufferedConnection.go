@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"fmt"
-
-	"github.com/xiaonanln/goworld/gwlog"
 )
 
 type BufferedConnection struct {
@@ -40,23 +38,19 @@ func (bc *BufferedConnection) sendRoutine() {
 	for !bc.closed {
 		time.Sleep(bc.delay)
 
-		bc.Lock() // TODO: handle network error
+		bc.Lock()
 		writableLen := bc.writeBuffer.Len()
 		if writableLen == 0 {
-
 			bc.Unlock()
 			continue
 		}
 
-		n, err := bc.writeBuffer.WriteTo(bc.Connection)
-		if int(n) < writableLen || err != nil {
-			gwlog.Debug("%s: Write Buffer Write To: %d %v, writableLen=%v", bc, n, err, writableLen)
-		}
+		_, err := bc.writeBuffer.WriteTo(bc.Connection)
 		bc.Unlock()
 
 		if err != nil && !IsTemporaryNetError(err) {
 			// got bad error, stop the send routine
-			gwlog.Error("%s send routine quit due to error: %s", bc, err)
+			//gwlog.Error("%s send routine quit due to error: %s", bc, err)
 			break
 		}
 	}
