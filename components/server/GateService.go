@@ -78,6 +78,9 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 
 	if clientproxy != nil {
 		clientproxy.SendPacket(packet)
+	} else {
+		// client already disconnected, but the game service seems not knowing it, so tell it
+		dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 	}
 
 	packet.Release()
