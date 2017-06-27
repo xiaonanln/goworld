@@ -1,6 +1,9 @@
 package main
 
 import (
+	"time"
+
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
@@ -10,7 +13,9 @@ import (
 
 type Account struct {
 	entity.Entity
-	username string
+	username        string
+	findAvatarTimer *timer.Timer
+	logining        bool
 }
 
 func (a *Account) OnInit() {
@@ -35,19 +40,26 @@ func (a Account) setAvatarID(username string, avatarID common.EntityID) {
 }
 
 func (a *Account) Login_Client(username string, password string) {
+	if a.logining {
+		// logining
+		gwlog.Error("%s is already logining", a)
+		return
+	}
+
 	gwlog.Info("%s logining with username %s password %s ...", a, username, password)
 	if password != "123456" {
 		a.GetClient().Call("OnLogin", false)
 		return
 	}
 
+	a.logining = true
 	a.CallClient("OnLogin", true)
 	a.getAvatarID(username, func(avatarID common.EntityID, err error) {
 		if err != nil {
 			gwlog.Panic(err)
 		}
 
-		gwlog.Info("Username %s get avatar id = %s", username, avatarID)
+		gwlog.Debug("Username %s get avatar id = %s", username, avatarID)
 		if avatarID.IsNil() {
 			// avatar not found, create new avatar
 			avatarID = goworld.CreateEntityLocally("Avatar")
@@ -60,13 +72,52 @@ func (a *Account) Login_Client(username string, password string) {
 		} else {
 			goworld.LoadEntityAnywhere("Avatar", avatarID)
 			// ask the avatar: where are you
-			a.Call(avatarID, "GetSpaceID", a.ID)
+			a.AddCallback(time.Millisecond*200, func() {
+				// wait for the avatar to be loaded
+				a.Call(avatarID, "GetSpaceID", a.ID) // request for avatar space ID
+
+				a.findAvatarTimer = a.AddTimer(time.Second, func() {
+					a.Call(avatarID, "GetSpaceID", a.ID)
+				})
+			})
 		}
-
 	})
-
 }
 
 func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
 	a.GiveClientTo(avatar)
+	a.Destroy()
+}
+
+func (a *Account) OnGetAvatarSpaceID_Server(avatarID common.EntityID, spaceID common.EntityID) {
+	if a.findAvatarTimer != nil {
+		a.CancelTimer(a.findAvatarTimer)
+		a.findAvatarTimer = nil
+	}
+
+	a.Attrs.Set("loginAvatarID", avatarID)
+	a.EnterSpace(spaceID)
+}
+
+func (a *Account) OnMigrateIn() {
+	loginAvatarID := common.EntityID(a.Attrs.GetStr("loginAvatarID"))
+	gwlog.Debug("%s migrating in, attrs=%v, loginAvatarID=%s", a, a.Attrs.ToMap(), loginAvatarID)
+
+	avatar := goworld.GetEntity(loginAvatarID)
+	if avatar != nil {
+		a.onAvatarEntityFound(avatar)
+	} else {
+		a.AddCallback(time.Millisecond*200, func() {
+			// wait for the avatar to be loaded
+			a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
+
+			a.findAvatarTimer = a.AddTimer(time.Second, func() {
+				a.Call(loginAvatarID, "GetSpaceID", a.ID)
+			})
+		})
+	}
+}
+
+func (a *Account) OnMigrateOut() {
+	gwlog.Debug("%s migrating out ...", a)
 }

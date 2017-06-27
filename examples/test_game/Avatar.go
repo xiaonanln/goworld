@@ -84,5 +84,9 @@ func (a *Avatar) OnEnterSpace() {
 }
 
 func (a *Avatar) GetSpaceID_Server(callerID common.EntityID) {
-	a.Call(callerID, "OnGetAvatarSpaceID", a.Space.ID)
+	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
+}
+
+func (a *Avatar) OnDestroy() {
+	a.CallService("OnlineService", "CheckOut", a.ID)
 }

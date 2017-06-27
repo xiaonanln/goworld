@@ -242,7 +242,7 @@ func (e *ClientEntity) applyAttrChange(path []string, key string, val interface{
 	callbackFuncName := "OnAttrChange_" + rootkey
 	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
 	if !callbackMethod.IsValid() {
-		gwlog.Warn("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
+		gwlog.Debug("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
 		return
 	}
 	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
@@ -262,7 +262,7 @@ func (e *ClientEntity) applyAttrDel(path []string, key string) {
 	callbackFuncName := "OnAttrChange_" + rootkey
 	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
 	if !callbackMethod.IsValid() {
-		gwlog.Warn("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
+		gwlog.Debug("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
 		return
 	}
 	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func

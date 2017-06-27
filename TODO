@@ -1,5 +1,5 @@
 TODO: AOI with specified range, entities go in / out AOI
-
+TODO: notify client disconnected might fail
 TODO: [test_game]
     TODO: Accout save and load existing avatar (use some DB)
     TODO: Create or load Avatar anywhere, and migrate account to it
