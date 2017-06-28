@@ -21,6 +21,10 @@ type KVDBEngine interface {
 
 type KVDBGetCallback func(val string, err error)
 type KVDBPutCallback func(err error)
+type KVDBQueryCallback func(items []struct {
+	key string
+	val string
+}, err error)
 
 func Initialize() {
 	var err error
@@ -66,6 +70,9 @@ func Put(key string, val string, callback KVDBPutCallback) {
 		callback,
 	})
 	return
+}
+
+func Query(beginKey string, endKey string, callback KVDBQueryCallback) {
 }
 
 func kvdbRoutine() {

@@ -10,7 +10,6 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb"
 	"github.com/xiaonanln/goworld/netutil"
-	"gopkg.in/mgo.v2"
 )
 
 type MailService struct {
@@ -85,7 +84,6 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 func (s *MailService) GetMails_Server(avatarID common.EntityID, lastMailID int64) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
 	q := kvdb.Find(beginMailKey)
-	mgo.Collection{}
 }
 
 func (s *MailService) genMailID() int64 {
