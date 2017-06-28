@@ -45,18 +45,27 @@ func (em *EntityManager) get(id EntityID) *Entity {
 	return em.entities.Get(id)
 }
 
+func (em *EntityManager) onEntityLoseClient(clientid ClientID) {
+	delete(em.ownerOfClient, clientid)
+}
+
+func (em *EntityManager) onEntityGetClient(entityID EntityID, clientid ClientID) {
+	em.ownerOfClient[clientid] = entityID
+}
+
 func (em *EntityManager) onClientDisconnected(clientid ClientID) {
 	eid := em.ownerOfClient[clientid]
-	delete(em.ownerOfClient, clientid)
-
 	if !eid.IsNil() { // should always true
-		owner := em.entities[eid] // FIXME: owner should not be nil
+		em.onEntityLoseClient(clientid)
+
+		owner := em.get(eid) // FIXME: owner should not be nil
 
 		if consts.DEBUG_CLIENTS {
 			if owner == nil {
 				gwlog.Warn("Client %s can not find owner entity %s", clientid, eid)
 			}
 		}
+
 		owner.notifyClientDisconnected()
 	}
 }
@@ -160,6 +169,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 			entity.SetClient(client)
 		} else {
 			entity.client = client // assign client quietly if migrate
+			entityManager.onEntityGetClient(entity.ID, client.clientid)
 		}
 	}
 

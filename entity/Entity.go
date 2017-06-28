@@ -92,6 +92,10 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 		e.Save()
 	} else {
 		gwutils.RunPanicless(e.I.OnMigrateOut)
+		if e.client != nil {
+			entityManager.onEntityLoseClient(e.client.clientid)
+			e.client = nil
+		}
 	}
 
 	entityManager.del(e.ID)
@@ -352,7 +356,7 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	if oldClient != nil {
 		// send destroy entity to client
-		delete(entityManager.ownerOfClient, oldClient.clientid)
+		entityManager.onEntityLoseClient(oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
 			oldClient.SendDestroyEntity(neighbor)
@@ -363,7 +367,7 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	if client != nil {
 		// send create entity to new client
-		entityManager.ownerOfClient[client.clientid] = e.ID
+		entityManager.onEntityGetClient(e.ID, client.clientid)
 
 		client.SendCreateEntity(e, true)
 		for neighbor := range e.Neighbors() {
@@ -399,7 +403,6 @@ func (e *Entity) GiveClientTo(other *Entity) {
 }
 
 func (e *Entity) notifyClientDisconnected() {
-
 	if e == nil {
 		// FIXME: might happen due to a bug
 		return
@@ -513,15 +516,15 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 }
 
 func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
-	e.destroyEntity(true) // disable the entity
-	migrateData := e.getMigrateData()
-
 	var clientid ClientID
 	var clientsrv uint16
 	if e.client != nil {
 		clientid = e.client.clientid
 		clientsrv = e.client.serverid
 	}
+
+	e.destroyEntity(true) // disable the entity
+	migrateData := e.getMigrateData()
 
 	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, clientid, clientsrv)
 }
