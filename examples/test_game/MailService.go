@@ -84,7 +84,7 @@ func (s *MailService) genMailID() int64 {
 	s.lastMailID += 1
 	lastMailID := s.lastMailID
 	kvdb.Put("lastMailID", strconv.Itoa(int(lastMailID)), func(err error) {
-		gwlog.Info("Save lastMailID %d: error=%s", lastMailID, err)
+		gwlog.Debug("Save lastMailID %d: error=%s", lastMailID, err)
 	})
 	return lastMailID
 }

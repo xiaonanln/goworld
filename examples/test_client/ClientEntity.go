@@ -226,7 +226,15 @@ func (e *ClientEntity) DoEnterRandomSpace() {
 }
 
 func (e *ClientEntity) DoSendMail() {
-	e.CallServer("SendMail", e.ID, map[string]interface{}{
+	neighbors := e.Neighbors()
+	//gwlog.Info("Neighbors: %v", neighbors)
+
+	receiver := e
+	if len(neighbors) > 0 {
+		receiver = neighbors[rand.Intn(len(neighbors))]
+	}
+
+	e.CallServer("SendMail", receiver.ID, map[string]interface{}{
 		"a": 1,
 		"b": "b",
 		"c": false,
@@ -342,4 +350,14 @@ func (entity *ClientEntity) OnLogin(ok bool) {
 func (entity *ClientEntity) OnSendMail(ok bool) {
 	gwlog.Debug("%s OnSendMail %v", entity, ok)
 	entity.notifyThingDone("DoSendMail")
+}
+
+func (entity *ClientEntity) Neighbors() []*ClientEntity {
+	var neighbors []*ClientEntity
+	for _, other := range entity.owner.entities {
+		if other.TypeName == "Avatar" {
+			neighbors = append(neighbors, other)
+		}
+	}
+	return neighbors
 }

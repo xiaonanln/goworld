@@ -30,6 +30,7 @@ import (
 var (
 	serverid    uint16
 	configFile  string
+	logLevel    string
 	gameService *GameService
 	gateService *GateService
 )
@@ -42,6 +43,7 @@ func parseArgs() {
 	var serveridArg int
 	flag.IntVar(&serveridArg, "sid", 0, "set serverid")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
+	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
 	flag.Parse()
 	serverid = uint16(serveridArg)
 }
@@ -54,7 +56,7 @@ func Run(delegate IServerDelegate) {
 	}
 
 	serverConfig := config.GetServer(serverid)
-	setupLogOutput(serverConfig)
+	setupGWLog(logLevel, serverConfig)
 
 	storage.Initialize()
 	kvdb.Initialize()
@@ -91,9 +93,12 @@ func setupPprofServer(serverConfig *config.ServerConfig) {
 	}()
 }
 
-func setupLogOutput(serverConfig *config.ServerConfig) {
-	gwlog.Info("Set log level to %s", serverConfig.LogLevel)
-	gwlog.SetLevel(gwlog.StringToLevel(serverConfig.LogLevel))
+func setupGWLog(logLevel string, serverConfig *config.ServerConfig) {
+	if logLevel == "" {
+		logLevel = serverConfig.LogLevel
+	}
+	gwlog.Info("Set log level to %s", logLevel)
+	gwlog.SetLevel(gwlog.StringToLevel(logLevel))
 
 	outputWriters := make([]io.Writer, 0, 2)
 	if serverConfig.LogFile != "" {
