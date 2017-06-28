@@ -167,7 +167,7 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid
 }
 
 func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
-	if consts.DEBUG_PACKETS {
+	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.HandleNotifyClientDisconnected: %s", gs, clientid)
 	}
 	// find the owner of the client, and notify lose client

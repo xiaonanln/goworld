@@ -36,6 +36,7 @@ type Entity struct {
 	timers           map[*timer.Timer]struct{}
 	client           *GameClient
 	declaredServices StringSet
+	becamePlayer     bool
 
 	Attrs *MapAttr
 
@@ -348,9 +349,10 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 
 	e.client = client
+
 	if oldClient != nil {
 		// send destroy entity to client
-		entityManager.onClientLoseOwner(oldClient.clientid)
+		delete(entityManager.ownerOfClient, oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
 			oldClient.SendDestroyEntity(neighbor)
@@ -361,7 +363,8 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	if client != nil {
 		// send create entity to new client
-		entityManager.onClientSetOwner(client.clientid, e.ID)
+		entityManager.ownerOfClient[client.clientid] = e.ID
+
 		client.SendCreateEntity(e, true)
 		for neighbor := range e.Neighbors() {
 			client.SendCreateEntity(neighbor, false)
@@ -382,20 +385,21 @@ func (e *Entity) CallClient(method string, args ...interface{}) {
 
 func (e *Entity) GiveClientTo(other *Entity) {
 	if e.client == nil {
+		gwlog.Warn("%s.GiveClientTo(%s): client is nil", e, other)
 		return
 	}
 
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("%s.GiveClientTo(%s): client=%s", e, other, e.client)
+	}
 	client := e.client
 	e.SetClient(nil)
-
-	if other.client != nil {
-		other.SetClient(nil)
-	}
 
 	other.SetClient(client)
 }
 
 func (e *Entity) notifyClientDisconnected() {
+
 	if e == nil {
 		// FIXME: might happen due to a bug
 		return
@@ -419,6 +423,10 @@ func (e *Entity) OnClientDisconnected() {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.OnClientDisconnected: %s", e, e.client)
 	}
+}
+
+func (e *Entity) OnBecomePlayer() {
+	gwlog.Info("%s.OnBecomePlayer: client=%s", e, e.client)
 }
 
 func (e *Entity) sendAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
@@ -506,7 +514,6 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 
 func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 	e.destroyEntity(true) // disable the entity
-	gwutils.RunPanicless(e.I.OnMigrateOut)
 	migrateData := e.getMigrateData()
 
 	var clientid ClientID
@@ -515,6 +522,7 @@ func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 		clientid = e.client.clientid
 		clientsrv = e.client.serverid
 	}
+
 	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, clientid, clientsrv)
 }
 

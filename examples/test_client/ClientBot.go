@@ -51,14 +51,13 @@ func (bot *ClientBot) run() {
 	serverIDs := config.GetServerIDs()
 	// choose a random serverID
 	serverID := serverIDs[rand.Intn(len(serverIDs))]
-	serverID = 1 // lndebug
 	gwlog.Debug("%s is connecting to server %d", bot, serverID)
 	cfg := config.GetServer(serverID)
 	cfg = cfg
 	var conn net.Conn
 	var err error
 	for { // retry for ever
-		conn, err = netutil.ConnectTCP(cfg.Ip, cfg.Port)
+		conn, err = netutil.ConnectTCP("127.0.0.1", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))

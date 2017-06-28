@@ -88,9 +88,9 @@ func (a *Account) OnClientDisconnected() {
 
 func (a *Account) OnMigrateIn() {
 	loginAvatarID := common.EntityID(a.Attrs.GetStr("loginAvatarID"))
-	gwlog.Debug("%s migrating in, attrs=%v, loginAvatarID=%s", a, a.Attrs.ToMap(), loginAvatarID)
-
 	avatar := goworld.GetEntity(loginAvatarID)
+	gwlog.Debug("%s migrating in, attrs=%v, loginAvatarID=%s, avatar=%v, client=%s", a, a.Attrs.ToMap(), loginAvatarID, avatar, a.GetClient())
+
 	if avatar != nil {
 		a.onAvatarEntityFound(avatar)
 	} else {

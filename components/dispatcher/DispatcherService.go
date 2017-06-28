@@ -291,6 +291,10 @@ func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherCli
 	service.targetServerOfClient[clientid] = targetServer.serverid // owner is not determined yet, set to "" as placeholder
 	service.clientsLock.Unlock()
 
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("Target server of client %s is SET to %v on connected", clientid, targetServer.serverid)
+	}
+
 	pkt.AppendUint16(dcp.serverid)
 	targetServer.SendPacket(pkt)
 }
@@ -302,6 +306,10 @@ func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *Dispatcher
 	targetSid := service.targetServerOfClient[clientid]
 	delete(service.targetServerOfClient, clientid)
 	service.clientsLock.Unlock()
+
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("Target server of client %s is %v, disconnecting ...", clientid, targetSid)
+	}
 
 	if targetSid != 0 { // if found the owner, tell it
 		service.dispatcherClientOfServer(targetSid).SendPacket(pkt) // tell the server that the client is down
@@ -509,6 +517,10 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	service.clientsLock.Lock()
 	service.targetServerOfClient[clientid] = targetServer // migrating also change target server of client
 	service.clientsLock.Unlock()
+
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("Target server of client %s is migrated to %v along with owner %s", clientid, targetServer, eid)
+	}
 
 	service.dispatcherClientOfServer(targetServer).SendPacket(pkt)
 	// send the cached calls to target server
