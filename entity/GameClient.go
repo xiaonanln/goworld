@@ -41,10 +41,11 @@ func (client *GameClient) SendDestroyEntity(entity *Entity) {
 	dispatcher_client.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID)
 }
 
-func (client *GameClient) Call(method string, args ...interface{}) {
+func (client *GameClient) call(entityID common.EntityID, method string, args ...interface{}) {
 	if client == nil {
 		return
 	}
+	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethodOnClient(client.serverid, client.clientid, entityID, method, args)
 }
 
 func (client *GameClient) SendNotifyAttrChange(entityID common.EntityID, path []string, key string, val interface{}) {
@@ -60,5 +61,5 @@ func (client *GameClient) SendNotifyAttrDel(entityID common.EntityID, path []str
 		return
 	}
 	gwlog.Debug("%s.SendNotifyAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelnClient(client.serverid, client.clientid, entityID, path, key)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelOnClient(client.serverid, client.clientid, entityID, path, key)
 }

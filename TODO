@@ -1,3 +1,4 @@
+
 TODO: AOI with specified range, entities go in / out AOI
 TODO: do client proxy use buffered connection ? if use, performance must be optimized because there are too many goroutines
 TODO: [test_game]
@@ -13,6 +14,7 @@ TODO: Example chatrooms with multiple channels: world, prof, club, ...
 # Optimizations
 TODO: Merge all goroutine of BufferedConnections to One Goroutine (need benchmark)
 TODO: Merge multiple packets instead of Buffered Connection (need benchmark)
+TODO: Strip serverid and clientid for packets sent to clients because useless
 
 # Future works
 TODO: ListAttr

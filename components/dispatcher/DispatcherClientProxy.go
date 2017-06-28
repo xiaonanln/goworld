@@ -61,6 +61,8 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleNotifyAttrChangeOnClient(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
 			dcp.owner.HandleNotifyAttrDelOnClient(dcp, pkt)
+		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_ON_CLIENT {
+			dcp.owner.HandleCallEntityMethodOnClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {

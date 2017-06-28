@@ -4,11 +4,15 @@ import (
 	"net"
 	"sync"
 
+	"github.com/xiaonanln/typeconv"
+
 	"fmt"
 
 	"math/rand"
 
 	"time"
+
+	"reflect"
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
@@ -141,10 +145,20 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		} else {
 			bot.destroyEntity(typeName, entityid)
 		}
+	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		method := packet.ReadVarStr()
+		var args []interface{}
+		packet.ReadData(&args)
+		if !quiet {
+			gwlog.Debug("Call entity %s.%s(%v)", entityID, method, args)
+		}
+		bot.callEntityMethod(entityID, method, args)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
 	}
 }
+
 func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, key string, val interface{}) {
 	if bot.entities[entityid] == nil {
 		gwlog.Error("entity %s not found")
@@ -204,6 +218,29 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 	bot.currentSpace = nil
 	gwlog.Debug("%s: leave current space %s", bot, spaceID)
 	bot.OnLeaveSpace(oldSpace)
+}
+
+func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args []interface{}) {
+	entity := bot.entities[entityID]
+	if entity == nil {
+		gwlog.Warn("Entity %s is not found while calling method %s(%v)", entityID, method, args)
+		return
+	}
+
+	methodVal := reflect.ValueOf(entity).MethodByName(method)
+	if !methodVal.IsValid() {
+		gwlog.Error("Client method %s is not found", method)
+		return
+	}
+
+	methodType := methodVal.Type()
+	in := make([]reflect.Value, len(args))
+
+	for i, arg := range args {
+		argType := methodType.In(i)
+		in[i] = typeconv.Convert(arg, argType)
+	}
+	methodVal.Call(in)
 }
 
 func (bot *ClientBot) username() string {

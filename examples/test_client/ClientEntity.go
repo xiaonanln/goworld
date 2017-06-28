@@ -334,3 +334,12 @@ func (entity *ClientEntity) OnAttrChange_subattr() {
 		gwlog.Debug("%s: attr subattr change to %v", entity, v)
 	}
 }
+
+func (entity *ClientEntity) OnLogin(ok bool) {
+	gwlog.Debug("%s OnLogin %v", entity, ok)
+}
+
+func (entity *ClientEntity) OnSendMail(ok bool) {
+	gwlog.Debug("%s OnSendMail %v", entity, ok)
+	entity.notifyThingDone("DoSendMail")
+}

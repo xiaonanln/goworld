@@ -261,6 +261,7 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 
 	in := make([]reflect.Value, len(args)+1)
 	in[0] = reflect.ValueOf(e.I)
+
 	for i, arg := range args {
 		argType := methodType.In(i + 1)
 		in[i+1] = typeconv.Convert(arg, argType)
@@ -386,7 +387,7 @@ func (e *Entity) SetClient(client *GameClient) {
 }
 
 func (e *Entity) CallClient(method string, args ...interface{}) {
-	e.client.Call(method, args...)
+	e.client.call(e.ID, method, args...)
 }
 
 func (e *Entity) GiveClientTo(other *Entity) {

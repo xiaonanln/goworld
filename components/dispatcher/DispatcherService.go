@@ -446,10 +446,8 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 }
 
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	// TODO: HandleXxxXxxOnClient functions are same, merge them
 	sid := pkt.ReadUint16()
-	//clientid := pkt.ReadClientID()
-
-	// Server <sid> is creating entity on client <clientid>, so we can safely assumes that target entity of
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
@@ -464,6 +462,11 @@ func (service *DispatcherService) HandleNotifyAttrChangeOnClient(dcp *Dispatcher
 }
 
 func (service *DispatcherService) HandleNotifyAttrDelOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
+}
+
+func (service *DispatcherService) HandleCallEntityMethodOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }

@@ -154,7 +154,7 @@ func (gwc *GoWorldConnection) SendNotifyAttrChangeOnClient(sid uint16, clientid 
 	return err
 }
 
-func (gwc *GoWorldConnection) SendNotifyAttrDelnClient(sid uint16, clientid ClientID, entityid EntityID, path []string, key string) error {
+func (gwc *GoWorldConnection) SendNotifyAttrDelOnClient(sid uint16, clientid ClientID, entityid EntityID, path []string, key string) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_ATTR_DEL_ON_CLIENT)
 	packet.AppendUint16(sid)
@@ -165,6 +165,19 @@ func (gwc *GoWorldConnection) SendNotifyAttrDelnClient(sid uint16, clientid Clie
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err
+}
+
+func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(sid uint16, clientid ClientID, entityID EntityID, method string, args []interface{}) (err error) {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_CALL_ENTITY_METHOD_ON_CLIENT)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendEntityID(entityID)
+	packet.AppendVarStr(method)
+	packet.AppendData(args)
+	err = gwc.SendPacket(packet)
+	packet.Release()
+	return
 }
 
 func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID EntityID) error {

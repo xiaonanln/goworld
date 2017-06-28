@@ -96,6 +96,15 @@ func (a *Avatar) SendMail_Client(targetID common.EntityID, mail MailData) {
 	a.CallService("MailService", "SendMail", a.ID, a.GetStr("name"), targetID, mail)
 }
 
+func (a *Avatar) OnSendMail_Server(ok bool) {
+	a.CallClient("OnSendMail", ok)
+}
+
+// Avatar has received a mail, can query now
+func (a *Avatar) NotifyReceiveMail_Server() {
+
+}
+
 //func (a *Avatar) getMailSenderInfo() map[string]interface{} {
 //	return map[string]interface{}{
 //		"ID":   a.ID,

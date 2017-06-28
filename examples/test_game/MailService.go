@@ -49,6 +49,7 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 	if s.lastMailID == -1 {
 		// not ready
 		gwlog.Warn("%s is not ready for send mail", s)
+		s.Call(senderID, "OnSendMail", false)
 		return
 	}
 
@@ -64,13 +65,18 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 	mailBytes, err := s.mailPacker.PackMsg(mail, nil)
 	if err != nil {
 		gwlog.Panicf("Pack mail failed: %s", err)
+		s.Call(senderID, "OnSendMail", false)
 	}
 
 	kvdb.Put(mailKey, string(mailBytes), func(err error) {
 		if err != nil {
 			gwlog.Panicf("Put mail to kvdb failed: %s", err)
+			s.Call(senderID, "OnSendMail", false)
 		}
 		gwlog.Debug("Put mail %s to KVDB succeed", mailID)
+		s.Call(senderID, "OnSendMail", true)
+		// tell the target that you have got a mail
+		s.Call(targetID, "NotifyReceiveMail")
 	})
 }
 

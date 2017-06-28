@@ -47,7 +47,7 @@ func (a *Account) Login_Client(username string, password string) {
 
 	gwlog.Info("%s logining with username %s password %s ...", a, username, password)
 	if password != "123456" {
-		a.GetClient().Call("OnLogin", false)
+		a.CallClient("OnLogin", false)
 		return
 	}
 
