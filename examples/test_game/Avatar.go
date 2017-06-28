@@ -90,3 +90,7 @@ func (a *Avatar) GetSpaceID_Server(callerID common.EntityID) {
 func (a *Avatar) OnDestroy() {
 	a.CallService("OnlineService", "CheckOut", a.ID)
 }
+
+func (a *Avatar) SendMail_Client(targetID common.EntityID, mail MailData) {
+
+}
