@@ -30,6 +30,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("level", 1)
 	a.Attrs.SetDefault("exp", 0)
 	a.Attrs.SetDefault("spaceKind", 1+rand.Intn(100))
+	a.Attrs.SetDefault("lastMailId", 0)
 }
 
 func (a *Avatar) IsPersistent() bool {
@@ -92,5 +93,12 @@ func (a *Avatar) OnDestroy() {
 }
 
 func (a *Avatar) SendMail_Client(targetID common.EntityID, mail MailData) {
-
+	a.CallService("MailService", "SendMail", a.ID, a.GetStr("name"), targetID, mail)
 }
+
+//func (a *Avatar) getMailSenderInfo() map[string]interface{} {
+//	return map[string]interface{}{
+//		"ID":   a.ID,
+//		"name": a.GetStr("name"),
+//	}
+//}

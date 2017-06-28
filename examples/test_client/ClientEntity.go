@@ -150,6 +150,7 @@ type _Something struct {
 var (
 	DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 100, time.Minute},
+		{"DoSendMail", 100, time.Minute},
 	}
 )
 
@@ -191,7 +192,19 @@ func (e *ClientEntity) notifyThingDone(thing string) {
 }
 
 func (e *ClientEntity) chooseThingByWeight() *_Something {
-	return DO_THINGS[0]
+	totalWeight := 0
+	for _, t := range DO_THINGS {
+		totalWeight += t.Weight
+	}
+	randWeight := rand.Intn(totalWeight)
+	for _, t := range DO_THINGS {
+		if randWeight < t.Weight {
+			return t
+		}
+		randWeight -= t.Weight
+	}
+	gwlog.Panicf("never goes here")
+	return nil
 }
 
 func (e *ClientEntity) DoEnterRandomSpace() {
@@ -210,6 +223,15 @@ func (e *ClientEntity) DoEnterRandomSpace() {
 	}
 
 	e.CallServer("EnterSpace", spaceKind)
+}
+
+func (e *ClientEntity) DoSendMail() {
+	e.CallServer("SendMail", e.ID, map[string]interface{}{
+		"a": 1,
+		"b": "b",
+		"c": false,
+		"d": 1231.111,
+	})
 }
 
 func (e *ClientEntity) onAccountCreated() {

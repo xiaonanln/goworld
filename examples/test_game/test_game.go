@@ -14,6 +14,7 @@ var (
 	SERVICE_NAMES = []string{
 		"OnlineService",
 		"SpaceService",
+		"MailService",
 	}
 )
 
@@ -31,6 +32,7 @@ func main() {
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("OnlineService", &OnlineService{})
 	goworld.RegisterEntity("SpaceService", &SpaceService{})
+	goworld.RegisterEntity("MailService", &MailService{})
 	goworld.RegisterEntity("Monster", &Monster{})
 	goworld.RegisterEntity("Avatar", &Avatar{})
 

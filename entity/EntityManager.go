@@ -149,7 +149,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 
 	entityManager.put(entity)
 	if data != nil {
-		entity.LoadPersistentData(data)
+		entity.I.LoadPersistentData(data)
 	} else {
 		entity.Save() // save immediately after creation
 	}

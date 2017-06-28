@@ -60,6 +60,8 @@ type IEntity interface {
 	OnLeaveSpace(space *Space)
 	// Storage: Save & Load
 	IsPersistent() bool
+	GetPersistentData() map[string]interface{}
+	LoadPersistentData(data map[string]interface{})
 	// Client Notifications
 	OnClientConnected()
 	OnClientDisconnected()
@@ -115,7 +117,7 @@ func (e *Entity) Save() {
 		gwlog.Debug("SAVING %s ...", e)
 	}
 
-	data := e.GetPersistentData()
+	data := e.I.GetPersistentData()
 
 	storage.Save(e.TypeName, e.ID, data, nil)
 }
