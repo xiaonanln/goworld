@@ -115,7 +115,7 @@ func (p *Packet) Release() {
 			atomic.AddInt64(&debugInfo.ReleaseCount, 1)
 		}
 	} else if refcount < 0 {
-		gwlog.Panicf("releasing p with refcount=%d", p.refcount)
+		gwlog.Panicf("releasing packet with refcount=%d", p.refcount)
 	}
 }
 

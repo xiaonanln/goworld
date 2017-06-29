@@ -63,7 +63,7 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 		gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
 	if packet.refcount <= 0 {
-		gwlog.Panicf("sending p with refcount=%d", packet.refcount)
+		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
 	}
 	if pc.useSendQueue {
 		packet.AddRefCount(1) // will be released when pop from queue
@@ -90,13 +90,13 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	var payloadLen uint32 = NETWORK_ENDIAN.Uint32(payloadLenBuf)
 
 	if payloadLen > MAX_PAYLOAD_LENGTH {
-		// p size is too large
-		// todo: reset the connection when p size is invalid
-		return nil, fmt.Errorf("message p too large: %v", payloadLen)
+		// packet size is too large
+		// todo: reset the connection when packet size is invalid
+		return nil, fmt.Errorf("message packet too large: %v", payloadLen)
 	}
 
 	packet := NewPacketWithPayloadLen(payloadLen)
-	err = ReadAll(pc.conn, packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+payloadLen]) // receive the p type and payload
+	err = ReadAll(pc.conn, packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+payloadLen]) // receive the packet type and payload
 	if err != nil {
 		packet.Release()
 		return nil, err
