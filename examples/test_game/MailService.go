@@ -9,7 +9,12 @@ import (
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb"
+	"github.com/xiaonanln/goworld/kvdb/types"
 	"github.com/xiaonanln/goworld/netutil"
+)
+
+const (
+	END_MAIL_ID = 9999999999
 )
 
 type MailService struct {
@@ -83,7 +88,21 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 // GetMails request from Avatar
 func (s *MailService) GetMails_Server(avatarID common.EntityID, lastMailID int64) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
-	q := kvdb.Find(beginMailKey)
+	endMailKey := s.getMailKey(END_MAIL_ID, avatarID)
+
+	kvdb.GetRange(beginMailKey, endMailKey, func(items []kvdb_types.KVItem, err error) {
+		s.PanicOnError(err)
+
+		var mails []interface{}
+		for _, item := range items { // Parse the mails
+			_, mailId := s.parseMailKey(item.Key) // eid should always equal to avatarID
+			mails = append(mails, []interface{}{
+				mailId, item.Val, // val is the marshalled mail
+			})
+		}
+
+		s.Call(avatarID, "OnGetMails", lastMailID, mails)
+	})
 }
 
 func (s *MailService) genMailID() int64 {
@@ -96,7 +115,16 @@ func (s *MailService) genMailID() int64 {
 }
 
 func (s *MailService) getMailKey(mailID int64, targetID common.EntityID) string {
-	return fmt.Sprintf("mailData$%s$%d", targetID, mailID)
+	return fmt.Sprintf("mail$%s$%010d", targetID, mailID)
+}
+
+func (s *MailService) parseMailKey(mailKey string) (common.EntityID, int) {
+	//	mail$WVKLioYW8i5wAAD9$0000020969
+	eid := common.EntityID(mailKey[5 : 5+common.ENTITYID_LENGTH])
+	mailIdStr := mailKey[5+common.ENTITYID_LENGTH+1:]
+	mailId, err := strconv.Atoi(mailIdStr)
+	s.PanicOnError(err)
+	return eid, mailId
 }
 
 //func (s *MailService) IsPersistent() bool {

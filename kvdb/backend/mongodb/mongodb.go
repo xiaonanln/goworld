@@ -3,7 +3,11 @@ package kvdb_mongo
 import (
 	"gopkg.in/mgo.v2"
 
+	"io"
+
 	"github.com/xiaonanln/goworld/gwlog"
+	. "github.com/xiaonanln/goworld/kvdb/types"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -53,4 +57,34 @@ func (kvdb *MongoKVDB) Get(key string) (val string, err error) {
 	}
 	val = doc[VAL_KEY]
 	return
+}
+
+type MongoKVIterator struct {
+	it *mgo.Iter
+}
+
+func (it *MongoKVIterator) Next() (KVItem, error) {
+	var doc map[string]string
+	ok := it.it.Next(&doc)
+	if ok {
+		return KVItem{
+			Key: doc["_id"],
+			Val: doc["_"],
+		}, nil
+	} else {
+		err := it.it.Close()
+		if err != nil {
+			return KVItem{}, err
+		} else {
+			return KVItem{}, io.EOF
+		}
+	}
+}
+
+func (kvdb *MongoKVDB) Find(key string) Iterator {
+	q := kvdb.c.Find(bson.M{"_id": bson.M{"$gte": key}})
+	it := q.Iter()
+	return &MongoKVIterator{
+		it: it,
+	}
 }

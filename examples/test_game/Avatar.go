@@ -3,10 +3,14 @@ package main
 import (
 	"math/rand"
 
+	"strconv"
+
+	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/typeconv"
 )
 
 type Avatar struct {
@@ -31,6 +35,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("exp", 0)
 	a.Attrs.SetDefault("spaceKind", 1+rand.Intn(100))
 	a.Attrs.SetDefault("lastMailID", 0)
+	a.Attrs.SetDefault("mails", goworld.MapAttr())
 }
 
 func (a *Avatar) IsPersistent() bool {
@@ -102,7 +107,38 @@ func (a *Avatar) OnSendMail_Server(ok bool) {
 
 // Avatar has received a mail, can query now
 func (a *Avatar) NotifyReceiveMail_Server() {
+
+}
+
+func (a *Avatar) GetMails_Client() {
 	a.CallService("MailService", "GetMails", a.ID, a.GetInt("lastMailID"))
+}
+
+func (a *Avatar) OnGetMails_Server(lastMailID int, mails []interface{}) {
+	//gwlog.Info("%s.OnGetMails_Server: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
+	if lastMailID != a.GetInt("lastMailID") {
+		gwlog.Warn("%s.OnGetMails_Server: lastMailID mismatch: local=%v, return=%v", a, a.GetInt("lastMailID"), lastMailID)
+		a.CallClient("OnGetMails", false)
+		return
+	}
+
+	mailsAttr := a.Attrs.GetMapAttr("mails")
+	for _, _item := range mails {
+		item := _item.([]interface{})
+		mailId := int(typeconv.Int(item[0]))
+		if mailId <= a.GetInt("lastMailID") {
+			gwlog.Panicf("mail ID should be increasing")
+		}
+		if mailsAttr.HasKey(strconv.Itoa(mailId)) {
+			gwlog.Panicf("mail %d received multiple times", mailId)
+		}
+		mail := typeconv.String(item[1])
+		mailsAttr.Set(strconv.Itoa(mailId), mail)
+		a.Attrs.Set("lastMailID", mailId)
+		//gwlog.Info("%s has %d mails!", a, mailsAttr.Size())
+	}
+
+	a.CallClient("OnGetMails", true)
 }
 
 //func (a *Avatar) getMailSenderInfo() map[string]interface{} {

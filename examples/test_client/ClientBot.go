@@ -132,7 +132,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 			bot.createSpace(entityid, clientData)
 		} else {
 			// this is a entity
-			bot.createEntity(typeName, entityid, isPlayer)
+			bot.createEntity(typeName, entityid, isPlayer, clientData)
 		}
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
@@ -160,6 +160,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 }
 
 func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, key string, val interface{}) {
+	//gwlog.Info("SET ATTR %s.%v: set %s=%v", entityid, path, key, val)
 	if bot.entities[entityid] == nil {
 		gwlog.Error("entity %s not found")
 	}
@@ -168,6 +169,7 @@ func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, k
 }
 
 func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key string) {
+	//gwlog.Info("DEL ATTR %s.%v: del %s", entityid, path, key)
 	if bot.entities[entityid] == nil {
 		gwlog.Error("entity %s not found")
 	}
@@ -175,9 +177,9 @@ func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key 
 	entity.applyAttrDel(path, key)
 }
 
-func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, isPlayer bool) {
+func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, isPlayer bool, clientData map[string]interface{}) {
 	if bot.entities[entityid] == nil {
-		e := newClientEntity(bot, typeName, entityid, isPlayer)
+		e := newClientEntity(bot, typeName, entityid, isPlayer, clientData)
 		bot.entities[entityid] = e
 		if isPlayer {
 			if bot.player != nil {

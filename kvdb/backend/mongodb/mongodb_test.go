@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+
+	"io"
 )
 
 func TestMongoKVDB_Set(t *testing.T) {
@@ -34,4 +36,37 @@ func TestMongoKVDB_Set(t *testing.T) {
 		}
 	}
 
+}
+
+func TestMongoKVDB_Find(t *testing.T) {
+	kvdb, err := OpenMongoKVDB("mongodb://127.0.0.1:27017/goworld", "goworld", "__kv__")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	beginKey := "1000"
+	endKey := "9999"
+	it := kvdb.Find(beginKey)
+	oldKey := ""
+	for {
+		item, err := it.Next()
+		if item.Key >= endKey {
+			break
+		}
+
+		if err != nil {
+			if err != io.EOF {
+				t.Error(err)
+			}
+
+			break
+		}
+
+		if item.Key <= oldKey { // the keys should be increasing
+			t.Errorf("old key is %s, new key is %s, should be increasing", oldKey, item.Key)
+		}
+
+		println(item.Key, item.Val)
+		oldKey = item.Key
+	}
 }

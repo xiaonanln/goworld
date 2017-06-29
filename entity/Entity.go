@@ -557,3 +557,11 @@ func (e *Entity) OnMigrateIn() {
 		gwlog.Debug("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
 	}
 }
+
+// Some Other Useful Utilities
+
+func (e *Entity) PanicOnError(err error) {
+	if err != nil {
+		gwlog.Panic(err)
+	}
+}

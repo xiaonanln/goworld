@@ -40,12 +40,12 @@ type ClientEntity struct {
 	currentTimeoutTimer   *timer.Timer
 }
 
-func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool) *ClientEntity {
+func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{}) *ClientEntity {
 	e := &ClientEntity{
 		owner:    owner,
 		TypeName: typeName,
 		ID:       entityid,
-		Attrs:    make(ClientAttrs),
+		Attrs:    clientData,
 		IsPlayer: isPlayer,
 		timers:   map[*timer.Timer]bool{},
 	}
@@ -150,7 +150,8 @@ type _Something struct {
 var (
 	DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 100, time.Minute},
-		{"DoSendMail", 100, time.Minute},
+		{"DoSendMail", 50, time.Minute},
+		{"DoGetMails", 50, time.Minute},
 	}
 )
 
@@ -240,6 +241,14 @@ func (e *ClientEntity) DoSendMail() {
 		"c": false,
 		"d": 1231.111,
 	})
+}
+
+func (e *ClientEntity) DoGetMails() {
+	e.CallServer("GetMails")
+}
+
+func (e *ClientEntity) OnGetMails(ok bool) {
+	e.notifyThingDone("DoGetMails")
 }
 
 func (e *ClientEntity) onAccountCreated() {
