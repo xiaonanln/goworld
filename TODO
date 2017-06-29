@@ -5,7 +5,7 @@ TODO: [test_game]
     TODO: Entity movement in space, AOI [move]
 
 # MISC
-TODO: config publicip in config file
+TODO: config publicip in config file, & bind ip & private ip ?
 TODO: destroy entity on client only those entities in AOI
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 

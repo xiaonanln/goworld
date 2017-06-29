@@ -44,6 +44,7 @@ type Entity struct {
 		SpaceID     EntityID
 		RequestTime int64
 	}
+	filterProps map[string]interface{}
 }
 
 // Functions declared by IEntity can be override in Entity subclasses
@@ -145,6 +146,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
+	e.filterProps = map[string]interface{}{}
 
 	attrs := NewMapAttr()
 	attrs.owner = e
@@ -556,6 +558,28 @@ func (e *Entity) OnMigrateIn() {
 	if consts.DEBUG_MIGRATE {
 		gwlog.Debug("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
 	}
+}
+
+//
+func (e *Entity) SetFilterProp(key string, value interface{}) {
+	curval := e.filterProps[key]
+	if curval == value {
+		return // not changed
+	}
+
+	e.filterProps[key] = value
+	// send filter property to client
+	if e.client != nil {
+		dispatcher_client.GetDispatcherClientForSend().SendSetFilterPropToClient(e.client.serverid, e.client.clientid, key, value)
+	}
+}
+
+func (e *Entity) CallFitleredClients(key string, value interface{}, method string, args ...interface{}) {
+
+}
+
+func (e *Entity) CallFilteredEntities(key string, value interface{}, method string, args ...interface{}) {
+
 }
 
 // Some Other Useful Utilities
