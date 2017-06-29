@@ -16,6 +16,8 @@ import (
 
 	"fmt"
 
+	"runtime"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/entity"
@@ -56,6 +58,11 @@ func Run(delegate IServerDelegate) {
 	}
 
 	serverConfig := config.GetServer(serverid)
+	if serverConfig.GoMaxProcs > 0 {
+		gwlog.Info("SET GOMAXPROCS = %d", serverConfig.GoMaxProcs)
+		runtime.GOMAXPROCS(serverConfig.GoMaxProcs)
+	}
+
 	setupGWLog(logLevel, serverConfig)
 
 	storage.Initialize()

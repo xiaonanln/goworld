@@ -44,6 +44,7 @@ type ServerConfig struct {
 	PProfIp      string
 	PProfPort    int
 	LogLevel     string
+	GoMaxProcs   int
 }
 
 type DispatcherConfig struct {
@@ -191,6 +192,7 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.SaveInterval = DEFAULT_SAVE_ITNERVAL
 	scc.PProfIp = DEFAULT_PPROF_IP
 	scc.PProfPort = 0 // pprof not enabled by default
+	scc.GoMaxProcs = 0
 
 	_readServerConfig(section, scc)
 }
@@ -226,6 +228,8 @@ func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 			sc.PProfPort = key.MustInt(sc.PProfPort)
 		} else if name == "log_level" {
 			sc.LogLevel = key.MustString(sc.LogLevel)
+		} else if name == "gomaxprocs" {
+			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
