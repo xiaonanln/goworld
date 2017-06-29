@@ -5,9 +5,14 @@ TODO: [test_game]
     TODO: Chat system [chat]
     TODO: Entity movement in space, AOI [move]
 
+# MISC
+TODO: config publicip in config file
+TODO: destroy entity on client only those entities in AOI
+
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 
 # Subsystem to be implemented
+TODO: Mail System
 TODO: Entity Attributes
 TODO: Example chatrooms with multiple channels: world, prof, club, ...
 

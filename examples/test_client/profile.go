@@ -45,7 +45,7 @@ func recordThingTime(thing string, d time.Duration) {
 func dumpThingProfile() {
 	for thing, count := range thingCounts {
 		totalTime := thingTimes[thing]
-		fmt.Fprintf(os.Stdout, "> %s *%d AVG %s RANGE %s ~ %s\n", thing, count, totalTime/time.Duration(count), thingMinTime[thing], thingMaxTime[thing])
+		fmt.Fprintf(os.Stdout, "> %-32s *%d AVG %s RANGE %s ~ %s\n", thing, count, totalTime/time.Duration(count), thingMinTime[thing], thingMaxTime[thing])
 	}
 	fmt.Fprintln(os.Stdout, "===============================================================================")
 }

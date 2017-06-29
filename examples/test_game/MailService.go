@@ -10,6 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb"
 	"github.com/xiaonanln/goworld/netutil"
+	"gopkg.in/mgo.v2"
 )
 
 type MailService struct {
@@ -54,7 +55,7 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 	}
 
 	mailID := s.genMailID()
-	mailKey := s.getMailDataKeyPrefix(mailID, targetID)
+	mailKey := s.getMailKey(mailID, targetID)
 
 	mail := map[string]interface{}{
 		"senderID":   senderID,
@@ -73,11 +74,18 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 			gwlog.Panicf("Put mail to kvdb failed: %s", err)
 			s.Call(senderID, "OnSendMail", false)
 		}
-		gwlog.Debug("Put mail %s to KVDB succeed", mailID)
+		gwlog.Debug("Put mail %s to KVDB succeed", mailKey)
 		s.Call(senderID, "OnSendMail", true)
 		// tell the target that you have got a mail
 		s.Call(targetID, "NotifyReceiveMail")
 	})
+}
+
+// GetMails request from Avatar
+func (s *MailService) GetMails_Server(avatarID common.EntityID, lastMailID int64) {
+	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
+	q := kvdb.Find(beginMailKey)
+	mgo.Collection{}
 }
 
 func (s *MailService) genMailID() int64 {
@@ -89,8 +97,8 @@ func (s *MailService) genMailID() int64 {
 	return lastMailID
 }
 
-func (s *MailService) getMailDataKeyPrefix(mailID int64, targetID common.EntityID) string {
-	return fmt.Sprintf("mailData$%s$%d", targetID, targetID)
+func (s *MailService) getMailKey(mailID int64, targetID common.EntityID) string {
+	return fmt.Sprintf("mailData$%s$%d", targetID, mailID)
 }
 
 //func (s *MailService) IsPersistent() bool {

@@ -30,7 +30,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("level", 1)
 	a.Attrs.SetDefault("exp", 0)
 	a.Attrs.SetDefault("spaceKind", 1+rand.Intn(100))
-	a.Attrs.SetDefault("lastMailId", 0)
+	a.Attrs.SetDefault("lastMailID", 0)
 }
 
 func (a *Avatar) IsPersistent() bool {
@@ -102,7 +102,7 @@ func (a *Avatar) OnSendMail_Server(ok bool) {
 
 // Avatar has received a mail, can query now
 func (a *Avatar) NotifyReceiveMail_Server() {
-
+	a.CallService("MailService", "GetMails", a.ID, a.GetInt("lastMailID"))
 }
 
 //func (a *Avatar) getMailSenderInfo() map[string]interface{} {
