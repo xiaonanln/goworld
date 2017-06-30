@@ -561,16 +561,19 @@ func (e *Entity) OnMigrateIn() {
 }
 
 //
-func (e *Entity) SetFilterProp(key string, value interface{}) {
-	curval := e.filterProps[key]
-	if curval == value {
+func (e *Entity) SetFilterProp(key string, val string) {
+	if consts.DEBUG_FILTER_PROP {
+		gwlog.Debug("%s.SetFilterProp: %s = %s", e, key, val)
+	}
+	curval, ok := e.filterProps[key]
+	if ok && curval == val {
 		return // not changed
 	}
 
-	e.filterProps[key] = value
+	e.filterProps[key] = val
 	// send filter property to client
 	if e.client != nil {
-		dispatcher_client.GetDispatcherClientForSend().SendSetFilterPropToClient(e.client.serverid, e.client.clientid, key, value)
+		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.serverid, e.client.clientid, key, val)
 	}
 }
 

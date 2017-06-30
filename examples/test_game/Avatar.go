@@ -25,6 +25,11 @@ func (a *Avatar) OnCreated() {
 
 	a.setDefaultAttrs()
 
+	gwlog.Info("Avatar %s on created: client=%s", a, a.GetClient())
+
+	a.SetFilterProp("spaceKind", strconv.Itoa(a.GetInt("spaceKind")))
+	a.SetFilterProp("level", strconv.Itoa(a.GetInt("level")))
+
 	//gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 }
@@ -66,6 +71,7 @@ func (a *Avatar) OnClientConnected() {
 	//subattr = a.Attrs.PopMapAttr("subattr")
 	//a.Attrs.Set("subattr", subattr)
 
+	a.SetFilterProp("online", "1")
 	a.enterSpace(a.GetInt("spaceKind"))
 }
 

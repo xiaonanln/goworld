@@ -180,6 +180,18 @@ func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(sid uint16, clientid 
 	return
 }
 
+func (gwc *GoWorldConnection) SendSetClientFilterProp(sid uint16, clientid ClientID, key, val string) (err error) {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_SET_CLIENT_FILTER_PROP)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendVarStr(key)
+	packet.AppendVarStr(val)
+	err = gwc.SendPacket(packet)
+	packet.Release()
+	return
+}
+
 func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_MIGRATE_REQUEST)

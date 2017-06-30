@@ -73,6 +73,8 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
 			dcp.owner.HandleNotifyClientDisconnected(dcp, pkt)
+		} else if msgtype == proto.MT_SET_CLIENT_FILTER_PROP {
+			dcp.owner.HandleSetClientFilterProp(dcp, pkt)
 		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {

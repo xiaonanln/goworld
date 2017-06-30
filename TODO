@@ -20,6 +20,7 @@ TODO: Merge multiple packets instead of Buffered Connection (need benchmark)
 TODO: Strip serverid and clientid for packets sent to clients because useless
 
 # Future works
+TODO: use protobuf
 TODO: ListAttr
 TODO: remove if ... else if ... else if ... else if ...
 TODO: make sure entity is destroyed if creation fails

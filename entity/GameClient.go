@@ -5,6 +5,7 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -52,7 +53,9 @@ func (client *GameClient) SendNotifyAttrChange(entityID common.EntityID, path []
 	if client == nil {
 		return
 	}
-	gwlog.Debug("%s.SendNotifyAttrChange: entityID=%s, path=%s, %s=%v", client, entityID, path, key, val)
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("%s.SendNotifyAttrChange: entityID=%s, path=%s, %s=%v", client, entityID, path, key, val)
+	}
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrChangeOnClient(client.serverid, client.clientid, entityID, path, key, val)
 }
 
@@ -60,6 +63,8 @@ func (client *GameClient) SendNotifyAttrDel(entityID common.EntityID, path []str
 	if client == nil {
 		return
 	}
-	gwlog.Debug("%s.SendNotifyAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
+	if consts.DEBUG_CLIENTS {
+		gwlog.Debug("%s.SendNotifyAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
+	}
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelOnClient(client.serverid, client.clientid, entityID, path, key)
 }

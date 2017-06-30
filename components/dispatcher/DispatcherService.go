@@ -471,6 +471,11 @@ func (service *DispatcherService) HandleCallEntityMethodOnClient(dcp *Dispatcher
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
+func (service *DispatcherService) HandleSetClientFilterProp(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
+}
+
 func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
 	spaceID := pkt.ReadEntityID() // TODO: no need spaceID?

@@ -34,4 +34,5 @@ const (
 	DEBUG_CLIENTS      = false
 	DEBUG_MIGRATE      = false
 	DEBUG_PACKET_ALLOC = false
+	DEBUG_FILTER_PROP  = true
 )

@@ -14,7 +14,8 @@ import (
 
 type ClientProxy struct {
 	proto.GoWorldConnection
-	clientid common.ClientID
+	clientid    common.ClientID
+	filterProps map[string]string
 }
 
 func newClientProxy(conn net.Conn) *ClientProxy {
@@ -22,6 +23,7 @@ func newClientProxy(conn net.Conn) *ClientProxy {
 		//GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*10), false), // using buffered connection for client proxy
 		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
 		clientid:          common.GenClientID(), // each client has its unique clientid
+		filterProps:       map[string]string{},
 	}
 }
 

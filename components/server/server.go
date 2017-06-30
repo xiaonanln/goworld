@@ -134,16 +134,16 @@ func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
 
 }
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
-	if msgtype < proto.MT_GATE_SERVICE_MSG_TYPE_START {
-		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
-			msgtype: msgtype,
-			packet:  packet,
-		}
-	} else {
+	if msgtype >= proto.MT_GATE_SERVICE_MSG_TYPE_START && msgtype <= proto.MT_GATE_SERVICE_MSG_TYPE_STOP {
 		gateService.packetQueue.Push(packetQueueItem{
 			msgtype: msgtype,
 			packet:  packet,
 		})
+	} else {
+		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
+			msgtype: msgtype,
+			packet:  packet,
+		}
 	}
 }
 
