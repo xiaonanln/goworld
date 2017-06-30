@@ -1,4 +1,4 @@
-package gwutil
+package gwutils
 
 import "github.com/google/btree"
 

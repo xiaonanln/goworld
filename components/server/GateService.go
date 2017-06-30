@@ -15,7 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/gwutil"
+	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
@@ -27,7 +27,7 @@ type GateService struct {
 	packetQueue       sync_queue.SyncQueue
 
 	filterTreesLock sync.Mutex
-	filterTrees     map[string]*gwutil.FilterTree
+	filterTrees     map[string]*gwutils.FilterTree
 }
 
 func newGateService() *GateService {
@@ -35,7 +35,7 @@ func newGateService() *GateService {
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies: map[common.ClientID]*ClientProxy{},
 		packetQueue:   sync_queue.NewSyncQueue(),
-		filterTrees:   map[string]*gwutil.FilterTree{},
+		filterTrees:   map[string]*gwutils.FilterTree{},
 	}
 }
 
@@ -128,7 +128,7 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	gs.filterTreesLock.Lock()
 	ft, ok := gs.filterTrees[key]
 	if !ok {
-		ft = gwutil.NewFilterTree()
+		ft = gwutils.NewFilterTree()
 		gs.filterTrees[key] = ft
 	}
 

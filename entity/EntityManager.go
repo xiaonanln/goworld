@@ -11,7 +11,6 @@ import (
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/gwutil"
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/storage"
 )
@@ -26,7 +25,7 @@ type EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[ClientID]EntityID
 	registeredServices map[string]EntityIDSet
-	filterTrees        map[string]*gwutil.FilterTree
+	filterTrees        map[string]*gwutils.FilterTree
 }
 
 func newEntityManager() *EntityManager {
@@ -34,7 +33,7 @@ func newEntityManager() *EntityManager {
 		entities:           EntityMap{},
 		ownerOfClient:      map[ClientID]EntityID{},
 		registeredServices: map[string]EntityIDSet{},
-		filterTrees:        map[string]*gwutil.FilterTree{},
+		//filterTrees:        map[string]*gwutils.FilterTree{}, //  filter props only supported in clients
 	}
 }
 
@@ -106,16 +105,6 @@ func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
 		r -= 1
 	}
 	return "" // never goes here
-}
-
-func (em *EntityManager) onSetFilterProp(entity *Entity, key string, val string) {
-	ft, ok := em.filterTrees[key]
-	if !ok {
-		ft = gwutil.NewFilterTree()
-		em.filterTrees[key] = ft
-	}
-
-	// lndev
 }
 
 func RegisterEntity(typeName string, entityPtr IEntity) {

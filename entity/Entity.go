@@ -572,18 +572,17 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Debug("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
 	}
+
 	curval, ok := e.filterProps[key]
 	if ok && curval == val {
 		return // not changed
 	}
 
 	e.filterProps[key] = val
-	entityManager.onSetFilterProp(e, key, val)
 	// send filter property to client
 	if e.client != nil {
 		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.serverid, e.client.clientid, key, val)
 	}
-
 }
 
 func (e *Entity) CallFitleredClients(key string, value interface{}, method string, args ...interface{}) {
