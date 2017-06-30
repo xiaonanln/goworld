@@ -5,8 +5,10 @@ import (
 	"io"
 	"net"
 	"reflect"
-	"runtime/debug"
 
+	"os"
+
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -124,6 +126,9 @@ func ServeForever(f interface{}, args ...interface{}) {
 
 	for {
 		runServe(fval, argVals)
+		if consts.DEBUG_MODE { // we just quit in debug mode
+			os.Exit(2)
+		}
 	}
 }
 
@@ -131,8 +136,7 @@ func runServe(f reflect.Value, args []reflect.Value) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			gwlog.Error("ServeForever: func %v quited with error %v", f, err)
-			debug.PrintStack()
+			gwlog.TraceError("ServeForever: func %v quited with error %v", f, err)
 		}
 	}()
 

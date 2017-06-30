@@ -20,6 +20,8 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/consts"
+	"os"
 )
 
 type ClientBot struct {
@@ -156,6 +158,9 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		bot.callEntityMethod(entityID, method, args)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
+		if consts.DEBUG_MODE{
+			os.Exit(2)
+		}
 	}
 }
 

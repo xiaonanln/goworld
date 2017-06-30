@@ -7,6 +7,8 @@ import (
 
 	"sync"
 
+	"os"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
@@ -32,6 +34,7 @@ func newGateService() *GateService {
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies: map[common.ClientID]*ClientProxy{},
 		packetQueue:   sync_queue.NewSyncQueue(),
+		filterTrees:   map[string]*FilterTree{},
 	}
 }
 
@@ -92,7 +95,6 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	gs.clientProxiesLock.RLock()
 	clientproxy := gs.clientProxies[clientid]
 	gs.clientProxiesLock.RUnlock()
-
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 		// message types that should be redirected to client proxy
 		if clientproxy != nil {
@@ -104,26 +106,29 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	} else if msgtype == proto.MT_SET_CLIENT_FILTER_PROP {
 		// set filter property
 		gs.handleSetClientFilterProp(clientproxy, packet)
+	} else if msgtype == proto.MT_CLEAR_CLIENT_FILTER_PROPS {
+		gs.handleClearClientFilterProps(clientproxy, packet)
 	} else {
 		gwlog.Panicf("%s: unknown msg type: %d", gs, msgtype)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 
 	packet.Release()
-	//typeName := packet.ReadVarStr()
-	//entityid := packet.ReadEntityID()
 }
 
-func (service *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packet *netutil.Packet) {
+func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packet *netutil.Packet) {
+	gwlog.Debug("%s.handleSetClientFilterProp: clientproxy=%s", gs, clientproxy)
 	key := packet.ReadVarStr()
 	val := packet.ReadVarStr()
 	clientid := clientproxy.clientid
 
-	service.filterTreesLock.Lock()
-
-	ft, ok := service.filterTrees[key]
+	gs.filterTreesLock.Lock()
+	ft, ok := gs.filterTrees[key]
 	if !ok {
 		ft = newFilterTree()
-		service.filterTrees[key] = ft
+		gs.filterTrees[key] = ft
 	}
 
 	oldVal, ok := clientproxy.filterProps[key]
@@ -133,12 +138,32 @@ func (service *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, 
 		}
 		ft.Remove(string(clientid), oldVal)
 	}
-
 	clientproxy.filterProps[key] = val
 	ft.Insert(string(clientid), val)
-	service.filterTreesLock.Unlock()
+	gs.filterTreesLock.Unlock()
+
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Info("SET CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
+	}
+}
+
+func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, packet *netutil.Packet) {
+	gwlog.Debug("%s.handleClearClientFilterProps: clientproxy=%s", gs, clientproxy)
+	clientid := clientproxy.clientid
+
+	gs.filterTreesLock.Lock()
+
+	for key, val := range clientproxy.filterProps {
+		ft, ok := gs.filterTrees[key]
+		if !ok {
+			continue
+		}
+		ft.Remove(string(clientid), val)
+	}
+	gs.filterTreesLock.Unlock()
+
+	if consts.DEBUG_FILTER_PROP {
+		gwlog.Info("CLEAR CLIENT %s FILTER PROPS", clientproxy)
 	}
 }
 

@@ -36,3 +36,8 @@ const (
 	DEBUG_PACKET_ALLOC = false
 	DEBUG_FILTER_PROP  = true
 )
+
+//  System level configurations
+const (
+	DEBUG_MODE = true
+)

@@ -110,7 +110,7 @@ func serveDispatcherClient() {
 		}
 
 		if consts.DEBUG_PACKETS {
-			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", msgtype, pkt.Payload())
+			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dispatcherClient, msgtype, pkt.Payload())
 		}
 		dispatcherClientDelegate.HandleDispatcherClientPacket(msgtype, pkt)
 	}

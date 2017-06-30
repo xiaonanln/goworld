@@ -97,6 +97,9 @@ func (gs *GameService) run() {
 				gs.HandleNotifyAllServersConnected()
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
+				if consts.DEBUG_MODE {
+					os.Exit(2)
+				}
 			}
 
 			pkt.Release()

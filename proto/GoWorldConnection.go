@@ -192,6 +192,16 @@ func (gwc *GoWorldConnection) SendSetClientFilterProp(sid uint16, clientid Clien
 	return
 }
 
+func (gwc *GoWorldConnection) SendClearClientFilterProp(sid uint16, clientid ClientID) (err error) {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_CLEAR_CLIENT_FILTER_PROPS)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	err = gwc.SendPacket(packet)
+	packet.Release()
+	return
+}
+
 func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_MIGRATE_REQUEST)

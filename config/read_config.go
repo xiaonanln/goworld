@@ -17,6 +17,8 @@ import (
 
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
+	"github.com/xiaonanln/goworld/consts"
+	"os"
 )
 
 const (
@@ -322,6 +324,9 @@ func validateKVDBConfig(config *KVDBConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
+		if consts.DEBUG_MODE{
+			os.Exit(2)
+		}
 	}
 }
 
@@ -349,5 +354,8 @@ func validateStorageConfig(config *StorageConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
+		if consts.DEBUG_MODE{
+			os.Exit(2)
+		}
 	}
 }

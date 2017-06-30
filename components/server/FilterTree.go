@@ -1,10 +1,6 @@
 package server
 
-import (
-	"sync"
-
-	"github.com/google/btree"
-)
+import "github.com/google/btree"
 
 const (
 	FILTER_TREE_DEGREE = 2
@@ -12,7 +8,6 @@ const (
 
 type FilterTree struct {
 	btree *btree.BTree
-	sync.RWMutex
 }
 
 func newFilterTree() *FilterTree {

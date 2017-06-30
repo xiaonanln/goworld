@@ -3,6 +3,8 @@ package storage
 import (
 	"time"
 
+	"os"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
@@ -95,6 +97,9 @@ func Initialize() {
 		storageEngine, err = entity_storage_mongodb.OpenMongoDB(cfg.Url, cfg.DB)
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
+		if consts.DEBUG_MODE{
+			os.Exit(2)
+		}
 	}
 
 	if err != nil {
@@ -108,6 +113,9 @@ func storageRoutine() {
 	defer func() {
 		err := recover()
 		gwlog.TraceError("storage routine paniced: %s, restarting ...", err)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 		go storageRoutine() // restart the storage routine
 	}()
 

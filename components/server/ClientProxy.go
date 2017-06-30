@@ -10,6 +10,8 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/consts"
+	"os"
 )
 
 type ClientProxy struct {
@@ -54,6 +56,9 @@ func (cp *ClientProxy) serve() {
 			cp.handleCallEntityMethodFromClient(pkt)
 		} else {
 			gwlog.Panicf("unknown message type from client: %d", msgtype)
+			if consts.DEBUG_MODE{
+				os.Exit(2)
+			}
 		}
 
 		pkt.Release()

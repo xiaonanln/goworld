@@ -44,7 +44,7 @@ type Entity struct {
 		SpaceID     EntityID
 		RequestTime int64
 	}
-	filterProps map[string]interface{}
+	filterProps map[string]string
 }
 
 // Functions declared by IEntity can be override in Entity subclasses
@@ -146,7 +146,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
-	e.filterProps = map[string]interface{}{}
+	e.filterProps = map[string]string{}
 
 	attrs := NewMapAttr()
 	attrs.owner = e
@@ -362,6 +362,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	if oldClient != nil {
 		// send destroy entity to client
 		entityManager.onEntityLoseClient(oldClient.clientid)
+		dispatcher_client.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.serverid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
 			oldClient.SendDestroyEntity(neighbor)
@@ -375,8 +376,14 @@ func (e *Entity) SetClient(client *GameClient) {
 		entityManager.onEntityGetClient(e.ID, client.clientid)
 
 		client.SendCreateEntity(e, true)
+
 		for neighbor := range e.Neighbors() {
 			client.SendCreateEntity(neighbor, false)
+		}
+
+		// set all filter properties to client
+		for key, val := range e.filterProps {
+			dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(client.serverid, client.clientid, key, val)
 		}
 	}
 
@@ -563,7 +570,7 @@ func (e *Entity) OnMigrateIn() {
 //
 func (e *Entity) SetFilterProp(key string, val string) {
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debug("%s.SetFilterProp: %s = %s", e, key, val)
+		gwlog.Debug("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
 	}
 	curval, ok := e.filterProps[key]
 	if ok && curval == val {

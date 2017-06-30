@@ -5,6 +5,8 @@ import (
 
 	"fmt"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
@@ -75,6 +77,8 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleNotifyClientDisconnected(dcp, pkt)
 		} else if msgtype == proto.MT_SET_CLIENT_FILTER_PROP {
 			dcp.owner.HandleSetClientFilterProp(dcp, pkt)
+		} else if msgtype == proto.MT_CLEAR_CLIENT_FILTER_PROPS {
+			dcp.owner.HandleClearClientFilterProps(dcp, pkt)
 		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
@@ -94,6 +98,9 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleSetServerID(dcp, pkt, serverid, isReconnect)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
+			if consts.DEBUG_MODE {
+				os.Exit(2)
+			}
 		}
 
 		pkt.Release()

@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/storage"
+	"os"
 )
 
 var (
@@ -129,6 +130,9 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
+		if consts.DEBUG_MODE{
+			os.Exit(2)
+		}
 	}
 
 	if entityID == "" {

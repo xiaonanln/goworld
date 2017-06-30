@@ -60,7 +60,8 @@ func (pc PacketConnection) NewPacket() *Packet {
 
 func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s SEND PACKET: %v", pc, packet.bytes[:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+		gwlog.Debug("%s SEND PACKET: msgtype=%v, payload=%v", pc, PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
+			packet.bytes[PREPAYLOAD_SIZE+2:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
 	if packet.refcount <= 0 {
 		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
