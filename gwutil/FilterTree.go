@@ -1,4 +1,4 @@
-package server
+package gwutil
 
 import "github.com/google/btree"
 
@@ -10,7 +10,7 @@ type FilterTree struct {
 	btree *btree.BTree
 }
 
-func newFilterTree() *FilterTree {
+func NewFilterTree() *FilterTree {
 	return &FilterTree{
 		btree: btree.New(FILTER_TREE_DEGREE),
 	}

@@ -578,10 +578,12 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	}
 
 	e.filterProps[key] = val
+	entityManager.onSetFilterProp(e, key, val)
 	// send filter property to client
 	if e.client != nil {
 		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.serverid, e.client.clientid, key, val)
 	}
+
 }
 
 func (e *Entity) CallFitleredClients(key string, value interface{}, method string, args ...interface{}) {

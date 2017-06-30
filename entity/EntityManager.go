@@ -5,13 +5,15 @@ import (
 
 	"math/rand"
 
+	"os"
+
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/gwutil"
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/storage"
-	"os"
 )
 
 var (
@@ -24,6 +26,7 @@ type EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[ClientID]EntityID
 	registeredServices map[string]EntityIDSet
+	filterTrees        map[string]*gwutil.FilterTree
 }
 
 func newEntityManager() *EntityManager {
@@ -31,6 +34,7 @@ func newEntityManager() *EntityManager {
 		entities:           EntityMap{},
 		ownerOfClient:      map[ClientID]EntityID{},
 		registeredServices: map[string]EntityIDSet{},
+		filterTrees:        map[string]*gwutil.FilterTree{},
 	}
 }
 
@@ -104,6 +108,16 @@ func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
 	return "" // never goes here
 }
 
+func (em *EntityManager) onSetFilterProp(entity *Entity, key string, val string) {
+	ft, ok := em.filterTrees[key]
+	if !ok {
+		ft = gwutil.NewFilterTree()
+		em.filterTrees[key] = ft
+	}
+
+	// lndev
+}
+
 func RegisterEntity(typeName string, entityPtr IEntity) {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
@@ -130,7 +144,7 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
-		if consts.DEBUG_MODE{
+		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
 	}
