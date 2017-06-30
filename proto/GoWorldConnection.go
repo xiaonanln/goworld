@@ -182,7 +182,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(sid uint16, clientid 
 
 func (gwc *GoWorldConnection) SendSetClientFilterProp(sid uint16, clientid ClientID, key, val string) (err error) {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_SET_CLIENT_FILTER_PROP)
+	packet.AppendUint16(MT_SET_CLIENTPROXY_FILTER_PROP)
 	packet.AppendUint16(sid)
 	packet.AppendClientID(clientid)
 	packet.AppendVarStr(key)
@@ -194,7 +194,7 @@ func (gwc *GoWorldConnection) SendSetClientFilterProp(sid uint16, clientid Clien
 
 func (gwc *GoWorldConnection) SendClearClientFilterProp(sid uint16, clientid ClientID) (err error) {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_CLEAR_CLIENT_FILTER_PROPS)
+	packet.AppendUint16(MT_CLEAR_CLIENTPROXY_FILTER_PROPS)
 	packet.AppendUint16(sid)
 	packet.AppendClientID(clientid)
 	err = gwc.SendPacket(packet)

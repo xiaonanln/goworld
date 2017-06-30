@@ -103,10 +103,10 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 			// client already disconnected, but the game service seems not knowing it, so tell it
 			dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 		}
-	} else if msgtype == proto.MT_SET_CLIENT_FILTER_PROP {
+	} else if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
 		// set filter property
 		gs.handleSetClientFilterProp(clientproxy, packet)
-	} else if msgtype == proto.MT_CLEAR_CLIENT_FILTER_PROPS {
+	} else if msgtype == proto.MT_CLEAR_CLIENTPROXY_FILTER_PROPS {
 		gs.handleClearClientFilterProps(clientproxy, packet)
 	} else {
 		gwlog.Panicf("%s: unknown msg type: %d", gs, msgtype)
