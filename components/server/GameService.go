@@ -41,6 +41,10 @@ func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
 }
 
 func (gs *GameService) run() {
+	netutil.ServeForever(gs.serveRoutine)
+}
+
+func (gs *GameService) serveRoutine() {
 	cfg := config.GetServer(serverid)
 	gs.config = cfg
 	fmt.Fprintf(os.Stderr, "Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))

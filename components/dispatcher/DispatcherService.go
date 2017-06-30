@@ -471,14 +471,18 @@ func (service *DispatcherService) HandleCallEntityMethodOnClient(dcp *Dispatcher
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
-func (service *DispatcherService) HandleSetClientFilterProp(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+func (service *DispatcherService) HandleSetClientProxyFilterProp(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
-func (service *DispatcherService) HandleClearClientFilterProps(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+func (service *DispatcherService) HandleClearClientProxyFilterProps(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
+}
+
+func (service *DispatcherService) HandleCallFilteredClientProxies(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	service.broadcastToDispatcherClients(pkt)
 }
 
 func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProxy, pkt *netutil.Packet) {

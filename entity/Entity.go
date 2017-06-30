@@ -585,12 +585,10 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	}
 }
 
-func (e *Entity) CallFitleredClients(key string, value interface{}, method string, args ...interface{}) {
-
-}
-
-func (e *Entity) CallFilteredEntities(key string, value interface{}, method string, args ...interface{}) {
-
+// Call the filtered clients with prop key = value
+// The message is broadcast to filtered clientproxies directly without going through entities
+func (e *Entity) CallFitleredClients(key string, val string, method string, args ...interface{}) {
+	dispatcher_client.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
 // Some Other Useful Utilities

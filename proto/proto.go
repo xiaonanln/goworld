@@ -42,6 +42,7 @@ const ( // Message types that should be handled by GateService
 
 	MT_SET_CLIENTPROXY_FILTER_PROP    = 1000 + iota
 	MT_CLEAR_CLIENTPROXY_FILTER_PROPS = 1000 + iota
+	MT_CALL_FILTERED_CLIENTPROXIES    = 1000 + iota
 
 	MT_GATE_SERVICE_MSG_TYPE_STOP = 1999
 )

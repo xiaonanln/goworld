@@ -71,14 +71,16 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleMigrateRequest(dcp, pkt)
 		} else if msgtype == proto.MT_REAL_MIGRATE {
 			dcp.owner.HandleRealMigrate(dcp, pkt)
+		} else if msgtype == proto.MT_CALL_FILTERED_CLIENTPROXIES {
+			dcp.owner.HandleCallFilteredClientProxies(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
 			dcp.owner.HandleNotifyClientDisconnected(dcp, pkt)
 		} else if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
-			dcp.owner.HandleSetClientFilterProp(dcp, pkt)
+			dcp.owner.HandleSetClientProxyFilterProp(dcp, pkt)
 		} else if msgtype == proto.MT_CLEAR_CLIENTPROXY_FILTER_PROPS {
-			dcp.owner.HandleClearClientFilterProps(dcp, pkt)
+			dcp.owner.HandleClearClientProxyFilterProps(dcp, pkt)
 		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {

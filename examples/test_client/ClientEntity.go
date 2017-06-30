@@ -152,6 +152,7 @@ var (
 		{"DoEnterRandomSpace", 100, time.Minute},
 		{"DoSendMail", 50, time.Minute},
 		{"DoGetMails", 50, time.Minute},
+		{"DoSayInWorldChannel", 50, time.Minute},
 	}
 )
 
@@ -249,6 +250,11 @@ func (e *ClientEntity) DoGetMails() {
 
 func (e *ClientEntity) OnGetMails(ok bool) {
 	e.notifyThingDone("DoGetMails")
+}
+
+func (e *ClientEntity) DoSayInWorldChannel() {
+	channel := "world"
+	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
 }
 
 func (e *ClientEntity) onAccountCreated() {

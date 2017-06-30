@@ -25,7 +25,6 @@ type EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[ClientID]EntityID
 	registeredServices map[string]EntityIDSet
-	filterTrees        map[string]*gwutils.FilterTree
 }
 
 func newEntityManager() *EntityManager {
@@ -33,7 +32,6 @@ func newEntityManager() *EntityManager {
 		entities:           EntityMap{},
 		ownerOfClient:      map[ClientID]EntityID{},
 		registeredServices: map[string]EntityIDSet{},
-		//filterTrees:        map[string]*gwutils.FilterTree{}, //  filter props only supported in clients
 	}
 }
 

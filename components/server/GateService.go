@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
 )
@@ -27,7 +26,7 @@ type GateService struct {
 	packetQueue       sync_queue.SyncQueue
 
 	filterTreesLock sync.Mutex
-	filterTrees     map[string]*gwutils.FilterTree
+	filterTrees     map[string]*FilterTree
 }
 
 func newGateService() *GateService {
@@ -35,7 +34,7 @@ func newGateService() *GateService {
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies: map[common.ClientID]*ClientProxy{},
 		packetQueue:   sync_queue.NewSyncQueue(),
-		filterTrees:   map[string]*gwutils.FilterTree{},
+		filterTrees:   map[string]*FilterTree{},
 	}
 }
 
@@ -75,7 +74,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 			if consts.DEBUG_FILTER_PROP {
 				gwlog.Info("DROP CLIENT %s FILTER PROP: %s = %s", cp, key, val)
 			}
-			ft.Remove(string(cp.clientid), val)
+			ft.Remove(cp.clientid, val)
 		}
 	}
 	gs.filterTreesLock.Unlock()
@@ -90,13 +89,15 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet=%v", gs, msgtype, packet.Payload())
 	}
-	_ = packet.ReadUint16() // sid
-	clientid := packet.ReadClientID()
-
-	gs.clientProxiesLock.RLock()
-	clientproxy := gs.clientProxies[clientid]
-	gs.clientProxiesLock.RUnlock()
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
+
+		_ = packet.ReadUint16() // sid
+		clientid := packet.ReadClientID()
+
+		gs.clientProxiesLock.RLock()
+		clientproxy := gs.clientProxies[clientid]
+		gs.clientProxiesLock.RUnlock()
+
 		// message types that should be redirected to client proxy
 		if clientproxy != nil {
 			clientproxy.SendPacket(packet)
@@ -104,11 +105,31 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 			// client already disconnected, but the game service seems not knowing it, so tell it
 			dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 		}
+	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTPROXIES {
+		gs.handleCallFilteredClientProxies(packet)
 	} else if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
 		// set filter property
-		gs.handleSetClientFilterProp(clientproxy, packet)
+		_ = packet.ReadUint16() // sid // TODO: bad code style here
+		clientid := packet.ReadClientID()
+
+		gs.clientProxiesLock.RLock()
+		clientproxy := gs.clientProxies[clientid]
+		gs.clientProxiesLock.RUnlock()
+
+		if clientproxy != nil {
+			gs.handleSetClientFilterProp(clientproxy, packet)
+		}
 	} else if msgtype == proto.MT_CLEAR_CLIENTPROXY_FILTER_PROPS {
-		gs.handleClearClientFilterProps(clientproxy, packet)
+		_ = packet.ReadUint16() // sid
+		clientid := packet.ReadClientID()
+
+		gs.clientProxiesLock.RLock()
+		clientproxy := gs.clientProxies[clientid]
+		gs.clientProxiesLock.RUnlock()
+
+		if clientproxy != nil {
+			gs.handleClearClientFilterProps(clientproxy, packet)
+		}
 	} else {
 		gwlog.Panicf("%s: unknown msg type: %d", gs, msgtype)
 		if consts.DEBUG_MODE {
@@ -128,7 +149,7 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	gs.filterTreesLock.Lock()
 	ft, ok := gs.filterTrees[key]
 	if !ok {
-		ft = gwutils.NewFilterTree()
+		ft = NewFilterTree()
 		gs.filterTrees[key] = ft
 	}
 
@@ -137,10 +158,10 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 		if consts.DEBUG_FILTER_PROP {
 			gwlog.Info("REMOVE CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
 		}
-		ft.Remove(string(clientid), oldVal)
+		ft.Remove(clientid, oldVal)
 	}
 	clientproxy.filterProps[key] = val
-	ft.Insert(string(clientid), val)
+	ft.Insert(clientid, val)
 	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
@@ -159,13 +180,33 @@ func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, pa
 		if !ok {
 			continue
 		}
-		ft.Remove(string(clientid), val)
+		ft.Remove(clientid, val)
 	}
 	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Info("CLEAR CLIENT %s FILTER PROPS", clientproxy)
 	}
+}
+
+func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
+	key := packet.ReadVarStr()
+	val := packet.ReadVarStr()
+
+	gs.filterTreesLock.Lock()
+	gs.clientProxiesLock.RLock()
+
+	ft := gs.filterTrees[key]
+	if ft != nil {
+		ft.Visit(val, func(clientid common.ClientID) {
+			//// visit all clientids and
+			clientproxy := gs.clientProxies[clientid] // should never be nil
+			clientproxy.SendPacket(packet)
+		})
+	}
+
+	gs.clientProxiesLock.RUnlock()
+	gs.filterTreesLock.Unlock()
 }
 
 func (gs *GateService) handlePacketRoutine() {
