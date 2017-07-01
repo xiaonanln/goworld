@@ -89,8 +89,8 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet=%v", gs, msgtype, packet.Payload())
 	}
-	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 
+	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 		_ = packet.ReadUint16() // sid
 		clientid := packet.ReadClientID()
 
@@ -136,8 +136,6 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 			os.Exit(2)
 		}
 	}
-
-	packet.Release()
 }
 
 func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packet *netutil.Packet) {
@@ -215,5 +213,6 @@ func (gs *GateService) handlePacketRoutine() {
 	for {
 		item := gs.packetQueue.Pop().(packetQueueItem)
 		gs.HandleDispatcherClientPacket(item.msgtype, item.packet)
+		item.packet.Release()
 	}
 }
