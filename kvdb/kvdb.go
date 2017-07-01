@@ -7,7 +7,7 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
 	. "github.com/xiaonanln/goworld/kvdb/types"
-	"github.com/xiaonanln/vacuum/netutil"
+	"github.com/xiaonanln/goworld/netutil"
 )
 
 var (
