@@ -30,13 +30,7 @@ type FilterTreeItem struct {
 
 func (it *FilterTreeItem) Less(_other btree.Item) bool {
 	other := _other.(*FilterTreeItem)
-	if it.val < other.val {
-		return true
-	} else if it.val > other.val {
-		return false
-	}
-
-	return it.clientid < other.clientid
+	return it.val < other.val || (it.val == other.val && it.clientid < other.clientid)
 }
 
 func (ft *FilterTree) Insert(id common.ClientID, val string) {

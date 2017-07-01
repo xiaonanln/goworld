@@ -96,6 +96,10 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 		return nil, fmt.Errorf("message packet too large: %v", payloadLen)
 	}
 
+	if payloadLen > 1024 {
+		fmt.Printf("(%d)", payloadLen)
+	}
+
 	packet := NewPacketWithPayloadLen(payloadLen)
 	err = ReadAll(pc.conn, packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+payloadLen]) // receive the packet type and payload
 	if err != nil {
