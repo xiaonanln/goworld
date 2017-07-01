@@ -72,7 +72,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 		ft := gs.filterTrees[key]
 		if ft != nil {
 			if consts.DEBUG_FILTER_PROP {
-				gwlog.Info("DROP CLIENT %s FILTER PROP: %s = %s", cp, key, val)
+				gwlog.Debug("DROP CLIENT %s FILTER PROP: %s = %s", cp, key, val)
 			}
 			ft.Remove(cp.clientid, val)
 		}
@@ -156,7 +156,7 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	oldVal, ok := clientproxy.filterProps[key]
 	if ok {
 		if consts.DEBUG_FILTER_PROP {
-			gwlog.Info("REMOVE CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
+			gwlog.Debug("REMOVE CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
 		}
 		ft.Remove(clientid, oldVal)
 	}
@@ -165,7 +165,7 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Info("SET CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
+		gwlog.Debug("SET CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
 	}
 }
 
@@ -185,7 +185,7 @@ func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, pa
 	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Info("CLEAR CLIENT %s FILTER PROPS", clientproxy)
+		gwlog.Debug("CLEAR CLIENT %s FILTER PROPS", clientproxy)
 	}
 }
 

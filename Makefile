@@ -20,11 +20,17 @@ runserver: test_server
 runclient: test_client
 	examples/test_client/test_client -N $(N)
 
+start:
+	make all
+	components/dispatcher/dispatcher &
+	examples/test_game/test_game -sid=1 -log info &
+	examples/test_game/test_game -sid=2 -log info &
+
+
 killall:
 	-make killdispatcher
 	-make killserver
 	-make killclient
-
 
 killdispatcher:
 	killall dispatcher

@@ -152,7 +152,7 @@ var (
 		{"DoEnterRandomSpace", 100, time.Minute},
 		{"DoSendMail", 50, time.Minute},
 		{"DoGetMails", 50, time.Minute},
-		{"DoSayInWorldChannel", 50, time.Minute},
+		{"DoSayInWorldChannel", 10, time.Minute},
 	}
 )
 
