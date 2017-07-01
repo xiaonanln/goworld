@@ -200,8 +200,10 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 	if ft != nil {
 		ft.Visit(val, func(clientid common.ClientID) {
 			//// visit all clientids and
-			clientproxy := gs.clientProxies[clientid] // should never be nil
-			clientproxy.SendPacket(packet)
+			clientproxy := gs.clientProxies[clientid]
+			if clientproxy != nil {
+				clientproxy.SendPacket(packet)
+			}
 		})
 	}
 
