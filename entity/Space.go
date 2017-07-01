@@ -93,15 +93,15 @@ func (space *Space) IsNil() bool {
 	return space.Kind == 0
 }
 
-func (space *Space) CreateEntity(typeName string) {
-	createEntity(typeName, space, "", nil, nil, false)
+func (space *Space) CreateEntity(typeName string, pos Position) {
+	createEntity(typeName, space, pos, "", nil, nil, false)
 }
 
-func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
-	loadEntityLocally(typeName, entityID, space)
+func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Position) {
+	loadEntityLocally(typeName, entityID, space, pos)
 }
 
-func (space *Space) enter(entity *Entity) {
+func (space *Space) enter(entity *Entity, pos Position) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))
 	}
@@ -115,12 +115,9 @@ func (space *Space) enter(entity *Entity) {
 	}
 
 	entity.Space = space
-	entity.interest(&space.Entity) // interest the Space entity before every other entities
-	for other := range space.entities {
-		entity.interest(other)
-		other.interest(entity)
-	}
 	space.entities.Add(entity)
+	entity.interest(&space.Entity) // interest the Space entity before every other entities
+
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityEnterSpace(entity)
 	})

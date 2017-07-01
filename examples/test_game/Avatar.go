@@ -87,7 +87,7 @@ func (a *Avatar) EnterSpace_Client(kind int) {
 
 func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
-	a.EnterSpace(spaceID)
+	a.EnterSpace(spaceID, entity.Position{})
 }
 
 func (a *Avatar) OnEnterSpace() {

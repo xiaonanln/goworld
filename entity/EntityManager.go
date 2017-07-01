@@ -126,7 +126,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 }
 
-func createEntity(typeName string, space *Space, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
+func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
 	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityType, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -185,13 +185,13 @@ func createEntity(typeName string, space *Space, entityID EntityID, data map[str
 	}
 
 	if space != nil {
-		space.enter(entity)
+		space.enter(entity, pos)
 	}
 
 	return entityID
 }
 
-func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
+func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Position) {
 	// load the data from storage
 	storage.Load(typeName, entityID, func(data interface{}, err error) {
 		// callback runs in main routine
@@ -207,7 +207,7 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space) {
 			return
 		}
 
-		createEntity(typeName, space, entityID, data.(map[string]interface{}), nil, false)
+		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, false)
 	})
 }
 
@@ -220,7 +220,7 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 }
 
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
-	return createEntity(typeName, nil, "", data, client, false)
+	return createEntity(typeName, nil, Position{}, "", data, client, false)
 }
 
 func CreateEntityAnywhere(typeName string) {
@@ -228,7 +228,7 @@ func CreateEntityAnywhere(typeName string) {
 }
 
 func LoadEntityLocally(typeName string, entityID EntityID) {
-	loadEntityLocally(typeName, entityID, nil)
+	loadEntityLocally(typeName, entityID, nil, Position{})
 }
 
 func LoadEntityAnywhere(typeName string, entityID EntityID) {

@@ -206,6 +206,9 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	}
 
 	spaceID := pkt.ReadEntityID() // target space
+	x := pkt.ReadFloat32()
+	y := pkt.ReadFloat32()
+	z := pkt.ReadFloat32()
 	typeName := pkt.ReadVarStr()
 	var migrateData map[string]interface{}
 	pkt.ReadData(&migrateData)
@@ -213,5 +216,5 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 		gwlog.Debug("%s.HandleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, clientid, clientsrv)
 	}
 
-	entity.OnRealMigrate(eid, spaceID, typeName, migrateData, clientid, clientsrv)
+	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, clientid, clientsrv)
 }

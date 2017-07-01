@@ -63,6 +63,7 @@ func Save(typeName string, entityID common.EntityID, data interface{}, callback 
 		Data:     data,
 		Callback: callback,
 	})
+	checkOperationQueueLen()
 }
 
 func Load(typeName string, entityID common.EntityID, callback LoadCallbackFunc) {
@@ -71,6 +72,7 @@ func Load(typeName string, entityID common.EntityID, callback LoadCallbackFunc) 
 		EntityID: entityID,
 		Callback: callback,
 	})
+	checkOperationQueueLen()
 }
 
 func Exists(typeName string, entityID common.EntityID, callback ExistsCallbackFunc) {
@@ -79,6 +81,7 @@ func Exists(typeName string, entityID common.EntityID, callback ExistsCallbackFu
 		EntityID: entityID,
 		Callback: callback,
 	})
+	checkOperationQueueLen()
 }
 
 func ListEntityIDs(typeName string, callback ListCallbackFunc) {
@@ -86,6 +89,17 @@ func ListEntityIDs(typeName string, callback ListCallbackFunc) {
 		TypeName: typeName,
 		Callback: callback,
 	})
+	checkOperationQueueLen()
+}
+
+var recentWarnedQueueLen = 0
+
+func checkOperationQueueLen() {
+	qlen := operationQueue.Len()
+	if qlen > 100 && qlen%100 == 0 && recentWarnedQueueLen != qlen {
+		gwlog.Warn("Storage operation queue length = %d", qlen)
+		recentWarnedQueueLen = qlen
+	}
 }
 
 func Initialize() {
@@ -97,7 +111,7 @@ func Initialize() {
 		storageEngine, err = entity_storage_mongodb.OpenMongoDB(cfg.Url, cfg.DB)
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
-		if consts.DEBUG_MODE{
+		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
 	}

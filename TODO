@@ -1,16 +1,16 @@
+TODO: Adopt Sweep and Prune Algorithm for AOI
 TODO: AOI with specified range, entities go in / out AOI
 TODO: do client proxy use buffered connection ? if use, performance must be optimized because there are too many goroutines
 TODO: [test_game]
-    TODO: Chat system [chat]
     TODO: Entity movement in space, AOI [move]
 
 # MISC
 TODO: config publicip in config file, & bind ip & private ip ?
+TODO: optimize packet alloc for large packets
 TODO: destroy entity on client only those entities in AOI
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 
 # Subsystem to be implemented
-TODO: Mail System (SendMail, GetMails is done)
 TODO: Entity Attributes
 TODO: Example chatrooms with multiple channels: world, prof, club, ...
 

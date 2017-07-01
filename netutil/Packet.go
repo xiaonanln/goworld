@@ -170,6 +170,24 @@ func (p *Packet) AppendUint64(v uint64) {
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 8
 }
 
+func (p *Packet) AppendFloat32(f float32) {
+	p.AppendUint32(*(*uint32)(unsafe.Pointer(&f)))
+}
+
+func (p *Packet) ReadFloat32() float32 {
+	v := p.ReadUint32()
+	return *(*float32)(unsafe.Pointer(&v))
+}
+
+func (p *Packet) AppendFloat64(f float64) {
+	p.AppendUint64(*(*uint64)(unsafe.Pointer(&f)))
+}
+
+func (p *Packet) ReadFloat64() float64 {
+	v := p.ReadUint64()
+	return *(*float64)(unsafe.Pointer(&v))
+}
+
 func (p *Packet) AppendBytes(v []byte) {
 	p.assureCapacity(uint32(len(v)))
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()

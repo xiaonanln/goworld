@@ -64,20 +64,31 @@ func Get(key string, callback KVDBGetCallback) {
 	kvdbOpQueue.Push(&getReq{
 		key, callback,
 	})
-	return
+	checkOperationQueueLen()
 }
 
 func Put(key string, val string, callback KVDBPutCallback) {
 	kvdbOpQueue.Push(&putReq{
 		key, val, callback,
 	})
-	return
+	checkOperationQueueLen()
 }
 
 func GetRange(beginKey string, endKey string, callback KVDBGetRangeCallback) {
 	kvdbOpQueue.Push(&getRangeReq{
 		beginKey, endKey, callback,
 	})
+	checkOperationQueueLen()
+}
+
+var recentWarnedQueueLen = 0
+
+func checkOperationQueueLen() {
+	qlen := kvdbOpQueue.Len()
+	if qlen > 100 && qlen%100 == 0 && recentWarnedQueueLen != qlen {
+		gwlog.Warn("KVDB operation queue length = %d", qlen)
+		recentWarnedQueueLen = qlen
+	}
 }
 
 func kvdbRoutine() {

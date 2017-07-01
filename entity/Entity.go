@@ -42,6 +42,7 @@ type Entity struct {
 
 	enterSpaceRequest struct {
 		SpaceID     EntityID
+		EnterPos    Position
 		RequestTime int64
 	}
 	filterProps map[string]string
@@ -470,21 +471,13 @@ func (e *Entity) GetFloat(key string) float64 {
 // Enter Space
 
 // Enter target space
-func (e *Entity) EnterSpace(spaceID EntityID) {
-	//space := spaceManager.getSpace(spaceID)
-	//if space != nil {
-	//	// space on the same server
-	//	e.Space.leave(e)
-	//	space.enter(e)
-	//	return
-	//}
-
+func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
 	if e.isEnteringSpace() {
 		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enterSpaceRequest.SpaceID, spaceID)
 		return
 	}
 
-	e.requestMigrateTo(spaceID)
+	e.requestMigrateTo(spaceID, pos)
 }
 
 func (e *Entity) isEnteringSpace() bool {
@@ -492,16 +485,18 @@ func (e *Entity) isEnteringSpace() bool {
 	return now < (e.enterSpaceRequest.RequestTime + int64(consts.ENTER_SPACE_REQUEST_TIMEOUT))
 }
 
-func (e *Entity) clearMigrateRequest() {
-	e.enterSpaceRequest.SpaceID = ""
-	e.enterSpaceRequest.RequestTime = 0
-}
-
 // Migrate to the server of space
-func (e *Entity) requestMigrateTo(spaceID EntityID) {
+func (e *Entity) requestMigrateTo(spaceID EntityID, pos Position) {
 	e.enterSpaceRequest.SpaceID = spaceID
+	e.enterSpaceRequest.EnterPos = pos
 	e.enterSpaceRequest.RequestTime = time.Now().UnixNano()
 	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
+}
+
+func (e *Entity) clearMigrateRequest() {
+	e.enterSpaceRequest.SpaceID = ""
+	e.enterSpaceRequest.EnterPos = Position{}
+	e.enterSpaceRequest.RequestTime = 0
 }
 
 func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
@@ -524,10 +519,15 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 		return
 	}
 
-	entity.realMigrateTo(spaceID, spaceLoc)
+	if entity.enterSpaceRequest.SpaceID != spaceID {
+		// not entering this space ?
+		return
+	}
+
+	entity.realMigrateTo(spaceID, entity.enterSpaceRequest.EnterPos, spaceLoc)
 }
 
-func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
+func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) {
 	var clientid ClientID
 	var clientsrv uint16
 	if e.client != nil {
@@ -538,10 +538,11 @@ func (e *Entity) realMigrateTo(spaceID EntityID, spaceLoc uint16) {
 	e.destroyEntity(true) // disable the entity
 	migrateData := e.getMigrateData()
 
-	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID, e.TypeName, migrateData, clientid, clientsrv)
+	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
+		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, clientid, clientsrv)
 }
 
-func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrateData map[string]interface{}, clientid ClientID, clientsrv uint16) {
+func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeName string, migrateData map[string]interface{}, clientid ClientID, clientsrv uint16) {
 	if entityManager.get(entityID) != nil {
 		gwlog.Panicf("entity %s already exists", entityID)
 	}
@@ -552,7 +553,8 @@ func OnRealMigrate(entityID EntityID, spaceID EntityID, typeName string, migrate
 	if !clientid.IsNil() {
 		client = MakeGameClient(clientid, clientsrv)
 	}
-	createEntity(typeName, space, entityID, migrateData, client, true)
+	pos := Position{Float(x), Float(y), Float(z)}
+	createEntity(typeName, space, pos, entityID, migrateData, client, true)
 }
 
 func (e *Entity) OnMigrateOut() {

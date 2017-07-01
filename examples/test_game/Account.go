@@ -75,7 +75,7 @@ func (a *Account) Login_Client(username string, password string) {
 
 func (a *Account) OnGetAvatarSpaceID_Server(avatarID common.EntityID, spaceID common.EntityID) {
 	a.Attrs.Set("loginAvatarID", avatarID)
-	a.EnterSpace(spaceID)
+	a.EnterSpace(spaceID, entity.Position{}) // TODO: not use 0, 0, 0
 }
 
 func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
