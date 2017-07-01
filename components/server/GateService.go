@@ -105,7 +105,7 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 			// client already disconnected, but the game service seems not knowing it, so tell it
 			dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 		}
-	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTPROXIES {
+	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
 		gs.handleCallFilteredClientProxies(packet)
 	} else if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
 		// set filter property

@@ -149,8 +149,8 @@ func (a *Avatar) OnGetMails_Server(lastMailID int, mails []interface{}) {
 }
 
 func (a *Avatar) Say_Client(channel string, content string) {
-	gwlog.Info("Say @%s: %s", channel, content)
-	a.CallFitleredClients("online", "1", "OnSay", channel, content)
+	gwlog.Debug("Say @%s: %s", channel, content)
+	a.CallFitleredClients("online", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
 }
 
 //func (a *Avatar) getMailSenderInfo() map[string]interface{} {

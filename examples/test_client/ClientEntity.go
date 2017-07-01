@@ -257,6 +257,13 @@ func (e *ClientEntity) DoSayInWorldChannel() {
 	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
 }
 
+func (e *ClientEntity) OnSay(senderID EntityID, senderName string, channel string, content string) {
+	if senderID == e.ID {
+		//gwlog.Info("%s %s @%s: %s", senderID, senderName, channel, content)
+		e.notifyThingDone("DoSayInWorldChannel")
+	}
+}
+
 func (e *ClientEntity) onAccountCreated() {
 	timer.AddCallback(0, func() {
 

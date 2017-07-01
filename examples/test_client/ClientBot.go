@@ -14,14 +14,15 @@ import (
 
 	"reflect"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/goworld/consts"
-	"os"
 )
 
 type ClientBot struct {
@@ -98,8 +99,11 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	bot.Lock()
 	defer bot.Unlock()
 
-	_ = packet.ReadUint16()
-	_ = packet.ReadClientID() // TODO: strip these two fields ?
+	if msgtype != proto.MT_CALL_FILTERED_CLIENTS {
+		_ = packet.ReadUint16()
+		_ = packet.ReadClientID() // TODO: strip these two fields ?
+	}
+
 	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
 		entityid := packet.ReadEntityID()
 		path := packet.ReadStringList()
@@ -156,9 +160,21 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 			gwlog.Debug("Call entity %s.%s(%v)", entityID, method, args)
 		}
 		bot.callEntityMethod(entityID, method, args)
+	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
+		_ = packet.ReadVarStr() // ignore key
+		_ = packet.ReadVarStr() // ignore val
+		method := packet.ReadVarStr()
+		var args []interface{}
+		packet.ReadData(&args)
+		if bot.player == nil {
+			gwlog.Warn("Player not found while calling filtered client")
+			return
+		}
+
+		bot.callEntityMethod(bot.player.ID, method, args)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
-		if consts.DEBUG_MODE{
+		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
 	}

@@ -1,11 +1,8 @@
 package server
 
 import (
-	"runtime/debug"
-
 	"github.com/google/btree"
 	"github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/gwlog"
 )
 
 const (
@@ -35,11 +32,11 @@ func (it *FilterTreeItem) Less(_other btree.Item) bool {
 	other := _other.(*FilterTreeItem)
 	if it.val < other.val {
 		return true
+	} else if it.val > other.val {
+		return false
 	}
-	if it.clientid < other.clientid {
-		return true
-	}
-	return false
+
+	return it.clientid < other.clientid
 }
 
 func (ft *FilterTree) Insert(id common.ClientID, val string) {
@@ -50,11 +47,10 @@ func (ft *FilterTree) Insert(id common.ClientID, val string) {
 }
 
 func (ft *FilterTree) Remove(id common.ClientID, val string) {
-	debug.PrintStack()
-	gwlog.Info("Removing %s %s has %v", id, val, ft.btree.Has(&FilterTreeItem{
-		clientid: id,
-		val:      val,
-	}))
+	//gwlog.Info("Removing %s %s has %v", id, val, ft.btree.Has(&FilterTreeItem{
+	//	clientid: id,
+	//	val:      val,
+	//}))
 
 	ft.btree.Delete(&FilterTreeItem{
 		clientid: id,
