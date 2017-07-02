@@ -33,3 +33,17 @@ func (aoi *AOI) interest(other *Entity) {
 func (aoi *AOI) uninterest(other *Entity) {
 	aoi.neighbors.Del(other)
 }
+
+type SweepList struct {
+	head *AOI
+	tail *AOI
+}
+
+func (sl *SweepList) Add(aoi *AOI, v Float) {
+	if sl.head != nil {
+
+	} else {
+		sl.head = aoi
+		sl.tail = aoi
+	}
+}

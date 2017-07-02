@@ -117,6 +117,8 @@ func (space *Space) enter(entity *Entity, pos Position) {
 	entity.Space = space
 	space.entities.Add(entity)
 	entity.interest(&space.Entity) // interest the Space entity before every other entities
+	entity.aoi.pos = pos
+	space.addToAOI(entity)
 
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityEnterSpace(entity)
@@ -174,4 +176,10 @@ func (space *Space) CountEntities(typeName string) int {
 
 func (space *Space) GetEntityCount() int {
 	return len(space.entities)
+}
+
+// AOI Management
+
+func (space *Space) addToAOI(entity *Entity) {
+
 }
