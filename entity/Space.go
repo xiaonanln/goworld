@@ -12,6 +12,8 @@ import (
 const (
 	SPACE_ENTITY_TYPE   = "__space__"
 	SPACE_KIND_ATTR_KEY = "_K"
+
+	DEFAULT_AOI_DISTANCE = 100
 )
 
 var (
@@ -24,6 +26,7 @@ type Space struct {
 	entities EntitySet
 	Kind     int
 	I        ISpace
+	aoiCalc  AOICalculator
 }
 
 func init() {
@@ -41,6 +44,7 @@ func (space *Space) String() string {
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
+	space.aoiCalc = newSweepAndPruneAOICalculator(DEFAULT_AOI_DISTANCE)
 	gwutils.RunPanicless(space.I.OnSpaceInit)
 }
 
@@ -117,8 +121,7 @@ func (space *Space) enter(entity *Entity, pos Position) {
 	entity.Space = space
 	space.entities.Add(entity)
 	entity.interest(&space.Entity) // interest the Space entity before every other entities
-	entity.aoi.pos = pos
-	space.addToAOI(entity)
+	space.aoiCalc.Enter(entity, pos)
 
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityEnterSpace(entity)
@@ -136,14 +139,11 @@ func (space *Space) leave(entity *Entity) {
 		return
 	}
 
-	entity.Space = nilSpace
+	space.aoiCalc.Leave(entity)
+	entity.uninterest(&space.Entity)
 	// remove from Space entities
 	space.entities.Del(entity)
-	for other := range space.entities {
-		entity.uninterest(other)
-		other.uninterest(entity)
-	}
-	entity.uninterest(&space.Entity)
+	entity.Space = nilSpace
 
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityLeaveSpace(entity)

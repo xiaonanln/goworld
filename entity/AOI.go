@@ -18,9 +18,12 @@ func (p Position) DistanceTo(o Position) Coord {
 }
 
 type AOI struct {
-	pos            Position
-	neighbors      EntitySet
-
+	pos       Position
+	neighbors EntitySet
+	xNext     *AOI
+	xPrev     *AOI
+	zNext     *AOI
+	zPrev     *AOI
 }
 
 func initAOI(aoi *AOI) {
@@ -35,43 +38,7 @@ func (aoi *AOI) uninterest(other *Entity) {
 	aoi.neighbors.Del(other)
 }
 
-type sweepListHead struct {
-	prev *AOI
-	next *AOI
-}
-
-type SweepList struct {
-	head *AOI
-	tail *AOI
-	xorz byte
-}
-
-func newSweepList(xorz byte) *SweepList {
-	return &SweepList{
-		head: nil, tail: nil, xorz: xorz,
-	}
-}
-
-func (sl *SweepList) Add(aoi *AOI, v Coord) {
-	insertCoord := aoi.pos.X
-	if sl.head != nil {
-		p := sl.head
-		for p != nil && p.pos.X < insertCoord {
-			p = p.sweepListHeadX.next
-		}
-		// now, p == nil or p.coord >= insertCoord
-		// if p == nil, insert aoi at the end of list
-		if p == nil {
-			tail := sl.tail
-			sl.tail.sweepListHeadX.next =
-		}
-	} else {
-		sl.head = aoi
-		sl.tail = aoi
-	}
-}
-
-//func (sl *SweepList) coord(aoi *AOI) Coord {
+//func (sl *xAOIList) coord(aoi *AOI) Coord {
 //	if sl.xorz == 0 {
 //		return aoi.pos.X
 //	} else {
@@ -79,7 +46,7 @@ func (sl *SweepList) Add(aoi *AOI, v Coord) {
 //	}
 //}
 
-//func (sl *SweepList) head(aoi *AOI) *sweepListHead {
+//func (sl *xAOIList) head(aoi *AOI) *sweepListHead {
 //	if sl.xorz == 0 {
 //		return &aoi.sweepListHeadX
 //	} else {
@@ -87,7 +54,7 @@ func (sl *SweepList) Add(aoi *AOI, v Coord) {
 //	}
 //}
 //
-//func (sl *SweepList) next(aoi *AOI) *AOI {
+//func (sl *xAOIList) next(aoi *AOI) *AOI {
 //	if sl.xorz == 0 {
 //		return aoi.sweepListHeadX.next
 //	} else {
@@ -95,10 +62,35 @@ func (sl *SweepList) Add(aoi *AOI, v Coord) {
 //	}
 //}
 //
-//func (sl *SweepList) prev(aoi *AOI) *AOI {
+//func (sl *xAOIList) prev(aoi *AOI) *AOI {
 //	if sl.xorz == 0 {
 //		return aoi.sweepListHeadX.prev
 //	} else {
 //		return aoi.sweepListHeadZ.prev
 //	}
 //}
+
+type AOISet map[*AOI]struct{}
+
+func (aoiset AOISet) Add(aoi *AOI) {
+	aoiset[aoi] = struct{}{}
+}
+
+func (aoiset AOISet) Del(aoi *AOI) {
+	delete(aoiset, aoi)
+}
+
+func (aoiset AOISet) Contains(aoi *AOI) bool {
+	_, ok := aoiset[aoi]
+	return ok
+}
+
+func (aoiset AOISet) Join(other AOISet) AOISet {
+	join := AOISet{}
+	for aoi, _ := range aoiset {
+		if other.Contains(aoi) {
+			join.Add(aoi)
+		}
+	}
+	return join
+}
