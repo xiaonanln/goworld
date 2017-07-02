@@ -114,7 +114,7 @@ func (a *Avatar) OnSendMail_Server(ok bool) {
 
 // Avatar has received a mail, can query now
 func (a *Avatar) NotifyReceiveMail_Server() {
-
+	a.CallService("MailService", "GetMails", a.ID)
 }
 
 func (a *Avatar) GetMails_Client() {
