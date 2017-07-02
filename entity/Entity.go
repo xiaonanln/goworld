@@ -553,7 +553,7 @@ func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeNam
 	if !clientid.IsNil() {
 		client = MakeGameClient(clientid, clientsrv)
 	}
-	pos := Position{Float(x), Float(y), Float(z)}
+	pos := Position{Coord(x), Coord(y), Coord(z)}
 	createEntity(typeName, space, pos, entityID, migrateData, client, true)
 }
 
