@@ -44,7 +44,7 @@ func (space *Space) String() string {
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
-	space.aoiCalc = newSweepAndPruneAOICalculator(DEFAULT_AOI_DISTANCE)
+	space.aoiCalc = newSweepAndPruneAOICalculator()
 	gwutils.RunPanicless(space.I.OnSpaceInit)
 }
 
@@ -120,8 +120,15 @@ func (space *Space) enter(entity *Entity, pos Position) {
 
 	entity.Space = space
 	space.entities.Add(entity)
-	entity.interest(&space.Entity) // interest the Space entity before every other entities
-	space.aoiCalc.Enter(entity, pos)
+	entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
+	space.aoiCalc.Enter(&entity.aoi, pos)
+	for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
+		neighbor := neighborAOI.getEntity()
+		entity.interest(neighbor)
+		neighbor.interest(entity)
+	}
+
+	gwlog.Info("%s entered with %d neighbors", entity, len(entity.Neighbors()))
 
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityEnterSpace(entity)
@@ -139,8 +146,12 @@ func (space *Space) leave(entity *Entity) {
 		return
 	}
 
-	space.aoiCalc.Leave(entity)
-	entity.uninterest(&space.Entity)
+	for neighbor := range entity.aoi.neighbors {
+		entity.uninterest(neighbor)
+		neighbor.uninterest(entity)
+	}
+	space.aoiCalc.Leave(&entity.aoi)
+	entity.client.SendDestroyEntity(&space.Entity)
 	// remove from Space entities
 	space.entities.Del(entity)
 	entity.Space = nilSpace

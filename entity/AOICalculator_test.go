@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 	"time"
@@ -68,6 +69,40 @@ func TestXAOIList_Move(t *testing.T) {
 			aoi.pos.X = newCoord
 			list.Move(aoi, oldCoord)
 			checkList(t, list, N)
+		}
+	}
+}
+
+func TestXAOIList_Interested(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		aois := []*AOI{}
+		list := newXAOIList()
+		N := 1 + rand.Intn(100)
+		for j := 0; j < N; j++ {
+			aoi := randAOI()
+			aois = append(aois, aoi)
+
+			list.Insert(aoi)
+		}
+		checkList(t, list, N)
+
+		for r := 0; r < 10; r++ {
+			aoi := aois[rand.Intn(len(aois))]
+			interested := list.Interested(aoi)
+			for other := range interested {
+				if math.Abs(float64(aoi.pos.X-other.pos.X)) > DEFAULT_AOI_DISTANCE {
+					t.Errorf("should not interest")
+				}
+			}
+			for _, other := range aois {
+				if other == aoi || interested.Contains(other) {
+					continue
+				}
+
+				if math.Abs(float64(aoi.pos.X-other.pos.X)) <= DEFAULT_AOI_DISTANCE {
+					t.Errorf("should not interest")
+				}
+			}
 		}
 	}
 }

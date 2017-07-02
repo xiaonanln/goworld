@@ -1,6 +1,9 @@
 package entity
 
-import "math"
+import (
+	"math"
+	"unsafe"
+)
 
 type Coord float32
 
@@ -28,6 +31,12 @@ type AOI struct {
 
 func initAOI(aoi *AOI) {
 	aoi.neighbors = EntitySet{}
+}
+
+func (aoi *AOI) getEntity() *Entity {
+	var dummyEntity Entity
+	offset := uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(&dummyEntity))
+	return (*Entity)(unsafe.Pointer(((uintptr)(unsafe.Pointer(aoi)) - offset))) // TODO: maybe not so trick?
 }
 
 func (aoi *AOI) interest(other *Entity) {
