@@ -10,6 +10,7 @@ TODO: config publicip in config file, & bind ip & private ip ?
 TODO: optimize packet alloc for large packets
 TODO: destroy entity on client only those entities in AOI
 TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
+TODO: Use bytes.Buffer for Packet Read/Append ?
 
 # Subsystem to be implemented
 TODO: Entity Attributes

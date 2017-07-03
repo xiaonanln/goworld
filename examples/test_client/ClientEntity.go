@@ -149,10 +149,10 @@ type _Something struct {
 
 var (
 	DO_THINGS = []*_Something{
-		//{"DoEnterRandomSpace", 100, time.Minute},
-		{"DoSendMail", 1, time.Minute},
-		{"DoGetMails", 50, time.Minute},
-		//{"DoSayInWorldChannel", 10, time.Minute},
+		{"DoEnterRandomSpace", 100, time.Minute},
+		//{"DoSendMail", 1, time.Minute},
+		//{"DoGetMails", 50, time.Minute},
+		{"DoSayInWorldChannel", 10, time.Minute},
 	}
 )
 
