@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"time"
 
 	"net"
 
@@ -212,7 +213,12 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 func (gs *GateService) handlePacketRoutine() {
 	for {
 		item := gs.packetQueue.Pop().(packetQueueItem)
+		startTime := time.Now()
 		gs.HandleDispatcherClientPacket(item.msgtype, item.packet)
+		takeTime := time.Now().Sub(startTime)
+		if takeTime > time.Millisecond*10 {
+			fmt.Print(item.msgtype, item.packet.GetPayloadLen(), takeTime, "|")
+		}
 		item.packet.Release()
 	}
 }
