@@ -2,6 +2,7 @@ package server
 
 import (
 	"net"
+	"time"
 
 	"fmt"
 
@@ -26,10 +27,10 @@ func newClientProxy(conn net.Conn) *ClientProxy {
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 	return &ClientProxy{
-		//GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*10), false), // using buffered connection for client proxy
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
-		clientid:          common.GenClientID(), // each client has its unique clientid
-		filterProps:       map[string]string{},
+		GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*50), false), // using buffered connection for client proxy
+		//GoWorldConnection: proto.NewGoWorldConnection(conn, false),
+		clientid:    common.GenClientID(), // each client has its unique clientid
+		filterProps: map[string]string{},
 	}
 }
 
