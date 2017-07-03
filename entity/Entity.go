@@ -7,7 +7,6 @@ import (
 	"time"
 
 	. "github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/typeconv"
 
 	"unsafe"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
+	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/storage"
 )
 
@@ -226,7 +226,7 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 	callRemote(serviceEid, method, args)
 }
 
-func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID) {
+func (e *Entity) onCall(methodName string, args [][]byte, clientid ClientID) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
 		if err != nil {
@@ -263,11 +263,20 @@ func (e *Entity) onCall(methodName string, args []interface{}, clientid ClientID
 	}
 
 	in := make([]reflect.Value, len(args)+1)
-	in[0] = reflect.ValueOf(e.I)
+	in[0] = reflect.ValueOf(e.I) // first argument is the bind instance (self)
 
 	for i, arg := range args {
 		argType := methodType.In(i + 1)
-		in[i+1] = typeconv.Convert(arg, argType)
+		argValPtr := reflect.New(argType)
+
+		err := netutil.MSG_PACKER.UnpackMsg(arg, argValPtr.Interface())
+		if err != nil {
+			gwlog.Panicf("Convert argument %d failed: type=%s", i+1, argType.Name())
+		}
+		//gwlog.Info("Unpacking Msg %v => %v", arg, *argValPtr.Interface().(*string))
+
+		in[i+1] = reflect.Indirect(argValPtr)
+		//typeconv.Convert(arg, argType)
 	}
 	rpcDesc.Func.Call(in)
 }
@@ -601,8 +610,9 @@ func (e *Entity) GetPosition() Position {
 
 func (e *Entity) SetPosition(pos Position) {
 	space := e.Space
-	if space != nil {
+	if space == nil {
 		gwlog.Warn("%s.SetPosition(%s): space is nil", e, pos)
+		return
 	}
 
 	space.move(e, pos)

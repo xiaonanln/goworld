@@ -95,7 +95,6 @@ func (sl *zAOIList) Move(aoi *AOI, oldCoord Coord) {
 		//fmt.Println(4)
 	} else {
 		// moving to prev ...
-		panic(1)
 		prev := aoi.zPrev
 		if prev == nil || prev.pos.Z <= coord {
 			// no need to adjust in list
@@ -104,11 +103,12 @@ func (sl *zAOIList) Move(aoi *AOI, oldCoord Coord) {
 
 		next := aoi.zNext
 		if next != nil {
-			prev.zNext = next // remove aoi from list
 			next.zPrev = prev
 		} else {
 			sl.tail = prev // aoi is the head, trim it
 		}
+		prev.zNext = next // remove aoi from list
+
 		next, prev = prev, prev.zPrev
 		for prev != nil && prev.pos.Z > coord {
 			next, prev = prev, prev.zPrev

@@ -95,7 +95,6 @@ func (sl *xAOIList) Move(aoi *AOI, oldCoord Coord) {
 		//fmt.Println(4)
 	} else {
 		// moving to prev ...
-		panic(1)
 		prev := aoi.xPrev
 		if prev == nil || prev.pos.X <= coord {
 			// no need to adjust in list
@@ -104,11 +103,12 @@ func (sl *xAOIList) Move(aoi *AOI, oldCoord Coord) {
 
 		next := aoi.xNext
 		if next != nil {
-			prev.xNext = next // remove aoi from list
 			next.xPrev = prev
 		} else {
 			sl.tail = prev // aoi is the head, trim it
 		}
+		prev.xNext = next // remove aoi from list
+
 		next, prev = prev, prev.xPrev
 		for prev != nil && prev.pos.X > coord {
 			next, prev = prev, prev.xPrev

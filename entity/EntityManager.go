@@ -256,7 +256,7 @@ func callRemote(id EntityID, method string, args []interface{}) {
 	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 
-func OnCall(id EntityID, method string, args []interface{}, clientID ClientID) {
+func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 	e := entityManager.get(id)
 	if e == nil {
 		// entity not found, may destroyed before call

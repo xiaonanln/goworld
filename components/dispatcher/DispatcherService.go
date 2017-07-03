@@ -412,10 +412,7 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 
 func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
-	//method := pkt.ReadVarStr() // TODO: optimize CallEntityMethodFromClient packet structure
-	//var args []interface{}
-	//pkt.ReadData(&args)
-	//clientid := pkt.ReadClientID()
+
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCallEntityMethodFromClient: entityID=%s, payload=%v", service, entityID, pkt.Payload())
 	}
@@ -437,11 +434,6 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 			packet: pkt,
 		})
 	}
-
-	// TODO: is it necessary to prohibit client from calling entities on every server
-	//service.clientsLock.RLock()
-	//sid := service.targetServerOfClient[clientid]
-	//service.clientsLock.RUnlock()
 
 }
 

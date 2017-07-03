@@ -63,9 +63,6 @@ func TestXAOIList_Move(t *testing.T) {
 			aoi := aois[rand.Intn(len(aois))]
 			oldCoord := aoi.pos.X
 			newCoord := Coord(rand.Intn(100))
-			if newCoord <= oldCoord {
-				continue
-			}
 			aoi.pos.X = newCoord
 			list.Move(aoi, oldCoord)
 			checkList(t, list, N)
