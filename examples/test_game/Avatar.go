@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 
 	"strconv"
@@ -152,10 +151,6 @@ func (a *Avatar) OnGetMails_Server(lastMailID int, mails []interface{}) {
 		mail := typeconv.String(item[1])
 		mailsAttr.Set(strconv.Itoa(mailId), mail)
 		a.Attrs.Set("lastMailID", mailId)
-		mailCount := mailsAttr.Size()
-		if mailCount >= 100 {
-			fmt.Printf("(Mail=%d)", mailCount)
-		}
 	}
 
 	a.CallClient("OnGetMails", true)

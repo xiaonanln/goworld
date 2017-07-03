@@ -112,8 +112,8 @@ func kvdbRoutine() {
 		}
 		if consts.PROFILE_KVDB {
 			takeTime := time.Now().Sub(startTime)
-			if takeTime > time.Millisecond {
-				fmt.Printf("(KVDB:%s)", takeTime)
+			if takeTime > time.Millisecond*100 {
+				fmt.Printf("(KVDB %T %s)", req, takeTime)
 			}
 		}
 	}
