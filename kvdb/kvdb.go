@@ -1,9 +1,14 @@
 package kvdb
 
 import (
+	"time"
+
+	"fmt"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
 	. "github.com/xiaonanln/goworld/kvdb/types"
@@ -94,12 +99,22 @@ func checkOperationQueueLen() {
 func kvdbRoutine() {
 	for {
 		req := kvdbOpQueue.Pop()
+		var startTime time.Time
+		if consts.PROFILE_KVDB {
+			startTime = time.Now()
+		}
 		if getReq, ok := req.(*getReq); ok {
 			handleGetReq(getReq)
 		} else if putReq, ok := req.(*putReq); ok {
 			handlePutReq(putReq)
 		} else if getRangeReq, ok := req.(*getRangeReq); ok {
 			handleGetRangeReq(getRangeReq)
+		}
+		if consts.PROFILE_KVDB {
+			takeTime := time.Now().Sub(startTime)
+			if takeTime > time.Millisecond {
+				fmt.Printf("(KVDB:%s)", takeTime)
+			}
 		}
 	}
 }
@@ -124,13 +139,6 @@ func handlePutReq(putReq *putReq) {
 
 func handleGetRangeReq(getRangeReq *getRangeReq) {
 	it := kvdbEngine.Find(getRangeReq.beginKey)
-	//if err != nil {
-	//	if getRangeReq.callback != nil {
-	//		getRangeReq.callback(nil, err)
-	//	}
-	//	return
-	//}
-
 	var items []KVItem
 	endKey := getRangeReq.endKey
 	for {

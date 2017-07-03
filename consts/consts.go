@@ -37,6 +37,10 @@ const (
 	DEBUG_FILTER_PROP  = false
 )
 
+const (
+	PROFILE_KVDB = true
+)
+
 //  System level configurations
 const (
 	DEBUG_MODE = true

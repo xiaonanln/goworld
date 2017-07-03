@@ -128,7 +128,7 @@ func (space *Space) enter(entity *Entity, pos Position) {
 		neighbor.interest(entity)
 	}
 
-	gwlog.Info("%s entered with %d neighbors", entity, len(entity.Neighbors()))
+	//gwlog.Info("%s entered with %d neighbors", entity, len(entity.Neighbors()))
 
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityEnterSpace(entity)
