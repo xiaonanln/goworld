@@ -5,7 +5,10 @@ import (
 
 	. "github.com/xiaonanln/goworld/common"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/opmon"
 )
 
 type GoWorldConnection struct {
@@ -252,7 +255,10 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 }
 
 func (gwc *GoWorldConnection) SendPacket(pkt *netutil.Packet) error {
-	return gwc.packetConn.SendPacket(pkt)
+	op := opmon.StartOperation("SendPacket")
+	err := gwc.packetConn.SendPacket(pkt)
+	op.Finish(time.Millisecond * 10)
+	return err
 }
 
 //func (gwc *GoWorldConnection) SendPacketRelease(pkt *netutil.Packet) error {

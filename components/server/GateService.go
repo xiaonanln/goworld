@@ -17,6 +17,7 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/opmon"
 	"github.com/xiaonanln/goworld/proto"
 )
 
@@ -213,12 +214,9 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 func (gs *GateService) handlePacketRoutine() {
 	for {
 		item := gs.packetQueue.Pop().(packetQueueItem)
-		startTime := time.Now()
+		op := opmon.StartOperation("GateServiceHandlePacket")
 		gs.HandleDispatcherClientPacket(item.msgtype, item.packet)
-		takeTime := time.Now().Sub(startTime)
-		if takeTime > time.Millisecond*10 {
-			fmt.Print(item.msgtype, item.packet.GetPayloadLen(), takeTime, "|")
-		}
+		op.Finish(time.Millisecond * 10)
 		item.packet.Release()
 	}
 }

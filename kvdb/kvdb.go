@@ -3,16 +3,14 @@ package kvdb
 import (
 	"time"
 
-	"fmt"
-
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
 	. "github.com/xiaonanln/goworld/kvdb/types"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/opmon"
 )
 
 var (
@@ -99,10 +97,8 @@ func checkOperationQueueLen() {
 func kvdbRoutine() {
 	for {
 		req := kvdbOpQueue.Pop()
-		var startTime time.Time
-		if consts.PROFILE_KVDB {
-			startTime = time.Now()
-		}
+
+		op := opmon.StartOperation("KVDB")
 		if getReq, ok := req.(*getReq); ok {
 			handleGetReq(getReq)
 		} else if putReq, ok := req.(*putReq); ok {
@@ -110,12 +106,7 @@ func kvdbRoutine() {
 		} else if getRangeReq, ok := req.(*getRangeReq); ok {
 			handleGetRangeReq(getRangeReq)
 		}
-		if consts.PROFILE_KVDB {
-			takeTime := time.Now().Sub(startTime)
-			if takeTime > time.Millisecond*100 {
-				fmt.Printf("(KVDB %T %s)", req, takeTime)
-			}
-		}
+		op.Finish(time.Millisecond * 100)
 	}
 }
 
