@@ -87,7 +87,16 @@ func (a *Avatar) EnterSpace_Client(kind int) {
 
 func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
-	a.EnterSpace(spaceID)
+	a.EnterSpace(spaceID, a.randomPosition())
+}
+
+func (a *Avatar) randomPosition() entity.Position {
+	minCoord, maxCoord := -200, 200
+	return entity.Position{
+		X: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
+		Y: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
+		Z: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
+	}
 }
 
 func (a *Avatar) OnEnterSpace() {
@@ -114,7 +123,7 @@ func (a *Avatar) OnSendMail_Server(ok bool) {
 
 // Avatar has received a mail, can query now
 func (a *Avatar) NotifyReceiveMail_Server() {
-
+	//a.CallService("MailService", "GetMails", a.ID)
 }
 
 func (a *Avatar) GetMails_Client() {

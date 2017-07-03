@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/xiaonanln/vacuum/netutil"
+	"github.com/xiaonanln/goworld/netutil"
 )
 
 func main() {

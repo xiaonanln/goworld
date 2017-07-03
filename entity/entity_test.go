@@ -3,6 +3,7 @@ package entity
 import (
 	"testing"
 
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -19,7 +20,7 @@ func TestRegisterEntity(t *testing.T) {
 }
 
 func TestGenEntityID(t *testing.T) {
-	eid := GenEntityID()
+	eid := common.GenEntityID()
 	gwlog.Info("TestGenEntityID: %s", eid)
 }
 

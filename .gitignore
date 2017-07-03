@@ -23,3 +23,6 @@ examples/test_client/test_client
 examples/test_game/test_game
 fc
 *.db/
+.idea/
+examples/*/*.sh
+storage/backend/filesystem/test_entity_storage/

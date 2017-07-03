@@ -12,6 +12,8 @@ import (
 const (
 	SPACE_ENTITY_TYPE   = "__space__"
 	SPACE_KIND_ATTR_KEY = "_K"
+
+	DEFAULT_AOI_DISTANCE = 100
 )
 
 var (
@@ -24,6 +26,7 @@ type Space struct {
 	entities EntitySet
 	Kind     int
 	I        ISpace
+	aoiCalc  AOICalculator
 }
 
 func init() {
@@ -41,6 +44,7 @@ func (space *Space) String() string {
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
+	space.aoiCalc = newSweepAndPruneAOICalculator()
 	gwutils.RunPanicless(space.I.OnSpaceInit)
 }
 
@@ -93,15 +97,15 @@ func (space *Space) IsNil() bool {
 	return space.Kind == 0
 }
 
-func (space *Space) CreateEntity(typeName string) {
-	createEntity(typeName, space, "", nil, nil, false)
+func (space *Space) CreateEntity(typeName string, pos Position) {
+	createEntity(typeName, space, pos, "", nil, nil, false)
 }
 
-func (space *Space) LoadEntity(typeName string, entityID common.EntityID) {
-	loadEntityLocally(typeName, entityID, space)
+func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Position) {
+	loadEntityLocally(typeName, entityID, space, pos)
 }
 
-func (space *Space) enter(entity *Entity) {
+func (space *Space) enter(entity *Entity, pos Position) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))
 	}
@@ -115,12 +119,17 @@ func (space *Space) enter(entity *Entity) {
 	}
 
 	entity.Space = space
-	entity.interest(&space.Entity) // interest the Space entity before every other entities
-	for other := range space.entities {
-		entity.interest(other)
-		other.interest(entity)
-	}
 	space.entities.Add(entity)
+	entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
+	space.aoiCalc.Enter(&entity.aoi, pos)
+	for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
+		neighbor := neighborAOI.getEntity()
+		entity.interest(neighbor)
+		neighbor.interest(entity)
+	}
+
+	gwlog.Info("%s entered with %d neighbors", entity, len(entity.Neighbors()))
+
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityEnterSpace(entity)
 	})
@@ -137,14 +146,15 @@ func (space *Space) leave(entity *Entity) {
 		return
 	}
 
-	entity.Space = nilSpace
+	for neighbor := range entity.aoi.neighbors {
+		entity.uninterest(neighbor)
+		neighbor.uninterest(entity)
+	}
+	space.aoiCalc.Leave(&entity.aoi)
+	entity.client.SendDestroyEntity(&space.Entity)
 	// remove from Space entities
 	space.entities.Del(entity)
-	for other := range space.entities {
-		entity.uninterest(other)
-		other.uninterest(entity)
-	}
-	entity.uninterest(&space.Entity)
+	entity.Space = nilSpace
 
 	gwutils.RunPanicless(func() {
 		space.I.OnEntityLeaveSpace(entity)
@@ -177,4 +187,10 @@ func (space *Space) CountEntities(typeName string) int {
 
 func (space *Space) GetEntityCount() int {
 	return len(space.entities)
+}
+
+// AOI Management
+
+func (space *Space) addToAOI(entity *Entity) {
+
 }
