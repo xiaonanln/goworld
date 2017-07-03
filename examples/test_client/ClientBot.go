@@ -64,7 +64,7 @@ func (bot *ClientBot) run() {
 	var conn net.Conn
 	var err error
 	for { // retry for ever
-		conn, err = netutil.ConnectTCP("10.246.13.148", cfg.Port)
+		conn, err = netutil.ConnectTCP("localhost", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))

@@ -593,6 +593,21 @@ func (e *Entity) CallFitleredClients(key string, val string, method string, args
 	dispatcher_client.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
+// Move in Space
+
+func (e *Entity) GetPosition() Position {
+	return e.aoi.pos
+}
+
+func (e *Entity) SetPosition(pos Position) {
+	space := e.Space
+	if space != nil {
+		gwlog.Warn("%s.SetPosition(%s): space is nil", e, pos)
+	}
+
+	space.move(e, pos)
+}
+
 // Some Other Useful Utilities
 
 func (e *Entity) PanicOnError(err error) {

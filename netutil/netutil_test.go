@@ -46,34 +46,14 @@ func TestRawConnection(t *testing.T) {
 	conn := NewRawConnection(_conn)
 	var b byte
 	for b = 0; b < 255; b++ {
-		conn.SendByte(b)
-		_b, err := conn.RecvByte()
-		if err != nil || b != _b {
+		conn.Write([]byte{b})
+		buf := []byte{0}
+		err := conn.Recv(buf)
+		if err != nil || b != buf[0] {
 			t.Errorf("send byte but recv wrong")
 		}
 	}
 	conn.Close()
-}
-
-func TestBinaryConnection(t *testing.T) {
-	PORT := 4002
-	go func() {
-		ServeTCP(fmt.Sprintf("localhost:%d", PORT), &testEchoTcpServer{})
-	}()
-
-	_conn, err := net.Dial("tcp", "localhost:4002")
-	if err != nil {
-		t.Errorf("connect error: %s", err)
-	}
-	conn := NewBinaryConnection(_conn)
-	for i := 0; i < 100; i++ {
-		var v uint64 = uint64(rand.Int63())
-		conn.SendUint64(v)
-		rv, err := conn.RecvUint64()
-		if err != nil || rv != v {
-			t.Errorf("send %v but recv %v", v, rv)
-		}
-	}
 }
 
 func TestPacketConnection(t *testing.T) {
@@ -87,7 +67,7 @@ func TestPacketConnection(t *testing.T) {
 		t.Errorf("connect error: %s", err)
 	}
 
-	conn := NewPacketConnection(_conn)
+	conn := NewPacketConnection(_conn, false)
 
 	for i := 0; i < 100; i++ {
 		var PAYLOAD_LEN uint32 = uint32(rand.Intn(4096 + 1))
@@ -97,18 +77,18 @@ func TestPacketConnection(t *testing.T) {
 		for j := uint32(0); j < PAYLOAD_LEN; j++ {
 			packet.AppendByte(byte(rand.Intn(256)))
 		}
-		if packet.payloadLen != PAYLOAD_LEN {
-			t.Errorf("payload should be %d, but is %d", PAYLOAD_LEN, packet.payloadLen)
+		if packet.GetPayloadLen() != PAYLOAD_LEN {
+			t.Errorf("payload should be %d, but is %d", PAYLOAD_LEN, packet.GetPayloadLen())
 		}
 		conn.SendPacket(packet)
 		recvPacket, err := conn.RecvPacket()
 		if err != nil {
 			t.Error(err)
 		}
-		if packet.payloadLen != recvPacket.payloadLen {
-			t.Errorf("send packet len %d, but recv len %d", packet.payloadLen, recvPacket.payloadLen)
+		if packet.GetPayloadLen() != recvPacket.GetPayloadLen() {
+			t.Errorf("send packet len %d, but recv len %d", packet.GetPayloadLen(), recvPacket.GetPayloadLen())
 		}
-		for i := uint32(0); i < packet.payloadLen; i++ {
+		for i := uint32(0); i < packet.GetPayloadLen(); i++ {
 			if packet.Payload()[i] != recvPacket.Payload()[i] {
 				t.Errorf("send packet and recv packet mismatch on byte index %d", i)
 			}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/typeconv"
 )
@@ -149,10 +150,11 @@ type _Something struct {
 
 var (
 	DO_THINGS = []*_Something{
-		{"DoEnterRandomSpace", 100, time.Minute},
+		{"DoEnterRandomSpace", 10, time.Minute},
 		//{"DoSendMail", 1, time.Minute},
 		//{"DoGetMails", 50, time.Minute},
-		{"DoSayInWorldChannel", 10, time.Minute},
+		//{"DoSayInWorldChannel", 5, time.Minute},
+		{"DoMoveInSpace", 20, time.Minute},
 	}
 )
 
@@ -262,6 +264,17 @@ func (e *ClientEntity) OnSay(senderID EntityID, senderName string, channel strin
 		//gwlog.Info("%s %s @%s: %s", senderID, senderName, channel, content)
 		e.notifyThingDone("DoSayInWorldChannel")
 	}
+}
+
+func (e *ClientEntity) DoMoveInSpace() {
+	e.CallServer("Move", entity.Position{
+		X: entity.Coord(-200 + rand.Intn(400)),
+		Y: entity.Coord(-200 + rand.Intn(400)),
+		Z: entity.Coord(-200 + rand.Intn(400)),
+	})
+	e.AddCallback(time.Millisecond*100, func() {
+		e.notifyThingDone("DoMoveInSpace")
+	})
 }
 
 func (e *ClientEntity) onAccountCreated() {

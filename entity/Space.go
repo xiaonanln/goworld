@@ -163,6 +163,35 @@ func (space *Space) leave(entity *Entity) {
 	entity.I.OnLeaveSpace(space)
 }
 
+func (space *Space) move(entity *Entity, newPos Position) {
+	space.aoiCalc.Move(&entity.aoi, newPos)
+	interestedAOIs := space.aoiCalc.Interested(&entity.aoi)
+	// uninterest all entities that is not interested
+	var uninterestNeighbors []*Entity
+	for neighbor := range entity.Neighbors() {
+		if !interestedAOIs.Contains(&neighbor.aoi) {
+			// this neighbor is not interested anymore
+			uninterestNeighbors = append(uninterestNeighbors, neighbor)
+		} else {
+			// this neighbor is still interested
+			interestedAOIs.Del(&neighbor.aoi)
+		}
+	}
+
+	for _, neighbor := range uninterestNeighbors {
+		entity.uninterest(neighbor)
+		neighbor.uninterest(entity)
+	}
+
+	// all entities in interestedAOIs now should be interested
+	for neighborAOI := range interestedAOIs {
+		neighbor := neighborAOI.getEntity()
+		entity.interest(neighbor)
+		neighbor.interest(entity)
+	}
+
+}
+
 func (space *Space) OnEntityEnterSpace(entity *Entity) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s ENTER SPACE %s", entity, space)
