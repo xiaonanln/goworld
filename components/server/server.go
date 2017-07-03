@@ -133,12 +133,20 @@ func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
 	// called when connected / reconnected to dispatcher (not in main routine)
 
 }
+
+var lastWarnGateServiceQueueLen = 0
+
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
 	if msgtype >= proto.MT_GATE_SERVICE_MSG_TYPE_START && msgtype <= proto.MT_GATE_SERVICE_MSG_TYPE_STOP {
 		gateService.packetQueue.Push(packetQueueItem{
 			msgtype: msgtype,
 			packet:  packet,
 		})
+		qlen := gateService.packetQueue.Len()
+		if qlen >= 10000 && qlen%10000 == 0 && lastWarnGateServiceQueueLen != qlen {
+			gwlog.Warn("Gate service queue length = %d", qlen)
+			lastWarnGateServiceQueueLen = qlen
+		}
 	} else {
 		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
 			msgtype: msgtype,
