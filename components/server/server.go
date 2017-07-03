@@ -143,7 +143,7 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 			packet:  packet,
 		})
 		qlen := gateService.packetQueue.Len()
-		if qlen >= 10000 && qlen%10000 == 0 && lastWarnGateServiceQueueLen != qlen {
+		if qlen >= 1000 && qlen%1000 == 0 && lastWarnGateServiceQueueLen != qlen {
 			gwlog.Warn("Gate service queue length = %d", qlen)
 			lastWarnGateServiceQueueLen = qlen
 		}
