@@ -257,7 +257,7 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 func (gwc *GoWorldConnection) SendPacket(pkt *netutil.Packet) error {
 	op := opmon.StartOperation("SendPacket")
 	err := gwc.packetConn.SendPacket(pkt)
-	op.Finish(time.Millisecond * 10)
+	op.Finish(time.Millisecond * 100)
 	return err
 }
 

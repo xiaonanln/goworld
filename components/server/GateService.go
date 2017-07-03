@@ -216,7 +216,7 @@ func (gs *GateService) handlePacketRoutine() {
 		item := gs.packetQueue.Pop().(packetQueueItem)
 		op := opmon.StartOperation("GateServiceHandlePacket")
 		gs.HandleDispatcherClientPacket(item.msgtype, item.packet)
-		op.Finish(time.Millisecond * 10)
+		op.Finish(time.Millisecond * 100)
 		item.packet.Release()
 	}
 }
