@@ -1,4 +1,5 @@
 TODO: Adopt Sweep and Prune Algorithm for AOI
+TODO: RecvPacket is causing too much GC overhead on dispatcher
 TODO: AOI with specified range, entities go in / out AOI
 TODO: do client proxy use buffered connection ? if use, performance must be optimized because there are too many goroutines
 TODO: [test_game]
