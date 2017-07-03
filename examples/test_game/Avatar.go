@@ -25,7 +25,7 @@ func (a *Avatar) OnCreated() {
 
 	a.setDefaultAttrs()
 
-	gwlog.Info("Avatar %s on created: client=%s", a, a.GetClient())
+	gwlog.Info("Avatar %s on created: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
 
 	a.SetFilterProp("spaceKind", strconv.Itoa(a.GetInt("spaceKind")))
 	a.SetFilterProp("level", strconv.Itoa(a.GetInt("level")))
@@ -151,7 +151,6 @@ func (a *Avatar) OnGetMails_Server(lastMailID int, mails []interface{}) {
 		mail := typeconv.String(item[1])
 		mailsAttr.Set(strconv.Itoa(mailId), mail)
 		a.Attrs.Set("lastMailID", mailId)
-		//gwlog.Info("%s has %d mails!", a, mailsAttr.Size())
 	}
 
 	a.CallClient("OnGetMails", true)

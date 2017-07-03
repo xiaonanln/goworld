@@ -2,16 +2,18 @@ package server
 
 import (
 	"net"
+	"time"
 
 	"fmt"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/goworld/consts"
-	"os"
 )
 
 type ClientProxy struct {
@@ -21,11 +23,14 @@ type ClientProxy struct {
 }
 
 func newClientProxy(conn net.Conn) *ClientProxy {
+	tcpConn := conn.(*net.TCPConn)
+	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
+	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 	return &ClientProxy{
-		//GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*10), false), // using buffered connection for client proxy
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
-		clientid:          common.GenClientID(), // each client has its unique clientid
-		filterProps:       map[string]string{},
+		GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*50), false), // using buffered connection for client proxy
+		//GoWorldConnection: proto.NewGoWorldConnection(conn, false),
+		clientid:    common.GenClientID(), // each client has its unique clientid
+		filterProps: map[string]string{},
 	}
 }
 
@@ -56,7 +61,7 @@ func (cp *ClientProxy) serve() {
 			cp.handleCallEntityMethodFromClient(pkt)
 		} else {
 			gwlog.Panicf("unknown message type from client: %d", msgtype)
-			if consts.DEBUG_MODE{
+			if consts.DEBUG_MODE {
 				os.Exit(2)
 			}
 		}

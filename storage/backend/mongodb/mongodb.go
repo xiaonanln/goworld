@@ -60,8 +60,17 @@ func (ss *MongoDBEntityStorge) Read(typeName string, entityID common.EntityID) (
 	if err != nil {
 		return nil, err
 	}
+	return ss.convertM2Map(doc["data"].(bson.M)), nil
+}
 
-	return map[string]interface{}(doc["data"].(bson.M)), nil
+func (ss *MongoDBEntityStorge) convertM2Map(m bson.M) map[string]interface{} {
+	ma := map[string]interface{}(m)
+	for k, v := range ma {
+		if m, ok := v.(bson.M); ok {
+			ma[k] = ss.convertM2Map(m)
+		}
+	}
+	return ma
 }
 
 func (ss *MongoDBEntityStorge) getCollection(typeName string) *mgo.Collection {

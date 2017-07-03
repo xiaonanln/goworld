@@ -18,6 +18,10 @@ const (
 	DISPATCHER_CLIENT_READ_BUFFER_SIZE  = 1024 * 1024
 	DISPATCHER_CLIENT_BUFFERED_DELAY    = 10 * time.Millisecond
 
+	// For Gate Service
+	CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024
+	CLIENT_PROXY_READ_BUFFER_SIZE  = 1024 * 1024
+
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
 	ENTER_SPACE_REQUEST_TIMEOUT = DISPATCHER_MIGRATE_TIMEOUT + time.Minute // enter space should finish in limited seconds
@@ -35,6 +39,10 @@ const (
 	DEBUG_MIGRATE      = false
 	DEBUG_PACKET_ALLOC = false
 	DEBUG_FILTER_PROP  = false
+)
+
+const (
+	PROFILE_KVDB = true
 )
 
 //  System level configurations
