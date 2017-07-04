@@ -180,8 +180,43 @@ func (ma *MapAttr) ToMap() map[string]interface{} {
 	return doc
 }
 
+func (ma *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interface{} {
+	doc := map[string]interface{}{}
+	for k, v := range ma.attrs {
+		if !filter(k) {
+			continue
+		}
+
+		innerMapAttr, isInnerMapAttr := v.(*MapAttr)
+		if isInnerMapAttr {
+			doc[k] = innerMapAttr.ToMap()
+		} else {
+			doc[k] = v
+		}
+	}
+	return doc
+}
+
 func (ma *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
 	for k, v := range doc {
+		innerMap, ok := v.(map[string]interface{})
+		if ok {
+			innerMapAttr := NewMapAttr()
+			innerMapAttr.AssignMap(innerMap)
+			ma.Set(k, innerMapAttr)
+		} else {
+			ma.Set(k, v)
+		}
+	}
+	return ma
+}
+
+func (ma *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(string) bool) *MapAttr {
+	for k, v := range doc {
+		if !filter(k) {
+			continue
+		}
+
 		innerMap, ok := v.(map[string]interface{})
 		if ok {
 			innerMapAttr := NewMapAttr()

@@ -15,6 +15,14 @@ func (ss StringSet) Remove(elem string) {
 	delete(ss, elem)
 }
 
+func (ss StringSet) ToList() []string {
+	keys := make([]string, 0, len(ss))
+	for s := range ss {
+		keys = append(keys, s)
+	}
+	return keys
+}
+
 type StringList []string
 
 func (sl *StringList) Remove(elem string) {

@@ -35,10 +35,17 @@ func main() {
 	goworld.RegisterEntity("MailService", &MailService{})
 
 	goworld.RegisterEntity("Monster", &Monster{}).DefineAttrs(map[string][]string{
-		"name": {"all_clien"},
+		"name": {"all_client"},
 	})
 
-	goworld.RegisterEntity("Avatar", &Avatar{})
+	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
+		"name":       {"all_client", "persistent"},
+		"level":      {"all_client", "persistent"},
+		"exp":        {"client", "persistent"},
+		"spaceKind":  {"persistent"},
+		"lastMailID": {"persistent"},
+		"mails":      {"client", "persistent"},
+	})
 
 	goworld.Run(&serverDelegate{})
 }

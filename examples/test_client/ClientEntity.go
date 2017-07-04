@@ -154,7 +154,7 @@ var (
 		//{"DoSendMail", 1, time.Minute},
 		//{"DoGetMails", 50, time.Minute},
 		//{"DoSayInWorldChannel", 5, time.Minute},
-		{"DoMoveInSpace", 20, time.Minute},
+		{"DoMoveInSpace", 30, time.Minute},
 	}
 )
 

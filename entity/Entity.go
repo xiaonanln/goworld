@@ -30,7 +30,7 @@ type Entity struct {
 	IV       reflect.Value
 
 	destroyed        bool
-	rpcDescMap       RpcDescMap
+	typeDesc         *EntityTypeDesc
 	Space            *Space
 	aoi              AOI
 	timers           map[*timer.Timer]struct{}
@@ -64,6 +64,8 @@ type IEntity interface {
 	IsPersistent() bool
 	GetPersistentData() map[string]interface{}
 	LoadPersistentData(data map[string]interface{})
+	GetMigrateData() map[string]interface{} // override these two functions to control mgirate data
+	LoadMigrateData(data map[string]interface{})
 	// Client Notifications
 	OnClientConnected()
 	OnClientDisconnected()
@@ -143,7 +145,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 	e.I = entityInstance.Interface().(IEntity)
 	e.TypeName = typeName
 
-	e.rpcDescMap = registeredEntityTypes[typeName].rpcDescs
+	e.typeDesc = registeredEntityTypes[typeName]
 
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
@@ -234,7 +236,7 @@ func (e *Entity) onCall(methodName string, args [][]byte, clientid ClientID) {
 		}
 	}()
 
-	rpcDesc := e.rpcDescMap[methodName]
+	rpcDesc := e.typeDesc.rpcDescs[methodName]
 	if rpcDesc == nil {
 		// rpc not found
 		gwlog.Error("%s.onCall: Method %s is not a valid RPC, args=%v", e, methodName, args)
@@ -319,7 +321,7 @@ func (e *Entity) IsPersistent() bool {
 }
 
 func (e *Entity) GetPersistentData() map[string]interface{} {
-	return e.Attrs.ToMap()
+	return e.Attrs.ToMapWithFilter(e.typeDesc.persistentAttrs.Contains)
 }
 
 func (e *Entity) LoadPersistentData(data map[string]interface{}) {
@@ -327,11 +329,20 @@ func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 }
 
 func (e *Entity) getClientData() map[string]interface{} {
-	return e.Attrs.ToMap() // TODO: only returns client data
+	// TODO: Optimize the calling of getClientData
+	return e.Attrs.ToMapWithFilter(e.typeDesc.clientAttrs.Contains)
 }
 
-func (e *Entity) getMigrateData() map[string]interface{} {
-	return e.Attrs.ToMap() // TODO: return all data (client, all_client, server, etc)
+func (e *Entity) getAllClientData() map[string]interface{} {
+	return e.Attrs.ToMapWithFilter(e.typeDesc.allClientAttrs.Contains)
+}
+
+func (e *Entity) GetMigrateData() map[string]interface{} {
+	return e.Attrs.ToMap() // all attrs are migrated, without filter
+}
+
+func (e *Entity) LoadMigrateData(data map[string]interface{}) {
+	e.Attrs.AssignMap(data)
 }
 
 //func (e *Entity) isCrossServerCallable() bool {
@@ -547,7 +558,7 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 	}
 
 	e.destroyEntity(true) // disable the entity
-	migrateData := e.getMigrateData()
+	migrateData := e.I.GetMigrateData()
 
 	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
 		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, clientid, clientsrv)

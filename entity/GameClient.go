@@ -32,7 +32,15 @@ func (client *GameClient) SendCreateEntity(entity *Entity, isPlayer bool) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer, entity.getClientData())
+
+	var clientData map[string]interface{}
+	if !isPlayer {
+		clientData = entity.getClientData()
+	} else {
+		clientData = entity.getAllClientData()
+	}
+
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer, clientData)
 }
 
 func (client *GameClient) SendDestroyEntity(entity *Entity) {

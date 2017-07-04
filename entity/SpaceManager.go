@@ -40,5 +40,7 @@ func RegisterSpace(spacePtr ISpace) {
 	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
 	spaceType = spaceVal.Type()
 
-	RegisterEntity(SPACE_ENTITY_TYPE, spacePtr.(IEntity))
+	RegisterEntity(SPACE_ENTITY_TYPE, spacePtr.(IEntity)).DefineAttrs(map[string][]string{
+		SPACE_KIND_ATTR_KEY: {"all_client"},
+	})
 }

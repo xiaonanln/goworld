@@ -41,7 +41,45 @@ type EntityTypeDesc struct {
 //	}
 //}
 
+var _VALID_ATTR_DEFS = StringSet{} // all valid attribute defs
+
+func init() {
+	_VALID_ATTR_DEFS.Add("client")
+	_VALID_ATTR_DEFS.Add("all_client")
+	_VALID_ATTR_DEFS.Add("persistent")
+}
+
 func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
+
+	for attr, defs := range attrDefs {
+		isAllClient, isClient, isPersistent := false, false, false
+
+		for _, def := range defs {
+			if !_VALID_ATTR_DEFS.Contains(def) {
+				// not a valid def
+				gwlog.Panicf("attribute %s: invalid property: %s; all valid properties: %v", attr, def, _VALID_ATTR_DEFS.ToList())
+			}
+
+			if def == "all_client" {
+				isAllClient = true
+				isClient = true
+			} else if def == "client" {
+				isClient = true
+			} else if def == "persistent" {
+				isPersistent = true
+			}
+		}
+
+		if isAllClient {
+			desc.allClientAttrs.Add(attr)
+		}
+		if isClient {
+			desc.clientAttrs.Add(attr)
+		}
+		if isPersistent {
+			desc.persistentAttrs.Add(attr)
+		}
+	}
 }
 
 type EntityManager struct {
@@ -138,8 +176,11 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	// register the string of e
 	rpcDescs := RpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
-		entityType: entityType,
-		rpcDescs:   rpcDescs,
+		entityType:      entityType,
+		rpcDescs:        rpcDescs,
+		clientAttrs:     StringSet{},
+		allClientAttrs:  StringSet{},
+		persistentAttrs: StringSet{},
 	}
 	registeredEntityTypes[typeName] = entityTypeDesc
 
@@ -182,7 +223,11 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 
 	entityManager.put(entity)
 	if data != nil {
-		entity.I.LoadPersistentData(data)
+		if !isMigrate {
+			entity.I.LoadPersistentData(data)
+		} else {
+			entity.I.LoadMigrateData(data)
+		}
 	} else {
 		entity.Save() // save immediately after creation
 	}
