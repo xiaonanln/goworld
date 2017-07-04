@@ -28,6 +28,8 @@ const (
 	DISPATCHER_MIGRATE_TIMEOUT  = time.Minute * 5
 	DISPATCHER_LOAD_TIMEOUT     = time.Minute * 5
 	// For Storage
+	// For Operation Monitor
+	OPMON_DUMP_INTERVAL = time.Second * 10
 )
 
 // Debug Options
