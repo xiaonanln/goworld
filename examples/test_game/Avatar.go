@@ -29,6 +29,7 @@ func (a *Avatar) OnCreated() {
 
 	a.SetFilterProp("spaceKind", strconv.Itoa(a.GetInt("spaceKind")))
 	a.SetFilterProp("level", strconv.Itoa(a.GetInt("level")))
+	a.SetFilterProp("prof", strconv.Itoa(a.GetInt("prof")))
 
 	//gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
@@ -38,6 +39,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("name", "无名")
 	a.Attrs.SetDefault("level", 1)
 	a.Attrs.SetDefault("exp", 0)
+	a.Attrs.SetDefault("prof", 1+rand.Intn(4))
 	a.Attrs.SetDefault("spaceKind", 1+rand.Intn(100))
 	a.Attrs.SetDefault("lastMailID", 0)
 	a.Attrs.SetDefault("mails", goworld.MapAttr())
@@ -158,7 +160,14 @@ func (a *Avatar) OnGetMails_Server(lastMailID int, mails []interface{}) {
 
 func (a *Avatar) Say_Client(channel string, content string) {
 	gwlog.Debug("Say @%s: %s", channel, content)
-	a.CallFitleredClients("online", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
+	if channel == "world" {
+		a.CallFitleredClients("online", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
+	} else if channel == "prof" {
+		profStr := strconv.Itoa(a.GetInt("prof"))
+		a.CallFitleredClients("prof", profStr, "OnSay", a.ID, a.GetStr("name"), channel, content)
+	} else {
+		gwlog.Panicf("%s.Say_Client: invalid channel: %s", a, channel)
+	}
 }
 
 func (a *Avatar) Move_Client(pos entity.Position) {

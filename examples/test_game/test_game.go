@@ -41,6 +41,7 @@ func main() {
 	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
 		"name":       {"all_client", "persistent"},
 		"level":      {"all_client", "persistent"},
+		"prof":       {"all_client", "persistent"},
 		"exp":        {"client", "persistent"},
 		"spaceKind":  {"persistent"},
 		"lastMailID": {"persistent"},

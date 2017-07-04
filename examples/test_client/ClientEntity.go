@@ -153,7 +153,8 @@ var (
 		{"DoEnterRandomSpace", 10, time.Minute},
 		//{"DoSendMail", 1, time.Minute},
 		//{"DoGetMails", 50, time.Minute},
-		//{"DoSayInWorldChannel", 5, time.Minute},
+		{"DoSayInWorldChannel", 5, time.Minute},
+		{"DoSayInProfChannel", 5, time.Minute},
 		{"DoMoveInSpace", 30, time.Minute},
 	}
 )
@@ -259,10 +260,17 @@ func (e *ClientEntity) DoSayInWorldChannel() {
 	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
 }
 
+func (e *ClientEntity) DoSayInProfChannel() {
+	channel := "prof"
+	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
+}
+
 func (e *ClientEntity) OnSay(senderID EntityID, senderName string, channel string, content string) {
-	if senderID == e.ID {
+	if channel == "world" && senderID == e.ID {
 		//gwlog.Info("%s %s @%s: %s", senderID, senderName, channel, content)
 		e.notifyThingDone("DoSayInWorldChannel")
+	} else if channel == "prof" && senderID == e.ID {
+		e.notifyThingDone("DoSayInProfChannel")
 	}
 }
 

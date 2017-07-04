@@ -14,7 +14,6 @@ TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 TODO: Use bytes.Buffer for Packet Read/Append ?
 
 # Subsystem to be implemented
-TODO: Entity Attributes
 TODO: Example chatrooms with multiple channels: world, prof, club, ...
 
 # Optimizations
