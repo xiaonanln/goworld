@@ -283,6 +283,26 @@ func (p *Packet) ReadData(msg interface{}) {
 	}
 }
 
+// Append arguments to packet one by one
+func (p *Packet) AppendArgs(args []interface{}) {
+	argCount := uint16(len(args))
+	p.AppendUint16(argCount)
+
+	for _, arg := range args {
+		p.AppendData(arg)
+	}
+}
+
+func (p *Packet) ReadArgs() [][]byte {
+	argCount := p.ReadUint16()
+	args := make([][]byte, argCount)
+	var i uint16
+	for i = 0; i < argCount; i++ {
+		args[i] = p.ReadVarBytes() // just read bytes, but not parse it
+	}
+	return args
+}
+
 func (p *Packet) AppendStringList(list []string) {
 	p.AppendUint16(uint16(len(list)))
 	for _, s := range list {

@@ -59,15 +59,13 @@ func (gs *GameService) serveRoutine() {
 			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
-				var args []interface{}
-				pkt.ReadData(&args)
+				args := pkt.ReadArgs()
 				clientid := pkt.ReadClientID()
 				gs.HandleCallEntityMethod(eid, method, args, clientid)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
-				var args []interface{}
-				pkt.ReadData(&args)
+				args := pkt.ReadArgs()
 				gs.HandleCallEntityMethod(eid, method, args, "")
 			} else if msgtype == proto.MT_MIGRATE_REQUEST { // migrate request sent to dispatcher is sent back
 				gs.HandleMigrateRequestAck(pkt)
@@ -156,7 +154,7 @@ func (gs *GameService) HandleNotifyAllServersConnected() {
 	gs.serverDelegate.OnServerReady()
 }
 
-func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{}, clientid common.ClientID) {
+func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	}

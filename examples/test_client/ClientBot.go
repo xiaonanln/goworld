@@ -4,8 +4,6 @@ import (
 	"net"
 	"sync"
 
-	"github.com/xiaonanln/typeconv"
-
 	"fmt"
 
 	"math/rand"
@@ -64,7 +62,7 @@ func (bot *ClientBot) run() {
 	var conn net.Conn
 	var err error
 	for { // retry for ever
-		conn, err = netutil.ConnectTCP("10.246.13.148", cfg.Port)
+		conn, err = netutil.ConnectTCP("localhost", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
@@ -154,8 +152,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_ON_CLIENT {
 		entityID := packet.ReadEntityID()
 		method := packet.ReadVarStr()
-		var args []interface{}
-		packet.ReadData(&args)
+		args := packet.ReadArgs()
 		if !quiet {
 			gwlog.Debug("Call entity %s.%s(%v)", entityID, method, args)
 		}
@@ -164,8 +161,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		_ = packet.ReadVarStr() // ignore key
 		_ = packet.ReadVarStr() // ignore val
 		method := packet.ReadVarStr()
-		var args []interface{}
-		packet.ReadData(&args)
+		args := packet.ReadArgs()
 		if bot.player == nil {
 			gwlog.Warn("Player not found while calling filtered client")
 			return
@@ -243,7 +239,7 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 	bot.OnLeaveSpace(oldSpace)
 }
 
-func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args []interface{}) {
+func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args [][]byte) {
 	entity := bot.entities[entityID]
 	if entity == nil {
 		gwlog.Warn("Entity %s is not found while calling method %s(%v)", entityID, method, args)
@@ -261,7 +257,9 @@ func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, 
 
 	for i, arg := range args {
 		argType := methodType.In(i)
-		in[i] = typeconv.Convert(arg, argType)
+		argValPtr := reflect.New(argType)
+		netutil.MSG_PACKER.UnpackMsg(arg, argValPtr.Interface())
+		in[i] = reflect.Indirect(argValPtr)
 	}
 	methodVal.Call(in)
 }

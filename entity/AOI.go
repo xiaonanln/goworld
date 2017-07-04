@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"math"
 	"unsafe"
 )
@@ -11,6 +12,10 @@ type Position struct {
 	X Coord
 	Y Coord
 	Z Coord
+}
+
+func (p Position) String() string {
+	return fmt.Sprintf("(%.1f, %.1f, %.1f)", p.X, p.Y, p.Z)
 }
 
 func (p Position) DistanceTo(o Position) Coord {
@@ -36,7 +41,7 @@ func initAOI(aoi *AOI) {
 func (aoi *AOI) getEntity() *Entity {
 	var dummyEntity Entity
 	offset := uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(&dummyEntity))
-	return (*Entity)(unsafe.Pointer(((uintptr)(unsafe.Pointer(aoi)) - offset))) // TODO: maybe not so trick?
+	return (*Entity)(unsafe.Pointer((uintptr)(unsafe.Pointer(aoi)) - offset)) // TODO: maybe not so trick?
 }
 
 func (aoi *AOI) interest(other *Entity) {

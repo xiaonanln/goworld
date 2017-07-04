@@ -101,7 +101,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, a
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD)
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(method)
-	packet.AppendData(args)
+	packet.AppendArgs(args)
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err
@@ -112,7 +112,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD_FROM_CLIENT)
 	packet.AppendEntityID(id)
 	packet.AppendVarStr(method)
-	packet.AppendData(args)
+	packet.AppendArgs(args)
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err
@@ -177,7 +177,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(sid uint16, clientid 
 	packet.AppendClientID(clientid)
 	packet.AppendEntityID(entityID)
 	packet.AppendVarStr(method)
-	packet.AppendData(args)
+	packet.AppendArgs(args)
 	err = gwc.SendPacket(packet)
 	packet.Release()
 	return
@@ -211,7 +211,7 @@ func (gwc *GoWorldConnection) SendCallFilterClientProxies(key string, val string
 	packet.AppendVarStr(key)
 	packet.AppendVarStr(val)
 	packet.AppendVarStr(method)
-	packet.AppendData(args)
+	packet.AppendArgs(args)
 	err = gwc.SendPacket(packet)
 	packet.Release()
 	return

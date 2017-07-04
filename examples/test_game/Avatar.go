@@ -161,6 +161,11 @@ func (a *Avatar) Say_Client(channel string, content string) {
 	a.CallFitleredClients("online", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
 }
 
+func (a *Avatar) Move_Client(pos entity.Position) {
+	gwlog.Debug("Move from %s -> %s", a.GetPosition(), pos)
+	a.SetPosition(pos)
+}
+
 //func (a *Avatar) getMailSenderInfo() map[string]interface{} {
 //	return map[string]interface{}{
 //		"ID":   a.ID,

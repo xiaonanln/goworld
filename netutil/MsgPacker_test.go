@@ -72,10 +72,10 @@ func TestMessagePackMsgPacker_UnpackMsg(t *testing.T) {
 	}
 }
 
-func BenchmarkMessagePackMsgPacker_PackMsg_Array(b *testing.B) {
+func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
 	packer := MessagePackMsgPacker{}
 	items := []testMsg{}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{
 			ID:        "abc",
 			F1:        0.123124234,
@@ -83,7 +83,28 @@ func BenchmarkMessagePackMsgPacker_PackMsg_Array(b *testing.B) {
 			MapField:  map[string]interface{}{},
 		})
 	}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		packer.PackMsg(items, []byte{})
+	}
+}
+
+func BenchmarkMessagePackMsgPacker_PackMsg_Array_OneByOne(b *testing.B) {
+	packer := MessagePackMsgPacker{}
+	items := []testMsg{}
+	for i := 0; i < 3; i++ {
+		items = append(items, testMsg{
+			ID:        "abc",
+			F1:        0.123124234,
+			ListField: []interface{}{1, 2, 3, "abc", "def"},
+			MapField:  map[string]interface{}{},
+		})
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, item := range items {
+			packer.PackMsg(item, []byte{})
+		}
 	}
 }
