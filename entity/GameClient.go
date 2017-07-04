@@ -40,7 +40,10 @@ func (client *GameClient) SendCreateEntity(entity *Entity, isPlayer bool) {
 		clientData = entity.getClientData()
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer, clientData)
+	pos := entity.aoi.pos
+	yaw := entity.yaw
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer,
+		clientData, float32(pos.X), float32(pos.Y), float32(pos.Z), float32(yaw))
 }
 
 func (client *GameClient) SendDestroyEntity(entity *Entity) {
@@ -75,4 +78,21 @@ func (client *GameClient) SendNotifyAttrDel(entityID common.EntityID, path []str
 		gwlog.Debug("%s.SendNotifyAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
 	}
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelOnClient(client.serverid, client.clientid, entityID, path, key)
+}
+
+func (client *GameClient) UpdatePositionOnClient(entityID common.EntityID, position Position) {
+	if client == nil {
+		return
+	}
+
+	dispatcher_client.GetDispatcherClientForSend().SendUpdatePositionOnClient(client.serverid, client.clientid, entityID,
+		float32(position.X), float32(position.Y), float32(position.Z))
+}
+
+func (client *GameClient) UpdateYawOnClient(entityID common.EntityID, yaw Yaw) {
+	if client == nil {
+		return
+	}
+
+	dispatcher_client.GetDispatcherClientForSend().SendUpdateYawOnClient(client.serverid, client.clientid, entityID, float32(yaw))
 }

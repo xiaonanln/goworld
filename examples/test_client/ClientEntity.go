@@ -36,12 +36,16 @@ type ClientEntity struct {
 	destroyed bool
 	timers    map[*timer.Timer]bool
 
+	pos entity.Position
+	yaw entity.Yaw
+
 	currentThing          string
 	currentThingStartTime time.Time
 	currentTimeoutTimer   *timer.Timer
 }
 
-func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{}) *ClientEntity {
+func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{},
+	x, y, z entity.Coord, yaw entity.Yaw) *ClientEntity {
 	e := &ClientEntity{
 		owner:    owner,
 		TypeName: typeName,
@@ -49,6 +53,8 @@ func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPla
 		Attrs:    clientData,
 		IsPlayer: isPlayer,
 		timers:   map[*timer.Timer]bool{},
+		pos:      entity.Position{x, y, z},
+		yaw:      yaw,
 	}
 
 	e.OnCreated()

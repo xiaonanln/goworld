@@ -23,6 +23,8 @@ var (
 	saveInterval time.Duration
 )
 
+type Yaw float32
+
 type Entity struct {
 	ID       EntityID
 	TypeName string
@@ -33,6 +35,7 @@ type Entity struct {
 	typeDesc         *EntityTypeDesc
 	Space            *Space
 	aoi              AOI
+	yaw              Yaw
 	timers           map[*timer.Timer]struct{}
 	client           *GameClient
 	declaredServices StringSet
@@ -435,6 +438,18 @@ func (e *Entity) GiveClientTo(other *Entity) {
 	other.SetClient(client)
 }
 
+func (e *Entity) ForAllClients(f func(client *GameClient)) {
+	if e.client != nil {
+		f(e.client)
+	}
+
+	for neighbor := range e.Neighbors() {
+		if neighbor.client != nil {
+			f(neighbor.client)
+		}
+	}
+}
+
 func (e *Entity) notifyClientDisconnected() {
 	if e == nil {
 		// FIXME: might happen due to a bug
@@ -629,10 +644,24 @@ func (e *Entity) SetPosition(pos Position) {
 	}
 
 	space.move(e, pos)
+	pos = e.aoi.pos
+	e.ForAllClients(func(client *GameClient) {
+		client.UpdatePositionOnClient(e.ID, pos)
+	})
+}
+
+func (e *Entity) GetYaw() Yaw {
+	return e.yaw
+}
+
+func (e *Entity) SetYaw(yaw Yaw) {
+	e.yaw = yaw
+	e.ForAllClients(func(client *GameClient) {
+		client.UpdateYawOnClient(e.ID, e.yaw)
+	})
 }
 
 // Some Other Useful Utilities
-
 func (e *Entity) PanicOnError(err error) {
 	if err != nil {
 		gwlog.Panic(err)

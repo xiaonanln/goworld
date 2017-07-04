@@ -117,7 +117,8 @@ func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method
 	packet.Release()
 	return err
 }
-func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{}) error {
+func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid ClientID, typeName string, entityid EntityID,
+	isPlayer bool, clientData map[string]interface{}, x, y, z float32, yaw float32) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CREATE_ENTITY_ON_CLIENT)
 	packet.AppendUint16(sid)
@@ -125,7 +126,37 @@ func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid Clie
 	packet.AppendBool(isPlayer)
 	packet.AppendEntityID(entityid)
 	packet.AppendVarStr(typeName)
+	packet.AppendFloat32(x)
+	packet.AppendFloat32(y)
+	packet.AppendFloat32(z)
+	packet.AppendFloat32(yaw)
 	packet.AppendData(clientData)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
+}
+
+func (gwc *GoWorldConnection) SendUpdatePositionOnClient(sid uint16, clientid ClientID, entityID EntityID, x, y, z float32) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_UPDATE_YAW_ON_CLIENT)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendEntityID(entityID)
+	packet.AppendFloat32(x)
+	packet.AppendFloat32(y)
+	packet.AppendFloat32(z)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
+}
+
+func (gwc *GoWorldConnection) SendUpdateYawOnClient(sid uint16, clientid ClientID, entityID EntityID, yaw float32) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_UPDATE_YAW_ON_CLIENT)
+	packet.AppendUint16(sid)
+	packet.AppendClientID(clientid)
+	packet.AppendEntityID(entityID)
+	packet.AppendFloat32(yaw)
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err

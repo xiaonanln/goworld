@@ -125,6 +125,11 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		entityid := packet.ReadEntityID()
 		typeName := packet.ReadVarStr()
 
+		x := entity.Coord(packet.ReadFloat32())
+		y := entity.Coord(packet.ReadFloat32())
+		z := entity.Coord(packet.ReadFloat32())
+		yaw := entity.Yaw(packet.ReadFloat32())
+
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
 		if !quiet {
@@ -136,7 +141,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 			bot.createSpace(entityid, clientData)
 		} else {
 			// this is a entity
-			bot.createEntity(typeName, entityid, isPlayer, clientData)
+			bot.createEntity(typeName, entityid, isPlayer, clientData, x, y, z, yaw)
 		}
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
@@ -194,9 +199,9 @@ func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key 
 	entity.applyAttrDel(path, key)
 }
 
-func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, isPlayer bool, clientData map[string]interface{}) {
+func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
 	if bot.entities[entityid] == nil {
-		e := newClientEntity(bot, typeName, entityid, isPlayer, clientData)
+		e := newClientEntity(bot, typeName, entityid, isPlayer, clientData, x, y, z, yaw)
 		bot.entities[entityid] = e
 		if isPlayer {
 			if bot.player != nil {

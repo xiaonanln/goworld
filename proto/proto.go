@@ -37,6 +37,8 @@ const ( // Message types that should be handled by GateService
 	MT_NOTIFY_ATTR_CHANGE_ON_CLIENT = 1000 + iota
 	MT_NOTIFY_ATTR_DEL_ON_CLIENT    = 1000 + iota
 	MT_CALL_ENTITY_METHOD_ON_CLIENT = 1000 + iota
+	MT_UPDATE_POSITION_ON_CLIENT    = 1000 + iota
+	MT_UPDATE_YAW_ON_CLIENT         = 1000 + iota
 
 	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP = 1000 + iota
 

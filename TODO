@@ -3,14 +3,14 @@ TODO: RecvPacket is causing too much GC overhead on dispatcher
 TODO: Send packets to client proxy in it's own goroutine for receiving packets
 TODO: An operation profiler to monitor the whole server
 TODO: Sync Position & Other physical properties to client (e.x. Yaw)
-TODO: [test_game]
-    TODO: Entity movement in space, AOI [move]
 
 # MISC
 TODO: optimize packet alloc for large packets
 TODO: destroy entity on client only those entities in AOI
-TODO: Entity Attribute Distingush between ALL_CLIENT, CLIENT, SERVER Attributes
 TODO: Use bytes.Buffer for Packet Read/Append ?
+TODO: make sure entity is destroyed if creation fails
+TODO: Strip serverid and clientid for packets sent to clients because useless
+TODO: drop RPC if rpc quque is too long ?
 
 # Subsystem to be implemented
 
@@ -21,8 +21,5 @@ TODO: Merge multiple packets instead of Buffered Connection (need benchmark)
 TODO: use protobuf
 TODO: implement ListAttr
 TODO: remove if ... else if ... else if ... else if ...
-TODO: make sure entity is destroyed if creation fails
 TODO: Entity Client Reconnect Mechianism
-TODO: drop RPC if rpc quque is too long
-TODO: Strip serverid and clientid for packets sent to clients because useless
 TODO: use vendor for submodules
