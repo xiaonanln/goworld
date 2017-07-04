@@ -35,9 +35,9 @@ func (client *GameClient) SendCreateEntity(entity *Entity, isPlayer bool) {
 
 	var clientData map[string]interface{}
 	if !isPlayer {
-		clientData = entity.getClientData()
-	} else {
 		clientData = entity.getAllClientData()
+	} else {
+		clientData = entity.getClientData()
 	}
 
 	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer, clientData)

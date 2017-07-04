@@ -329,11 +329,11 @@ func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 }
 
 func (e *Entity) getClientData() map[string]interface{} {
-	// TODO: Optimize the calling of getClientData
 	return e.Attrs.ToMapWithFilter(e.typeDesc.clientAttrs.Contains)
 }
 
 func (e *Entity) getAllClientData() map[string]interface{} {
+	// TODO: Optimize the calling of getAllClientData
 	return e.Attrs.ToMapWithFilter(e.typeDesc.allClientAttrs.Contains)
 }
 
