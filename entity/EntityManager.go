@@ -20,12 +20,6 @@ var (
 	entityManager         = newEntityManager()
 )
 
-const (
-	AF_PERSISTENT = 1 << iota
-	AF_ALL_CLIENT = 1 << iota
-	AF_OWN_CLIENT = 1 << iota
-)
-
 type EntityTypeDesc struct {
 	entityType      reflect.Type
 	rpcDescs        RpcDescMap
@@ -34,21 +28,20 @@ type EntityTypeDesc struct {
 	persistentAttrs StringSet
 }
 
-func (desc *EntityTypeDesc) SetAllClientAttrs(attrs ...string) {
-	for _, attr := range attrs {
-		desc.allClientAttrs.Add(attr)
-		desc.clientAttrs.Add(attr)
-	}
-}
+//func (desc *EntityTypeDesc) SetAllClientAttrs(attrs ...string) {
+//	for _, attr := range attrs {
+//		desc.allClientAttrs.Add(attr)
+//		desc.clientAttrs.Add(attr)
+//	}
+//}
+//
+//func (desc *EntityTypeDesc) SetClientAttrs(attrs ...string) {
+//	for _, attr := range attrs {
+//		desc.clientAttrs.Add(attr)
+//	}
+//}
 
-func (desc *EntityTypeDesc) SetClientAttrs(attrs ...string) {
-	for _, attr := range attrs {
-		desc.clientAttrs.Add(attr)
-	}
-}
-
-func (desc *EntityTypeDesc) DefineAttrs() {
-
+func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 }
 
 type EntityManager struct {
