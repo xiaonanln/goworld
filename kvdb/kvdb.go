@@ -97,13 +97,15 @@ func checkOperationQueueLen() {
 func kvdbRoutine() {
 	for {
 		req := kvdbOpQueue.Pop()
-
-		op := opmon.StartOperation("KVDB")
+		var op *opmon.Operation
 		if getReq, ok := req.(*getReq); ok {
+			op = opmon.StartOperation("kvdb.get")
 			handleGetReq(getReq)
 		} else if putReq, ok := req.(*putReq); ok {
+			op = opmon.StartOperation("kvdb.put")
 			handlePutReq(putReq)
 		} else if getRangeReq, ok := req.(*getRangeReq); ok {
+			op = opmon.StartOperation("kvdb.getRange")
 			handleGetRangeReq(getRangeReq)
 		}
 		op.Finish(time.Millisecond * 100)

@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/opmon"
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/storage/backend/mongodb"
 )
@@ -135,8 +136,10 @@ func storageRoutine() {
 
 	for {
 		op := operationQueue.Pop()
+		var monop *opmon.Operation
 		if saveReq, ok := op.(saveRequest); ok {
 			// handle save request
+			monop = opmon.StartOperation("storage.save")
 			for {
 				if consts.DEBUG_SAVE_LOAD {
 					gwlog.Debug("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
@@ -148,6 +151,7 @@ func storageRoutine() {
 					time.Sleep(time.Second) // wait for 1 second to retry
 					continue                // always retry if fail
 				} else {
+					monop.Finish(time.Millisecond * 100)
 					if saveReq.Callback != nil {
 						timer.AddCallback(0, func() {
 							saveReq.Callback()
@@ -159,6 +163,7 @@ func storageRoutine() {
 		} else if loadReq, ok := op.(loadRequest); ok {
 			// handle load request
 			gwlog.Debug("storage: LOADING %s %s ...", loadReq.TypeName, loadReq.EntityID)
+			monop = opmon.StartOperation("storage.load")
 			data, err := storageEngine.Read(loadReq.TypeName, loadReq.EntityID)
 			if err != nil {
 				// save failed ?
@@ -166,21 +171,26 @@ func storageRoutine() {
 				data = nil
 			}
 
+			monop.Finish(time.Millisecond * 100)
 			if loadReq.Callback != nil {
 				timer.AddCallback(0, func() {
 					loadReq.Callback(data, err)
 				})
 			}
 		} else if existsReq, ok := op.(existsRequest); ok {
+			monop = opmon.StartOperation("storage.exists")
 			exists, err := storageEngine.Exists(existsReq.TypeName, existsReq.EntityID)
+			monop.Finish(time.Millisecond * 100)
 			if existsReq.Callback != nil {
 				existsReq.Callback(exists, err)
 			}
 		} else if listReq, ok := op.(listEntityIDsRequest); ok {
+			monop = opmon.StartOperation("storage.list")
 			eids, err := storageEngine.List(listReq.TypeName)
 			if err != nil {
 				gwlog.TraceError("ListEntityIDs %s failed: %s", listReq.TypeName, err)
 			}
+			monop.Finish(time.Millisecond * 1000)
 			if listReq.Callback != nil {
 				listReq.Callback(eids, err)
 			}

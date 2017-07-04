@@ -10,7 +10,7 @@ import (
 var (
 	operationAllocPool = sync.Pool{
 		New: func() interface{} {
-			return &operation{}
+			return &Operation{}
 		},
 	}
 
@@ -38,19 +38,19 @@ func (monitor *Monitor) record(opname string, duration time.Duration) {
 	monitor.Unlock()
 }
 
-type operation struct {
+type Operation struct {
 	name      string
 	startTime time.Time
 }
 
-func StartOperation(operationName string) *operation {
-	op := operationAllocPool.Get().(*operation)
+func StartOperation(operationName string) *Operation {
+	op := operationAllocPool.Get().(*Operation)
 	op.name = operationName
 	op.startTime = time.Now()
 	return op
 }
 
-func (op *operation) Finish(warnThreshold time.Duration) {
+func (op *Operation) Finish(warnThreshold time.Duration) {
 	takeTime := time.Now().Sub(op.startTime)
 	monitor.record(op.name, takeTime)
 	if takeTime >= warnThreshold {
