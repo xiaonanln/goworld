@@ -143,7 +143,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 	e.I = entityInstance.Interface().(IEntity)
 	e.TypeName = typeName
 
-	e.rpcDescMap = entityType2RpcDescMap[typeName]
+	e.rpcDescMap = registeredEntityTypes[typeName].rpcDescs
 
 	e.timers = map[*timer.Timer]struct{}{}
 	e.declaredServices = StringSet{}
@@ -463,6 +463,8 @@ func (e *Entity) sendAttrDelToClients(ma *MapAttr, key string) {
 	path := ma.getPathFromOwner()
 	e.client.SendNotifyAttrDel(e.ID, path, key)
 }
+
+// Define Attributes Properties
 
 // Fast access to attrs
 func (e *Entity) GetInt(key string) int {

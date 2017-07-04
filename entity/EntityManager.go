@@ -16,10 +16,19 @@ import (
 )
 
 var (
-	registeredEntityTypes = map[string]reflect.Type{}
-	entityType2RpcDescMap = map[string]RpcDescMap{}
+	registeredEntityTypes = map[string]*EntityTypeDesc{}
 	entityManager         = newEntityManager()
 )
+
+type EntityTypeDesc struct {
+	entityType reflect.Type
+	rpcDescs   RpcDescMap
+	allClientAttrs
+}
+
+func (desc *EntityTypeDesc) SetAllClientAttrs(i string) {
+
+}
 
 type EntityManager struct {
 	entities           EntityMap
@@ -105,7 +114,7 @@ func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
 	return "" // never goes here
 }
 
-func RegisterEntity(typeName string, entityPtr IEntity) {
+func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -113,22 +122,27 @@ func RegisterEntity(typeName string, entityPtr IEntity) {
 	entityType := entityVal.Type()
 
 	// register the string of e
-	registeredEntityTypes[typeName] = entityType
-	entityType2RpcDescMap[typeName] = RpcDescMap{}
+	rpcDescs := RpcDescMap{}
+	entityTypeDesc := &EntityTypeDesc{
+		entityType: entityType,
+		rpcDescs:   rpcDescs,
+	}
+	registeredEntityTypes[typeName] = entityTypeDesc
 
 	entityPtrType := reflect.PtrTo(entityType)
 	numMethods := entityPtrType.NumMethod()
 	for i := 0; i < numMethods; i++ {
 		method := entityPtrType.Method(i)
-		entityType2RpcDescMap[typeName].visit(method)
+		rpcDescs.visit(method)
 	}
 
 	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
+	return entityTypeDesc
 }
 
 func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
 	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
-	entityType, ok := registeredEntityTypes[typeName]
+	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
 		if consts.DEBUG_MODE {
@@ -144,7 +158,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 	var entityInstance reflect.Value
 
 	//if typeName != SPACE_ENTITY_TYPE {
-	entityInstance = reflect.New(entityType)
+	entityInstance = reflect.New(entityTypeDesc.entityType)
 	//} else {
 	//	entityInstance = reflect.New(spaceType)
 	//}

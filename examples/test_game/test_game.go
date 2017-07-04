@@ -33,7 +33,9 @@ func main() {
 	goworld.RegisterEntity("OnlineService", &OnlineService{})
 	goworld.RegisterEntity("SpaceService", &SpaceService{})
 	goworld.RegisterEntity("MailService", &MailService{})
-	goworld.RegisterEntity("Monster", &Monster{})
+
+	goworld.RegisterEntity("Monster", &Monster{}).SetAllClientAttrs("name")
+
 	goworld.RegisterEntity("Avatar", &Avatar{})
 
 	goworld.Run(&serverDelegate{})

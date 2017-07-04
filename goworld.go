@@ -11,8 +11,8 @@ func Run(delegate server.IServerDelegate) {
 	server.Run(delegate)
 }
 
-func RegisterEntity(typeName string, entityPtr entity.IEntity) {
-	entity.RegisterEntity(typeName, entityPtr)
+func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
+	return entity.RegisterEntity(typeName, entityPtr)
 }
 
 //func createEntity(typeName string) {
