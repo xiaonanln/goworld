@@ -103,26 +103,26 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	}
 
 	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
-		entityid := packet.ReadEntityID()
+		entityID := packet.ReadEntityID()
 		path := packet.ReadStringList()
 		key := packet.ReadVarStr()
 		var val interface{}
 		packet.ReadData(&val)
 		if !quiet {
-			gwlog.Debug("Entity %s Attribute %v: set %s=%v", entityid, path, key, val)
+			gwlog.Debug("Entity %s Attribute %v: set %s=%v", entityID, path, key, val)
 		}
-		bot.applyAttrChange(entityid, path, key, val)
+		bot.applyAttrChange(entityID, path, key, val)
 	} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
-		entityid := packet.ReadEntityID()
+		entityID := packet.ReadEntityID()
 		path := packet.ReadStringList()
 		key := packet.ReadVarStr()
 		if !quiet {
-			gwlog.Debug("Entity %s Attribute %v deleted %s", entityid, path, key)
+			gwlog.Debug("Entity %s Attribute %v deleted %s", entityID, path, key)
 		}
-		bot.applyAttrDel(entityid, path, key)
+		bot.applyAttrDel(entityID, path, key)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		isPlayer := packet.ReadBool()
-		entityid := packet.ReadEntityID()
+		entityID := packet.ReadEntityID()
 		typeName := packet.ReadVarStr()
 
 		x := entity.Coord(packet.ReadFloat32())
@@ -133,26 +133,26 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
 		if !quiet {
-			gwlog.Debug("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityid, isPlayer, clientData)
+			gwlog.Debug("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityID, isPlayer, clientData)
 		}
 
 		if typeName == entity.SPACE_ENTITY_TYPE {
 			// this is a space
-			bot.createSpace(entityid, clientData)
+			bot.createSpace(entityID, clientData)
 		} else {
 			// this is a entity
-			bot.createEntity(typeName, entityid, isPlayer, clientData, x, y, z, yaw)
+			bot.createEntity(typeName, entityID, isPlayer, clientData, x, y, z, yaw)
 		}
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
-		entityid := packet.ReadEntityID()
+		entityID := packet.ReadEntityID()
 		if !quiet {
-			gwlog.Debug("Destroy entity %s.%s", typeName, entityid)
+			gwlog.Debug("Destroy entity %s.%s", typeName, entityID)
 		}
 		if typeName == entity.SPACE_ENTITY_TYPE {
-			bot.destroySpace(entityid)
+			bot.destroySpace(entityID)
 		} else {
-			bot.destroyEntity(typeName, entityid)
+			bot.destroyEntity(typeName, entityID)
 		}
 	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_ON_CLIENT {
 		entityID := packet.ReadEntityID()
@@ -173,6 +173,16 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		}
 
 		bot.callEntityMethod(bot.player.ID, method, args)
+	} else if msgtype == proto.MT_UPDATE_POSITION_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		x := entity.Coord(packet.ReadFloat32())
+		y := entity.Coord(packet.ReadFloat32())
+		z := entity.Coord(packet.ReadFloat32())
+		bot.updateEntityPosition(entityID, entity.Position{x, y, z})
+	} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		yaw := entity.Yaw(packet.ReadFloat32())
+		bot.updateEntityYaw(entityID, yaw)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
 		if consts.DEBUG_MODE {
@@ -181,28 +191,52 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	}
 }
 
-func (bot *ClientBot) applyAttrChange(entityid common.EntityID, path []string, key string, val interface{}) {
-	//gwlog.Info("SET ATTR %s.%v: set %s=%v", entityid, path, key, val)
-	if bot.entities[entityid] == nil {
+func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Position) {
+	//gwlog.Debug("updateEntityPosition %s => %s", entityID, position)
+	if bot.entities[entityID] == nil {
 		gwlog.Error("entity %s not found")
+		return
 	}
-	entity := bot.entities[entityid]
+	entity := bot.entities[entityID]
+	entity.pos = position
+	entity.onUpdatePosition()
+}
+
+func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) {
+	//gwlog.Debug("updateEntityYaw %s => %s", entityID, yaw)
+	if bot.entities[entityID] == nil {
+		gwlog.Error("entity %s not found")
+		return
+	}
+	entity := bot.entities[entityID]
+	entity.yaw = yaw
+	entity.onUpdateYaw()
+}
+
+func (bot *ClientBot) applyAttrChange(entityID common.EntityID, path []string, key string, val interface{}) {
+	//gwlog.Info("SET ATTR %s.%v: set %s=%v", entityID, path, key, val)
+	if bot.entities[entityID] == nil {
+		gwlog.Error("entity %s not found")
+		return
+	}
+	entity := bot.entities[entityID]
 	entity.applyAttrChange(path, key, val)
 }
 
-func (bot *ClientBot) applyAttrDel(entityid common.EntityID, path []string, key string) {
-	//gwlog.Info("DEL ATTR %s.%v: del %s", entityid, path, key)
-	if bot.entities[entityid] == nil {
+func (bot *ClientBot) applyAttrDel(entityID common.EntityID, path []string, key string) {
+	//gwlog.Info("DEL ATTR %s.%v: del %s", entityID, path, key)
+	if bot.entities[entityID] == nil {
 		gwlog.Error("entity %s not found")
+		return
 	}
-	entity := bot.entities[entityid]
+	entity := bot.entities[entityID]
 	entity.applyAttrDel(path, key)
 }
 
-func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
-	if bot.entities[entityid] == nil {
-		e := newClientEntity(bot, typeName, entityid, isPlayer, clientData, x, y, z, yaw)
-		bot.entities[entityid] = e
+func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
+	if bot.entities[entityID] == nil {
+		e := newClientEntity(bot, typeName, entityID, isPlayer, clientData, x, y, z, yaw)
+		bot.entities[entityID] = e
 		if isPlayer {
 			if bot.player != nil {
 				gwlog.TraceError("%s.createEntity: creating player %S, but player is already set to %s", bot, e, bot.player)
@@ -212,14 +246,14 @@ func (bot *ClientBot) createEntity(typeName string, entityid common.EntityID, is
 	}
 }
 
-func (bot *ClientBot) destroyEntity(typeName string, entityid common.EntityID) {
-	entity := bot.entities[entityid]
+func (bot *ClientBot) destroyEntity(typeName string, entityID common.EntityID) {
+	entity := bot.entities[entityID]
 	if entity != nil {
 		entity.Destroy()
 		if entity == bot.player {
 			bot.player = nil
 		}
-		delete(bot.entities, entityid)
+		delete(bot.entities, entityID)
 	}
 }
 

@@ -138,7 +138,7 @@ func (gwc *GoWorldConnection) SendCreateEntityOnClient(sid uint16, clientid Clie
 
 func (gwc *GoWorldConnection) SendUpdatePositionOnClient(sid uint16, clientid ClientID, entityID EntityID, x, y, z float32) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_UPDATE_YAW_ON_CLIENT)
+	packet.AppendUint16(MT_UPDATE_POSITION_ON_CLIENT)
 	packet.AppendUint16(sid)
 	packet.AppendClientID(clientid)
 	packet.AppendEntityID(entityID)

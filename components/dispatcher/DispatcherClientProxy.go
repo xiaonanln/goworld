@@ -55,6 +55,10 @@ func (dcp *DispatcherClientProxy) serve() {
 
 		if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			dcp.owner.HandleCallEntityMethod(dcp, pkt)
+		} else if msgtype == proto.MT_UPDATE_POSITION_ON_CLIENT {
+			dcp.owner.HandleUpdatePositionOnClient(dcp, pkt)
+		} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT {
+			dcp.owner.HandleUpdateYawOnClient(dcp, pkt)
 		} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 			dcp.owner.HandleCreateEntityOnClient(dcp, pkt)
 		} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {

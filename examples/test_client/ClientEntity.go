@@ -157,8 +157,8 @@ type _Something struct {
 var (
 	DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 10, time.Minute},
-		//{"DoSendMail", 1, time.Minute},
-		//{"DoGetMails", 50, time.Minute},
+		{"DoSendMail", 1, time.Minute},
+		{"DoGetMails", 5, time.Minute},
 		{"DoSayInWorldChannel", 5, time.Minute},
 		{"DoSayInProfChannel", 5, time.Minute},
 		{"DoMoveInSpace", 30, time.Minute},
@@ -286,9 +286,14 @@ func (e *ClientEntity) DoMoveInSpace() {
 		Y: entity.Coord(-200 + rand.Intn(400)),
 		Z: entity.Coord(-200 + rand.Intn(400)),
 	})
-	e.AddCallback(time.Millisecond*100, func() {
-		e.notifyThingDone("DoMoveInSpace")
-	})
+}
+
+func (e *ClientEntity) onUpdatePosition() {
+	e.notifyThingDone("DoMoveInSpace")
+}
+
+func (e *ClientEntity) onUpdateYaw() {
+
 }
 
 func (e *ClientEntity) onAccountCreated() {

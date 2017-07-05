@@ -439,11 +439,21 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 
 func (service *DispatcherService) HandleCreateEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	// TODO: HandleXxxXxxOnClient functions are same, merge them
-	sid := pkt.ReadUint16()
+	sid := pkt.ReadUint16() // TODO: not just read sid, trim it
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleDestroyEntityOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
+}
+
+func (service *DispatcherService) HandleUpdatePositionOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	sid := pkt.ReadUint16()
+	service.dispatcherClientOfServer(sid).SendPacket(pkt)
+}
+
+func (service *DispatcherService) HandleUpdateYawOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
