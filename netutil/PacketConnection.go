@@ -61,6 +61,10 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	return WriteAll(pc.conn, packet.data())
 }
 
+func (pc Packet) FlushPackets() error {
+
+}
+
 func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	var _payloadLenBuf [SIZE_FIELD_SIZE]byte
 	payloadLenBuf := _payloadLenBuf[:]
