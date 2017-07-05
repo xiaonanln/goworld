@@ -15,9 +15,9 @@ type GoWorldConnection struct {
 	packetConn netutil.PacketConnection
 }
 
-func NewGoWorldConnection(conn netutil.Connection, useSendQueue bool) GoWorldConnection {
+func NewGoWorldConnection(conn netutil.Connection) GoWorldConnection {
 	return GoWorldConnection{
-		packetConn: netutil.NewPacketConnection(conn, useSendQueue),
+		packetConn: netutil.NewPacketConnection(conn),
 	}
 }
 

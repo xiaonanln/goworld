@@ -25,7 +25,7 @@ func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *Dispatc
 		conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
 	}
 	return &DispatcherClientProxy{
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false), // Using send queue slows down dispatcher performance
+		GoWorldConnection: proto.NewGoWorldConnection(conn),
 		owner:             owner,
 	}
 }

@@ -6,7 +6,6 @@ import (
 
 	"encoding/binary"
 
-	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -29,19 +28,12 @@ var (
 )
 
 type PacketConnection struct {
-	conn         Connection
-	useSendQueue bool
-	sendQueue    sync_queue.SyncQueue
+	conn Connection
 }
 
-func NewPacketConnection(conn Connection, useSendQueue bool) PacketConnection {
+func NewPacketConnection(conn Connection) PacketConnection {
 	pc := PacketConnection{
-		conn:         conn,
-		useSendQueue: useSendQueue,
-	}
-	if useSendQueue {
-		pc.sendQueue = sync_queue.NewSyncQueue()
-		go pc.sendRoutine()
+		conn: conn,
 	}
 	return pc
 }
@@ -66,17 +58,7 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if packet.refcount <= 0 {
 		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
 	}
-	if pc.useSendQueue {
-		packet.AddRefCount(1) // will be released when pop from queue
-		pc.sendQueue.Push(packet)
-		sendQueueLen := pc.sendQueue.Len()
-		if sendQueueLen >= 10000 && sendQueueLen%10000 == 0 {
-			gwlog.Warn("%s: send queue length = %d", pc, sendQueueLen)
-		}
-		return nil
-	} else {
-		return WriteAll(pc.conn, packet.data())
-	}
+	return WriteAll(pc.conn, packet.data())
 }
 
 func (pc PacketConnection) RecvPacket() (*Packet, error) {
@@ -126,39 +108,4 @@ func (pc PacketConnection) LocalAddr() net.Addr {
 
 func (pc PacketConnection) String() string {
 	return fmt.Sprintf("[%s >>> %s]", pc.LocalAddr(), pc.RemoteAddr())
-}
-
-//type PacketConnectionWithQueue struct {
-//	PacketConnection
-//	queue sync_queue.SyncQueue
-//}
-//
-//func NewPacketConnectionWithQueue(conn net.Conn) PacketConnectionWithQueue {
-//	pc := PacketConnectionWithQueue{
-//		PacketConnection: NewPacketConnection(conn),
-//		queue:            sync_queue.NewSyncQueue(),
-//	}
-//
-//	go pc.sendRoutine()
-//	return pc
-//}
-//
-//func (pc PacketConnectionWithQueue) PushPacket(p *Packet) {
-//	pc.queue.Push(p)
-//}
-//
-//func (pc PacketConnectionWithQueue) SendInstantPacket(p *Packet) error {
-//	return pc.PacketConnection.SendPacket(p)
-//}
-//
-//func (pc PacketConnectionWithQueue) SendPacket(p *Packet) {
-//	gwlog.Panicf("DO NOT USE SendPacket")
-//}
-//
-func (pc PacketConnection) sendRoutine() {
-	for {
-		packet := pc.sendQueue.Pop().(*Packet)
-		WriteAll(pc.conn, packet.data())
-		packet.Release()
-	}
 }

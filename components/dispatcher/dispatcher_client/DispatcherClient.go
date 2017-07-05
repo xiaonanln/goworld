@@ -19,6 +19,6 @@ func newDispatcherClient(_conn net.Conn) *DispatcherClient {
 		conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_BUFFERED_DELAY)
 	}
 	return &DispatcherClient{
-		GoWorldConnection: proto.NewGoWorldConnection(conn, false),
+		GoWorldConnection: proto.NewGoWorldConnection(conn),
 	}
 }
