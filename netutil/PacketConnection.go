@@ -6,6 +6,8 @@ import (
 
 	"encoding/binary"
 
+	"sync"
+
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -28,11 +30,13 @@ var (
 )
 
 type PacketConnection struct {
-	conn Connection
+	conn               Connection
+	pendingPackets     []*Packet
+	pendingPacketsLock sync.Mutex
 }
 
-func NewPacketConnection(conn Connection) PacketConnection {
-	pc := PacketConnection{
+func NewPacketConnection(conn Connection) *PacketConnection {
+	pc := &PacketConnection{
 		conn: conn,
 	}
 	return pc
@@ -46,11 +50,11 @@ func NewPacket() *Packet {
 	return allocPacket(INITIAL_PACKET_CAPACITY)
 }
 
-func (pc PacketConnection) NewPacket() *Packet {
+func (pc *PacketConnection) NewPacket() *Packet {
 	return allocPacket(INITIAL_PACKET_CAPACITY)
 }
 
-func (pc PacketConnection) SendPacket(packet *Packet) error {
+func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s SEND PACKET: msgtype=%v, payload=%v", pc, PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
 			packet.bytes[PREPAYLOAD_SIZE+2:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
@@ -58,14 +62,34 @@ func (pc PacketConnection) SendPacket(packet *Packet) error {
 	if packet.refcount <= 0 {
 		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
 	}
-	return WriteAll(pc.conn, packet.data())
+
+	packet.AddRefCount(1)
+	pc.pendingPacketsLock.Lock()
+	pc.pendingPackets = append(pc.pendingPackets, packet)
+	pc.pendingPacketsLock.Unlock()
+	return nil
 }
 
-func (pc Packet) FlushPackets() error {
+func (pc *PacketConnection) Flush() error {
 
+	pc.pendingPacketsLock.Lock()
+	packets := make([]*Packet, 0, len(pc.pendingPackets))
+	packets, pc.pendingPackets = pc.pendingPackets, packets
+	pc.pendingPacketsLock.Unlock()
+
+	// flush should only be called in one goroutine
+	for _, packet := range packets { // TODO: merge packets and write in one syscall?
+		err := WriteAll(pc.conn, packet.data())
+		packet.Release()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (pc PacketConnection) RecvPacket() (*Packet, error) {
+func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	var _payloadLenBuf [SIZE_FIELD_SIZE]byte
 	payloadLenBuf := _payloadLenBuf[:]
 
@@ -98,18 +122,18 @@ func (pc PacketConnection) RecvPacket() (*Packet, error) {
 	return packet, nil
 }
 
-func (pc PacketConnection) Close() {
+func (pc *PacketConnection) Close() {
 	pc.conn.Close()
 }
 
-func (pc PacketConnection) RemoteAddr() net.Addr {
+func (pc *PacketConnection) RemoteAddr() net.Addr {
 	return pc.conn.RemoteAddr()
 }
 
-func (pc PacketConnection) LocalAddr() net.Addr {
+func (pc *PacketConnection) LocalAddr() net.Addr {
 	return pc.conn.LocalAddr()
 }
 
-func (pc PacketConnection) String() string {
+func (pc *PacketConnection) String() string {
 	return fmt.Sprintf("[%s >>> %s]", pc.LocalAddr(), pc.RemoteAddr())
 }

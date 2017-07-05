@@ -7,6 +7,8 @@ import (
 
 	"os"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
@@ -14,18 +16,20 @@ import (
 )
 
 type DispatcherClientProxy struct {
-	proto.GoWorldConnection
+	*proto.GoWorldConnection
 	owner    *DispatcherService
 	serverid uint16
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *DispatcherClientProxy {
 	conn := netutil.Connection(_conn)
-	if consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY > 0 {
-		conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
-	}
+	//if consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY > 0 {
+	//	conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
+	//}
+	gwc := proto.NewGoWorldConnection(conn)
+	gwc.SetAutoFlush(time.Millisecond * 10)
 	return &DispatcherClientProxy{
-		GoWorldConnection: proto.NewGoWorldConnection(conn),
+		GoWorldConnection: gwc,
 		owner:             owner,
 	}
 }

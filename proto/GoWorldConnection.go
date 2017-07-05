@@ -7,16 +7,19 @@ import (
 
 	"time"
 
+	"sync/atomic"
+
+	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/opmon"
 )
 
 type GoWorldConnection struct {
-	packetConn netutil.PacketConnection
+	packetConn *netutil.PacketConnection
+	closed     int32
 }
 
-func NewGoWorldConnection(conn netutil.Connection) GoWorldConnection {
-	return GoWorldConnection{
+func NewGoWorldConnection(conn netutil.Connection) *GoWorldConnection {
+	return &GoWorldConnection{
 		packetConn: netutil.NewPacketConnection(conn),
 	}
 }
@@ -285,11 +288,25 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16,
 	return err
 }
 
-func (gwc *GoWorldConnection) SendPacket(pkt *netutil.Packet) error {
-	op := opmon.StartOperation("SendPacket")
-	err := gwc.packetConn.SendPacket(pkt)
-	op.Finish(time.Millisecond * 100)
-	return err
+func (gwc *GoWorldConnection) SendPacket(packet *netutil.Packet) error {
+	return gwc.packetConn.SendPacket(packet)
+}
+
+func (gwc *GoWorldConnection) Flush() error {
+	return gwc.packetConn.Flush()
+}
+
+func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
+	go func() {
+		defer gwlog.Debug("%s: auto flush routine quited", gwc)
+		for !gwc.IsClosed() {
+			time.Sleep(interval)
+			err := gwc.Flush()
+			if err != nil {
+				break
+			}
+		}
+	}()
 }
 
 //func (gwc *GoWorldConnection) SendPacketRelease(pkt *netutil.Packet) error {
@@ -313,7 +330,12 @@ func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t) (*netutil.Packet, error) 
 }
 
 func (gwc *GoWorldConnection) Close() {
+	atomic.StoreInt32(&gwc.closed, 1)
 	gwc.packetConn.Close()
+}
+
+func (gwc *GoWorldConnection) IsClosed() bool {
+	return atomic.LoadInt32(&gwc.closed) != 0
 }
 
 func (gwc *GoWorldConnection) RemoteAddr() net.Addr {

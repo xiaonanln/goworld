@@ -2,11 +2,12 @@ package server
 
 import (
 	"net"
-	"time"
 
 	"fmt"
 
 	"os"
+
+	"time"
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
@@ -17,7 +18,7 @@ import (
 )
 
 type ClientProxy struct {
-	proto.GoWorldConnection
+	*proto.GoWorldConnection
 	clientid    common.ClientID
 	filterProps map[string]string
 }
@@ -26,11 +27,13 @@ func newClientProxy(conn net.Conn) *ClientProxy {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
+
+	gwc := proto.NewGoWorldConnection(conn)
+	gwc.SetAutoFlush(time.Millisecond * 50) // TODO: flush in per client proxy routine
 	return &ClientProxy{
-		GoWorldConnection: proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn, time.Millisecond*50)), // using buffered connection for client proxy
-		//GoWorldConnection: proto.NewGoWorldConnection(conn, false),
-		clientid:    common.GenClientID(), // each client has its unique clientid
-		filterProps: map[string]string{},
+		GoWorldConnection: gwc,
+		clientid:          common.GenClientID(), // each client has its unique clientid
+		filterProps:       map[string]string{},
 	}
 }
 
