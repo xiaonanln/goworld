@@ -56,7 +56,12 @@ func (cp *ClientProxy) serve() {
 	for {
 		var msgtype proto.MsgType_t
 		pkt, err := cp.Recv(&msgtype)
+
 		if err != nil {
+			if netutil.IsTemporaryNetError(err) {
+				continue
+			}
+
 			panic(err)
 		}
 

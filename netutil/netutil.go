@@ -17,11 +17,13 @@ func init() {
 
 func IsTemporaryNetError(err error) bool {
 	if err == nil {
+		println("nil")
 		return false
 	}
 
 	netErr, ok := err.(net.Error)
 	if !ok {
+		println("not net.Error")
 		return false
 	}
 	return netErr.Temporary() || netErr.Timeout()

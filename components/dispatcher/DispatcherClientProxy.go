@@ -49,7 +49,12 @@ func (dcp *DispatcherClientProxy) serve() {
 	for {
 		var msgtype proto.MsgType_t
 		pkt, err := dcp.Recv(&msgtype)
+
 		if err != nil {
+			if netutil.IsTemporaryNetError(err) {
+				continue
+			}
+
 			gwlog.Panic(err)
 		}
 

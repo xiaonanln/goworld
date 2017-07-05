@@ -101,7 +101,12 @@ func serveDispatcherClient() {
 		dispatcherClient := assureConnectedDispatcherClient()
 		var msgtype proto.MsgType_t
 		pkt, err := dispatcherClient.Recv(&msgtype)
+
 		if err != nil {
+			if netutil.IsTemporaryNetError(err) {
+				continue
+			}
+
 			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
 			setDispatcherClient(nil)

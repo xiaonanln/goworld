@@ -85,7 +85,12 @@ func (bot *ClientBot) loop() {
 	var msgtype proto.MsgType_t
 	for {
 		pkt, err := bot.conn.Recv(&msgtype)
+
 		if err != nil {
+			if netutil.IsTemporaryNetError(err) {
+				continue
+			}
+
 			gwlog.Panic(err)
 		}
 		//gwlog.Info("recv packet: msgtype=%v, packet=%v", msgtype, pkt.Payload())
