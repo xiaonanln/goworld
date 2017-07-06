@@ -14,6 +14,7 @@ import (
 
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/opmon"
 )
 
 const ( // Three different level of packet size
@@ -96,13 +97,18 @@ func (pc *PacketConnection) SendPacket(packet *Packet) error {
 }
 
 func (pc *PacketConnection) Flush() error {
-
 	pc.pendingPacketsLock.Lock()
+	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
+		pc.pendingPacketsLock.Unlock()
+		return nil
+	}
 	packets := make([]*Packet, 0, len(pc.pendingPackets))
 	packets, pc.pendingPackets = pc.pendingPackets, packets
 	pc.pendingPacketsLock.Unlock()
 
 	// flush should only be called in one goroutine
+	op := opmon.StartOperation("FlushPackets")
+
 	for _, packet := range packets { // TODO: merge packets and write in one syscall?
 		err := WriteAll(pc.conn, packet.data())
 		packet.Release()
@@ -111,6 +117,7 @@ func (pc *PacketConnection) Flush() error {
 		}
 	}
 
+	op.Finish(time.Millisecond * 100)
 	return nil
 }
 
