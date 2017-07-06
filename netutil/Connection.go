@@ -13,3 +13,22 @@ type Connection interface {
 	SetWriteDeadline(time.Time) error
 	SetReadDeadline(time.Time) error
 }
+
+type FlushableConnection interface {
+	Connection
+	Flush() error
+}
+
+type _NopFlushable struct {
+	Connection
+}
+
+func (nf _NopFlushable) Flush() error {
+	return nil
+}
+
+func NopFlushable(conn Connection) FlushableConnection {
+	return &_NopFlushable{
+		Connection: conn,
+	}
+}

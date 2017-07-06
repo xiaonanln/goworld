@@ -1,9 +1,5 @@
-TODO: Optimize PacketConnection.Flush
-TODO: CallFilteredClients is causing GateService to block for too long
 TODO: RecvPacket is causing too much GC overhead on dispatcher
-TODO: Send packets to client proxy in it's own goroutine for receiving packets
-TODO: An operation profiler to monitor the whole server
-TODO: Sync Position & Other physical properties to client (e.x. Yaw)
+TODO: Compress and decompress traffic between clients and servers
 
 # MISC
 TODO: optimize packet alloc for large packets

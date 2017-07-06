@@ -50,7 +50,7 @@ func (err _ErrRecvAgain) Timeout() bool {
 }
 
 type PacketConnection struct {
-	conn               Connection
+	conn               FlushableConnection
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
 	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
@@ -65,7 +65,7 @@ type PacketConnection struct {
 
 func NewPacketConnection(conn Connection) *PacketConnection {
 	pc := &PacketConnection{
-		conn:       conn,
+		conn:       NopFlushable(conn),
 		sendBuffer: NewSendBuffer(),
 	}
 	return pc
@@ -116,6 +116,9 @@ func (pc *PacketConnection) Flush() (err error) {
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		err = WriteAll(pc.conn, packets[0].data())
+		if err == nil {
+			err = pc.conn.Flush()
+		}
 		return
 	}
 
@@ -151,8 +154,11 @@ send_packets_loop:
 	}
 
 	// now we send all data in the send buffer
-	sendBuffer.WriteTo(pc.conn)
-	return nil
+	err = sendBuffer.WriteTo(pc.conn)
+	if err == nil {
+		err = pc.conn.Flush()
+	}
+	return
 }
 
 func (pc *PacketConnection) SetRecvDeadline(deadline time.Time) error {
