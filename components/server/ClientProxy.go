@@ -29,7 +29,6 @@ func newClientProxy(conn net.Conn) *ClientProxy {
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 
 	gwc := proto.NewGoWorldConnection(conn)
-	gwc.SetAutoFlush(time.Millisecond * 50) // TODO: flush in per client proxy routine
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid
@@ -55,26 +54,26 @@ func (cp *ClientProxy) serve() {
 
 	for {
 		var msgtype proto.MsgType_t
+		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
 		pkt, err := cp.Recv(&msgtype)
-
-		if err != nil {
-			if netutil.IsTemporaryNetError(err) {
-				continue
+		if pkt != nil {
+			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
+				cp.handleCallEntityMethodFromClient(pkt)
+			} else {
+				if consts.DEBUG_MODE {
+					gwlog.TraceError("unknown message type from client: %d", msgtype)
+					os.Exit(2)
+				} else {
+					gwlog.Panicf("unknown message type from client: %d", msgtype)
+				}
 			}
 
+			pkt.Release()
+		} else if err != nil && !netutil.IsTemporaryNetError(err) {
 			panic(err)
 		}
 
-		if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-			cp.handleCallEntityMethodFromClient(pkt)
-		} else {
-			gwlog.Panicf("unknown message type from client: %d", msgtype)
-			if consts.DEBUG_MODE {
-				os.Exit(2)
-			}
-		}
-
-		pkt.Release()
+		cp.Flush()
 	}
 }
 
