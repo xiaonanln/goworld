@@ -28,19 +28,6 @@ type EntityTypeDesc struct {
 	persistentAttrs StringSet
 }
 
-//func (desc *EntityTypeDesc) SetAllClientAttrs(attrs ...string) {
-//	for _, attr := range attrs {
-//		desc.allClientAttrs.Add(attr)
-//		desc.clientAttrs.Add(attr)
-//	}
-//}
-//
-//func (desc *EntityTypeDesc) SetClientAttrs(attrs ...string) {
-//	for _, attr := range attrs {
-//		desc.clientAttrs.Add(attr)
-//	}
-//}
-
 var _VALID_ATTR_DEFS = StringSet{} // all valid attribute defs
 
 func init() {
