@@ -53,7 +53,9 @@ type PacketConnection struct {
 	conn               Connection
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
+	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
 
+	// buffers and infos for receiving a packet
 	payloadLenBuf         [SIZE_FIELD_SIZE]byte
 	payloadLenBytesRecved int
 	recvTotalPayloadLen   uint32
@@ -63,7 +65,8 @@ type PacketConnection struct {
 
 func NewPacketConnection(conn Connection) *PacketConnection {
 	pc := &PacketConnection{
-		conn: conn,
+		conn:       conn,
+		sendBuffer: NewSendBuffer(),
 	}
 	return pc
 }
@@ -96,11 +99,11 @@ func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	return nil
 }
 
-func (pc *PacketConnection) Flush() error {
+func (pc *PacketConnection) Flush() (err error) {
 	pc.pendingPacketsLock.Lock()
 	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
 		pc.pendingPacketsLock.Unlock()
-		return nil
+		return
 	}
 	packets := make([]*Packet, 0, len(pc.pendingPackets))
 	packets, pc.pendingPackets = pc.pendingPackets, packets
@@ -108,16 +111,47 @@ func (pc *PacketConnection) Flush() error {
 
 	// flush should only be called in one goroutine
 	op := opmon.StartOperation("FlushPackets")
+	defer op.Finish(time.Millisecond * 100)
 
-	for _, packet := range packets { // TODO: merge packets and write in one syscall?
-		err := WriteAll(pc.conn, packet.data())
-		packet.Release()
-		if err != nil {
-			return err
-		}
+	if len(packets) == 1 {
+		// only 1 packet to send, just send it directly, no need to use send buffer
+		err = WriteAll(pc.conn, packets[0].data())
+		return
 	}
 
-	op.Finish(time.Millisecond * 100)
+	sendBuffer := pc.sendBuffer // the send buffer
+
+	gwlog.Info("Flush %d packets, send buffer=%d", len(packets), sendBuffer.FreeSpace())
+send_packets_loop:
+	for _, packet := range packets { // TODO: merge packets and write in one syscall?
+		packetData := packet.data()
+		if len(packetData) > sendBuffer.FreeSpace() {
+			// can not append data to send buffer, so clear send buffer first
+			if err = sendBuffer.WriteTo(pc.conn); err != nil {
+				return err
+			}
+
+			if len(packetData) >= SEND_BUFFER_SIZE {
+				// packet is too large, impossible to put to send buffer
+				err = WriteAll(pc.conn, packetData)
+				if err != nil {
+					return
+				}
+				packet.Release()
+				continue send_packets_loop
+			}
+		}
+
+		// now we are sure that len(packetData) <= sendBuffer.FreeSize()
+		n, _ := sendBuffer.Write(packetData)
+		if n != len(packetData) {
+			gwlog.Panicf("packet is not fully written")
+		}
+		packet.Release()
+	}
+
+	// now we send all data in the send buffer
+	sendBuffer.WriteTo(pc.conn)
 	return nil
 }
 
