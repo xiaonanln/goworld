@@ -329,6 +329,10 @@ func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t) (*netutil.Packet, error) 
 	return pkt, nil
 }
 
+func (gwc *GoWorldConnection) SetRecvDeadline(deadline time.Time) error {
+	return gwc.packetConn.SetRecvDeadline(deadline)
+}
+
 func (gwc *GoWorldConnection) Close() {
 	atomic.StoreInt32(&gwc.closed, 1)
 	gwc.packetConn.Close()

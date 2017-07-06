@@ -62,7 +62,7 @@ func (bot *ClientBot) run() {
 	var conn net.Conn
 	var err error
 	for { // retry for ever
-		conn, err = netutil.ConnectTCP("localhost", cfg.Port)
+		conn, err = netutil.ConnectTCP("10.246.13.148", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
@@ -84,18 +84,22 @@ func (bot *ClientBot) run() {
 func (bot *ClientBot) loop() {
 	var msgtype proto.MsgType_t
 	for {
-		pkt, err := bot.conn.Recv(&msgtype)
-
+		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 20))
 		if err != nil {
-			if netutil.IsTemporaryNetError(err) {
-				continue
-			}
-
 			gwlog.Panic(err)
 		}
-		//gwlog.Info("recv packet: msgtype=%v, packet=%v", msgtype, pkt.Payload())
-		bot.handlePacket(msgtype, pkt)
-		pkt.Release()
+
+		pkt, err := bot.conn.Recv(&msgtype)
+
+		if pkt != nil {
+			bot.handlePacket(msgtype, pkt)
+			pkt.Release()
+		} else if err != nil && !netutil.IsTemporaryNetError(err) {
+			// bad error
+			gwlog.Panic(err)
+		}
+
+		bot.conn.Flush()
 	}
 }
 
