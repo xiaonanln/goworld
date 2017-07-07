@@ -77,7 +77,9 @@ func (pc *PacketConnection) NewPacket() *Packet {
 
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s SEND PACKET: msgtype=%v, payload=%v", pc, PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
+		gwlog.Debug("%s SEND PACKET: msgtype=%v, payload(%d)=%v", pc,
+			PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
+			packet.GetPayloadLen(),
 			packet.bytes[PREPAYLOAD_SIZE+2:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
 	if atomic.LoadInt64(&packet.refcount) <= 0 {
@@ -180,6 +182,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		pc.recvedPayloadLen = 0
 		pc.recvingPacket = NewPacket()
 		pc.recvingPacket.assureCapacity(pc.recvTotalPayloadLen)
+		gwlog.Info("Recving Packet %p, payloadLen %d", pc.recvingPacket, pc.recvTotalPayloadLen)
 	}
 
 	// now all bytes of payload len is received, start receiving payload

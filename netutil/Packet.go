@@ -82,6 +82,7 @@ func allocPacket() *Packet {
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
 	}
+	gwlog.Info("Alloc Packet %p", pkt)
 	return pkt
 }
 
@@ -103,9 +104,9 @@ func NewPacket() *Packet {
 
 func (p *Packet) assureCapacity(need uint32) {
 	requireCap := p.GetPayloadLen() + need
-	cap := p.PayloadCap()
+	oldCap := p.PayloadCap()
 
-	if requireCap <= cap { // most case
+	if requireCap <= oldCap { // most case
 		return
 	}
 
@@ -118,6 +119,9 @@ func (p *Packet) assureCapacity(need uint32) {
 	}
 
 	buffer := packetBufferPools[resizeToCap].Get().([]byte)
+	if len(buffer) != int(resizeToCap+SIZE_FIELD_SIZE) {
+		gwlog.Panicf("buffer size should be %d, but is %d", resizeToCap, len(buffer))
+	}
 	copy(buffer, p.data())
 	oldPayloadCap := p.PayloadCap()
 	if oldPayloadCap > MIN_PAYLOAD_CAP {
@@ -126,6 +130,7 @@ func (p *Packet) assureCapacity(need uint32) {
 	}
 
 	p.bytes = buffer
+	gwlog.Info("Packet %p assure capacity %d, oldCap %d, newCap %d", p, need, oldCap, p.PayloadCap())
 }
 
 func (p *Packet) AddRefCount(add int64) {
@@ -154,6 +159,8 @@ func (p *Packet) Release() {
 	refcount := atomic.AddInt64(&p.refcount, -1)
 
 	if refcount == 0 {
+		gwlog.Info("Released Packet %p", p)
+
 		p.SetPayloadLen(0)
 		p.readCursor = 0
 
@@ -289,6 +296,10 @@ func (p *Packet) ReadUint64() (v uint64) {
 
 func (p *Packet) ReadBytes(size uint32) []byte {
 	pos := p.readCursor + PREPAYLOAD_SIZE
+	if pos > uint32(len(p.bytes)) || pos+size > uint32(len(p.bytes)) {
+		gwlog.Panicf("bytes is %d, but reading %d+%d", len(p.bytes), pos, size)
+	}
+
 	bytes := p.bytes[pos : pos+size] // bytes are not copied
 	p.readCursor += size
 	return bytes
@@ -316,7 +327,7 @@ func (p *Packet) ReadVarStr() string {
 
 func (p *Packet) ReadVarBytes() []byte {
 	blen := p.ReadUint32()
-	gwlog.Info("ReadVarBytes: %d", blen)
+	gwlog.Info("Packet %p ReadVarBytes: %d, PayloadCap: %d", p, blen, p.PayloadCap())
 	return p.ReadBytes(blen)
 }
 
