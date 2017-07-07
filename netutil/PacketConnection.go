@@ -24,7 +24,7 @@ const ( // Three different level of packet size
 )
 
 const (
-	MAX_PACKET_SIZE    = 4 * 1024 * 1024
+	MAX_PACKET_SIZE    = 25 * 1024 * 1024
 	SIZE_FIELD_SIZE    = 4
 	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
 	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
@@ -69,14 +69,6 @@ func NewPacketConnection(conn Connection) *PacketConnection {
 		sendBuffer: NewSendBuffer(),
 	}
 	return pc
-}
-
-func NewPacketWithPayloadLen(payloadLen uint32) *Packet {
-	return allocPacket(payloadLen)
-}
-
-func NewPacket() *Packet {
-	return allocPacket(INITIAL_PACKET_CAPACITY)
 }
 
 func (pc *PacketConnection) NewPacket() *Packet {

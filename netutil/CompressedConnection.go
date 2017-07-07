@@ -4,6 +4,7 @@ type CompressedConnection struct {
 	conn Connection
 }
 
-func NewCompressedConnection(conn Connection) FlushableConnection {
-
-}
+//
+//func NewCompressedConnection(conn Connection) FlushableConnection {
+//
+//}

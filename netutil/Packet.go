@@ -20,7 +20,8 @@ const (
 )
 
 var (
-	PACKET_ENDIAN = binary.LittleEndian
+	PACKET_ENDIAN                = binary.LittleEndian
+	PREDEFINE_PAYLOAD_CAPACITIES []uint32
 
 	debugInfo struct {
 		NewCount     int64
@@ -46,6 +47,18 @@ var (
 	}
 )
 
+func init() {
+	payloadCap := uint32(128)
+	for payloadCap < MAX_PAYLOAD_LENGTH {
+		PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, payloadCap)
+		payloadCap *= 2
+	}
+	PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, MAX_PAYLOAD_LENGTH)
+	println("Predefined payload caps:", PREDEFINE_PAYLOAD_CAPACITIES)
+
+	for payloadCap :=
+}
+
 type Packet struct {
 	readCursor uint32
 
@@ -67,6 +80,14 @@ func allocPacket(payloadCap uint32) *Packet {
 	}
 	return pkt
 }
+
+func NewPacketWithPayloadLen(payloadLen uint32) *Packet {
+	return allocPacket(payloadLen)
+}
+
+//func NewPacket() *Packet {
+//	return allocPacket(INITIAL_PACKET_CAPACITY)
+//}
 
 func (p *Packet) assureCapacity(need uint32) {
 	requireCap := PREPAYLOAD_SIZE + p.GetPayloadLen() + need
