@@ -16,12 +16,12 @@ import (
 )
 
 const (
-	INITIAL_PACKET_CAPACITY = 128
+	MIN_PAYLOAD_CAP = 128
+	CAP_GROW_SHIFT  = uint(2)
 )
 
 var (
 	PACKET_ENDIAN                = binary.LittleEndian
-	MIN_PAYLOAD_CAP              = 128
 	PREDEFINE_PAYLOAD_CAPACITIES []uint32
 
 	debugInfo struct {
@@ -33,10 +33,9 @@ var (
 	packetBufferPools = map[uint32]*sync.Pool{}
 	packetPool        = sync.Pool{
 		New: func() interface{} {
-			p := &Packet{
-				refcount: 0,
-				bytes:    make([]byte, PREPAYLOAD_SIZE+MIN_PAYLOAD_CAP), // 4 for the uint32 payload len
-			}
+			p := &Packet{}
+			p.bytes = p.initialBytes[:]
+
 			if consts.DEBUG_PACKET_ALLOC {
 				atomic.AddInt64(&debugInfo.NewCount, 1)
 				gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
@@ -50,10 +49,10 @@ var (
 )
 
 func init() {
-	payloadCap := uint32(MIN_PAYLOAD_CAP)
+	payloadCap := uint32(MIN_PAYLOAD_CAP) << CAP_GROW_SHIFT
 	for payloadCap < MAX_PAYLOAD_LENGTH {
 		PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, payloadCap)
-		payloadCap <<= 2
+		payloadCap <<= CAP_GROW_SHIFT
 	}
 	PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, MAX_PAYLOAD_LENGTH)
 	gwlog.Info("Predefined payload caps: %v", PREDEFINE_PAYLOAD_CAPACITIES)
@@ -73,12 +72,11 @@ type Packet struct {
 
 	refcount     int64
 	bytes        []byte
-	initialBytes [MIN_PAYLOAD_CAP]byte
+	initialBytes [PREPAYLOAD_SIZE + MIN_PAYLOAD_CAP]byte
 }
 
-func allocPacket(payloadCap uint32) *Packet {
+func allocPacket() *Packet {
 	pkt := packetPool.Get().(*Packet)
-	pkt.assureCapacity(payloadCap)
 	pkt.refcount = 1
 
 	if consts.DEBUG_PACKET_ALLOC {
@@ -87,33 +85,47 @@ func allocPacket(payloadCap uint32) *Packet {
 	return pkt
 }
 
-func NewPacketWithPayloadLen(payloadLen uint32) *Packet {
-	allocPayloadCap := uint32(MAX_PAYLOAD_LENGTH)
-	for _, payloadCap := range PREDEFINE_PAYLOAD_CAPACITIES {
-		if payloadCap >= payloadLen {
-			allocPayloadCap = payloadCap
-			break
-		}
-	}
-	return allocPacket(allocPayloadCap)
+func NewPacket() *Packet {
+	return allocPacket()
 }
 
-func (p *Packet) assureCapacity(need uint32) {
-	requireCap := PREPAYLOAD_SIZE + p.GetPayloadLen() + need
-	curcap := uint32(len(p.bytes))
+//func NewPacketWithPayloadLen(payloadLen uint32) *Packet {
+//	allocPayloadCap := uint32(MAX_PAYLOAD_LENGTH)
+//	for _, payloadCap := range PREDEFINE_PAYLOAD_CAPACITIES {
+//		if payloadCap >= payloadLen {
+//			allocPayloadCap = payloadCap
+//			break
+//		}
+//	}
+//
+//	return allocPacket(allocPayloadCap)
+//}
 
-	if requireCap <= curcap {
+func (p *Packet) assureCapacity(need uint32) {
+	requireCap := p.GetPayloadLen() + need
+	cap := p.PayloadCap()
+
+	if requireCap <= cap { // most case
 		return
 	}
 
-	resizeToCap := curcap << 1
-	for resizeToCap < requireCap {
-		resizeToCap <<= 1
+	// try to find the proper capacity for the need bytes
+	var resizeToCap uint32
+	for _, resizeToCap = range PREDEFINE_PAYLOAD_CAPACITIES {
+		if resizeToCap >= requireCap {
+			break
+		}
 	}
 
-	newbytes := make([]byte, resizeToCap)
-	copy(newbytes, p.data())
-	p.bytes = newbytes
+	buffer := packetBufferPools[resizeToCap].Get().([]byte)
+	copy(buffer, p.data())
+	oldPayloadCap := p.PayloadCap()
+	if oldPayloadCap > MIN_PAYLOAD_CAP {
+		// release old bytes
+		packetBufferPools[oldPayloadCap].Put(p.bytes)
+	}
+
+	p.bytes = buffer
 }
 
 func (p *Packet) AddRefCount(add int64) {
@@ -146,10 +158,18 @@ func (p *Packet) Release() {
 		p.readCursor = 0
 
 		payloadCap := p.PayloadCap()
-		packetPool := packetBufferPools[payloadCap]
-		if packetPool == nil {
-			gwlog.Panicf("payload cap is not valid: %v", payloadCap)
+		if payloadCap > MIN_PAYLOAD_CAP {
+			buffer := p.bytes
+			p.bytes = p.initialBytes[:]
+			gwlog.Info("Reclaim packet buffer: %d", payloadCap)
+			packetBufferPools[payloadCap].Put(buffer) // reclaim the buffer
 		}
+
+		//packetPool := packetBufferPools[payloadCap]
+		//if packetPool == nil {
+		//	gwlog.Panicf("payload cap is not valid: %v", payloadCap)
+		//}
+
 		packetPool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
@@ -166,6 +186,7 @@ func (p *Packet) ClearPayload() {
 }
 
 func (p *Packet) AppendByte(b byte) {
+	p.assureCapacity(1)
 	p.bytes[PREPAYLOAD_SIZE+p.GetPayloadLen()] = b
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 1
 }
@@ -190,18 +211,21 @@ func (p *Packet) ReadBool() (v bool) {
 }
 
 func (p *Packet) AppendUint16(v uint16) {
+	p.assureCapacity(2)
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint16(p.bytes[payloadEnd:payloadEnd+2], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 2
 }
 
 func (p *Packet) AppendUint32(v uint32) {
+	p.assureCapacity(4)
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint32(p.bytes[payloadEnd:payloadEnd+4], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 4
 }
 
 func (p *Packet) AppendUint64(v uint64) {
+	p.assureCapacity(8)
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint64(p.bytes[payloadEnd:payloadEnd+8], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 8
@@ -226,8 +250,9 @@ func (p *Packet) ReadFloat64() float64 {
 }
 
 func (p *Packet) AppendBytes(v []byte) {
-	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	bytesLen := uint32(len(v))
+	p.assureCapacity(bytesLen)
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += bytesLen
 }
@@ -291,25 +316,19 @@ func (p *Packet) ReadVarStr() string {
 
 func (p *Packet) ReadVarBytes() []byte {
 	blen := p.ReadUint32()
+	gwlog.Info("ReadVarBytes: %d", blen)
 	return p.ReadBytes(blen)
 }
 
 func (p *Packet) AppendData(msg interface{}) {
-	oldPayloadLen := p.GetPayloadLen() // save payload len before pack msg
-	p.AppendUint32(0)                  // uint32 for data length
-
-	newData, err := MSG_PACKER.PackMsg(msg, p.data())
+	dataBytes, err := MSG_PACKER.PackMsg(msg, nil)
 	if err != nil {
 		gwlog.Panic(err)
 	}
 
-	if len(newData) > len(p.bytes) { // data overflow!
-		gwlog.Panicf("AppendData failed: overflow")
-	}
-	newPayloadLen := uint32(len(newData) - PREPAYLOAD_SIZE)
-	dataLen := newPayloadLen - oldPayloadLen - 4
-	PACKET_ENDIAN.PutUint32(p.bytes[PREPAYLOAD_SIZE+oldPayloadLen:PREPAYLOAD_SIZE+oldPayloadLen+4], dataLen)
-	p.SetPayloadLen(newPayloadLen)
+	gwlog.Info("AppendData: %d", len(dataBytes))
+
+	p.AppendVarBytes(dataBytes)
 }
 
 func (p *Packet) ReadData(msg interface{}) {

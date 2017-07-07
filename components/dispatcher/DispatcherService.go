@@ -374,7 +374,7 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 }
 
 func (service *DispatcherService) handleServiceDown(serviceName string, eid common.EntityID) {
-	pkt := netutil.NewPacketWithPayloadLen(128)
+	pkt := netutil.NewPacket()
 	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
 	pkt.AppendEntityID(eid)
 	pkt.AppendVarStr(serviceName)

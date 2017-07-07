@@ -72,7 +72,7 @@ func NewPacketConnection(conn Connection) *PacketConnection {
 }
 
 func (pc *PacketConnection) NewPacket() *Packet {
-	return allocPacket(INITIAL_PACKET_CAPACITY)
+	return allocPacket()
 }
 
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
@@ -178,7 +178,8 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		}
 
 		pc.recvedPayloadLen = 0
-		pc.recvingPacket = NewPacketWithPayloadLen(pc.recvTotalPayloadLen)
+		pc.recvingPacket = NewPacket()
+		pc.recvingPacket.assureCapacity(pc.recvTotalPayloadLen)
 	}
 
 	// now all bytes of payload len is received, start receiving payload
