@@ -21,6 +21,7 @@ const (
 
 var (
 	PACKET_ENDIAN                = binary.LittleEndian
+	MIN_PAYLOAD_CAP              = 128
 	PREDEFINE_PAYLOAD_CAPACITIES []uint32
 
 	debugInfo struct {
@@ -29,11 +30,27 @@ var (
 		ReleaseCount int64
 	}
 
-	packetPools = map[uint32]*sync.Pool{}
+	packetBufferPools = map[uint32]*sync.Pool{}
+	packetPool        = sync.Pool{
+		New: func() interface{} {
+			p := &Packet{
+				refcount: 0,
+				bytes:    make([]byte, PREPAYLOAD_SIZE+MIN_PAYLOAD_CAP), // 4 for the uint32 payload len
+			}
+			if consts.DEBUG_PACKET_ALLOC {
+				atomic.AddInt64(&debugInfo.NewCount, 1)
+				gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
+					atomic.LoadInt64(&debugInfo.AllocCount),
+					atomic.LoadInt64(&debugInfo.ReleaseCount),
+					atomic.LoadInt64(&debugInfo.NewCount))
+			}
+			return p
+		},
+	}
 )
 
 func init() {
-	payloadCap := uint32(128)
+	payloadCap := uint32(MIN_PAYLOAD_CAP)
 	for payloadCap < MAX_PAYLOAD_LENGTH {
 		PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, payloadCap)
 		payloadCap <<= 2
@@ -43,20 +60,9 @@ func init() {
 
 	for _, payloadCap := range PREDEFINE_PAYLOAD_CAPACITIES {
 		payloadCap := payloadCap
-		packetPools[payloadCap] = &sync.Pool{
+		packetBufferPools[payloadCap] = &sync.Pool{
 			New: func() interface{} {
-				p := &Packet{
-					refcount: 0,
-					bytes:    make([]byte, PREPAYLOAD_SIZE+payloadCap), // 4 for the uint32 payload len
-				}
-				if consts.DEBUG_PACKET_ALLOC {
-					atomic.AddInt64(&debugInfo.NewCount, 1)
-					gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
-						atomic.LoadInt64(&debugInfo.AllocCount),
-						atomic.LoadInt64(&debugInfo.ReleaseCount),
-						atomic.LoadInt64(&debugInfo.NewCount))
-				}
-				return p
+				return make([]byte, PREPAYLOAD_SIZE+payloadCap)
 			},
 		}
 	}
@@ -65,18 +71,14 @@ func init() {
 type Packet struct {
 	readCursor uint32
 
-	refcount int64
-	bytes    []byte
+	refcount     int64
+	bytes        []byte
+	initialBytes [MIN_PAYLOAD_CAP]byte
 }
 
 func allocPacket(payloadCap uint32) *Packet {
-	//pkt := &Packet{
-	//	refcount: 1,
-	//	bytes:    make([]byte, PREPAYLOAD_SIZE+payloadCap), // 4 for the uint32 payload len
-	//}
-	packetPool := packetPools[payloadCap]
 	pkt := packetPool.Get().(*Packet)
-	//pkt.assureCapacity(payloadCap)
+	pkt.assureCapacity(payloadCap)
 	pkt.refcount = 1
 
 	if consts.DEBUG_PACKET_ALLOC {
@@ -96,23 +98,23 @@ func NewPacketWithPayloadLen(payloadLen uint32) *Packet {
 	return allocPacket(allocPayloadCap)
 }
 
-//func (p *Packet) assureCapacity(need uint32) {
-//	requireCap := PREPAYLOAD_SIZE + p.GetPayloadLen() + need
-//	curcap := uint32(len(p.bytes))
-//
-//	if requireCap <= curcap {
-//		return
-//	}
-//
-//	resizeToCap := curcap << 1
-//	for resizeToCap < requireCap {
-//		resizeToCap <<= 1
-//	}
-//
-//	newbytes := make([]byte, resizeToCap)
-//	copy(newbytes, p.data())
-//	p.bytes = newbytes
-//}
+func (p *Packet) assureCapacity(need uint32) {
+	requireCap := PREPAYLOAD_SIZE + p.GetPayloadLen() + need
+	curcap := uint32(len(p.bytes))
+
+	if requireCap <= curcap {
+		return
+	}
+
+	resizeToCap := curcap << 1
+	for resizeToCap < requireCap {
+		resizeToCap <<= 1
+	}
+
+	newbytes := make([]byte, resizeToCap)
+	copy(newbytes, p.data())
+	p.bytes = newbytes
+}
 
 func (p *Packet) AddRefCount(add int64) {
 	atomic.AddInt64(&p.refcount, add)
@@ -144,7 +146,7 @@ func (p *Packet) Release() {
 		p.readCursor = 0
 
 		payloadCap := p.PayloadCap()
-		packetPool := packetPools[payloadCap]
+		packetPool := packetBufferPools[payloadCap]
 		if packetPool == nil {
 			gwlog.Panicf("payload cap is not valid: %v", payloadCap)
 		}

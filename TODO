@@ -8,6 +8,7 @@ TODO: Use bytes.Buffer for Packet Read/Append ?
 TODO: make sure entity is destroyed if creation fails
 TODO: Strip serverid and clientid for packets sent to clients because useless
 TODO: drop RPC if rpc quque is too long ?
+TODO: not allow client connection if server is not ready
 
 # Subsystem to be implemented
 
@@ -21,3 +22,4 @@ TODO: remove if ... else if ... else if ... else if ...
 TODO: Entity Client Reconnect Mechianism
 TODO: use vendor for submodules
 TODO: use termui
+TODO: use UDP : e.x. KCP
