@@ -13,13 +13,8 @@ type DispatcherClient struct {
 	*proto.GoWorldConnection
 }
 
-func newDispatcherClient(_conn net.Conn) *DispatcherClient {
-	var conn netutil.Connection
-	conn = _conn
-	//if consts.DISPATCHER_CLIENT_BUFFERED_DELAY > 0 {
-	//	conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_BUFFERED_DELAY)
-	//}
-	gwc := proto.NewGoWorldConnection(conn)
+func newDispatcherClient(conn net.Conn) *DispatcherClient {
+	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn))
 	gwc.SetAutoFlush(time.Millisecond * 10)
 	return &DispatcherClient{
 		GoWorldConnection: gwc,

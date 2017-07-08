@@ -28,7 +28,7 @@ func newClientProxy(conn net.Conn) *ClientProxy {
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 
-	gwc := proto.NewGoWorldConnection(conn)
+	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn))
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid
