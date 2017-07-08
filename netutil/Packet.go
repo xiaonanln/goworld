@@ -55,7 +55,6 @@ func init() {
 		payloadCap <<= CAP_GROW_SHIFT
 	}
 	PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, MAX_PAYLOAD_LENGTH)
-	gwlog.Info("Predefined payload caps: %v", PREDEFINE_PAYLOAD_CAPACITIES)
 
 	for _, payloadCap := range PREDEFINE_PAYLOAD_CAPACITIES {
 		payloadCap := payloadCap
@@ -82,7 +81,11 @@ func allocPacket() *Packet {
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
 	}
-	gwlog.Info("Alloc Packet %p", pkt)
+
+	if pkt.GetPayloadLen() != 0 {
+		gwlog.Panicf("allocPacket: payload should be 0, but is %d", pkt.GetPayloadLen())
+	}
+
 	return pkt
 }
 
@@ -124,13 +127,13 @@ func (p *Packet) assureCapacity(need uint32) {
 	}
 	copy(buffer, p.data())
 	oldPayloadCap := p.PayloadCap()
+	oldBytes := p.bytes
+	p.bytes = buffer
+
 	if oldPayloadCap > MIN_PAYLOAD_CAP {
 		// release old bytes
-		packetBufferPools[oldPayloadCap].Put(p.bytes)
+		packetBufferPools[oldPayloadCap].Put(oldBytes)
 	}
-
-	p.bytes = buffer
-	gwlog.Info("Packet %p assure capacity %d, oldCap %d, newCap %d", p, need, oldCap, p.PayloadCap())
 }
 
 func (p *Packet) AddRefCount(add int64) {
@@ -155,28 +158,18 @@ func (p *Packet) PayloadCap() uint32 {
 }
 
 func (p *Packet) Release() {
-
 	refcount := atomic.AddInt64(&p.refcount, -1)
 
 	if refcount == 0 {
-		gwlog.Info("Released Packet %p", p)
-
-		p.SetPayloadLen(0)
-		p.readCursor = 0
-
 		payloadCap := p.PayloadCap()
 		if payloadCap > MIN_PAYLOAD_CAP {
 			buffer := p.bytes
 			p.bytes = p.initialBytes[:]
-			gwlog.Info("Reclaim packet buffer: %d", payloadCap)
 			packetBufferPools[payloadCap].Put(buffer) // reclaim the buffer
 		}
 
-		//packetPool := packetBufferPools[payloadCap]
-		//if packetPool == nil {
-		//	gwlog.Panicf("payload cap is not valid: %v", payloadCap)
-		//}
-
+		p.readCursor = 0
+		p.SetPayloadLen(0)
 		packetPool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
@@ -297,7 +290,7 @@ func (p *Packet) ReadUint64() (v uint64) {
 func (p *Packet) ReadBytes(size uint32) []byte {
 	pos := p.readCursor + PREPAYLOAD_SIZE
 	if pos > uint32(len(p.bytes)) || pos+size > uint32(len(p.bytes)) {
-		gwlog.Panicf("bytes is %d, but reading %d+%d", len(p.bytes), pos, size)
+		gwlog.Panicf("Packet %p bytes is %d, but reading %d+%d", p, len(p.bytes), pos, size)
 	}
 
 	bytes := p.bytes[pos : pos+size] // bytes are not copied
@@ -327,7 +320,6 @@ func (p *Packet) ReadVarStr() string {
 
 func (p *Packet) ReadVarBytes() []byte {
 	blen := p.ReadUint32()
-	gwlog.Info("Packet %p ReadVarBytes: %d, PayloadCap: %d", p, blen, p.PayloadCap())
 	return p.ReadBytes(blen)
 }
 
@@ -336,8 +328,6 @@ func (p *Packet) AppendData(msg interface{}) {
 	if err != nil {
 		gwlog.Panic(err)
 	}
-
-	gwlog.Info("AppendData: %d", len(dataBytes))
 
 	p.AppendVarBytes(dataBytes)
 }

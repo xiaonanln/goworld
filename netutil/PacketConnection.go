@@ -77,7 +77,7 @@ func (pc *PacketConnection) NewPacket() *Packet {
 
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s SEND PACKET: msgtype=%v, payload(%d)=%v", pc,
+		gwlog.Debug("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
 			PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
 			packet.GetPayloadLen(),
 			packet.bytes[PREPAYLOAD_SIZE+2:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
@@ -109,7 +109,9 @@ func (pc *PacketConnection) Flush() (err error) {
 
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
-		err = WriteAll(pc.conn, packets[0].data())
+		packet := packets[0]
+		err = WriteAll(pc.conn, packet.data())
+		packet.Release()
 		if err == nil {
 			err = pc.conn.Flush()
 		}
@@ -118,7 +120,6 @@ func (pc *PacketConnection) Flush() (err error) {
 
 	sendBuffer := pc.sendBuffer // the send buffer
 
-	gwlog.Info("Flush %d packets, send buffer=%d", len(packets), sendBuffer.FreeSpace())
 send_packets_loop:
 	for _, packet := range packets { // TODO: merge packets and write in one syscall?
 		packetData := packet.data()
@@ -131,10 +132,11 @@ send_packets_loop:
 			if len(packetData) >= SEND_BUFFER_SIZE {
 				// packet is too large, impossible to put to send buffer
 				err = WriteAll(pc.conn, packetData)
+				packet.Release()
+
 				if err != nil {
 					return
 				}
-				packet.Release()
 				continue send_packets_loop
 			}
 		}
@@ -182,7 +184,6 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		pc.recvedPayloadLen = 0
 		pc.recvingPacket = NewPacket()
 		pc.recvingPacket.assureCapacity(pc.recvTotalPayloadLen)
-		gwlog.Info("Recving Packet %p, payloadLen %d", pc.recvingPacket, pc.recvTotalPayloadLen)
 	}
 
 	// now all bytes of payload len is received, start receiving payload
@@ -205,6 +206,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 func (pc *PacketConnection) resetRecvStates() {
 	pc.payloadLenBytesRecved = 0
 	pc.recvTotalPayloadLen = 0
+	pc.recvedPayloadLen = 0
 	pc.recvingPacket = nil
 }
 

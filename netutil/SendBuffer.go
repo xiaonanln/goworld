@@ -1,10 +1,6 @@
 package netutil
 
-import (
-	"io"
-
-	"github.com/xiaonanln/goworld/gwlog"
-)
+import "io"
 
 const (
 	SEND_BUFFER_SIZE = 8192 * 2
@@ -34,7 +30,6 @@ func (sb *SendBuffer) Write(b []byte) (n int, err error) {
 //}
 
 func (sb *SendBuffer) WriteTo(writer io.Writer) error {
-	gwlog.Info("SendBuffer WriteTo: %d bytes", sb.written)
 	if sb.written == 0 {
 		return nil
 	}
