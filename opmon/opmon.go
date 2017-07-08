@@ -70,17 +70,18 @@ func (monitor *Monitor) record(opname string, duration time.Duration) {
 func (monitor *Monitor) Dump() {
 	type _T struct {
 		name string
-		info _OpInfo
+		info *_OpInfo
 	}
-	copyOpInfos := []_T{}
+	var opInfos map[string]*_OpInfo
 	monitor.Lock()
-
-	for opname, opinfo := range monitor.opInfos {
-		copyOpInfos = append(copyOpInfos, _T{opname, *opinfo})
-	}
-
+	opInfos = monitor.opInfos
+	monitor.opInfos = map[string]*_OpInfo{} // clear to be empty
 	monitor.Unlock()
 
+	var copyOpInfos []_T
+	for name, opinfo := range opInfos {
+		copyOpInfos = append(copyOpInfos, _T{name, opinfo})
+	}
 	sort.Slice(copyOpInfos, func(i, j int) bool {
 		_t1 := copyOpInfos[i]
 		_t2 := copyOpInfos[j]
@@ -88,7 +89,7 @@ func (monitor *Monitor) Dump() {
 	})
 	fmt.Fprintf(os.Stderr, "=====================================================================================\n")
 	for _, _t := range copyOpInfos {
-		opname, opinfo := _t.name, &_t.info
+		opname, opinfo := _t.name, _t.info
 		fmt.Fprintf(os.Stderr, "%-30sx%-10d AVG %-10s MAX %-10s\n", opname, opinfo.count, opinfo.totalDuration/time.Duration(opinfo.count), opinfo.maxDuration)
 	}
 }
