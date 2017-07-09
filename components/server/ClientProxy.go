@@ -11,6 +11,7 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
@@ -23,10 +24,16 @@ type ClientProxy struct {
 	filterProps map[string]string
 }
 
-func newClientProxy(conn net.Conn) *ClientProxy {
-	tcpConn := conn.(*net.TCPConn)
+func newClientProxy(netConn net.Conn, cfg *config.ServerConfig) *ClientProxy {
+	tcpConn := netConn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
+
+	var conn netutil.Connection = netConn
+	if cfg.CompressConnection {
+		// compressing connection, use CompressedConnection
+		conn = netutil.NewCompressedConnection(conn)
+	}
 
 	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn))
 	return &ClientProxy{

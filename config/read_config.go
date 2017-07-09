@@ -15,10 +15,11 @@ import (
 
 	"time"
 
+	"os"
+
+	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
-	"github.com/xiaonanln/goworld/consts"
-	"os"
 )
 
 const (
@@ -37,16 +38,17 @@ var (
 )
 
 type ServerConfig struct {
-	Ip           string
-	Port         int
-	BootEntity   string
-	SaveInterval time.Duration
-	LogFile      string
-	LogStderr    bool
-	PProfIp      string
-	PProfPort    int
-	LogLevel     string
-	GoMaxProcs   int
+	Ip                 string
+	Port               int
+	BootEntity         string
+	SaveInterval       time.Duration
+	LogFile            string
+	LogStderr          bool
+	PProfIp            string
+	PProfPort          int
+	LogLevel           string
+	GoMaxProcs         int
+	CompressConnection bool
 }
 
 type DispatcherConfig struct {
@@ -195,6 +197,7 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.PProfIp = DEFAULT_PPROF_IP
 	scc.PProfPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
+	scc.CompressConnection = false
 
 	_readServerConfig(section, scc)
 }
@@ -232,6 +235,8 @@ func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else if name == "gomaxprocs" {
 			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
+		} else if name == "compress_connection" {
+			sc.CompressConnection = key.MustBool(sc.CompressConnection)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -324,7 +329,7 @@ func validateKVDBConfig(config *KVDBConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
-		if consts.DEBUG_MODE{
+		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
 	}
@@ -354,7 +359,7 @@ func validateStorageConfig(config *StorageConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
-		if consts.DEBUG_MODE{
+		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
 	}

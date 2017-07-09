@@ -42,6 +42,7 @@ func newGateService() *GateService {
 
 func (gs *GateService) run() {
 	cfg := config.GetServer(serverid)
+	gwlog.Info("Compress connection: %v", cfg.CompressConnection)
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeForever(gs.handlePacketRoutine)
 	netutil.ServeTCPForever(gs.listenAddr, gs)
@@ -52,7 +53,9 @@ func (gs *GateService) String() string {
 }
 
 func (gs *GateService) ServeTCPConnection(conn net.Conn) {
-	cp := newClientProxy(conn)
+	cfg := config.GetServer(serverid)
+	cp := newClientProxy(conn, cfg)
+
 	gs.clientProxiesLock.Lock()
 	gs.clientProxies[cp.clientid] = cp
 	gs.clientProxiesLock.Unlock()

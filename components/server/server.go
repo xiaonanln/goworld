@@ -62,7 +62,6 @@ func Run(delegate IServerDelegate) {
 		gwlog.Info("SET GOMAXPROCS = %d", serverConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(serverConfig.GoMaxProcs)
 	}
-
 	setupGWLog(logLevel, serverConfig)
 
 	storage.Initialize()
