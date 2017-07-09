@@ -7,6 +7,10 @@ import (
 
 	"sync"
 
+	"fmt"
+
+	"time"
+
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -30,6 +34,7 @@ func paniciferror(err error) {
 func TestCompressedConnection_Read(t *testing.T) {
 	var wait sync.WaitGroup
 	wait.Add(2)
+	MSGCOUNT := 1000
 	go func() {
 		defer wait.Done()
 		conn, err := net.Dial("tcp", "localhost:13001")
@@ -37,18 +42,10 @@ func TestCompressedConnection_Read(t *testing.T) {
 		paniciferror(err)
 		cc := NewCompressedConnection(NetConnection{conn})
 		println("NewCompressedConnection", cc)
-		n, err := cc.Write([]byte("hello"))
-		println("write", n, err)
-		err = cc.Flush()
-		paniciferror(err)
-		println("flush", err)
-		cc.Write([]byte("world"))
-		cc.Flush()
-		cc.Write([]byte("bigaa"))
-		cc.Flush()
-
-		cc.Write([]byte("bigha"))
-		cc.Flush()
+		for i := 0; i < MSGCOUNT; i++ {
+			cc.Write([]byte(fmt.Sprintf("test message %d", i)))
+			cc.Flush()
+		}
 	}()
 	go func() {
 		defer wait.Done()
@@ -58,44 +55,20 @@ func TestCompressedConnection_Read(t *testing.T) {
 		paniciferror(err)
 		cc := NewCompressedConnection(NetConnection{conn})
 		println("NewCompressedConnection", cc)
-		buf := make([]byte, 5)
-		n, err := cc.Read(buf)
-		paniciferror(err)
-		println("read", n, err, string(buf[:n]))
-		if string(buf[:n]) != "hello" {
-			gwlog.Panicf("recv error")
-		}
 
-		n, err = cc.Read(buf)
-		paniciferror(err)
-		println("read", n, err, string(buf[:n]))
-		if string(buf[:n]) != "world" {
-			gwlog.Panicf("recv error")
-		}
-		buf = make([]byte, 3)
-		n, err = cc.Read(buf)
-		paniciferror(err)
-		println("read", n, err, string(buf[:n]))
-		if string(buf[:n]) != "big" {
-			gwlog.Panicf("recv error")
-		}
-		n, err = cc.Read(buf)
-		paniciferror(err)
-		println("read", n, err, string(buf[:n]))
-		if string(buf[:n]) != "aa" {
-			gwlog.Panicf("recv error")
-		}
-		n, err = cc.Read(buf)
-		paniciferror(err)
-		println("read", n, err, string(buf[:n]))
-		if string(buf[:n]) != "big" {
-			gwlog.Panicf("recv error")
-		}
-		n, err = cc.Read(buf)
-		paniciferror(err)
-		println("read", n, err, string(buf[:n]))
-		if string(buf[:n]) != "ha" {
-			gwlog.Panicf("recv error")
+		buf := make([]byte, 1024)
+		for i := 0; i < MSGCOUNT; i++ {
+			cc.SetReadDeadline(time.Now().Add(time.Millisecond))
+			n, err := cc.Read(buf)
+			if err != nil && IsTemporaryNetError(err) {
+				continue
+			}
+
+			paniciferror(err)
+			msg := string(buf[:n])
+			if msg != fmt.Sprintf("test message %d", i) {
+				t.Error("wrong message")
+			}
 		}
 	}()
 
