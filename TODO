@@ -19,3 +19,4 @@ TODO: use vendor for submodules
 TODO: use termui
 TODO: use UDP : e.x. KCP
 TODO: 加密 & 解密
+TODO: Seperate functionalities of PacketConnection and BufferedConnection

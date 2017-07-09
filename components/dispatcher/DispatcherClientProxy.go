@@ -22,7 +22,7 @@ type DispatcherClientProxy struct {
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *DispatcherClientProxy {
-	conn := netutil.Connection(_conn)
+	conn := netutil.NetConnection{_conn}
 	//if consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY > 0 {
 	//	conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
 	//}

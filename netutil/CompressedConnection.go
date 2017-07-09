@@ -1,42 +1,57 @@
 package netutil
 
 import (
-	"compress/zlib"
+	"compress/flate"
 	"io"
 
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
 type CompressedConnection struct {
-	io.ReadCloser
-	*zlib.Writer
+	zipReadCloser io.ReadCloser
+	zipWriter     *flate.Writer
 	Connection
 }
 
 func NewCompressedConnection(conn Connection) *CompressedConnection {
 	cc := &CompressedConnection{
-		Writer:     zlib.NewWriter(conn),
 		Connection: conn,
 	}
 	var err error
-	cc.ReadCloser, err = zlib.NewReader(conn)
+
+	cc.zipWriter, err = flate.NewWriter(conn, flate.BestSpeed)
 	if err != nil {
-		gwlog.Panicf("zlib new reader failed: %s", err.Error())
+		gwlog.Panicf("flate new writer failed: %s", err.Error())
 	}
+	//cc.zipWriter.Flush()
+	cc.zipReadCloser = flate.NewReader(conn)
+	//if err != nil {
+	//	gwlog.Panicf("flate new reader failed: %s", err.Error())
+	//}
 
 	return cc
 }
 
 func (cc *CompressedConnection) Write(p []byte) (int, error) {
-	return cc.Writer.Write(p)
+	n, err := cc.zipWriter.Write(p)
+	if n > 0 {
+		gwlog.Info("compress write %d %v", n, err)
+	}
+
+	return n, err
 }
 
 func (cc *CompressedConnection) Read(p []byte) (int, error) {
-	return cc.ReadCloser.Read(p)
+	n, err := cc.zipReadCloser.Read(p)
+	if n > 0 {
+		gwlog.Info("compress read %d %v", n, err)
+	}
+	return n, err
 }
 
 func (cc *CompressedConnection) Flush() error {
-	err := cc.Writer.Flush()
+	gwlog.Info("compress flush")
+	err := cc.zipWriter.Flush()
 	if err != nil {
 		return err
 	}
@@ -48,5 +63,5 @@ func (cc *CompressedConnection) Close() error {
 	if err != nil {
 		return err
 	}
-	return cc.ReadCloser.Close()
+	return cc.zipReadCloser.Close()
 }

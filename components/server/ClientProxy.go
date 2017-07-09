@@ -30,12 +30,13 @@ func newClientProxy(netConn net.Conn, cfg *config.ServerConfig) *ClientProxy {
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 
 	var conn netutil.Connection = netutil.NetConnection{netConn}
-	if cfg.CompressConnection {
-		// compressing connection, use CompressedConnection
-		conn = netutil.NewCompressedConnection(conn)
-	}
+	conn = netutil.NewBufferedReadConnection(conn)
+	//if cfg.CompressConnection {
+	// compressing connection, use CompressedConnection
+	//conn = netutil.NewCompressedConnection(conn)
+	//}
 
-	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn))
+	gwc := proto.NewGoWorldConnection(conn)
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid

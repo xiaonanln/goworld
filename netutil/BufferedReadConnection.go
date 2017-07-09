@@ -16,6 +16,7 @@ func NewBufferedReadConnection(conn Connection) *BufferedReadConnection {
 }
 
 func (brc *BufferedReadConnection) Read(p []byte) (int, error) {
+	//gwlog.Info("BufferedReadConnection reading %d", len(p))
 	totalN := 0
 	if !brc.isBufferEmpty() {
 		n := brc.readTo(p)
