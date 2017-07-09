@@ -29,7 +29,7 @@ func newClientProxy(netConn net.Conn, cfg *config.ServerConfig) *ClientProxy {
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 
-	var conn netutil.Connection = netConn
+	var conn netutil.Connection = netutil.NetConnection{netConn}
 	if cfg.CompressConnection {
 		// compressing connection, use CompressedConnection
 		conn = netutil.NewCompressedConnection(conn)

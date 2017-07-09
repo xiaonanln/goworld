@@ -50,7 +50,7 @@ func (err _ErrRecvAgain) Timeout() bool {
 }
 
 type PacketConnection struct {
-	conn               FlushableConnection
+	conn               Connection
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
 	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
@@ -65,7 +65,7 @@ type PacketConnection struct {
 
 func NewPacketConnection(conn Connection) *PacketConnection {
 	pc := &PacketConnection{
-		conn:       NopFlushable(conn),
+		conn:       (conn),
 		sendBuffer: NewSendBuffer(),
 	}
 	return pc

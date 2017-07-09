@@ -59,10 +59,10 @@ func (bot *ClientBot) run() {
 	gwlog.Debug("%s is connecting to server %d", bot, serverID)
 	cfg := config.GetServer(serverID)
 	cfg = cfg
-	var conn net.Conn
+	var netconn net.Conn
 	var err error
 	for { // retry for ever
-		conn, err = netutil.ConnectTCP("localhost", cfg.Port)
+		netconn, err = netutil.ConnectTCP("localhost", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
@@ -71,9 +71,14 @@ func (bot *ClientBot) run() {
 		// connected , ok
 		break
 	}
-	conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
-	conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
-	gwlog.Info("connected: %s", conn.RemoteAddr())
+	netconn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
+	netconn.(*net.TCPConn).SetReadBuffer(64 * 1024)
+	gwlog.Info("connected: %s", netconn.RemoteAddr())
+
+	var conn netutil.Connection = netutil.NetConnection{netconn}
+	if cfg.CompressConnection {
+		conn = netutil.NewCompressedConnection(conn)
+	}
 
 	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn))
 	defer bot.conn.Close()
