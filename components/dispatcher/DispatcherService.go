@@ -456,7 +456,7 @@ func (service *DispatcherService) HandleCallFilteredClientProxies(dcp *Dispatche
 
 func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
-	spaceID := pkt.ReadEntityID() // TODO: no need spaceID?
+	spaceID := pkt.ReadEntityID()
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("Entity %s is migrating to space %s", entityID, spaceID)
 	}
