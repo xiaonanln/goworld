@@ -1,5 +1,4 @@
 TODO: Compress and decompress traffic between clients and servers
-TODO: drop RPC if rpc quque is too long ?
 
 # MISC
 TODO: make sure entity is destroyed if creation fails

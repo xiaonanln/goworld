@@ -64,20 +64,8 @@ func (dcp *DispatcherClientProxy) serve() {
 
 		if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			dcp.owner.HandleCallEntityMethod(dcp, pkt)
-		} else if msgtype == proto.MT_UPDATE_POSITION_ON_CLIENT {
-			dcp.owner.HandleUpdatePositionOnClient(dcp, pkt)
-		} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT {
-			dcp.owner.HandleUpdateYawOnClient(dcp, pkt)
-		} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
-			dcp.owner.HandleCreateEntityOnClient(dcp, pkt)
-		} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
-			dcp.owner.HandleDestroyEntityOnClient(dcp, pkt)
-		} else if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
-			dcp.owner.HandleNotifyAttrChangeOnClient(dcp, pkt)
-		} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
-			dcp.owner.HandleNotifyAttrDelOnClient(dcp, pkt)
-		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_ON_CLIENT {
-			dcp.owner.HandleCallEntityMethodOnClient(dcp, pkt)
+		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
+			dcp.owner.HandleDoSomethingOnClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {
