@@ -403,10 +403,14 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
 	} else {
 		// if migrating, just put the call to wait
-		pkt.AddRefCount(1)
-		entityDispatchInfo.pendingPacketQueue.Push(callQueueItem{
-			packet: pkt,
-		})
+		if entityDispatchInfo.pendingPacketQueue.Len() < consts.ENTITY_PENDING_PACKET_QUEUE_MAX_LEN {
+			pkt.AddRefCount(1)
+			entityDispatchInfo.pendingPacketQueue.Push(callQueueItem{
+				packet: pkt,
+			})
+		} else {
+			gwlog.Error("%s.HandleCallEntityMethod %s: packet queue too long, packet dropped", service, entityID)
+		}
 	}
 }
 
@@ -429,10 +433,14 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
 	} else {
 		// if migrating, just put the call to wait
-		pkt.AddRefCount(1)
-		entityDispatchInfo.pendingPacketQueue.Push(callQueueItem{
-			packet: pkt,
-		})
+		if entityDispatchInfo.pendingPacketQueue.Len() < consts.ENTITY_PENDING_PACKET_QUEUE_MAX_LEN {
+			pkt.AddRefCount(1)
+			entityDispatchInfo.pendingPacketQueue.Push(callQueueItem{
+				packet: pkt,
+			})
+		} else {
+			gwlog.Error("%s.HandleCallEntityMethodFromClient %s: packet queue too long, packet dropped", service, entityID)
+		}
 	}
 
 }
