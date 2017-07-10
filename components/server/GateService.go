@@ -103,38 +103,21 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 		clientproxy := gs.clientProxies[clientid]
 		gs.clientProxiesLock.RUnlock()
 
-		// message types that should be redirected to client proxy
 		if clientproxy != nil {
-			clientproxy.SendPacket(packet)
+			if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
+				gs.handleSetClientFilterProp(clientproxy, packet)
+			} else if msgtype == proto.MT_CLEAR_CLIENTPROXY_FILTER_PROPS {
+				gs.handleClearClientFilterProps(clientproxy, packet)
+			} else {
+				// message types that should be redirected to client proxy
+				clientproxy.SendPacket(packet)
+			}
 		} else {
 			// client already disconnected, but the game service seems not knowing it, so tell it
 			dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 		}
 	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
 		gs.handleCallFilteredClientProxies(packet)
-	} else if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
-		// set filter property
-		_ = packet.ReadUint16() // sid // TODO: bad code style here
-		clientid := packet.ReadClientID()
-
-		gs.clientProxiesLock.RLock()
-		clientproxy := gs.clientProxies[clientid]
-		gs.clientProxiesLock.RUnlock()
-
-		if clientproxy != nil {
-			gs.handleSetClientFilterProp(clientproxy, packet)
-		}
-	} else if msgtype == proto.MT_CLEAR_CLIENTPROXY_FILTER_PROPS {
-		_ = packet.ReadUint16() // sid
-		clientid := packet.ReadClientID()
-
-		gs.clientProxiesLock.RLock()
-		clientproxy := gs.clientProxies[clientid]
-		gs.clientProxiesLock.RUnlock()
-
-		if clientproxy != nil {
-			gs.handleClearClientFilterProps(clientproxy, packet)
-		}
 	} else {
 		gwlog.Panicf("%s: unknown msg type: %d", gs, msgtype)
 		if consts.DEBUG_MODE {
