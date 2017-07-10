@@ -51,6 +51,7 @@ func (err _ErrRecvAgain) Timeout() bool {
 
 type PacketConnection struct {
 	conn               Connection
+	compressed         bool
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
 	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
@@ -58,15 +59,17 @@ type PacketConnection struct {
 	// buffers and infos for receiving a packet
 	payloadLenBuf         [SIZE_FIELD_SIZE]byte
 	payloadLenBytesRecved int
+	recvCompressed        bool
 	recvTotalPayloadLen   uint32
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
 }
 
-func NewPacketConnection(conn Connection) *PacketConnection {
+func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	pc := &PacketConnection{
 		conn:       (conn),
 		sendBuffer: NewSendBuffer(),
+		compressed: compressed,
 	}
 	return pc
 }
@@ -110,6 +113,9 @@ func (pc *PacketConnection) Flush() (err error) {
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
+		if pc.compressed {
+			packet.Compress()
+		}
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
 		if err == nil {
@@ -121,7 +127,11 @@ func (pc *PacketConnection) Flush() (err error) {
 	sendBuffer := pc.sendBuffer // the send buffer
 
 send_packets_loop:
-	for _, packet := range packets { // TODO: merge packets and write in one syscall?
+	for _, packet := range packets {
+		if pc.compressed {
+			packet.Compress()
+		}
+
 		packetData := packet.data()
 		if len(packetData) > sendBuffer.FreeSpace() {
 			// can not append data to send buffer, so clear send buffer first
@@ -174,11 +184,17 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		}
 
 		pc.recvTotalPayloadLen = NETWORK_ENDIAN.Uint32(pc.payloadLenBuf[:])
+		//pc.recvCompressed = false
+		if pc.recvTotalPayloadLen&COMPRESSED_BIT_MASK != 0 {
+			pc.recvTotalPayloadLen &= PAYLOAD_LEN_MASK
+			pc.recvCompressed = true
+		}
 
 		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > MAX_PAYLOAD_LENGTH {
 			// todo: reset the connection when packet size is invalid
+			err := fmt.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
 			pc.resetRecvStates()
-			return nil, fmt.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
+			return nil, err
 		}
 
 		pc.recvedPayloadLen = 0
@@ -193,8 +209,10 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	if pc.recvedPayloadLen == pc.recvTotalPayloadLen {
 		// full packet received, return the packet
 		packet := pc.recvingPacket
-		packet.SetPayloadLen(pc.recvTotalPayloadLen)
+		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
 		pc.resetRecvStates()
+		packet.Uncompress()
+
 		return packet, nil
 	}
 
@@ -208,6 +226,7 @@ func (pc *PacketConnection) resetRecvStates() {
 	pc.recvTotalPayloadLen = 0
 	pc.recvedPayloadLen = 0
 	pc.recvingPacket = nil
+	pc.recvCompressed = false
 }
 
 func (pc *PacketConnection) Close() {

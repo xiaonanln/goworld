@@ -18,9 +18,9 @@ type GoWorldConnection struct {
 	closed     int32
 }
 
-func NewGoWorldConnection(conn netutil.Connection) *GoWorldConnection {
+func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConnection {
 	return &GoWorldConnection{
-		packetConn: netutil.NewPacketConnection(conn),
+		packetConn: netutil.NewPacketConnection(conn, compressed),
 	}
 }
 
@@ -308,16 +308,6 @@ func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
 		}
 	}()
 }
-
-//func (gwc *GoWorldConnection) SendPacketRelease(pkt *netutil.Packet) error {
-//	err := gwc.packetConn.SendPacket(pkt)
-//	pkt.Release()
-//	return err
-//}
-
-//func (gwc *GoWorldConnection) RecvPacket() (*netutil.Packet, error) {
-//	return gwc.packetConn.RecvPacket()
-//}
 
 func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t) (*netutil.Packet, error) {
 	pkt, err := gwc.packetConn.RecvPacket()

@@ -36,7 +36,7 @@ func newClientProxy(netConn net.Conn, cfg *config.ServerConfig) *ClientProxy {
 	//conn = netutil.NewCompressedConnection(conn)
 	//}
 
-	gwc := proto.NewGoWorldConnection(conn)
+	gwc := proto.NewGoWorldConnection(conn, cfg.CompressConnection)
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid
@@ -54,7 +54,7 @@ func (cp *ClientProxy) serve() {
 		// tell the gate service that this client is down
 		gateService.onClientProxyClose(cp)
 		if err := recover(); err != nil && !netutil.IsConnectionClosed(err) {
-			gwlog.Error("%s error: %s", cp, err)
+			gwlog.TraceError("%s error: %s", cp, err)
 		} else {
 			gwlog.Info("%s disconnected", cp)
 		}

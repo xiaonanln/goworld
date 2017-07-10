@@ -1,8 +1,9 @@
 package netutil
 
 import (
+	"bytes"
+	"compress/flate"
 	"encoding/binary"
-	"log"
 
 	"unsafe"
 
@@ -18,6 +19,9 @@ import (
 const (
 	MIN_PAYLOAD_CAP = 128
 	CAP_GROW_SHIFT  = uint(2)
+
+	PAYLOAD_LEN_MASK    = 0x7FFFFFFF
+	COMPRESSED_BIT_MASK = 0x80000000
 )
 
 var (
@@ -377,13 +381,93 @@ func (p *Packet) ReadStringList() []string {
 }
 
 func (p *Packet) GetPayloadLen() uint32 {
-	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))
+	return *(*uint32)(unsafe.Pointer(&p.bytes[0])) & PAYLOAD_LEN_MASK
 }
 
 func (p *Packet) SetPayloadLen(plen uint32) {
-	if plen > MAX_PAYLOAD_LENGTH {
-		log.Panicf("payload length too long: %d", plen)
+	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
+	*pplen = (*pplen & COMPRESSED_BIT_MASK) | plen
+}
+
+func (p *Packet) setPayloadLenCompressed(plen uint32, compressed bool) {
+	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
+	if compressed {
+		*pplen = COMPRESSED_BIT_MASK | plen
+	} else {
+		*pplen = plen
+	}
+}
+
+func (p *Packet) Compress() {
+	if p.isCompressed() {
+		return
 	}
 
-	*(*uint32)(unsafe.Pointer(&p.bytes[0])) = plen
+	payloadCap := p.PayloadCap()
+	var compressedBuffer []byte
+	if payloadCap == MIN_PAYLOAD_CAP {
+		compressedBuffer = packetBufferPools[MIN_PAYLOAD_CAP<<CAP_GROW_SHIFT].Get().([]byte)
+	} else {
+		compressedBuffer = packetBufferPools[payloadCap].Get().([]byte)
+	}
+	compressedData := bytes.NewBuffer(compressedBuffer[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE])
+	w, err := flate.NewWriter(compressedData, flate.BestSpeed)
+	if err != nil {
+		gwlog.Panicf("compress error: %v", err)
+	}
+
+	oldPayload := p.Payload()
+	oldPayloadLen := len(oldPayload)
+	n, err := w.Write(oldPayload)
+	if err != nil {
+		gwlog.Panicf("compress error: %v", err)
+	}
+
+	if err := w.Close(); err != nil {
+		gwlog.Panicf("compress error: %v", err)
+	}
+
+	if n != oldPayloadLen {
+		gwlog.Panicf("not fully compressed")
+	}
+
+	compressedPayload := compressedData.Bytes()
+	compressedPayloadLen := len(compressedPayload)
+	gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
+	if compressedPayloadLen >= oldPayloadLen {
+		return // giveup compress
+	}
+
+	if &compressedPayload[0] != &compressedBuffer[PREPAYLOAD_SIZE] {
+		gwlog.Panicf("should equal")
+	}
+
+	p.bytes = compressedBuffer
+	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
+	*pplen = COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
+	gwlog.Info("set new payload length: %x, payload len %d", *pplen, p.GetPayloadLen())
+	return
+}
+
+func (p *Packet) Uncompress() {
+	if !p.isCompressed() {
+		return
+	}
+
+	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
+	oldPayload := p.Payload()
+	r := flate.NewReader(bytes.NewReader(oldPayload))
+	newPayloadLen, err := r.Read(uncompressedBuffer)
+	if err != nil {
+		gwlog.Panicf("uncompress error: %v", err)
+	}
+
+	gwlog.Info("Compressed payload: %d, after uncompress: %d", len(oldPayload), newPayloadLen)
+	p.bytes = uncompressedBuffer
+	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
+	*pplen = uint32(newPayloadLen)
+}
+
+func (p *Packet) isCompressed() bool {
+	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))&COMPRESSED_BIT_MASK != 0
 }

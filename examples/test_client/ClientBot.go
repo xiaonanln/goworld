@@ -81,7 +81,7 @@ func (bot *ClientBot) run() {
 	//	conn = netutil.NewCompressedConnection(conn)
 	//}
 
-	bot.conn = proto.NewGoWorldConnection(conn)
+	bot.conn = proto.NewGoWorldConnection(conn, cfg.CompressConnection)
 	defer bot.conn.Close()
 
 	bot.loop()

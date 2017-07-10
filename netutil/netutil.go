@@ -23,7 +23,6 @@ func IsTemporaryNetError(err error) bool {
 
 	netErr, ok := err.(net.Error)
 	if !ok {
-		println("not net.Error")
 		return false
 	}
 	return netErr.Temporary() || netErr.Timeout()
