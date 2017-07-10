@@ -65,7 +65,7 @@ func (dcp *DispatcherClientProxy) serve() {
 		if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			dcp.owner.HandleCallEntityMethod(dcp, pkt)
 		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
-			dcp.owner.HandleDoSomethingOnClient(dcp, pkt)
+			dcp.owner.HandleDoSomethingOnSpecifiedClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {
@@ -78,10 +78,6 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
 			dcp.owner.HandleNotifyClientDisconnected(dcp, pkt)
-		} else if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
-			dcp.owner.HandleSetClientProxyFilterProp(dcp, pkt)
-		} else if msgtype == proto.MT_CLEAR_CLIENTPROXY_FILTER_PROPS {
-			dcp.owner.HandleClearClientProxyFilterProps(dcp, pkt)
 		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
 			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {

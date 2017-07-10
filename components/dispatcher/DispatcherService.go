@@ -445,17 +445,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 
 }
 
-func (service DispatcherService) HandleDoSomethingOnClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	sid := pkt.ReadUint16()
-	service.dispatcherClientOfServer(sid).SendPacket(pkt)
-}
-
-func (service *DispatcherService) HandleSetClientProxyFilterProp(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	sid := pkt.ReadUint16()
-	service.dispatcherClientOfServer(sid).SendPacket(pkt)
-}
-
-func (service *DispatcherService) HandleClearClientProxyFilterProps(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+func (service DispatcherService) HandleDoSomethingOnSpecifiedClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	sid := pkt.ReadUint16()
 	service.dispatcherClientOfServer(sid).SendPacket(pkt)
 }
