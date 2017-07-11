@@ -410,20 +410,20 @@ func (p *Packet) Compress() {
 	} else {
 		compressedBuffer = packetBufferPools[payloadCap].Get().([]byte)
 	}
-	compressedData := bytes.NewBuffer(compressedBuffer[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE])
-	w, err := flate.NewWriter(compressedData, flate.BestSpeed)
+	w := bytes.NewBuffer(compressedBuffer[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE])
+	cw, err := flate.NewWriter(w, flate.BestSpeed)
 	if err != nil {
 		gwlog.Panicf("compress error: %v", err)
 	}
 
 	oldPayload := p.Payload()
 	oldPayloadLen := len(oldPayload)
-	n, err := w.Write(oldPayload)
+	n, err := cw.Write(oldPayload)
 	if err != nil {
 		gwlog.Panicf("compress error: %v", err)
 	}
 
-	if err := w.Close(); err != nil {
+	if err := cw.Flush(); err != nil {
 		gwlog.Panicf("compress error: %v", err)
 	}
 
@@ -431,7 +431,7 @@ func (p *Packet) Compress() {
 		gwlog.Panicf("not fully compressed")
 	}
 
-	compressedPayload := compressedData.Bytes()
+	compressedPayload := w.Bytes()
 	compressedPayloadLen := len(compressedPayload)
 	gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
 	if compressedPayloadLen >= oldPayloadLen {
@@ -457,12 +457,13 @@ func (p *Packet) Uncompress() {
 	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
 	oldPayload := p.Payload()
 	r := flate.NewReader(bytes.NewReader(oldPayload))
-	newPayloadLen, err := r.Read(uncompressedBuffer)
+	newPayloadLen, err := r.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
 	if err != nil {
-		gwlog.Panicf("uncompress error: %v", err)
+		gwlog.Panic(err)
 	}
 
-	gwlog.Info("Compressed payload: %d, after uncompress: %d", len(oldPayload), newPayloadLen)
+	//gwlog.Info("Compressed payload: %d, after uncompress: %d", len(oldPayload), newPayloadLen)
+	//gwlog.Info("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
 	p.bytes = uncompressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	*pplen = uint32(newPayloadLen)
