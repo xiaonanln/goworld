@@ -433,7 +433,7 @@ func (p *Packet) Compress() {
 
 	compressedPayload := w.Bytes()
 	compressedPayloadLen := len(compressedPayload)
-	gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
+	//gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
 	if compressedPayloadLen >= oldPayloadLen {
 		return // giveup compress
 	}
@@ -445,7 +445,6 @@ func (p *Packet) Compress() {
 	p.bytes = compressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	*pplen = COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
-	gwlog.Info("set new payload length: %x, payload len %d", *pplen, p.GetPayloadLen())
 	return
 }
 
