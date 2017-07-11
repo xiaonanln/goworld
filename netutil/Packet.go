@@ -86,8 +86,8 @@ func allocPacket() *Packet {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
 	}
 
-	if pkt.GetPayloadLen() != 0 {
-		gwlog.Panicf("allocPacket: payload should be 0, but is %d", pkt.GetPayloadLen())
+	if pkt.GetPayloadLen() != 0 || pkt.isCompressed() {
+		gwlog.Panicf("allocPacket: payload should be 0 not not compressed, but is %d, compressed %v", pkt.GetPayloadLen(), pkt.isCompressed())
 	}
 
 	return pkt
@@ -173,7 +173,7 @@ func (p *Packet) Release() {
 		}
 
 		p.readCursor = 0
-		p.SetPayloadLen(0)
+		p.setPayloadLenCompressed(0, false)
 		packetPool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
@@ -433,6 +433,7 @@ func (p *Packet) Compress() {
 
 	compressedPayload := w.Bytes()
 	compressedPayloadLen := len(compressedPayload)
+	//gwlog.Info("COMPRESS %v => %v", oldPayload, compressedPayload)
 	//gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
 	if compressedPayloadLen >= oldPayloadLen {
 		return // giveup compress
@@ -456,8 +457,18 @@ func (p *Packet) Uncompress() {
 	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
 	oldPayload := p.Payload()
 	r := flate.NewReader(bytes.NewReader(oldPayload))
+
+	defer func() {
+		err := recover()
+		if err != nil {
+			gwlog.Error("Uncompressing %d %v failed: %v", p.GetPayloadLen(), oldPayload, err)
+			panic(err)
+		}
+	}()
+
 	newPayloadLen, err := r.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
 	if err != nil {
+		gwlog.Error("uncompress failed")
 		gwlog.Panic(err)
 	}
 

@@ -12,6 +12,7 @@ import (
 
 	"sync/atomic"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/opmon"
@@ -121,6 +122,9 @@ func (pc *PacketConnection) Flush() (err error) {
 		if err == nil {
 			err = pc.conn.Flush()
 		}
+		if err != nil {
+			err = errors.Wrap(err, "write packet data error")
+		}
 		return
 	}
 
@@ -145,6 +149,7 @@ send_packets_loop:
 				packet.Release()
 
 				if err != nil {
+					err = errors.Wrap(err, "write packet data error")
 					return
 				}
 				continue send_packets_loop
@@ -155,6 +160,9 @@ send_packets_loop:
 		n, _ := sendBuffer.Write(packetData)
 		if n != len(packetData) {
 			gwlog.Panicf("packet is not fully written")
+		}
+		if err != nil {
+			err = errors.Wrap(err, "write packet data error")
 		}
 		packet.Release()
 	}
@@ -179,12 +187,17 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		if pc.payloadLenBytesRecved < SIZE_FIELD_SIZE {
 			if err == nil {
 				err = errRecvAgain
+			} else {
+				err = errors.Wrap(err, "read payload len failed")
 			}
 			return nil, err // packet not finished yet
 		}
 
 		pc.recvTotalPayloadLen = NETWORK_ENDIAN.Uint32(pc.payloadLenBuf[:])
 		//pc.recvCompressed = false
+		if pc.recvCompressed {
+			gwlog.Panicf("should be false")
+		}
 		if pc.recvTotalPayloadLen&COMPRESSED_BIT_MASK != 0 {
 			pc.recvTotalPayloadLen &= PAYLOAD_LEN_MASK
 			pc.recvCompressed = true
@@ -192,7 +205,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 
 		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > MAX_PAYLOAD_LENGTH {
 			// todo: reset the connection when packet size is invalid
-			err := fmt.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
+			err := errors.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
 			pc.resetRecvStates()
 			return nil, err
 		}
@@ -218,6 +231,8 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 
 	if err == nil {
 		err = errRecvAgain
+	} else {
+		err = errors.Wrap(err, "read payload failed")
 	}
 	return nil, err
 }

@@ -14,6 +14,7 @@ import (
 
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
@@ -62,6 +63,7 @@ func (bot *ClientBot) run() {
 	var netconn net.Conn
 	var err error
 	for { // retry for ever
+		//netconn, err = netutil.ConnectTCP("10.246.13.148", cfg.Port)
 		netconn, err = netutil.ConnectTCP("localhost", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
@@ -100,7 +102,7 @@ func (bot *ClientBot) loop() {
 		if pkt != nil {
 			bot.handlePacket(msgtype, pkt)
 			pkt.Release()
-		} else if err != nil && !netutil.IsTemporaryNetError(err) {
+		} else if err != nil && !netutil.IsTemporaryNetError(errors.Cause(err)) {
 			// bad error
 			gwlog.Panic(err)
 		}

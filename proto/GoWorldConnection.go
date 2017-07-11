@@ -9,6 +9,7 @@ import (
 
 	"sync/atomic"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 )
@@ -312,7 +313,7 @@ func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
 func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t) (*netutil.Packet, error) {
 	pkt, err := gwc.packetConn.RecvPacket()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "RecvPacket failed")
 	}
 
 	*msgtype = MsgType_t(pkt.ReadUint16())
