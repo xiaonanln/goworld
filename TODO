@@ -4,9 +4,10 @@ TODO: reuse flate.Writer to save memory because it is very large
 TODO: make sure entity is destroyed if creation fails
 TODO: Strip serverid and clientid for packets sent to clients because useless
 TODO: not allow client connection if server is not ready
-TODO: remove if ... else if ... else if ... else if ...
 
 # Subsystem to be implemented
+
+
 
 # Optimizations
 
@@ -17,5 +18,4 @@ TODO: Entity Client Reconnect Mechianism
 TODO: use vendor for submodules
 TODO: use termui
 TODO: use UDP : e.x. KCP
-TODO: 加密 & 解密
 TODO: Seperate functionalities of PacketConnection and BufferedConnection
