@@ -1,7 +1,4 @@
 TODO: Compress and decompress traffic between clients and servers
-    * Reuse compress Writer & Reader
-    * Ignore compress for very small packets
-    * reclaim old payload buffer if compress or uncompress replaced ok
     * use proper payload buffer for uncompressing (estimate the compress rate?)
 
 TODO: reuse flate.Writer to save memory because it is very large

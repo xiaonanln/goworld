@@ -88,8 +88,9 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 		if err != nil {
 			gwlog.Panic(err)
 		}
-		pc.compressReader = flate.NewReader(os.Stdin)
 	}
+
+	pc.compressReader = flate.NewReader(os.Stdin) // reader is always needed
 	return pc
 }
 
