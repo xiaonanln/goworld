@@ -30,7 +30,7 @@ func IsTemporaryNetError(err error) bool {
 	return netErr.Temporary() || netErr.Timeout()
 }
 
-func IsConnectionClosed(_err interface{}) bool {
+func IsConnectionError(_err interface{}) bool {
 	err, ok := _err.(error)
 	if !ok {
 		return false
@@ -41,7 +41,7 @@ func IsConnectionClosed(_err interface{}) bool {
 		return true
 	}
 
-	neterr, ok := _err.(net.Error)
+	neterr, ok := err.(net.Error)
 	if !ok {
 		return false
 	}

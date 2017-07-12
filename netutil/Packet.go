@@ -15,6 +15,7 @@ import (
 
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -485,18 +486,9 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 	uncompressedBuffer := packetBufferPools[getPayloadCapOfPayloadLen(uncompressedPayloadLen)].Get().([]byte)
 	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
 
-	defer func() { // TODO: remove debug code
-		err := recover()
-		if err != nil {
-			gwlog.Error("Uncompressing %d %v failed: %v", p.GetPayloadLen(), oldPayload, err)
-			panic(err)
-		}
-	}()
-
 	newPayloadLen, err := cr.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
 	if err != nil {
-		gwlog.Error("decompress failed")
-		gwlog.Panic(err)
+		gwlog.Panic(errors.Wrap(err, "decompress failed"))
 	}
 
 	//gwlog.Info("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)

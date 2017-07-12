@@ -40,7 +40,7 @@ func (dcp *DispatcherClientProxy) serve() {
 		dcp.Close()
 		dcp.owner.HandleDispatcherClientDisconnect(dcp)
 		err := recover()
-		if err != nil && !netutil.IsConnectionClosed(err) {
+		if err != nil && !netutil.IsConnectionError(err) {
 			gwlog.TraceError("Client %s paniced with error: %v", dcp, err)
 		}
 	}()

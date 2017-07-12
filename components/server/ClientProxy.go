@@ -53,7 +53,7 @@ func (cp *ClientProxy) serve() {
 		cp.Close()
 		// tell the gate service that this client is down
 		gateService.onClientProxyClose(cp)
-		if err := recover(); err != nil && !netutil.IsConnectionClosed(err.(error)) {
+		if err := recover(); err != nil && !netutil.IsConnectionError(err.(error)) {
 			gwlog.TraceError("%s error: %s", cp, err.(error))
 			if consts.DEBUG_MODE {
 				os.Exit(2)
