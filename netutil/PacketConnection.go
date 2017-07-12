@@ -81,13 +81,15 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 		sendBuffer: NewSendBuffer(),
 		compressed: compressed,
 	}
-	var err error
-	pc.compressWriter, err = flate.NewWriter(os.Stderr, flate.BestSpeed)
-	if err != nil {
-		gwlog.Panic(err)
-	}
-	pc.compressReader = flate.NewReader(os.Stdin)
 
+	if compressed {
+		var err error
+		pc.compressWriter, err = flate.NewWriter(os.Stderr, flate.BestSpeed)
+		if err != nil {
+			gwlog.Panic(err)
+		}
+		pc.compressReader = flate.NewReader(os.Stdin)
+	}
 	return pc
 }
 

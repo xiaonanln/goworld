@@ -4,6 +4,8 @@ TODO: Compress and decompress traffic between clients and servers
     * reclaim old payload buffer if compress or uncompress replaced ok
     * use proper payload buffer for uncompressing (estimate the compress rate?)
 
+TODO: reuse flate.Writer to save memory because it is very large
+
 # MISC
 TODO: make sure entity is destroyed if creation fails
 TODO: Strip serverid and clientid for packets sent to clients because useless
