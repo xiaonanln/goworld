@@ -12,6 +12,10 @@ import (
 
 	"sync/atomic"
 
+	"compress/flate"
+
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -64,13 +68,16 @@ type PacketConnection struct {
 	recvTotalPayloadLen   uint32
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
+
+	compressWriter *flate.Writer
 }
 
 func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	pc := &PacketConnection{
-		conn:       (conn),
-		sendBuffer: NewSendBuffer(),
-		compressed: compressed,
+		conn:           (conn),
+		sendBuffer:     NewSendBuffer(),
+		compressed:     compressed,
+		compressWriter: flate.NewWriter(os.Stderr, flate.BestSpeed),
 	}
 	return pc
 }
@@ -115,7 +122,7 @@ func (pc *PacketConnection) Flush() (err error) {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
 		if pc.compressed {
-			packet.Compress()
+			packet.compress()
 		}
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
@@ -133,7 +140,7 @@ func (pc *PacketConnection) Flush() (err error) {
 send_packets_loop:
 	for _, packet := range packets {
 		if pc.compressed {
-			packet.Compress()
+			packet.compress()
 		}
 
 		packetData := packet.data()
@@ -224,7 +231,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		packet := pc.recvingPacket
 		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
 		pc.resetRecvStates()
-		packet.Uncompress()
+		packet.uncompress()
 
 		return packet, nil
 	}

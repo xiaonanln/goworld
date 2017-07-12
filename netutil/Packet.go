@@ -398,7 +398,7 @@ func (p *Packet) setPayloadLenCompressed(plen uint32, compressed bool) {
 	}
 }
 
-func (p *Packet) Compress() {
+func (p *Packet) compress(cw *flate.Writer) {
 	if p.isCompressed() {
 		return
 	}
@@ -449,7 +449,7 @@ func (p *Packet) Compress() {
 	return
 }
 
-func (p *Packet) Uncompress() {
+func (p *Packet) uncompress() {
 	if !p.isCompressed() {
 		return
 	}
