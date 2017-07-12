@@ -107,15 +107,7 @@ func (em *EntityManager) onClientDisconnected(clientid ClientID) {
 	eid := em.ownerOfClient[clientid]
 	if !eid.IsNil() { // should always true
 		em.onEntityLoseClient(clientid)
-
-		owner := em.get(eid) // FIXME: owner should not be nil
-
-		if consts.DEBUG_CLIENTS {
-			if owner == nil {
-				gwlog.Warn("Client %s can not find owner entity %s", clientid, eid)
-			}
-		}
-
+		owner := em.get(eid)
 		owner.notifyClientDisconnected()
 	}
 }

@@ -336,7 +336,6 @@ func (e *Entity) getClientData() map[string]interface{} {
 }
 
 func (e *Entity) getAllClientData() map[string]interface{} {
-	// TODO: Optimize the calling of getAllClientData
 	return e.Attrs.ToMapWithFilter(e.typeDesc.allClientAttrs.Contains)
 }
 
@@ -451,11 +450,6 @@ func (e *Entity) ForAllClients(f func(client *GameClient)) {
 }
 
 func (e *Entity) notifyClientDisconnected() {
-	if e == nil {
-		// FIXME: might happen due to a bug
-		return
-	}
-
 	// called when client disconnected
 	if e.client == nil {
 		gwlog.Panic(e.client)
