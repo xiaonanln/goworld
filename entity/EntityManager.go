@@ -249,7 +249,6 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Pos
 		// callback runs in main routine
 		if err != nil {
 			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
-			// TODO: need to notify dispatcher that entity creation failed ?
 			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 		}
 
