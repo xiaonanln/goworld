@@ -79,6 +79,15 @@ func init() {
 	}
 }
 
+func getPayloadCapOfPayloadLen(payloadLen uint32) uint32 {
+	for _, payloadCap := range PREDEFINE_PAYLOAD_CAPACITIES {
+		if payloadCap >= payloadLen {
+			return payloadCap
+		}
+	}
+	return MAX_PAYLOAD_LENGTH
+}
+
 type Packet struct {
 	readCursor uint32
 
@@ -127,12 +136,7 @@ func (p *Packet) assureCapacity(need uint32) {
 	}
 
 	// try to find the proper capacity for the need bytes
-	var resizeToCap uint32
-	for _, resizeToCap = range PREDEFINE_PAYLOAD_CAPACITIES {
-		if resizeToCap >= requireCap {
-			break
-		}
-	}
+	resizeToCap := getPayloadCapOfPayloadLen(requireCap)
 
 	buffer := packetBufferPools[resizeToCap].Get().([]byte)
 	if len(buffer) != int(resizeToCap+SIZE_FIELD_SIZE) {
@@ -235,6 +239,13 @@ func (p *Packet) AppendUint32(v uint32) {
 	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
 	PACKET_ENDIAN.PutUint32(p.bytes[payloadEnd:payloadEnd+4], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 4
+}
+
+func (p *Packet) PopUint32() (v uint32) {
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
+	v = PACKET_ENDIAN.Uint32(p.bytes[payloadEnd-4 : payloadEnd])
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) -= 4
+	return
 }
 
 func (p *Packet) AppendUint64(v uint64) {
@@ -443,8 +454,8 @@ func (p *Packet) compress(cw *flate.Writer) {
 	//gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
 	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
 
-	if compressedPayloadLen >= oldPayloadLen {
-		return // giveup compress
+	if compressedPayloadLen >= oldPayloadLen-4 { // leave 4 bytes for AppendUint32 in the last
+		return // compress not useful enough, throw away
 	}
 
 	if &compressedPayload[0] != &compressedBuffer[PREPAYLOAD_SIZE] {
@@ -456,6 +467,8 @@ func (p *Packet) compress(cw *flate.Writer) {
 	p.bytes = compressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	*pplen = COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
+
+	p.AppendUint32(uint32(oldPayloadLen)) // append the size of old payload to the end of packet
 	return
 }
 
@@ -464,9 +477,12 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 		return
 	}
 
+	// pop the uncompressed payload len from payload
+	uncompressedPayloadLen := p.PopUint32()
+
 	oldPayloadCap := p.PayloadCap()
 	oldPayload := p.Payload()
-	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
+	uncompressedBuffer := packetBufferPools[getPayloadCapOfPayloadLen(uncompressedPayloadLen)].Get().([]byte)
 	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
 
 	defer func() { // TODO: remove debug code
