@@ -363,14 +363,6 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 	service.registeredServices[serviceName].Add(entityID)
 	service.broadcastToDispatcherClients(pkt)
 	service.servicesLock.Unlock()
-	//_, ok := service.registeredServices[serviceName]
-	//if ok {
-	//	// already registered
-	//	dcp.SendDeclareServiceReply(entityID, serviceName, false)
-	//	return
-	//}
-	//service.registeredServices[serviceName] = entityID
-	//dcp.SendDeclareServiceReply(entityID, serviceName, true)
 }
 
 func (service *DispatcherService) handleServiceDown(serviceName string, eid common.EntityID) {
