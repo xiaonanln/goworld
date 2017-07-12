@@ -11,6 +11,8 @@ import (
 
 	"sync"
 
+	"io"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -411,10 +413,7 @@ func (p *Packet) compress(cw *flate.Writer) {
 		compressedBuffer = packetBufferPools[payloadCap].Get().([]byte)
 	}
 	w := bytes.NewBuffer(compressedBuffer[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE])
-	cw, err := flate.NewWriter(w, flate.BestSpeed)
-	if err != nil {
-		gwlog.Panicf("compress error: %v", err)
-	}
+	cw.Reset(w)
 
 	oldPayload := p.Payload()
 	oldPayloadLen := len(oldPayload)
@@ -449,14 +448,14 @@ func (p *Packet) compress(cw *flate.Writer) {
 	return
 }
 
-func (p *Packet) uncompress() {
+func (p *Packet) uncompress(cr io.ReadCloser) {
 	if !p.isCompressed() {
 		return
 	}
 
 	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
 	oldPayload := p.Payload()
-	r := flate.NewReader(bytes.NewReader(oldPayload))
+	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
 
 	defer func() {
 		err := recover()
@@ -466,7 +465,7 @@ func (p *Packet) uncompress() {
 		}
 	}()
 
-	newPayloadLen, err := r.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
+	newPayloadLen, err := cr.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
 	if err != nil {
 		gwlog.Error("uncompress failed")
 		gwlog.Panic(err)

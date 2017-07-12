@@ -16,6 +16,8 @@ import (
 
 	"os"
 
+	"io"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -70,15 +72,22 @@ type PacketConnection struct {
 	recvingPacket         *Packet
 
 	compressWriter *flate.Writer
+	compressReader io.ReadCloser
 }
 
 func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	pc := &PacketConnection{
-		conn:           (conn),
-		sendBuffer:     NewSendBuffer(),
-		compressed:     compressed,
-		compressWriter: flate.NewWriter(os.Stderr, flate.BestSpeed),
+		conn:       (conn),
+		sendBuffer: NewSendBuffer(),
+		compressed: compressed,
 	}
+	var err error
+	pc.compressWriter, err = flate.NewWriter(os.Stderr, flate.BestSpeed)
+	if err != nil {
+		gwlog.Panic(err)
+	}
+	pc.compressReader = flate.NewReader(os.Stdin)
+
 	return pc
 }
 
@@ -122,7 +131,7 @@ func (pc *PacketConnection) Flush() (err error) {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
 		if pc.compressed {
-			packet.compress()
+			packet.compress(pc.compressWriter)
 		}
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
@@ -140,7 +149,7 @@ func (pc *PacketConnection) Flush() (err error) {
 send_packets_loop:
 	for _, packet := range packets {
 		if pc.compressed {
-			packet.compress()
+			packet.compress(pc.compressWriter)
 		}
 
 		packetData := packet.data()
@@ -231,7 +240,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		packet := pc.recvingPacket
 		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
 		pc.resetRecvStates()
-		packet.uncompress()
+		packet.uncompress(pc.compressReader)
 
 		return packet, nil
 	}
