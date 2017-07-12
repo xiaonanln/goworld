@@ -1,6 +1,3 @@
-TODO: Compress and decompress traffic between clients and servers
-    * use proper payload buffer for uncompressing (estimate the compress rate?)
-
 TODO: reuse flate.Writer to save memory because it is very large
 
 # MISC

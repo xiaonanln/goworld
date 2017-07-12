@@ -38,10 +38,12 @@ func initAOI(aoi *AOI) {
 	aoi.neighbors = EntitySet{}
 }
 
+// Get the owner entity of this AOI
+// This is very tricky but also effective
 func (aoi *AOI) getEntity() *Entity {
-	var dummyEntity Entity
-	offset := uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(&dummyEntity))
-	return (*Entity)(unsafe.Pointer((uintptr)(unsafe.Pointer(aoi)) - offset)) // TODO: maybe not so trick?
+	dummyEntity := (*Entity)(unsafe.Pointer(aoi))
+	offset := uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(dummyEntity))
+	return (*Entity)(unsafe.Pointer((uintptr)(unsafe.Pointer(aoi)) - offset))
 }
 
 func (aoi *AOI) interest(other *Entity) {
