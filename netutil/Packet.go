@@ -57,6 +57,11 @@ var (
 )
 
 func init() {
+
+	if MIN_PAYLOAD_CAP >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD {
+		gwlog.Fatal("MIN_PAYLOAD_CAP should be smaller than PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD")
+	}
+
 	payloadCap := uint32(MIN_PAYLOAD_CAP) << CAP_GROW_SHIFT
 	for payloadCap < MAX_PAYLOAD_LENGTH {
 		PREDEFINE_PAYLOAD_CAPACITIES = append(PREDEFINE_PAYLOAD_CAPACITIES, payloadCap)
@@ -412,12 +417,7 @@ func (p *Packet) compress(cw *flate.Writer) {
 	}
 
 	payloadCap := p.PayloadCap()
-	var compressedBuffer []byte
-	if payloadCap == MIN_PAYLOAD_CAP {
-		compressedBuffer = packetBufferPools[MIN_PAYLOAD_CAP<<CAP_GROW_SHIFT].Get().([]byte)
-	} else {
-		compressedBuffer = packetBufferPools[payloadCap].Get().([]byte)
-	}
+	compressedBuffer := packetBufferPools[payloadCap].Get().([]byte)
 	w := bytes.NewBuffer(compressedBuffer[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE])
 	cw.Reset(w)
 
@@ -438,10 +438,11 @@ func (p *Packet) compress(cw *flate.Writer) {
 
 	compressedPayload := w.Bytes()
 	compressedPayloadLen := len(compressedPayload)
+
 	//gwlog.Info("COMPRESS %v => %v", oldPayload, compressedPayload)
 	//gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
-
 	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
+
 	if compressedPayloadLen >= oldPayloadLen {
 		return // giveup compress
 	}
@@ -450,6 +451,8 @@ func (p *Packet) compress(cw *flate.Writer) {
 		gwlog.Panicf("should equal")
 	}
 
+	// reclaim the old payload buffer and use new compressed buffer
+	packetBufferPools[payloadCap].Put(p.bytes)
 	p.bytes = compressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	*pplen = COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
@@ -461,11 +464,12 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 		return
 	}
 
+	oldPayloadCap := p.PayloadCap()
 	oldPayload := p.Payload()
 	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
 	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
 
-	defer func() {
+	defer func() { // TODO: remove debug code
 		err := recover()
 		if err != nil {
 			gwlog.Error("Uncompressing %d %v failed: %v", p.GetPayloadLen(), oldPayload, err)
@@ -481,6 +485,10 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 
 	//gwlog.Info("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
 	//gwlog.Info("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
+	if oldPayloadCap != MIN_PAYLOAD_CAP {
+		packetBufferPools[oldPayloadCap].Put(p.bytes)
+	}
+
 	p.bytes = uncompressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	*pplen = uint32(newPayloadLen)
