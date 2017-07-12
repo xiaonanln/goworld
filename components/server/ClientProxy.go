@@ -9,7 +9,6 @@ import (
 
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
@@ -54,7 +53,7 @@ func (cp *ClientProxy) serve() {
 		cp.Close()
 		// tell the gate service that this client is down
 		gateService.onClientProxyClose(cp)
-		if err := recover(); err != nil && !netutil.IsConnectionClosed(errors.Cause(err.(error))) {
+		if err := recover(); err != nil && !netutil.IsConnectionClosed(err.(error)) {
 			gwlog.TraceError("%s error: %s", cp, err.(error))
 			if consts.DEBUG_MODE {
 				os.Exit(2)
@@ -81,7 +80,7 @@ func (cp *ClientProxy) serve() {
 			}
 
 			pkt.Release()
-		} else if err != nil && !netutil.IsTemporaryNetError(errors.Cause(err)) {
+		} else if err != nil && !netutil.IsTemporaryNetError(err) {
 			panic(err)
 		}
 

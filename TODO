@@ -1,4 +1,8 @@
 TODO: Compress and decompress traffic between clients and servers
+    * Reuse compress Writer & Reader
+    * Ignore compress for very small packets
+    * reclaim old payload buffer if compress or uncompress replaced ok
+    * use proper payload buffer for uncompressing (estimate the compress rate?)
 
 # MISC
 TODO: make sure entity is destroyed if creation fails

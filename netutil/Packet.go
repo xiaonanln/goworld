@@ -13,6 +13,8 @@ import (
 
 	"io"
 
+	"fmt"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -405,6 +407,10 @@ func (p *Packet) compress(cw *flate.Writer) {
 		return
 	}
 
+	if p.GetPayloadLen() < consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD {
+		return // payload is too short, compress is ignored
+	}
+
 	payloadCap := p.PayloadCap()
 	var compressedBuffer []byte
 	if payloadCap == MIN_PAYLOAD_CAP {
@@ -434,6 +440,8 @@ func (p *Packet) compress(cw *flate.Writer) {
 	compressedPayloadLen := len(compressedPayload)
 	//gwlog.Info("COMPRESS %v => %v", oldPayload, compressedPayload)
 	//gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
+
+	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
 	if compressedPayloadLen >= oldPayloadLen {
 		return // giveup compress
 	}
@@ -448,13 +456,13 @@ func (p *Packet) compress(cw *flate.Writer) {
 	return
 }
 
-func (p *Packet) uncompress(cr io.ReadCloser) {
+func (p *Packet) decompress(cr io.ReadCloser) {
 	if !p.isCompressed() {
 		return
 	}
 
-	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
 	oldPayload := p.Payload()
+	uncompressedBuffer := packetBufferPools[MAX_PAYLOAD_LENGTH].Get().([]byte)
 	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
 
 	defer func() {
@@ -467,11 +475,11 @@ func (p *Packet) uncompress(cr io.ReadCloser) {
 
 	newPayloadLen, err := cr.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
 	if err != nil {
-		gwlog.Error("uncompress failed")
+		gwlog.Error("decompress failed")
 		gwlog.Panic(err)
 	}
 
-	//gwlog.Info("Compressed payload: %d, after uncompress: %d", len(oldPayload), newPayloadLen)
+	//gwlog.Info("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
 	//gwlog.Info("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
 	p.bytes = uncompressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))

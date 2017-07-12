@@ -8,6 +8,7 @@ import (
 
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 )
@@ -21,6 +22,7 @@ func IsTemporaryNetError(err error) bool {
 		return false
 	}
 
+	err = errors.Cause(err)
 	netErr, ok := err.(net.Error)
 	if !ok {
 		return false
@@ -30,7 +32,12 @@ func IsTemporaryNetError(err error) bool {
 
 func IsConnectionClosed(_err interface{}) bool {
 	err, ok := _err.(error)
-	if ok && err == io.EOF {
+	if !ok {
+		return false
+	}
+
+	err = errors.Cause(err)
+	if err == io.EOF {
 		return true
 	}
 

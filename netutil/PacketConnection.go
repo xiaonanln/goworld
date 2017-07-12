@@ -240,7 +240,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		packet := pc.recvingPacket
 		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
 		pc.resetRecvStates()
-		packet.uncompress(pc.compressReader)
+		packet.decompress(pc.compressReader)
 
 		return packet, nil
 	}

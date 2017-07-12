@@ -14,7 +14,6 @@ import (
 
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
@@ -102,7 +101,7 @@ func (bot *ClientBot) loop() {
 		if pkt != nil {
 			bot.handlePacket(msgtype, pkt)
 			pkt.Release()
-		} else if err != nil && !netutil.IsTemporaryNetError(errors.Cause(err)) {
+		} else if err != nil && !netutil.IsTemporaryNetError(err) {
 			// bad error
 			gwlog.Panic(err)
 		}

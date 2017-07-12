@@ -7,10 +7,9 @@ import (
 
 	"unsafe"
 
-	"errors"
-
 	"net"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"

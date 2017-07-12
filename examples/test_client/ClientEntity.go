@@ -157,11 +157,11 @@ type _Something struct {
 var (
 	DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 10, time.Minute},
-		{"DoSendMail", 1, time.Minute},
-		{"DoGetMails", 5, time.Minute},
-		{"DoSayInWorldChannel", 5, time.Minute},
-		{"DoSayInProfChannel", 5, time.Minute},
-		{"DoMoveInSpace", 30, time.Minute},
+		{"DoSendMail", 20, time.Minute},
+		{"DoGetMails", 10, time.Minute},
+		//{"DoSayInWorldChannel", 5, time.Minute},
+		//{"DoSayInProfChannel", 5, time.Minute},
+		//{"DoMoveInSpace", 30, time.Minute},
 	}
 )
 
@@ -245,12 +245,18 @@ func (e *ClientEntity) DoSendMail() {
 		receiver = neighbors[rand.Intn(len(neighbors))]
 	}
 
-	e.CallServer("SendMail", receiver.ID, map[string]interface{}{
+	mail := map[string]interface{}{
 		"a": 1,
 		"b": "b",
 		"c": false,
 		"d": 1231.111,
-	})
+	}
+
+	for i := 0; i < 1000; i++ {
+		mail[fmt.Sprintf("field%d", i+1)] = rand.Intn(100)
+	}
+
+	e.CallServer("SendMail", receiver.ID, mail)
 }
 
 func (e *ClientEntity) DoGetMails() {
