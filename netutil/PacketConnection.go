@@ -223,9 +223,9 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		}
 
 		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > MAX_PAYLOAD_LENGTH {
-			// todo: reset the connection when packet size is invalid
 			err := errors.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
 			pc.resetRecvStates()
+			pc.Close()
 			return nil, err
 		}
 

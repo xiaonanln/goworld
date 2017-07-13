@@ -2,7 +2,6 @@ TODO: reuse flate.Writer to save memory because it is very large
 
 # MISC
 TODO: make sure entity is destroyed if creation fails
-TODO: Strip serverid and clientid for packets sent to clients because useless
 TODO: not allow client connection if server is not ready
 
 # Subsystem to be implemented

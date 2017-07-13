@@ -116,7 +116,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 
 	if msgtype != proto.MT_CALL_FILTERED_CLIENTS {
 		_ = packet.ReadUint16()
-		_ = packet.ReadClientID() // TODO: strip these two fields ?
+		_ = packet.ReadClientID() // TODO: strip these two fields ? seems a little difficult, maybe later.
 	}
 
 	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
