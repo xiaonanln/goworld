@@ -23,6 +23,7 @@ const (
 	// For Gate Service
 	CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024
 	CLIENT_PROXY_READ_BUFFER_SIZE  = 1024 * 1024
+	COMPRESS_WRITER_POOL_SIZE      = 100
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
