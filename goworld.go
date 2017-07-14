@@ -64,6 +64,9 @@ func MapAttr() *entity.MapAttr {
 	return entity.NewMapAttr()
 }
 
+// Register the space entity type
+//
+// All spaces will be created as an instance of this type
 func RegisterSpace(spacePtr entity.ISpace) {
 	entity.RegisterSpace(spacePtr)
 }
