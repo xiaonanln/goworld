@@ -7,6 +7,10 @@ import (
 	"github.com/xiaonanln/goworld/storage"
 )
 
+// Run the server
+//
+// This is the main routine for the server and all entity logic,
+// and this function never quit
 func Run(delegate server.IServerDelegate) {
 	server.Run(delegate)
 }
