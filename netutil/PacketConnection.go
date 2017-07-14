@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
+	"github.com/xiaonanln/goNewlessPool"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/opmon"
@@ -38,9 +39,23 @@ const (
 )
 
 var (
-	NETWORK_ENDIAN = binary.LittleEndian
-	errRecvAgain   = _ErrRecvAgain{}
+	NETWORK_ENDIAN      = binary.LittleEndian
+	errRecvAgain        = _ErrRecvAgain{}
+	compressWritersPool = newless_pool.NewNewlessPool()
 )
+
+func init() {
+	for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
+		cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
+		if err != nil {
+			gwlog.Fatal("create flate compressor failed: %v", err)
+		}
+
+		compressWritersPool.Put(cw)
+	}
+
+	gwlog.Info("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
+}
 
 type _ErrRecvAgain struct{}
 
@@ -71,7 +86,6 @@ type PacketConnection struct {
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
 
-	compressWriter *flate.Writer
 	compressReader io.ReadCloser
 }
 
@@ -80,14 +94,6 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 		conn:       (conn),
 		sendBuffer: NewSendBuffer(),
 		compressed: compressed,
-	}
-
-	if compressed {
-		var err error
-		pc.compressWriter, err = flate.NewWriter(os.Stderr, flate.BestSpeed)
-		if err != nil {
-			gwlog.Panic(err)
-		}
 	}
 
 	pc.compressReader = flate.NewReader(os.Stdin) // reader is always needed
@@ -130,11 +136,16 @@ func (pc *PacketConnection) Flush() (err error) {
 	op := opmon.StartOperation("FlushPackets")
 	defer op.Finish(time.Millisecond * 100)
 
+	var cw *flate.Writer
+
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
 		if pc.compressed {
-			packet.compress(pc.compressWriter)
+			cw := compressWritersPool.Get()
+			if cw != nil {
+				packet.compress(cw.(*flate.Writer))
+			}
 		}
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
