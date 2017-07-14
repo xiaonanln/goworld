@@ -28,6 +28,9 @@ type KVDBGetCallback func(val string, err error)
 type KVDBPutCallback func(err error)
 type KVDBGetRangeCallback func(items []KVItem, err error)
 
+// Initialize the KVDB
+//
+// Called by game server engine
 func Initialize() {
 	var err error
 	kvdbCfg := config.GetKVDB()
