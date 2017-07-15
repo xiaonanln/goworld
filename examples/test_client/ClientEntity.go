@@ -12,6 +12,7 @@ import (
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/typeconv"
 )
 
@@ -303,8 +304,7 @@ func (e *ClientEntity) onUpdateYaw() {
 }
 
 func (e *ClientEntity) onAccountCreated() {
-	timer.AddCallback(0, func() {
-
+	post.Post(func() {
 		username := e.owner.username()
 		password := e.owner.password()
 		e.CallServer("Login", username, password)

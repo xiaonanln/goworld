@@ -4,13 +4,13 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goSyncQueue"
-	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
 	. "github.com/xiaonanln/goworld/kvdb/types"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/opmon"
+	"github.com/xiaonanln/goworld/post"
 )
 
 var (
@@ -118,7 +118,7 @@ func kvdbRoutine() {
 func handleGetReq(getReq *getReq) {
 	val, err := kvdbEngine.Get(getReq.key)
 	if getReq.callback != nil {
-		timer.AddCallback(0, func() {
+		post.Post(func() {
 			getReq.callback(val, err)
 		})
 	}
@@ -127,7 +127,7 @@ func handleGetReq(getReq *getReq) {
 func handlePutReq(putReq *putReq) {
 	err := kvdbEngine.Put(putReq.key, putReq.val)
 	if putReq.callback != nil {
-		timer.AddCallback(0, func() {
+		post.Post(func() {
 			putReq.callback(err)
 		})
 	}

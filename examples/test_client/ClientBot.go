@@ -20,6 +20,7 @@ import (
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/proto"
 )
 
@@ -107,6 +108,7 @@ func (bot *ClientBot) loop() {
 		}
 
 		bot.conn.Flush()
+		post.Tick()
 	}
 }
 
