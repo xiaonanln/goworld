@@ -17,10 +17,11 @@ const (
 	END_MAIL_ID = 9999999999
 )
 
+// MailService to handle mail sending & receiving
 type MailService struct {
-	entity.Entity
-	lastMailID int64
-	mailPacker netutil.MsgPacker
+	entity.Entity // Entity type should always inherit entity.Entity
+	lastMailID    int64
+	mailPacker    netutil.MsgPacker
 }
 
 func (s *MailService) OnInit() {

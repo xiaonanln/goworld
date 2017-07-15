@@ -27,17 +27,19 @@ type serverDelegate struct {
 }
 
 func main() {
-	goworld.RegisterSpace(&MySpace{})
+	goworld.RegisterSpace(&MySpace{}) // Register the space type
 
+	// Register each entity types
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("OnlineService", &OnlineService{})
 	goworld.RegisterEntity("SpaceService", &SpaceService{})
 	goworld.RegisterEntity("MailService", &MailService{})
 
+	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{}).DefineAttrs(map[string][]string{
 		"name": {"all_client"},
 	})
-
+	// Register Avatar type and define attributes
 	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
 		"name":       {"all_client", "persistent"},
 		"level":      {"all_client", "persistent"},
@@ -48,9 +50,11 @@ func main() {
 		"mails":      {"client", "persistent"},
 	})
 
+	// Run the game server
 	goworld.Run(&serverDelegate{})
 }
 
+// Called when the game server is ready
 func (server serverDelegate) OnServerReady() {
 	server.ServerDelegate.OnServerReady()
 

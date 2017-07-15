@@ -1,3 +1,5 @@
+TODO: Service register and auto-creation in dispatcher
+TODO: Crontab module 8
 
 # MISC
 TODO: make sure entity is destroyed if creation fails
@@ -6,6 +8,7 @@ TODO: not allow client connection if server is not ready
 # Subsystem to be implemented
 TODO: Client system on Unity3D *
 TODO: more documents
+TODO: Plugin system ?
 
 # Optimizations
 

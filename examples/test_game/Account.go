@@ -11,10 +11,11 @@ import (
 	"github.com/xiaonanln/goworld/kvdb"
 )
 
+// Account entity for login process
 type Account struct {
-	entity.Entity
-	username string
-	logining bool
+	entity.Entity // Entity type should always inherit entity.Entity
+	username      string
+	logining      bool
 }
 
 func (a *Account) OnInit() {
