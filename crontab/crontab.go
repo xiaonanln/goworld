@@ -18,7 +18,7 @@ var (
 	nextHandle       = Handle(1)
 )
 
-type Handle int
+type Handle int // Return value of Register, can be used to cancel the register
 
 type entry struct {
 	minute, hour, day, month, dayofweek int
@@ -96,7 +96,8 @@ func validateTime(minute, hour, day, month, dayofweek int) {
 	}
 }
 
-func Unregister(h Handle) {
+// Unregister a registered crontab handle
+func (h Handle) Unregister() {
 	cancelledHandles = append(cancelledHandles, h)
 }
 

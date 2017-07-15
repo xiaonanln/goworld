@@ -36,7 +36,7 @@ func TestUnregister(t *testing.T) {
 
 	h = Register(-1, -1, -1, -1, -1, func() {
 		t.Logf("crontab every minute 2")
-		Unregister(h)
+		h.Unregister()
 	})
 
 	timerLoop()
