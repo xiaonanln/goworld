@@ -20,6 +20,7 @@ import (
 
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
+	"github.com/xiaonanln/goworld/crontab"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
@@ -66,6 +67,7 @@ func Run(delegate IServerDelegate) {
 
 	storage.Initialize()
 	kvdb.Initialize()
+	crontab.Initialize()
 
 	setupPprofServer(serverConfig)
 
