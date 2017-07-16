@@ -1,5 +1,4 @@
 TODO: Service register and auto-creation in dispatcher
-TODO: Crontab module 8
 
 # MISC
 TODO: make sure entity is destroyed if creation fails

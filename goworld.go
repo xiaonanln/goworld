@@ -23,6 +23,11 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTyp
 	return entity.RegisterEntity(typeName, entityPtr)
 }
 
+//// Register a service entity type
+//func RegisterService(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
+//	return entity.RegisterService(typeName, entityPtr)
+//}
+
 // Create a space with specified kind in any game server
 func CreateSpaceAnywhere(kind int) {
 	entity.CreateSpaceAnywhere(kind)
