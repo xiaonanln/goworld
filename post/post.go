@@ -37,7 +37,6 @@ func Tick() {
 		callbacks = make([]PostCallback, 0, len(callbacks))
 		lock.Unlock()
 
-		gwlog.Info("Run %d Post Funcs", len(callbacksCopy))
 		for _, f := range callbacksCopy {
 			gwutils.RunPanicless(f)
 		}
