@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goSyncQueue"
-	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
+	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_mongodb"
+	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_redis"
 	. "github.com/xiaonanln/goworld/kvdb/types"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/opmon"
+	"github.com/xiaonanln/goworld/post"
 )
 
 var (
@@ -28,6 +29,9 @@ type KVDBGetCallback func(val string, err error)
 type KVDBPutCallback func(err error)
 type KVDBGetRangeCallback func(items []KVItem, err error)
 
+// Initialize the KVDB
+//
+// Called by game server engine
 func Initialize() {
 	var err error
 	kvdbCfg := config.GetKVDB()
@@ -40,6 +44,13 @@ func Initialize() {
 		if err != nil {
 			gwlog.Panic(err)
 		}
+	} else if kvdbCfg.Type == "redis" {
+		kvdbEngine, err = kvdb_redis.OpenRedisKVDB()
+		if err != nil {
+			gwlog.Panic(err)
+		}
+	} else {
+		gwlog.Fatal("KVDB type %s is not implemented", kvdbCfg.Type)
 	}
 
 	kvdbOpQueue = sync_queue.NewSyncQueue()
@@ -115,7 +126,7 @@ func kvdbRoutine() {
 func handleGetReq(getReq *getReq) {
 	val, err := kvdbEngine.Get(getReq.key)
 	if getReq.callback != nil {
-		timer.AddCallback(0, func() {
+		post.Post(func() {
 			getReq.callback(val, err)
 		})
 	}
@@ -124,7 +135,7 @@ func handleGetReq(getReq *getReq) {
 func handlePutReq(putReq *putReq) {
 	err := kvdbEngine.Put(putReq.key, putReq.val)
 	if putReq.callback != nil {
-		timer.AddCallback(0, func() {
+		post.Post(func() {
 			putReq.callback(err)
 		})
 	}

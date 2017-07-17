@@ -40,10 +40,14 @@ func initAOI(aoi *AOI) {
 
 // Get the owner entity of this AOI
 // This is very tricky but also effective
+var aoiFieldOffset uintptr
+
+func init() {
+	dummyEntity := (*Entity)(unsafe.Pointer(&aoiFieldOffset))
+	aoiFieldOffset = uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(dummyEntity))
+}
 func (aoi *AOI) getEntity() *Entity {
-	dummyEntity := (*Entity)(unsafe.Pointer(aoi))
-	offset := uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(dummyEntity))
-	return (*Entity)(unsafe.Pointer((uintptr)(unsafe.Pointer(aoi)) - offset))
+	return (*Entity)(unsafe.Pointer((uintptr)(unsafe.Pointer(aoi)) - aoiFieldOffset))
 }
 
 func (aoi *AOI) interest(other *Entity) {

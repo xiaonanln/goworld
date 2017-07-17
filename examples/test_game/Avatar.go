@@ -13,8 +13,9 @@ import (
 	"github.com/xiaonanln/typeconv"
 )
 
+// Avatar entity which is the player itself
 type Avatar struct {
-	entity.Entity
+	entity.Entity // Entity type should always inherit entity.Entity
 }
 
 func (a *Avatar) OnInit() {

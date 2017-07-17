@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/xiaonanln/goSyncQueue"
-	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/opmon"
+	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/storage/backend/mongodb"
 )
@@ -153,7 +153,7 @@ func storageRoutine() {
 				} else {
 					monop.Finish(time.Millisecond * 100)
 					if saveReq.Callback != nil {
-						timer.AddCallback(0, func() {
+						post.Post(func() {
 							saveReq.Callback()
 						})
 					}
@@ -173,7 +173,7 @@ func storageRoutine() {
 
 			monop.Finish(time.Millisecond * 100)
 			if loadReq.Callback != nil {
-				timer.AddCallback(0, func() {
+				post.Post(func() {
 					loadReq.Callback(data, err)
 				})
 			}
@@ -182,7 +182,9 @@ func storageRoutine() {
 			exists, err := storageEngine.Exists(existsReq.TypeName, existsReq.EntityID)
 			monop.Finish(time.Millisecond * 100)
 			if existsReq.Callback != nil {
-				existsReq.Callback(exists, err)
+				post.Post(func() {
+					existsReq.Callback(exists, err)
+				})
 			}
 		} else if listReq, ok := op.(listEntityIDsRequest); ok {
 			monop = opmon.StartOperation("storage.list")
@@ -192,7 +194,9 @@ func storageRoutine() {
 			}
 			monop.Finish(time.Millisecond * 1000)
 			if listReq.Callback != nil {
-				listReq.Callback(eids, err)
+				post.Post(func() {
+					listReq.Callback(eids, err)
+				})
 			}
 		} else {
 			gwlog.Panicf("storage: unknown operation: %v", op)

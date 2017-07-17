@@ -2,8 +2,9 @@ package main
 
 import "github.com/xiaonanln/goworld/entity"
 
+// Monsters to be killed
 type Monster struct {
-	entity.Entity
+	entity.Entity // Entity type should always inherit entity.Entity
 }
 
 func (e *Monster) OnCreated() {

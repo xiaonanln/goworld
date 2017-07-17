@@ -13,8 +13,9 @@ const (
 	SPACE_DESTROY_CHECK_INTERVAL = time.Minute * 5
 )
 
+// Space type
 type MySpace struct {
-	Space
+	Space // Space type should always inherit from entity.Space
 
 	destroyCheckTimer *timer.Timer
 }

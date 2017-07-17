@@ -13,6 +13,7 @@ import (
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/proto"
 )
 
@@ -112,6 +113,9 @@ func (gs *GameService) serveRoutine() {
 				os.Stderr.Write([]byte{'|'})
 			}
 		}
+
+		// after handling packets or firing timers, check the posted functions
+		post.Tick()
 	}
 }
 

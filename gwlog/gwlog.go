@@ -26,7 +26,6 @@ var (
 	Error  = sublog.Errorf
 	Panic  = sublog.Panic
 	Panicf = sublog.Panicf
-	Fatal  = sublog.Fatalf
 
 	outputWriter io.Writer
 )
@@ -51,6 +50,11 @@ func SetLevel(lv Level) {
 func TraceError(format string, args ...interface{}) {
 	outputWriter.Write(debug.Stack())
 	Error(format, args...)
+}
+
+func Fatal(format string, args ...interface{}) {
+	debug.PrintStack()
+	sublog.Fatalf(format, args...)
 }
 
 func SetOutput(out io.Writer) {

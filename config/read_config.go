@@ -80,9 +80,11 @@ type StorageConfig struct {
 
 type KVDBConfig struct {
 	Type       string
-	Url        string
-	DB         string
-	Collection string
+	Url        string // MongoDB
+	DB         string // MongoDB
+	Collection string // MongoDB
+	Host       string // Redis
+
 }
 
 func SetConfigFile(f string) {
@@ -310,6 +312,8 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 			config.DB = key.MustString(config.DB)
 		} else if name == "collection" {
 			config.Collection = key.MustString(config.Collection)
+		} else if name == "host" {
+			config.Host = key.MustString(config.Host)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -324,6 +328,12 @@ func validateKVDBConfig(config *KVDBConfig) {
 	} else if config.Type == "mongodb" {
 		// must set DB and Collection for mongodb
 		if config.Url == "" || config.DB == "" || config.Collection == "" {
+			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
+			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+		}
+	} else if config.Type == "redis" {
+		// todo check config for redis kvdb
+		if config.Host == "" {
 			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
 			gwlog.Panicf("invalid %s KVDB config above", config.Type)
 		}
