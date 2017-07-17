@@ -5,7 +5,7 @@ import (
 	"github.com/google/btree"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/kvdb/types"
+	. "github.com/xiaonanln/goworld/kvdb/types"
 )
 
 const (
@@ -17,6 +17,14 @@ type redisKVDB struct {
 	keyTree *btree.BTree
 }
 
+type keyTreeItem struct {
+	key string
+}
+
+func (ki keyTreeItem) Less(_other btree.Item) bool {
+	return ki.key < _other.(keyTreeItem).key
+}
+
 func OpenRedisKVDB(host string) (*redisKVDB, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
@@ -24,7 +32,8 @@ func OpenRedisKVDB(host string) (*redisKVDB, error) {
 	}
 
 	db := &redisKVDB{
-		c: c,
+		c:       c,
+		keyTree: btree.New(2),
 	}
 	if err := db.initialize(); err != nil {
 		panic(errors.Wrap(err, "redis kvdb initialize failed"))
@@ -45,13 +54,16 @@ func (db *redisKVDB) initialize() error {
 			return err
 		}
 		gwlog.Info("SCAN: %v, nextcursor=%s", keys, string(nextCursor.([]byte)))
+		for _, key := range keys {
+			key := key[len(keyPrefix):]
+			db.keyTree.ReplaceOrInsert(keyTreeItem{key})
+		}
 
 		if db.isZeroCursor(nextCursor) {
 			break
 		}
 		r, err = redis.Values(db.c.Do("SCAN", nextCursor))
 	}
-
 	return nil
 }
 
@@ -75,6 +87,14 @@ func (db *redisKVDB) Put(key string, val string) error {
 	_, err := db.c.Do("SET", keyPrefix+key, val)
 	return err
 }
-func (db *redisKVDB) Find(key string) kvdb_types.Iterator {
+
+type RedisKVIterator struct {
+	db       *redisKVDB
+	beginKey string
+}
+
+func (db *redisKVDB) Find(key string) Iterator {
+	db.keyTree.AscendGreaterOrEqual(keyTreeItem{key}, func(ki btree.Item) bool {
+	})
 	return nil
 }
