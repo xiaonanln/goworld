@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"fmt"
+	"io"
+
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_mongodb"
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_redis"
-	"io"
 )
 
 func TestMongoBackend_Set(t *testing.T) {
@@ -177,7 +178,7 @@ func openTestMongoKVDB(f _Fataler) KVDBEngine {
 }
 
 func openTestRedisKVDB(f _Fataler) KVDBEngine {
-	kvdb, err := kvdb_redis.OpenRedisKVDB("127.0.0.1:6379")
+	kvdb, err := kvdb_redis.OpenRedisKVDB("127.0.0.1:6379", 0)
 	if err != nil {
 		f.Fatal(err)
 	}
