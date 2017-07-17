@@ -10,6 +10,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"os/signal"
+
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
@@ -17,6 +19,7 @@ import (
 
 var (
 	configFile = ""
+	sigChan    = make(chan os.Signal, 1)
 )
 
 func debuglog(format string, a ...interface{}) {
@@ -61,10 +64,27 @@ func main() {
 
 	dispatcherConfig := config.GetDispatcher()
 	setupGWLog(dispatcherConfig)
+	setupSignals()
 	setupPprofServer(dispatcherConfig)
 
 	dispatcher := newDispatcherService()
 	dispatcher.run()
+}
+
+func setupSignals() {
+	signal.Notify(sigChan, os.Interrupt)
+	go func() {
+		for {
+			sig := <-sigChan
+
+			if sig == os.Interrupt {
+				// interrupting, quit dispatcher
+				os.Exit(0)
+			} else {
+				gwlog.Info("unexcepted signal: %s", sig)
+			}
+		}
+	}()
 }
 
 func setupPprofServer(cfg *config.DispatcherConfig) {
