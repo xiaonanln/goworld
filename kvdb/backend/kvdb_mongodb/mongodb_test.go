@@ -46,19 +46,16 @@ func TestMongoKVDB_Find(t *testing.T) {
 
 	beginKey := "1000"
 	endKey := "9999"
-	it := kvdb.Find(beginKey)
+	it := kvdb.Find(beginKey, endKey)
 	oldKey := ""
 	for {
 		item, err := it.Next()
-		if item.Key >= endKey {
+		if err == io.EOF {
 			break
 		}
 
 		if err != nil {
-			if err != io.EOF {
-				t.Error(err)
-			}
-
+			t.Error(err)
 			break
 		}
 

@@ -46,11 +46,11 @@ func TestRedisKVDB_Find(t *testing.T) {
 
 	beginKey := "1000"
 	endKey := "9999"
-	it := kvdb.Find(beginKey)
+	it := kvdb.Find(beginKey, endKey)
 	oldKey := ""
 	for {
 		item, err := it.Next()
-		if item.Key >= endKey {
+		if err == io.EOF {
 			break
 		}
 

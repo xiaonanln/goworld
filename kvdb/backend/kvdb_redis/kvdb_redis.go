@@ -1,6 +1,8 @@
 package kvdb_redis
 
 import (
+	"io"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/google/btree"
 	"github.com/pkg/errors"
@@ -88,13 +90,35 @@ func (db *redisKVDB) Put(key string, val string) error {
 	return err
 }
 
-type RedisKVIterator struct {
+type redisKVDBIterator struct {
 	db       *redisKVDB
-	beginKey string
+	leftKeys []string
+}
+
+func (it *redisKVDBIterator) Next() (KVItem, error) {
+	if len(it.leftKeys) == 0 {
+		return KVItem{}, io.EOF
+	}
+
+	key := it.leftKeys[0]
+	it.leftKeys = it.leftKeys[1:]
+	val, err := it.db.Get(key)
+	if err != nil {
+		return KVItem{}, err
+	}
+
+	return KVItem{key, val}, nil
 }
 
 func (db *redisKVDB) Find(beginKey string, endKey string) Iterator {
-	//db.keyTree.AscendGreaterOrEqual(keyTreeItem{key}, func(ki btree.Item) bool {
-	//})
-	return nil
+	keys := []string{} // retrive all keys in the range, ordered
+	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it btree.Item) bool {
+		keys = append(keys, it.(keyTreeItem).key)
+		return true
+	})
+
+	return &redisKVDBIterator{
+		db:       db,
+		leftKeys: keys,
+	}
 }
