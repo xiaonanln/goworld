@@ -6,7 +6,8 @@ import (
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/kvdb/backend/mongodb"
+	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_mongodb"
+	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_redis"
 	. "github.com/xiaonanln/goworld/kvdb/types"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/opmon"
@@ -43,6 +44,13 @@ func Initialize() {
 		if err != nil {
 			gwlog.Panic(err)
 		}
+	} else if kvdbCfg.Type == "redis" {
+		kvdbEngine, err = kvdb_redis.OpenRedisKVDB()
+		if err != nil {
+			gwlog.Panic(err)
+		}
+	} else {
+		gwlog.Fatal("KVDB type %s is not implemented", kvdbCfg.Type)
 	}
 
 	kvdbOpQueue = sync_queue.NewSyncQueue()
