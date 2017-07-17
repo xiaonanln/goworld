@@ -39,7 +39,7 @@ func TestRedisKVDB_Set(t *testing.T) {
 }
 
 func TestRedisKVDB_Find(t *testing.T) {
-	kvdb, err := OpenRedisKVDB("127.0.0.1")
+	kvdb, err := OpenRedisKVDB("127.0.0.1:6379")
 	if err != nil {
 		t.Fatal(err)
 	}
