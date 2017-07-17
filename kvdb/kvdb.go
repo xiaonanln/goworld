@@ -3,6 +3,8 @@ package kvdb
 import (
 	"time"
 
+	"io"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -22,7 +24,7 @@ var (
 type KVDBEngine interface {
 	Get(key string) (val string, err error)
 	Put(key string, val string) (err error)
-	Find(key string) Iterator
+	Find(beginKey string, endKey string) Iterator
 }
 
 type KVDBGetCallback func(val string, err error)
@@ -45,7 +47,7 @@ func Initialize() {
 			gwlog.Panic(err)
 		}
 	} else if kvdbCfg.Type == "redis" {
-		kvdbEngine, err = kvdb_redis.OpenRedisKVDB()
+		kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host)
 		if err != nil {
 			gwlog.Panic(err)
 		}
@@ -142,13 +144,11 @@ func handlePutReq(putReq *putReq) {
 }
 
 func handleGetRangeReq(getRangeReq *getRangeReq) {
-	it := kvdbEngine.Find(getRangeReq.beginKey)
+	it := kvdbEngine.Find(getRangeReq.beginKey, getRangeReq.endKey)
 	var items []KVItem
-	endKey := getRangeReq.endKey
 	for {
 		item, err := it.Next()
-		if item.Key >= endKey {
-			// it is the end, end is not included
+		if err == io.EOF {
 			break
 		}
 

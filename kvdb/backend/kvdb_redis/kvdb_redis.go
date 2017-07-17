@@ -93,8 +93,8 @@ type RedisKVIterator struct {
 	beginKey string
 }
 
-func (db *redisKVDB) Find(key string) Iterator {
-	db.keyTree.AscendGreaterOrEqual(keyTreeItem{key}, func(ki btree.Item) bool {
-	})
+func (db *redisKVDB) Find(beginKey string, endKey string) Iterator {
+	//db.keyTree.AscendGreaterOrEqual(keyTreeItem{key}, func(ki btree.Item) bool {
+	//})
 	return nil
 }
