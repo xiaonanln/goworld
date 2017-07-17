@@ -14,6 +14,7 @@ import (
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/opmon"
 	"github.com/xiaonanln/goworld/post"
+	"strconv"
 )
 
 var (
@@ -49,7 +50,12 @@ func Initialize() {
 			gwlog.Panic(err)
 		}
 	} else if kvdbCfg.Type == "redis" {
-		kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host)
+		dbindex, err := strconv.Atoi(kvdbCfg.DB)
+		if err != nil {
+			gwlog.Panic(err)
+		}
+
+		kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
 		if err != nil {
 			gwlog.Panic(err)
 		}

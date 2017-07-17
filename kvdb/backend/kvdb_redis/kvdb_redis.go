@@ -27,7 +27,7 @@ func (ki keyTreeItem) Less(_other btree.Item) bool {
 	return ki.key < _other.(keyTreeItem).key
 }
 
-func OpenRedisKVDB(host string) (*redisKVDB, error) {
+func OpenRedisKVDB(host string, dbindex int) (*redisKVDB, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
@@ -37,14 +37,18 @@ func OpenRedisKVDB(host string) (*redisKVDB, error) {
 		c:       c,
 		keyTree: btree.New(2),
 	}
-	if err := db.initialize(); err != nil {
+	if err := db.initialize(dbindex); err != nil {
 		panic(errors.Wrap(err, "redis kvdb initialize failed"))
 	}
 
 	return db, nil
 }
 
-func (db *redisKVDB) initialize() error {
+func (db *redisKVDB) initialize(dbindex int) error {
+	if _, err := db.c.Do("SELECT", dbindex); err != nil {
+		return err
+	}
+
 	r, err := redis.Values(db.c.Do("SCAN", "0", "MATCH", keyPrefix+"*", "COUNT", 10000))
 	if err != nil {
 		return err
