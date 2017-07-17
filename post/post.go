@@ -3,7 +3,7 @@ package post
 import (
 	"sync"
 
-	"github.com/xiaonanln/goworld/gwlog"
+	//"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
 )
 

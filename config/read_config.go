@@ -17,6 +17,7 @@ import (
 
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/ini.v1"
@@ -336,6 +337,14 @@ func validateKVDBConfig(config *KVDBConfig) {
 		if config.Host == "" {
 			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
 			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+		}
+		if config.DB == "" {
+			config.DB = "0"
+		} else {
+			_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
+			if err != nil {
+				gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
+			}
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)

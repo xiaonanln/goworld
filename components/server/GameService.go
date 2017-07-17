@@ -48,7 +48,7 @@ func (gs *GameService) run() {
 func (gs *GameService) serveRoutine() {
 	cfg := config.GetServer(serverid)
 	gs.config = cfg
-	fmt.Fprintf(os.Stderr, "Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))
+	gwlog.Info("Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))
 
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
 	// here begins the main loop of Server

@@ -41,6 +41,8 @@ func Initialize() {
 		return // kvdb not enabled
 	}
 
+	gwlog.Info("KVDB initializing, config:\n%s", config.DumpPretty(kvdbCfg))
+
 	if kvdbCfg.Type == "mongodb" {
 		kvdbEngine, err = kvdb_mongo.OpenMongoKVDB(kvdbCfg.Url, kvdbCfg.DB, kvdbCfg.Collection)
 		if err != nil {
