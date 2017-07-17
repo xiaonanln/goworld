@@ -6,7 +6,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/google/btree"
 	"github.com/pkg/errors"
-	"github.com/xiaonanln/goworld/gwlog"
+	//"github.com/xiaonanln/goworld/gwlog"
 	. "github.com/xiaonanln/goworld/kvdb/types"
 )
 
@@ -55,7 +55,7 @@ func (db *redisKVDB) initialize() error {
 		if err != nil {
 			return err
 		}
-		gwlog.Info("SCAN: %v, nextcursor=%s", keys, string(nextCursor.([]byte)))
+		//gwlog.Info("SCAN: %v, nextcursor=%s", keys, string(nextCursor.([]byte)))
 		for _, key := range keys {
 			key := key[len(keyPrefix):]
 			db.keyTree.ReplaceOrInsert(keyTreeItem{key})
@@ -87,6 +87,9 @@ func (db *redisKVDB) Get(key string) (val string, err error) {
 
 func (db *redisKVDB) Put(key string, val string) error {
 	_, err := db.c.Do("SET", keyPrefix+key, val)
+	if err != nil {
+		db.keyTree.ReplaceOrInsert(keyTreeItem{key})
+	}
 	return err
 }
 
