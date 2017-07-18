@@ -6,7 +6,7 @@ dispatcher:
 	cd components/dispatcher && go build
 
 test_server:
-	cd examples/test_game && go build
+	cd examples/test_server && go build
 
 test_client:
 	cd examples/test_client && go build
@@ -15,7 +15,7 @@ rundispatcher: dispatcher
 	components/dispatcher/dispatcher
 
 runserver: test_server
-	examples/test_game/test_game -sid=1
+	examples/test_server/test_server -sid=1
 
 runclient: test_client
 	examples/test_client/test_client -N $(N)
@@ -23,8 +23,8 @@ runclient: test_client
 start:
 	make all
 	components/dispatcher/dispatcher &
-	examples/test_game/test_game -sid=1 -log info &
-	examples/test_game/test_game -sid=2 -log info &
+	examples/test_server/test_server -sid=1 -log info &
+	examples/test_server/test_server -sid=2 -log info &
 
 
 killall:
@@ -36,7 +36,7 @@ killdispatcher:
 	killall dispatcher
 
 killserver:
-	killall test_game
+	killall test_server
 
 killclient:
 	killall test_client
