@@ -56,24 +56,24 @@ type Entity struct {
 // Functions declared by IEntity can be override in Entity subclasses
 type IEntity interface {
 	// Entity Lifetime
-	OnInit()
-	OnCreated()
-	OnDestroy()
+	OnInit()    // Called when initializing entity struct, override to initialize entity custom fields
+	OnCreated() // Called when entity is just created
+	OnDestroy() // Called when entity is destroying (just before destroy)
 	// Migration
-	OnMigrateOut()
-	OnMigrateIn()
+	OnMigrateOut() // Called just before entity is migrating out
+	OnMigrateIn()  // Called just after entity is migrating in
 	// Space Operations
-	OnEnterSpace()
-	OnLeaveSpace(space *Space)
+	OnEnterSpace()             // Called when entity leaves space
+	OnLeaveSpace(space *Space) // Called when entity enters space
 	// Storage: Save & Load
-	IsPersistent() bool
-	GetPersistentData() map[string]interface{}
-	LoadPersistentData(data map[string]interface{})
-	GetMigrateData() map[string]interface{} // override these two functions to control mgirate data
-	LoadMigrateData(data map[string]interface{})
+	IsPersistent() bool                             // Return whether entity is persistent, override to return true for persistent entity
+	GetPersistentData() map[string]interface{}      // Convert persistent entity attributes to persistent data for storage, can override to customize entity saving
+	LoadPersistentData(data map[string]interface{}) // Initialize entity attributes with persistetn data, can override to customize entity loading
+	GetMigrateData() map[string]interface{}         // Convert entity attributes for migrating to other servers, can override to customize data migrating
+	LoadMigrateData(data map[string]interface{})    // Initialize attributes with migrating data, can override to customize data migrating
 	// Client Notifications
-	OnClientConnected()
-	OnClientDisconnected()
+	OnClientConnected()    // Called when client is connected to entity (become player)
+	OnClientDisconnected() // Called when client disconnected
 }
 
 func (e *Entity) String() string {
