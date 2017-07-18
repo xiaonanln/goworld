@@ -68,7 +68,6 @@ func Run(delegate IServerDelegate) {
 		runtime.GOMAXPROCS(serverConfig.GoMaxProcs)
 	}
 	setupGWLog(logLevel, serverConfig)
-	setupSignals()
 
 	storage.Initialize()
 	kvdb.Initialize()
@@ -87,6 +86,8 @@ func Run(delegate IServerDelegate) {
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine
 
+	setupSignals()
+
 	gameService.run()
 }
 
@@ -94,13 +95,23 @@ func setupSignals() {
 	gwlog.Info("Setup signals ...")
 	signal.Notify(signalChan, syscall.SIGINT)
 	signal.Notify(signalChan, syscall.SIGTERM)
-	signal.Notify(signalChan, syscall.SIGQUIT)
-	signal.Notify(signalChan, syscall.SIGKILL)
 
 	go func() {
 		for {
 			sig := <-signalChan
-			gwlog.Info("SIGNAL %s", sig)
+			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
+				// terminating server ...
+				gwlog.Info("Terminating gate service ...")
+				gateService.terminate()
+				gateService.terminated.Wait()
+				gwlog.Info("Terminating game service ...")
+				gameService.terminate()
+				gameService.terminated.Wait()
+				gwlog.Info("Server shutdown gracefully.")
+				os.Exit(0)
+			} else {
+				gwlog.Error("unexpected signal: %s", sig)
+			}
 		}
 	}()
 }

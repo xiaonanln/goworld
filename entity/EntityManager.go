@@ -331,3 +331,9 @@ func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 func GetEntity(id EntityID) *Entity {
 	return entityManager.get(id)
 }
+
+func OnServerTerminating() {
+	for _, e := range entityManager.entities {
+		e.Destroy()
+	}
+}
