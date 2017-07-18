@@ -23,7 +23,6 @@ import (
 	"github.com/xiaonanln/goworld/crontab"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/kvdb"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/proto"
@@ -123,7 +122,7 @@ func setupGWLog(logLevel string, serverConfig *config.ServerConfig) {
 	if len(outputWriters) == 1 {
 		gwlog.SetOutput(outputWriters[0])
 	} else {
-		gwlog.SetOutput(gwutils.NewMultiWriter(outputWriters...))
+		gwlog.SetOutput(io.MultiWriter(outputWriters...))
 	}
 }
 

@@ -14,7 +14,6 @@ import (
 
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/gwutils"
 )
 
 var (
@@ -51,7 +50,7 @@ func setupGWLog(dispatcherConfig *config.DispatcherConfig) {
 	if len(outputWriters) == 1 {
 		gwlog.SetOutput(outputWriters[0])
 	} else {
-		gwlog.SetOutput(gwutils.NewMultiWriter(outputWriters...))
+		gwlog.SetOutput(io.MultiWriter(outputWriters...))
 	}
 }
 
