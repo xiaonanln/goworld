@@ -189,30 +189,38 @@ func (e *Entity) Neighbors() EntitySet {
 	return e.aoi.neighbors
 }
 
-// Timer & Callback Management TODO: better management, maybe use Integer to indicate timer ?
-func (e *Entity) AddCallback(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
+// Timer & Callback Management
+
+// Type of a timer / callback added by entity
+type EntityTimer *timer.Timer
+
+// Add a callback
+//
+// The callback will be automatically cancelled if entity is destroyed or migrated to other spaces
+func (e *Entity) AddCallback(d time.Duration, cb timer.CallbackFunc) EntityTimer {
 	var t *timer.Timer
 	t = timer.AddCallback(d, func() {
 		delete(e.timers, t)
 		cb()
 	})
 	e.timers[t] = struct{}{}
-	return t
+	return EntityTimer(t)
 }
 
-func (e *Entity) Post(cb func()) {
-	post.Post(cb)
-}
-
-func (e *Entity) AddTimer(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
+// Add a repeat timer
+//
+// The timer will be automatically cancelled if entity is destroyed or migrated to other spaces
+func (e *Entity) AddTimer(d time.Duration, cb timer.CallbackFunc) EntityTimer {
 	t := timer.AddTimer(d, cb)
 	e.timers[t] = struct{}{}
-	return t
+	return EntityTimer(t)
 }
 
-func (e *Entity) CancelTimer(t *timer.Timer) {
-	delete(e.timers, t)
-	t.Cancel()
+// Cancel a timer or callback
+func (e *Entity) CancelTimer(t EntityTimer) {
+	_t := (*timer.Timer)(t)
+	_t.Cancel()
+	delete(e.timers, _t)
 }
 
 func (e *Entity) clearTimers() {
@@ -220,6 +228,11 @@ func (e *Entity) clearTimers() {
 		t.Cancel()
 	}
 	e.timers = map[*timer.Timer]struct{}{}
+}
+
+// Post a function which will be executed immediately but not in the current stack frames
+func (e *Entity) Post(cb func()) {
+	post.Post(cb)
 }
 
 // Call other entities
