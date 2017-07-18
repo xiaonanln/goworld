@@ -305,7 +305,7 @@ func GetServiceProviders(serviceName string) EntityIDSet {
 func callEntity(id EntityID, method string, args []interface{}) {
 	e := entityManager.get(id)
 	if e != nil { // this entity is local, just call entity directly
-		e.Post(func() {
+		e.Post(func() { // TODO: what if the taret entity is migrating ? callRemote instead ?
 			e.onCallFromLocal(method, args)
 		})
 	} else {
