@@ -18,6 +18,10 @@ import (
 
 	"runtime"
 
+	"os/signal"
+
+	"syscall"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/crontab"
@@ -35,6 +39,7 @@ var (
 	logLevel    string
 	gameService *GameService
 	gateService *GateService
+	signalChan  = make(chan os.Signal, 1)
 )
 
 func init() {
@@ -63,6 +68,7 @@ func Run(delegate IServerDelegate) {
 		runtime.GOMAXPROCS(serverConfig.GoMaxProcs)
 	}
 	setupGWLog(logLevel, serverConfig)
+	setupSignals()
 
 	storage.Initialize()
 	kvdb.Initialize()
@@ -82,6 +88,21 @@ func Run(delegate IServerDelegate) {
 	go gateService.run() // run gate service in another goroutine
 
 	gameService.run()
+}
+
+func setupSignals() {
+	gwlog.Info("Setup signals ...")
+	signal.Notify(signalChan, syscall.SIGINT)
+	signal.Notify(signalChan, syscall.SIGTERM)
+	signal.Notify(signalChan, syscall.SIGQUIT)
+	signal.Notify(signalChan, syscall.SIGKILL)
+
+	go func() {
+		for {
+			sig := <-signalChan
+			gwlog.Info("SIGNAL %s", sig)
+		}
+	}()
 }
 
 func setupPprofServer(serverConfig *config.ServerConfig) {

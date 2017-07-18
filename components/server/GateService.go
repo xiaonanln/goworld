@@ -30,7 +30,8 @@ type GateService struct {
 
 	filterTreesLock sync.Mutex
 	filterTrees     map[string]*FilterTree
-	terminated      xnsyncutil.AtomicBool
+
+	terminated xnsyncutil.AtomicBool
 }
 
 func newGateService() *GateService {
@@ -55,6 +56,12 @@ func (gs *GateService) String() string {
 }
 
 func (gs *GateService) ServeTCPConnection(conn net.Conn) {
+	if gs.terminated.Load() {
+		// server terminated, not accepting more connections
+		conn.Close()
+		return
+	}
+
 	cfg := config.GetServer(serverid)
 	cp := newClientProxy(conn, cfg)
 
@@ -211,4 +218,11 @@ func (gs *GateService) handlePacketRoutine() {
 
 func (gs *GateService) terminate() {
 	gs.terminated.Store(true)
+	gs.clientProxiesLock.RLock()
+
+	for _, cp := range gs.clientProxies { // close all connected clients when terminated
+		cp.Close()
+	}
+
+	gs.clientProxiesLock.RUnlock()
 }
