@@ -6,6 +6,7 @@ import (
 
 	"time"
 
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
@@ -30,6 +31,8 @@ type GameService struct {
 
 	packetQueue           chan packetQueueItem
 	isAllServersConnected bool
+	terminating           xnsyncutil.AtomicBool
+	terminated            *xnsyncutil.OneTimeCond
 }
 
 func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
@@ -38,6 +41,7 @@ func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
 		serverDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
 		packetQueue: make(chan packetQueueItem, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
+		terminated:  xnsyncutil.NewOneTimeCond(),
 	}
 }
 
@@ -52,7 +56,6 @@ func (gs *GameService) serveRoutine() {
 
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
 	// here begins the main loop of Server
-	tickCount := 0
 	for {
 		select {
 		case item := <-gs.packetQueue:
@@ -107,15 +110,26 @@ func (gs *GameService) serveRoutine() {
 
 			pkt.Release()
 		case <-ticker:
-			timer.Tick()
-			tickCount += 1
-			if tickCount%100 == 0 {
-				os.Stderr.Write([]byte{'|'})
+			if gs.terminating.Load() {
+				// server is terminating, run the terminating process
+				gs.doTerminate()
 			}
+
+			timer.Tick()
 		}
 
 		// after handling packets or firing timers, check the posted functions
 		post.Tick()
+	}
+}
+
+func (gs *GameService) doTerminate() {
+	// destroy all entities
+	entity.OnServerTerminating()
+	gwlog.Info("All entities saved & destroyed, game service terminated.")
+	gs.terminated.Signal() // signal terminated condition
+	for {                  // enter the endless loop, not serving anything anymore
+		time.Sleep(time.Second)
 	}
 }
 
@@ -219,4 +233,8 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	}
 
 	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, clientid, clientsrv)
+}
+
+func (gs *GameService) terminate() {
+	gs.terminating.Store(true)
 }

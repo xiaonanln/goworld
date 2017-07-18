@@ -94,15 +94,20 @@ func (e *Entity) Destroy() {
 
 func (e *Entity) destroyEntity(isMigrate bool) {
 	e.Space.leave(e)
+
+	if !isMigrate {
+		gwutils.RunPanicless(e.I.OnDestroy)
+	} else {
+		gwutils.RunPanicless(e.I.OnMigrateOut)
+	}
+
 	e.clearTimers()
 	e.timers = nil // prohibit further use
 
 	if !isMigrate {
-		gwutils.RunPanicless(e.I.OnDestroy)
 		e.SetClient(nil) // always set client to nil before destroy
 		e.Save()
 	} else {
-		gwutils.RunPanicless(e.I.OnMigrateOut)
 		if e.client != nil {
 			entityManager.onEntityLoseClient(e.client.clientid)
 			e.client = nil

@@ -18,6 +18,10 @@ import (
 
 	"runtime"
 
+	"os/signal"
+
+	"syscall"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/crontab"
@@ -35,6 +39,7 @@ var (
 	logLevel    string
 	gameService *GameService
 	gateService *GateService
+	signalChan  = make(chan os.Signal, 1)
 )
 
 func init() {
@@ -81,7 +86,34 @@ func Run(delegate IServerDelegate) {
 	gateService = newGateService()
 	go gateService.run() // run gate service in another goroutine
 
+	setupSignals()
+
 	gameService.run()
+}
+
+func setupSignals() {
+	gwlog.Info("Setup signals ...")
+	signal.Notify(signalChan, syscall.SIGINT)
+	signal.Notify(signalChan, syscall.SIGTERM)
+
+	go func() {
+		for {
+			sig := <-signalChan
+			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
+				// terminating server ...
+				gwlog.Info("Terminating gate service ...")
+				gateService.terminate()
+				gateService.terminated.Wait()
+				gwlog.Info("Terminating game service ...")
+				gameService.terminate()
+				gameService.terminated.Wait()
+				gwlog.Info("Server shutdown gracefully.")
+				os.Exit(0)
+			} else {
+				gwlog.Error("unexpected signal: %s", sig)
+			}
+		}
+	}()
 }
 
 func setupPprofServer(serverConfig *config.ServerConfig) {

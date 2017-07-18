@@ -61,6 +61,7 @@ func (space *Space) OnCreated() {
 			gwlog.Panicf("duplicate nil space: %s && %s", nilSpace, space)
 		}
 		nilSpace = space
+		nilSpace.Space = nilSpace
 		return
 	}
 

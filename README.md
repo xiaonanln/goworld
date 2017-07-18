@@ -1,2 +1,4 @@
 # goworld
-Server Server Engine in Golang for MMORPGs - under construction
+Server Server Engine in Golang for MMORPGs
+
+Chinese website: http://goworldgs.com/?p=64

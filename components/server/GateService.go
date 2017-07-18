@@ -10,6 +10,7 @@ import (
 
 	"os"
 
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
@@ -29,6 +30,9 @@ type GateService struct {
 
 	filterTreesLock sync.Mutex
 	filterTrees     map[string]*FilterTree
+
+	terminating xnsyncutil.AtomicBool
+	terminated  *xnsyncutil.OneTimeCond
 }
 
 func newGateService() *GateService {
@@ -37,6 +41,7 @@ func newGateService() *GateService {
 		clientProxies: map[common.ClientID]*ClientProxy{},
 		packetQueue:   sync_queue.NewSyncQueue(),
 		filterTrees:   map[string]*FilterTree{},
+		terminated:    xnsyncutil.NewOneTimeCond(),
 	}
 }
 
@@ -53,6 +58,12 @@ func (gs *GateService) String() string {
 }
 
 func (gs *GateService) ServeTCPConnection(conn net.Conn) {
+	if gs.terminating.Load() {
+		// server terminating, not accepting more connections
+		conn.Close()
+		return
+	}
+
 	cfg := config.GetServer(serverid)
 	cp := newClientProxy(conn, cfg)
 
@@ -205,4 +216,18 @@ func (gs *GateService) handlePacketRoutine() {
 		op.Finish(time.Millisecond * 100)
 		item.packet.Release()
 	}
+}
+
+func (gs *GateService) terminate() {
+	gs.terminating.Store(true)
+
+	gs.clientProxiesLock.RLock()
+
+	for _, cp := range gs.clientProxies { // close all connected clients when terminating
+		cp.Close()
+	}
+
+	gs.clientProxiesLock.RUnlock()
+
+	gs.terminated.Signal()
 }

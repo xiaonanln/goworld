@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
 
 	"flag"
 
@@ -71,13 +72,15 @@ func main() {
 }
 
 func setupSignals() {
-	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, syscall.SIGINT)
+	signal.Notify(sigChan, syscall.SIGTERM)
 	go func() {
 		for {
 			sig := <-sigChan
 
-			if sig == os.Interrupt {
+			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// interrupting, quit dispatcher
+				gwlog.Info("Dispatcher quited.")
 				os.Exit(0)
 			} else {
 				gwlog.Info("unexcepted signal: %s", sig)
