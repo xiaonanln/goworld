@@ -45,7 +45,7 @@ type Entity struct {
 
 	Attrs *MapAttr
 
-	enterSpaceRequest struct {
+	enteringSpaceRequest struct {
 		SpaceID     EntityID
 		EnterPos    Position
 		RequestTime int64
@@ -556,30 +556,61 @@ func (e *Entity) GetFloat(key string) float64 {
 // Enter target space
 func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
 	if e.isEnteringSpace() {
-		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enterSpaceRequest.SpaceID, spaceID)
+		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
 		return
 	}
 
-	e.requestMigrateTo(spaceID, pos)
+	//e.requestMigrateTo(spaceID, pos)
+	localSpace := spaceManager.getSpace(spaceID)
+	if localSpace != nil { // target space is local, just enter
+		e.enterLocalSpace(localSpace, pos)
+	} else { // else request migrating to other space
+		e.requestMigrateTo(spaceID, pos)
+	}
+}
+func (e *Entity) enterLocalSpace(space *Space, pos Position) {
+	if space == e.Space {
+		// space not changed
+		gwlog.TraceError("%s.enterLocalSpace: already in space %s", e, space)
+		return
+	}
+
+	e.enteringSpaceRequest.SpaceID = space.ID
+	e.enteringSpaceRequest.EnterPos = pos
+	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
+
+	e.Post(func() {
+		e.clearEnteringSpaceRequest()
+
+		if space.IsDestroyed() {
+			gwlog.Warn("%s: space %s is destroyed, enter space cancelled", e, space.ID)
+			return
+		}
+
+		//gwlog.Info("%s.enterLocalSpace ==> %s", e, space)
+		e.Space.leave(e)
+		space.enter(e, pos)
+	})
 }
 
 func (e *Entity) isEnteringSpace() bool {
 	now := time.Now().UnixNano()
-	return now < (e.enterSpaceRequest.RequestTime + int64(consts.ENTER_SPACE_REQUEST_TIMEOUT))
+	return now < (e.enteringSpaceRequest.RequestTime + int64(consts.ENTER_SPACE_REQUEST_TIMEOUT))
 }
 
 // Migrate to the server of space
 func (e *Entity) requestMigrateTo(spaceID EntityID, pos Position) {
-	e.enterSpaceRequest.SpaceID = spaceID
-	e.enterSpaceRequest.EnterPos = pos
-	e.enterSpaceRequest.RequestTime = time.Now().UnixNano()
+	e.enteringSpaceRequest.SpaceID = spaceID
+	e.enteringSpaceRequest.EnterPos = pos
+	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
+
 	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
 }
 
-func (e *Entity) clearMigrateRequest() {
-	e.enterSpaceRequest.SpaceID = ""
-	e.enterSpaceRequest.EnterPos = Position{}
-	e.enterSpaceRequest.RequestTime = 0
+func (e *Entity) clearEnteringSpaceRequest() {
+	e.enteringSpaceRequest.SpaceID = ""
+	e.enteringSpaceRequest.EnterPos = Position{}
+	e.enteringSpaceRequest.RequestTime = 0
 }
 
 func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
@@ -593,7 +624,7 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 	if spaceLoc == 0 {
 		// target space not found, migrate not started
 		gwlog.Error("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
-		entity.clearMigrateRequest()
+		entity.clearEnteringSpaceRequest()
 		return
 	}
 
@@ -602,12 +633,12 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 		return
 	}
 
-	if entity.enterSpaceRequest.SpaceID != spaceID {
+	if entity.enteringSpaceRequest.SpaceID != spaceID {
 		// not entering this space ?
 		return
 	}
 
-	entity.realMigrateTo(spaceID, entity.enterSpaceRequest.EnterPos, spaceLoc)
+	entity.realMigrateTo(spaceID, entity.enteringSpaceRequest.EnterPos, spaceLoc)
 }
 
 func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) {
