@@ -10,6 +10,7 @@ import (
 
 	"os"
 
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
@@ -29,6 +30,7 @@ type GateService struct {
 
 	filterTreesLock sync.Mutex
 	filterTrees     map[string]*FilterTree
+	terminated      xnsyncutil.AtomicBool
 }
 
 func newGateService() *GateService {
@@ -205,4 +207,8 @@ func (gs *GateService) handlePacketRoutine() {
 		op.Finish(time.Millisecond * 100)
 		item.packet.Release()
 	}
+}
+
+func (gs *GateService) terminate() {
+	gs.terminated.Store(true)
 }
