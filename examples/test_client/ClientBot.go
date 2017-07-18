@@ -148,12 +148,9 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		y := entity.Coord(packet.ReadFloat32())
 		z := entity.Coord(packet.ReadFloat32())
 		yaw := entity.Yaw(packet.ReadFloat32())
-
+		gwlog.Info("Create entity %s.%s: isPlayer=%v", typeName, entityID, isPlayer)
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
-		if !quiet {
-			gwlog.Debug("Create entity %s.%s: isPlayer=%v, attrs=%v", typeName, entityID, isPlayer, clientData)
-		}
 
 		if typeName == entity.SPACE_ENTITY_TYPE {
 			// this is a space

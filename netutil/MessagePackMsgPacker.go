@@ -3,6 +3,7 @@ package netutil
 import (
 	"bytes"
 
+	"github.com/xiaonanln/goworld/gwlog"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -34,10 +35,23 @@ func (mp MessagePackMsgPacker) UnpackMsg(data []byte, msg interface{}) error {
 }
 
 func (mp MessagePackMsgPacker) convertToStringKeys(v interface{}) interface{} {
+	defer func() {
+		err := recover()
+		if err != nil {
+			gwlog.Error("MessagePackMsgPacker.convertToStringKeys failed while converting: %v", v)
+			panic(err)
+		}
+	}()
+
 	if rv, ok := v.(map[interface{}]interface{}); ok {
 		rrv := make(map[string]interface{}, len(rv))
 		for k, _v := range rv {
-			rrv[k.(string)] = mp.convertToStringKeys(_v)
+			ks, ok := k.(string)
+			if !ok {
+				gwlog.Panicf("%v is not string, but %T", k, k)
+			}
+
+			rrv[ks] = mp.convertToStringKeys(_v)
 		}
 		return rrv
 	}

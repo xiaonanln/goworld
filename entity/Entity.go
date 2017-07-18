@@ -18,6 +18,7 @@ import (
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/storage"
+	"github.com/xiaonanln/typeconv"
 )
 
 var (
@@ -237,15 +238,15 @@ func (e *Entity) Post(cb func()) {
 
 // Call other entities
 func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
-	callRemote(id, method, args)
+	callEntity(id, method, args)
 }
 
 func (e *Entity) CallService(serviceName string, method string, args ...interface{}) {
 	serviceEid := entityManager.chooseServiceProvider(serviceName)
-	callRemote(serviceEid, method, args)
+	callEntity(serviceEid, method, args)
 }
 
-func (e *Entity) onCall(methodName string, args [][]byte, clientid ClientID) {
+func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
 		if err != nil {
@@ -256,7 +257,45 @@ func (e *Entity) onCall(methodName string, args [][]byte, clientid ClientID) {
 	rpcDesc := e.typeDesc.rpcDescs[methodName]
 	if rpcDesc == nil {
 		// rpc not found
-		gwlog.Error("%s.onCall: Method %s is not a valid RPC, args=%v", e, methodName, args)
+		gwlog.Error("%s.onCallFromLocal: Method %s is not a valid RPC, args=%v", e, methodName, args)
+		return
+	}
+
+	// rpc call from server
+	if rpcDesc.Flags&RF_SERVER == 0 {
+		// can not call from server
+		gwlog.Panicf("%s.onCallFromLocal: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
+	}
+
+	if rpcDesc.NumArgs != len(args) {
+		gwlog.Error("%s.onCallFromLocal: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
+		return
+	}
+
+	methodType := rpcDesc.MethodType
+	in := make([]reflect.Value, len(args)+1)
+	in[0] = reflect.ValueOf(e.I) // first argument is the bind instance (self)
+
+	for i, arg := range args {
+		argType := methodType.In(i + 1)
+		in[i+1] = typeconv.Convert(arg, argType)
+	}
+
+	rpcDesc.Func.Call(in)
+}
+
+func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid ClientID) {
+	defer func() {
+		err := recover() // recover from any error during RPC call
+		if err != nil {
+			gwlog.TraceError("%s.%s%v paniced: %s", e, methodName, args, err)
+		}
+	}()
+
+	rpcDesc := e.typeDesc.rpcDescs[methodName]
+	if rpcDesc == nil {
+		// rpc not found
+		gwlog.Error("%s.onCallFromRemote: Method %s is not a valid RPC, args=%v", e, methodName, args)
 		return
 	}
 
@@ -265,19 +304,19 @@ func (e *Entity) onCall(methodName string, args [][]byte, clientid ClientID) {
 		// rpc call from server
 		if rpcDesc.Flags&RF_SERVER == 0 {
 			// can not call from server
-			gwlog.Panicf("%s.onCall: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
+			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 		}
 	} else {
 		isFromOwnClient := clientid == e.getClientID()
 		if rpcDesc.Flags&RF_OWN_CLIENT == 0 && isFromOwnClient {
-			gwlog.Panicf("%s.onCall: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
+			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
 		} else if rpcDesc.Flags&RF_OTHER_CLIENT == 0 && !isFromOwnClient {
-			gwlog.Panicf("%s.onCall: Method %s can not be called from OtherClient: flags=%v, OwnClient=%s, OtherClient=%s", e, methodName, rpcDesc.Flags, e.getClientID(), clientid)
+			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from OtherClient: flags=%v, OwnClient=%s, OtherClient=%s", e, methodName, rpcDesc.Flags, e.getClientID(), clientid)
 		}
 	}
 
 	if rpcDesc.NumArgs != len(args) {
-		gwlog.Error("%s.onCall: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
+		gwlog.Error("%s.onCallFromRemote: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
 		return
 	}
 
@@ -292,11 +331,10 @@ func (e *Entity) onCall(methodName string, args [][]byte, clientid ClientID) {
 		if err != nil {
 			gwlog.Panicf("Convert argument %d failed: type=%s", i+1, argType.Name())
 		}
-		//gwlog.Info("Unpacking Msg %v => %v", arg, *argValPtr.Interface().(*string))
 
 		in[i+1] = reflect.Indirect(argValPtr)
-		//typeconv.Convert(arg, argType)
 	}
+
 	rpcDesc.Func.Call(in)
 }
 

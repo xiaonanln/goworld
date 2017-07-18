@@ -131,7 +131,6 @@ type dispatcherClientDelegate struct {
 
 func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
 	// called when connected / reconnected to dispatcher (not in main routine)
-
 }
 
 var lastWarnGateServiceQueueLen = 0

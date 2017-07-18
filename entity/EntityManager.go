@@ -302,8 +302,18 @@ func GetServiceProviders(serviceName string) EntityIDSet {
 	return entityManager.registeredServices[serviceName]
 }
 
+func callEntity(id EntityID, method string, args []interface{}) {
+	e := entityManager.get(id)
+	if e != nil { // this entity is local, just call entity directly
+		e.Post(func() {
+			e.onCallFromLocal(method, args)
+		})
+	} else {
+		callRemote(id, method, args)
+	}
+}
+
 func callRemote(id EntityID, method string, args []interface{}) {
-	//gwlog.Info("dispatcher_client.GetDispatcherClientForSend(): %v", dispatcher_client.GetDispatcherClientForSend())
 	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 
@@ -315,7 +325,7 @@ func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 		return
 	}
 
-	e.onCall(method, args, clientID)
+	e.onCallFromRemote(method, args, clientID)
 }
 
 func GetEntity(id EntityID) *Entity {
