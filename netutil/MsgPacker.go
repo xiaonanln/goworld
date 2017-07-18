@@ -1,7 +1,7 @@
 package netutil
 
 var (
-	MSG_PACKER MsgPacker = JSONMsgPacker{}
+	MSG_PACKER MsgPacker = MessagePackMsgPacker{}
 )
 
 type MsgPacker interface {
