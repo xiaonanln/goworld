@@ -16,6 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/storage"
 )
 
@@ -199,8 +200,8 @@ func (e *Entity) AddCallback(d time.Duration, cb timer.CallbackFunc) *timer.Time
 	return t
 }
 
-func (e *Entity) Post(cb timer.CallbackFunc) {
-	e.AddCallback(0, cb)
+func (e *Entity) Post(cb func()) {
+	post.Post(cb)
 }
 
 func (e *Entity) AddTimer(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
