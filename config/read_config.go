@@ -75,8 +75,9 @@ type StorageConfig struct {
 	// Filesystem Storage Configs
 	Directory string // directory for filesystem storage
 	// MongoDB storage configs
-	Url string
-	DB  string
+	Url  string
+	DB   string
+	Host string // Redis host
 }
 
 type KVDBConfig struct {
@@ -294,8 +295,16 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 			config.Url = key.MustString(config.Url)
 		} else if name == "db" {
 			config.DB = key.MustString(config.DB)
+		} else if name == "host" {
+			config.Host = key.MustString(config.Host)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+		}
+	}
+
+	if config.Type == "redis" {
+		if config.DB == "" {
+			config.DB = "0"
 		}
 	}
 
@@ -320,6 +329,12 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 		}
 	}
 
+	if config.Type == "redis" {
+		if config.DB == "" {
+			config.DB = "0"
+		}
+	}
+
 	validateKVDBConfig(config)
 }
 
@@ -333,18 +348,13 @@ func validateKVDBConfig(config *KVDBConfig) {
 			gwlog.Panicf("invalid %s KVDB config above", config.Type)
 		}
 	} else if config.Type == "redis" {
-		// todo check config for redis kvdb
 		if config.Host == "" {
 			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
 			gwlog.Panicf("invalid %s KVDB config above", config.Type)
 		}
-		if config.DB == "" {
-			config.DB = "0"
-		} else {
-			_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
-			if err != nil {
-				gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
-			}
+		_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
+		if err != nil {
+			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
@@ -375,6 +385,13 @@ func validateStorageConfig(config *StorageConfig) {
 		}
 		if config.DB == "" {
 			gwlog.Panicf("db is not set in %s storage config", config.Type)
+		}
+	} else if config.Type == "redis" {
+		if config.Host == "" {
+			gwlog.Panicf("redis host is not set")
+		}
+		if _, err := strconv.Atoi(config.DB); err != nil {
+			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)

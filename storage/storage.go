@@ -5,6 +5,8 @@ import (
 
 	"os"
 
+	"strconv"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
@@ -14,6 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/storage/backend/mongodb"
+	"github.com/xiaonanln/goworld/storage/backend/redis"
 )
 
 type EntityStorage interface {
@@ -110,6 +113,11 @@ func Initialize() {
 		storageEngine, err = entity_storage_filesystem.OpenDirectory(cfg.Directory)
 	} else if cfg.Type == "mongodb" {
 		storageEngine, err = entity_storage_mongodb.OpenMongoDB(cfg.Url, cfg.DB)
+	} else if cfg.Type == "redis" {
+		var dbindex int
+		if dbindex, err = strconv.Atoi(cfg.DB); err == nil {
+			storageEngine, err = entity_storage_redis.OpenRedis(cfg.Host, dbindex)
+		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
 		if consts.DEBUG_MODE {
