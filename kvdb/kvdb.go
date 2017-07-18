@@ -5,6 +5,8 @@ import (
 
 	"io"
 
+	"strconv"
+
 	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -14,7 +16,6 @@ import (
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/opmon"
 	"github.com/xiaonanln/goworld/post"
-	"strconv"
 )
 
 var (
@@ -162,7 +163,9 @@ func handleGetRangeReq(getRangeReq *getRangeReq) {
 
 		if err != nil {
 			if getRangeReq.callback != nil {
-				getRangeReq.callback(nil, err)
+				post.Post(func() {
+					getRangeReq.callback(nil, err)
+				})
 			}
 			return
 		}
@@ -171,6 +174,8 @@ func handleGetRangeReq(getRangeReq *getRangeReq) {
 	}
 
 	if getRangeReq.callback != nil {
-		getRangeReq.callback(items, nil)
+		post.Post(func() {
+			getRangeReq.callback(items, nil)
+		})
 	}
 }

@@ -26,7 +26,7 @@ type MailService struct {
 
 func (s *MailService) OnInit() {
 	s.lastMailID = -1
-	s.mailPacker = netutil.MessagePackMsgPacker{}
+	s.mailPacker = netutil.JSONMsgPacker{}
 }
 
 func (s *MailService) OnCreated() {
