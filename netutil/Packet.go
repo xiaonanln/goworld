@@ -359,6 +359,7 @@ func (p *Packet) AppendData(msg interface{}) {
 
 func (p *Packet) ReadData(msg interface{}) {
 	b := p.ReadVarBytes()
+	//gwlog.Info("ReadData: %s", string(b))
 	err := MSG_PACKER.UnpackMsg(b, msg)
 	if err != nil {
 		gwlog.Panic(err)
@@ -435,17 +436,12 @@ func (p *Packet) compress(cw *flate.Writer) {
 
 	oldPayload := p.Payload()
 	oldPayloadLen := len(oldPayload)
-	n, err := cw.Write(oldPayload)
-	if err != nil {
+	if err := WriteAll(cw, oldPayload); err != nil {
 		gwlog.Panicf("compress error: %v", err)
 	}
 
 	if err := cw.Flush(); err != nil {
 		gwlog.Panicf("compress error: %v", err)
-	}
-
-	if n != oldPayloadLen {
-		gwlog.Panicf("not fully compressed")
 	}
 
 	compressedPayload := w.Bytes()
@@ -486,10 +482,14 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 	uncompressedBuffer := packetBufferPools[getPayloadCapOfPayloadLen(uncompressedPayloadLen)].Get().([]byte)
 	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
 
-	newPayloadLen, err := cr.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
+	//newPayloadLen, err := cr.Read(uncompressedBuffer[PREPAYLOAD_SIZE:])
+	err := ReadAll(cr, uncompressedBuffer[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+uncompressedPayloadLen])
 	if err != nil {
 		gwlog.Panic(errors.Wrap(err, "decompress failed"))
 	}
+	//if err := cr.Close(); err != nil {
+	//	gwlog.Panic(errors.Wrap(err, "close uncompressor failed"))
+	//}
 
 	//gwlog.Info("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
 	//gwlog.Info("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
@@ -499,7 +499,7 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 
 	p.bytes = uncompressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	*pplen = uint32(newPayloadLen)
+	*pplen = uncompressedPayloadLen
 }
 
 func (p *Packet) isCompressed() bool {
