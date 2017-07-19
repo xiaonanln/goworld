@@ -46,10 +46,6 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("mails", goworld.MapAttr())
 }
 
-func (a *Avatar) IsPersistent() bool {
-	return true
-}
-
 func (a *Avatar) enterSpace(spaceKind int) {
 	if a.Space.Kind == spaceKind {
 		return

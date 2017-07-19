@@ -127,20 +127,3 @@ func (s *MailService) parseMailKey(mailKey string) (common.EntityID, int) {
 	s.PanicOnError(err)
 	return eid, mailId
 }
-
-//func (s *MailService) IsPersistent() bool {
-//	return true
-//}
-//
-//// Override the default GetPersistentData because we are not using Attrs
-//func (s *MailService) GetPersistentData() map[string]interface{} {
-//	return map[string]interface{}{
-//		"lastMailID": s.lastMailID,
-//	}
-//}
-//
-//func (s *MailService) LoadPersistentData(data map[string]interface{}) {
-//	if lastMailID, ok := data["lastMailID"]; ok {
-//		s.lastMailID = typeconv.Int(lastMailID)
-//	}
-//}

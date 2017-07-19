@@ -42,7 +42,3 @@ func (s *OnlineService) CheckOut_Server(avatarID EntityID) {
 	delete(s.avatars, avatarID)
 	gwlog.Info("%s CHECK OUT: %s, total online %d", s, avatarID, len(s.avatars))
 }
-
-func (s *OnlineService) IsPersistent() bool {
-	return true
-}

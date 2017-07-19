@@ -82,10 +82,6 @@ func (s *SpaceService) OnCreated() {
 	s.DeclareService("SpaceService")
 }
 
-func (s *SpaceService) IsPersistent() bool {
-	return false
-}
-
 func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
