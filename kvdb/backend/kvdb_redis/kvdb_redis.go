@@ -49,7 +49,8 @@ func (db *redisKVDB) initialize(dbindex int) error {
 		return err
 	}
 
-	r, err := redis.Values(db.c.Do("SCAN", "0", "MATCH", keyPrefix+"*", "COUNT", 10000))
+	keyMatch := keyPrefix + "*"
+	r, err := redis.Values(db.c.Do("SCAN", "0", "MATCH", keyMatch, "COUNT", 10000))
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,7 @@ func (db *redisKVDB) initialize(dbindex int) error {
 		if db.isZeroCursor(nextCursor) {
 			break
 		}
-		r, err = redis.Values(db.c.Do("SCAN", nextCursor))
+		r, err = redis.Values(db.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
 	}
 	return nil
 }
