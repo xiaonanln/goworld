@@ -28,9 +28,10 @@ start:
 
 
 killall:
-	-make killdispatcher
-	-make killserver
 	-make killclient
+	-make killserver
+	-sleep 1
+	-make killdispatcher
 
 killdispatcher:
 	killall dispatcher

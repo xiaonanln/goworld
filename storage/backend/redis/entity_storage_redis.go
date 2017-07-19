@@ -42,7 +42,8 @@ func packData(data interface{}) (b []byte, err error) {
 }
 
 func (es *redisEntityStorage) List(typeName string) ([]common.EntityID, error) {
-	r, err := redis.Values(es.c.Do("SCAN", "0", "MATCH", typeName+"$*", "COUNT", 10000))
+	keyMatch := typeName + "$*"
+	r, err := redis.Values(es.c.Do("SCAN", "0", "MATCH", keyMatch, "COUNT", 10000))
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +57,14 @@ func (es *redisEntityStorage) List(typeName string) ([]common.EntityID, error) {
 		}
 
 		for _, key := range keys {
+			println("key", key)
 			eids = append(eids, common.EntityID(key[prefixLen:]))
 		}
 
 		if isZeroCursor(nextCursor) {
 			break
 		}
-		r, err = redis.Values(es.c.Do("SCAN", nextCursor))
+		r, err = redis.Values(es.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
 	}
 	return eids, nil
 }
