@@ -5,6 +5,7 @@ import (
 
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/typeconv"
 )
 
 func TestRedisEntityStorage(t *testing.T) {
@@ -33,7 +34,7 @@ func TestRedisEntityStorage(t *testing.T) {
 		t.Error(err)
 	}
 
-	if verifyData.(map[string]interface{})["a"].(int) != 1 {
+	if typeconv.Int(verifyData.(map[string]interface{})["a"]) != 1 {
 		t.Errorf("read wrong data: %v", verifyData)
 	}
 	if verifyData.(map[string]interface{})["b"].(string) != "2" {
