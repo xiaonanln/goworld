@@ -1,7 +1,6 @@
 TODO: Service register and auto-creation in dispatcher
-TODO: Use redis for entity storage and kvdb
-TODO: Handle SIGINT on dispatcher & server
-TODO: Entity storage on redis
+TODO: Session based Connection Management
+TODO：Server Reboot without Client Awareness
 
 # MISC
 TODO: make sure entity is destroyed if creation fails

@@ -84,12 +84,9 @@ func (e *Entity) Destroy() {
 	if e.destroyed {
 		return
 	}
-	gwlog.Info("%s.Destroy ...", e)
-	//isCrossServerCallable := e.isCrossServerCallable()
+	gwlog.Debug("%s.Destroy ...", e)
 	e.destroyEntity(false)
-	//if isCrossServerCallable {
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
-	//}
 }
 
 func (e *Entity) destroyEntity(isMigrate bool) {
@@ -403,20 +400,6 @@ func (e *Entity) GetMigrateData() map[string]interface{} {
 func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
-
-//func (e *Entity) isCrossServerCallable() bool {
-//	// find a better rule to determine if entity is cross server callable
-//	if e.IsPersistent() {
-//		return true
-//	}
-//	if e.IsSpaceEntity() && !e.ToSpace().IsNil() {
-//		return true
-//	}
-//	if len(e.declaredServices) > 0 {
-//		return true
-//	}
-//	return false
-//}
 
 // Client related utilities
 func (e *Entity) GetClient() *GameClient {
