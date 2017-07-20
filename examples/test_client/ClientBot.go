@@ -92,7 +92,7 @@ func (bot *ClientBot) run() {
 func (bot *ClientBot) loop() {
 	var msgtype proto.MsgType_t
 	for {
-		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 10))
+		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 100))
 		if err != nil {
 			gwlog.Panic(err)
 		}

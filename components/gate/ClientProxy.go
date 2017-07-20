@@ -65,7 +65,7 @@ func (cp *ClientProxy) serve() {
 
 	for {
 		var msgtype proto.MsgType_t
-		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 20))
+		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
