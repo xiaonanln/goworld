@@ -24,12 +24,12 @@ func TestLoad(t *testing.T) {
 	if config.Dispatcher.Port == 0 {
 		t.Errorf("dispatcher port not found")
 	}
-	for serverName, gateConfig := range config.Gates {
+	for gateid, gateConfig := range config.Gates {
 		if gateConfig.Ip == "" {
-			t.Errorf("server %s ip not found", serverName)
+			t.Errorf("gate %s ip not found", gateid)
 		}
 		if gateConfig.Port == 0 {
-			t.Errorf("server %s port not found", serverName)
+			t.Errorf("gate %s port not found", gateid)
 		}
 	}
 
