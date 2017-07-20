@@ -98,7 +98,7 @@ func setupSignals() {
 				gwlog.Info("Terminating game service ...")
 				gameService.terminate()
 				gameService.terminated.Wait()
-				gwlog.Info("Server shutdown gracefully.")
+				gwlog.Info("Game shutdown gracefully.")
 				os.Exit(0)
 			} else {
 				gwlog.Error("unexpected signal: %s", sig)
@@ -112,7 +112,7 @@ type dispatcherClientDelegate struct {
 
 func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
-	dispatcherClient.SendSetServerID(gameid, isReconnect)
+	dispatcherClient.SendSetGameID(gameid, isReconnect)
 }
 
 var lastWarnGateServiceQueueLen = 0

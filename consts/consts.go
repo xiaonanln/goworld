@@ -12,10 +12,10 @@ const (
 	DISPATCHER_CLIENT_PROXY_READ_BUFFER_SIZE  = 1024 * 1024
 	ENTITY_PENDING_PACKET_QUEUE_MAX_LEN       = 1000
 
-	// For Server & Gate
+	// For Game & Gate
 	GAME_SERVICE_PACKET_QUEUE_SIZE = 10000 // packet queue size
-	// For Server
-	SERVER_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affect timer resolution
+	// For Game
+	GAME_SERVICE_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affect timer resolution
 
 	DISPATCHER_CLIENT_WRITE_BUFFER_SIZE = 1024 * 1024
 	DISPATCHER_CLIENT_READ_BUFFER_SIZE  = 1024 * 1024

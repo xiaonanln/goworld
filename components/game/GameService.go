@@ -54,7 +54,7 @@ func (gs *GameService) serveRoutine() {
 	gs.config = cfg
 	gwlog.Info("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
-	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
+	ticker := time.Tick(consts.GAME_SERVICE_TICK_INTERVAL)
 	// here begins the main loop of Game
 	for {
 		select {
