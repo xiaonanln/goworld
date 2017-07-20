@@ -1,7 +1,7 @@
+TODO: Handle gate disconnection from dispatcher, and reconnection of gate?
 TODO: Service register and auto-creation in dispatcher
 TODO: Session based Connection Management
 TODO：Server Reboot without Client Awareness
-TODO: Seperate Gate & Game from Server ?
 
 # MISC
 TODO: make sure entity is destroyed if creation fails
