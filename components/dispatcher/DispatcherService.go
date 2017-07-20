@@ -60,7 +60,8 @@ func (info *EntityDispatchInfo) isBlockingRPC() bool {
 
 type DispatcherService struct {
 	config            *config.DispatcherConfig
-	clients           []*DispatcherClientProxy
+	gameClients       []*DispatcherClientProxy
+	gateClients       []*DispatcherClientProxy
 	chooseClientIndex int64
 
 	entityDispatchInfosLock sync.RWMutex
@@ -76,9 +77,11 @@ type DispatcherService struct {
 func newDispatcherService() *DispatcherService {
 	cfg := config.Get()
 	serverCount := len(cfg.Servers)
+	gateCount := len(cfg.Gates)
 	return &DispatcherService{
 		config:            &cfg.Dispatcher,
-		clients:           make([]*DispatcherClientProxy, serverCount),
+		gameClients:       make([]*DispatcherClientProxy, serverCount),
+		gateClients:       make([]*DispatcherClientProxy, gateCount),
 		chooseClientIndex: 0,
 
 		entityDispatchInfos:  map[common.EntityID]*EntityDispatchInfo{},
@@ -194,16 +197,16 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 		gwlog.Panicf("invalid serverid: %d", serverid)
 	}
 
-	olddcp := service.clients[serverid-1] // should be nil, unless reconnect
-	service.clients[serverid-1] = dcp
+	olddcp := service.gameClients[serverid-1] // should be nil, unless reconnect
+	service.gameClients[serverid-1] = dcp
 	// notify all servers that all servers connected to dispatcher now!
-	if service.isAllClientsConnected() {
+	if service.isAllGameClientsConnected() {
 		pkt.ClearPayload() // reuse this packet
 		pkt.AppendUint16(proto.MT_NOTIFY_ALL_SERVERS_CONNECTED)
 		if olddcp == nil {
 			// for the first time that all servers connected to dispatcher, notify all servers
-			gwlog.Info("All servers(%d) are connected", len(service.clients))
-			service.broadcastToDispatcherClients(pkt)
+			gwlog.Info("All servers(%d) are connected", len(service.gameClients))
+			service.broadcastToGameClients(pkt)
 		} else { // dispatcher reconnected, only notify this server
 			dcp.SendPacket(pkt)
 		}
@@ -217,8 +220,12 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 	return
 }
 
-func (service *DispatcherService) isAllClientsConnected() bool {
-	for _, client := range service.clients {
+func (service *DispatcherService) HandleSetGateID(dcp *DispatcherClientProxy, pkt *netutil.Packet, gateid uint16) {
+	service.gateClients[gateid-1] = dcp
+}
+
+func (service *DispatcherService) isAllGameClientsConnected() bool {
+	for _, client := range service.gameClients {
 		if client == nil {
 			return false
 		}
@@ -226,34 +233,20 @@ func (service *DispatcherService) isAllClientsConnected() bool {
 	return true
 }
 
-func (service *DispatcherService) dispatcherClientOfServer(serverid uint16) *DispatcherClientProxy {
-	return service.clients[serverid-1]
+func (service *DispatcherService) dispatcherClientOfGame(serverid uint16) *DispatcherClientProxy {
+	return service.gameClients[serverid-1]
+}
+
+func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *DispatcherClientProxy {
+	return service.gateClients[gateid-1]
 }
 
 // Choose a dispatcher client for sending Anywhere packets
-func (service *DispatcherService) chooseDispatcherClient() *DispatcherClientProxy {
+func (service *DispatcherService) chooseGameDispatcherClient() *DispatcherClientProxy {
 	index := atomic.LoadInt64(&service.chooseClientIndex)
-	client := service.clients[index]
-	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.clients)))
+	client := service.gameClients[index]
+	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.gameClients)))
 	return client
-	//startIndex := service.chooseClientIndex
-	//clients := service.clients
-	//clientsNum := len(clients)
-	//if clients[startIndex] != nil { // most of time
-	//	service.chooseClientIndex = (service.chooseClientIndex + 1) % clientsNum
-	//	return clients[startIndex]
-	//} else {
-	//	index := (startIndex + 1) % clientsNum
-	//	for index != startIndex {
-	//		if clients[index] != nil {
-	//			service.chooseClientIndex = (index + 1) % clientsNum
-	//			return clients[index]
-	//		}
-	//		index = (index + 1) % clientsNum
-	//	}
-	//
-	//	return nil // non-nil client not found, should not happen
-	//}
 }
 
 func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *DispatcherClientProxy) {
@@ -285,7 +278,7 @@ func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClien
 
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	clientid := pkt.ReadClientID()
-	targetServer := service.chooseDispatcherClient()
+	targetServer := service.chooseGameDispatcherClient()
 
 	service.clientsLock.Lock()
 	service.targetServerOfClient[clientid] = targetServer.serverid // owner is not determined yet, set to "" as placeholder
@@ -295,7 +288,7 @@ func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherCli
 		gwlog.Debug("Target server of client %s is SET to %v on connected", clientid, targetServer.serverid)
 	}
 
-	pkt.AppendUint16(dcp.serverid)
+	pkt.AppendUint16(dcp.gateid)
 	targetServer.SendPacket(pkt)
 }
 
@@ -312,7 +305,7 @@ func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *Dispatcher
 	}
 
 	if targetSid != 0 { // if found the owner, tell it
-		service.dispatcherClientOfServer(targetSid).SendPacket(pkt) // tell the server that the client is down
+		service.dispatcherClientOfGame(targetSid).SendPacket(pkt) // tell the server that the client is down
 	}
 }
 
@@ -328,7 +321,7 @@ func (service *DispatcherService) HandleLoadEntityAnywhere(dcp *DispatcherClient
 	defer entityDispatchInfo.Unlock()
 
 	if entityDispatchInfo.serverid == 0 { // entity not loaded, try load now
-		dcp := service.chooseDispatcherClient()
+		dcp := service.chooseGameDispatcherClient()
 		entityDispatchInfo.serverid = dcp.serverid
 		entityDispatchInfo.startLoad()
 		dcp.SendPacket(pkt)
@@ -341,7 +334,7 @@ func (service *DispatcherService) HandleCreateEntityAnywhere(dcp *DispatcherClie
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
-	service.chooseDispatcherClient().SendPacket(pkt)
+	service.chooseGameDispatcherClient().SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -361,7 +354,7 @@ func (service *DispatcherService) HandleDeclareService(dcp *DispatcherClientProx
 	}
 
 	service.registeredServices[serviceName].Add(entityID)
-	service.broadcastToDispatcherClients(pkt)
+	service.broadcastToGameClients(pkt)
 	service.servicesLock.Unlock()
 }
 
@@ -371,7 +364,7 @@ func (service *DispatcherService) handleServiceDown(serviceName string, eid comm
 	pkt.AppendEntityID(eid)
 	pkt.AppendVarStr(serviceName)
 
-	service.broadcastToDispatcherClients(pkt)
+	service.broadcastToGameClients(pkt)
 	pkt.Release()
 }
 
@@ -392,7 +385,7 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	defer entityDispatchInfo.RUnlock()
 
 	if !entityDispatchInfo.isBlockingRPC() {
-		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
+		service.dispatcherClientOfGame(entityDispatchInfo.serverid).SendPacket(pkt)
 	} else {
 		// if migrating, just put the call to wait
 		if entityDispatchInfo.pendingPacketQueue.Len() < consts.ENTITY_PENDING_PACKET_QUEUE_MAX_LEN {
@@ -422,7 +415,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 	defer entityDispatchInfo.RUnlock()
 
 	if !entityDispatchInfo.isBlockingRPC() {
-		service.dispatcherClientOfServer(entityDispatchInfo.serverid).SendPacket(pkt)
+		service.dispatcherClientOfGame(entityDispatchInfo.serverid).SendPacket(pkt)
 	} else {
 		// if migrating, just put the call to wait
 		if entityDispatchInfo.pendingPacketQueue.Len() < consts.ENTITY_PENDING_PACKET_QUEUE_MAX_LEN {
@@ -438,12 +431,12 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 }
 
 func (service DispatcherService) HandleDoSomethingOnSpecifiedClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	sid := pkt.ReadUint16()
-	service.dispatcherClientOfServer(sid).SendPacket(pkt)
+	gid := pkt.ReadUint16()
+	service.dispatcherClientOfGate(gid).SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleCallFilteredClientProxies(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	service.broadcastToDispatcherClients(pkt)
+	service.broadcastToGateClients(pkt)
 }
 
 func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
@@ -500,7 +493,7 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 		gwlog.Debug("Target server of client %s is migrated to %v along with owner %s", clientid, targetServer, eid)
 	}
 
-	service.dispatcherClientOfServer(targetServer).SendPacket(pkt)
+	service.dispatcherClientOfGame(targetServer).SendPacket(pkt)
 	// send the cached calls to target server
 	service.sendPendingPackets(entityDispatchInfo)
 }
@@ -511,15 +504,21 @@ func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *EntityD
 	item, ok := entityDispatchInfo.pendingPacketQueue.TryPop()
 	for ok {
 		cachedPkt := item.(callQueueItem).packet
-		service.dispatcherClientOfServer(targetServer).SendPacket(cachedPkt)
+		service.dispatcherClientOfGame(targetServer).SendPacket(cachedPkt)
 		cachedPkt.Release()
 
 		item, ok = entityDispatchInfo.pendingPacketQueue.TryPop()
 	}
 }
 
-func (service *DispatcherService) broadcastToDispatcherClients(pkt *netutil.Packet) {
-	for _, dcp := range service.clients {
+func (service *DispatcherService) broadcastToGameClients(pkt *netutil.Packet) {
+	for _, dcp := range service.gameClients {
+		dcp.SendPacket(pkt)
+	}
+}
+
+func (service *DispatcherService) broadcastToGateClients(pkt *netutil.Packet) {
+	for _, dcp := range service.gateClients {
 		dcp.SendPacket(pkt)
 	}
 }

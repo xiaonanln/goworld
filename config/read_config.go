@@ -144,6 +144,21 @@ func GetServerIDs() []uint16 {
 	return res
 }
 
+func GetGateIDs() []uint16 {
+	cfg := Get()
+	gateIDs := make([]int, 0, len(cfg.Gates))
+	for id, _ := range cfg.Gates {
+		gateIDs = append(gateIDs, id)
+	}
+	sort.Ints(gateIDs)
+
+	res := make([]uint16, len(gateIDs))
+	for i, id := range gateIDs {
+		res[i] = uint16(id)
+	}
+	return res
+}
+
 func GetDispatcher() *DispatcherConfig {
 	return &Get().Dispatcher
 }

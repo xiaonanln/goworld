@@ -19,6 +19,7 @@ type DispatcherClientProxy struct {
 	*proto.GoWorldConnection
 	owner    *DispatcherService
 	serverid uint16
+	gateid   uint16
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *DispatcherClientProxy {
@@ -91,10 +92,28 @@ func (dcp *DispatcherClientProxy) serve() {
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			dcp.owner.HandleDeclareService(dcp, pkt)
 		} else if msgtype == proto.MT_SET_SERVER_ID {
+			// this is a game server
 			serverid := pkt.ReadUint16()
 			isReconnect := pkt.ReadBool()
+			if serverid <= 0 {
+				gwlog.Panicf("invalid serverid: %d", serverid)
+			}
+			if dcp.serverid > 0 || dcp.gateid > 0 {
+				gwlog.Panicf("already set serverid=%d, gateid=%d", dcp.serverid, dcp.gateid)
+			}
 			dcp.serverid = serverid
 			dcp.owner.HandleSetServerID(dcp, pkt, serverid, isReconnect)
+		} else if msgtype == proto.MT_SET_GATE_ID {
+			// this is a gate
+			gateid := pkt.ReadUint16()
+			if gateid <= 0 {
+				gwlog.Panicf("invalid gateid: %d", gateid)
+			}
+			if dcp.serverid > 0 || dcp.gateid > 0 {
+				gwlog.Panicf("already set serverid=%d, gateid=%d", dcp.serverid, dcp.gateid)
+			}
+			dcp.gateid = gateid
+			dcp.owner.HandleSetGateID(dcp, pkt, gateid)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 			if consts.DEBUG_MODE {
@@ -107,5 +126,11 @@ func (dcp *DispatcherClientProxy) serve() {
 }
 
 func (dcp *DispatcherClientProxy) String() string {
-	return fmt.Sprintf("DispatcherClientProxy<%d|%s>", dcp.serverid, dcp.RemoteAddr())
+	if dcp.serverid > 0 {
+		return fmt.Sprintf("DispatcherClientProxy<game%d|%s>", dcp.serverid, dcp.RemoteAddr())
+	} else if dcp.gateid > 0 {
+		return fmt.Sprintf("DispatcherClientProxy<gate%d|%s>", dcp.gateid, dcp.RemoteAddr())
+	} else {
+		return fmt.Sprintf("DispatcherClientProxy<%s>", dcp.RemoteAddr())
+	}
 }

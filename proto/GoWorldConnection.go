@@ -35,6 +35,15 @@ func (gwc *GoWorldConnection) SendSetServerID(id uint16, isReconnect bool) error
 	return err
 }
 
+func (gwc *GoWorldConnection) SendSetGateID(id uint16) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_SET_GATE_ID)
+	packet.AppendUint16(id)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
+}
+
 func (gwc *GoWorldConnection) SendNotifyCreateEntity(id EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CREATE_ENTITY)

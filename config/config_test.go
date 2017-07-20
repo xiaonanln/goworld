@@ -24,11 +24,11 @@ func TestLoad(t *testing.T) {
 	if config.Dispatcher.Port == 0 {
 		t.Errorf("dispatcher port not found")
 	}
-	for serverName, serverConfig := range config.Servers {
-		if serverConfig.Ip == "" {
+	for serverName, gateConfig := range config.Gates {
+		if gateConfig.Ip == "" {
 			t.Errorf("server %s ip not found", serverName)
 		}
-		if serverConfig.Port == 0 {
+		if gateConfig.Port == 0 {
 			t.Errorf("server %s port not found", serverName)
 		}
 	}
@@ -50,7 +50,7 @@ func TestGetDispatcher(t *testing.T) {
 
 func TestGetServer(t *testing.T) {
 	for id := 1; id <= 10; id++ {
-		cfg := GetServer(id)
+		cfg := GetServer(uint16(id))
 		if cfg == nil {
 			gwlog.Info("Server %d not found", id)
 		} else {

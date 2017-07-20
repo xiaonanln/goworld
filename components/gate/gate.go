@@ -63,7 +63,7 @@ func main() {
 	binutil.SetupGWLog(logLevel, gateConfig.LogFile, gateConfig.LogStderr)
 
 	binutil.SetupPprofServer(gateConfig.PProfIp, gateConfig.PProfPort)
-	dispatcher_client.Initialize(gateid, &dispatcherClientDelegate{})
+	dispatcher_client.Initialize(&dispatcherClientDelegate{})
 	gateService = newGateService()
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
@@ -94,8 +94,9 @@ func setupSignals() {
 type dispatcherClientDelegate struct {
 }
 
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
+func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
+	dispatcherClient.SendSetGateID(gateid)
 }
 
 var lastWarnGateServiceQueueLen = 0

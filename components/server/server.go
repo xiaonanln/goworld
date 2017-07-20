@@ -76,7 +76,7 @@ func Run(delegate IServerDelegate) {
 
 	gameService = newGameService(serverid, delegate)
 
-	dispatcher_client.Initialize(serverid, &dispatcherClientDelegate{})
+	dispatcher_client.Initialize(&dispatcherClientDelegate{})
 
 	entity.CreateSpaceLocally(0) // create to be the nil space
 
@@ -110,8 +110,9 @@ func setupSignals() {
 type dispatcherClientDelegate struct {
 }
 
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
+func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
+	dispatcherClient.SendSetServerID(serverid, isReconnect)
 }
 
 var lastWarnGateServiceQueueLen = 0
