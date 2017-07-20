@@ -11,7 +11,7 @@ import (
 //
 // This is the main routine for the server and all entity logic,
 // and this function never quit
-func Run(delegate game.IServerDelegate) {
+func Run(delegate game.IGameDelegate) {
 	game.Run(delegate)
 }
 
@@ -85,8 +85,8 @@ func GetEntity(id EntityID) *entity.Entity {
 //
 // server ID is a uint16 number starts from 1, which should be different for each servers
 // server ID is also in the game config section name of goworld.ini
-func GetServerID() uint16 {
-	return game.GetServerID()
+func GetGameID() uint16 {
+	return game.GetGameID()
 }
 
 // Creates a new MapAttr

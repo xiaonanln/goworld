@@ -50,7 +50,7 @@ func TestGetDispatcher(t *testing.T) {
 
 func TestGetServer(t *testing.T) {
 	for id := 1; id <= 10; id++ {
-		cfg := GetServer(uint16(id))
+		cfg := GetGame(uint16(id))
 		if cfg == nil {
 			gwlog.Info("Server %d not found", id)
 		} else {

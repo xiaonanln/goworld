@@ -72,13 +72,13 @@ type DispatcherConfig struct {
 }
 
 type GoWorldConfig struct {
-	Dispatcher   DispatcherConfig
-	ServerCommon GameConfig
-	GateCommon   GateConfig
-	Games        map[int]*GameConfig
-	Gates        map[int]*GateConfig
-	Storage      StorageConfig
-	KVDB         KVDBConfig
+	Dispatcher DispatcherConfig
+	GameCommon GameConfig
+	GateCommon GateConfig
+	Games      map[int]*GameConfig
+	Gates      map[int]*GateConfig
+	Storage    StorageConfig
+	KVDB       KVDBConfig
 }
 
 type StorageConfig struct {
@@ -121,7 +121,7 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
-func GetServer(serverid uint16) *GameConfig {
+func GetGame(serverid uint16) *GameConfig {
 	return Get().Games[int(serverid)]
 }
 
@@ -129,7 +129,7 @@ func GetGate(gateid uint16) *GateConfig {
 	return Get().Gates[int(gateid)]
 }
 
-func GetServerIDs() []uint16 {
+func GetGameIDs() []uint16 {
 	cfg := Get()
 	serverIDs := make([]int, 0, len(cfg.Games))
 	for id, _ := range cfg.Games {
@@ -188,7 +188,7 @@ func readGoWorldConfig() *GoWorldConfig {
 	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
 	serverCommonSec := iniFile.Section("server_common")
-	readServerCommonConfig(serverCommonSec, &config.ServerCommon)
+	readGameCommonConfig(serverCommonSec, &config.GameCommon)
 	gateCommonSec := iniFile.Section("gate_common")
 	readGateCommonConfig(gateCommonSec, &config.GateCommon)
 
@@ -209,7 +209,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
-			config.Games[id] = readServerConfig(sec, &config.ServerCommon)
+			config.Games[id] = readGameConfig(sec, &config.GameCommon)
 		} else if len(secName) > 4 && secName[:4] == "gate" {
 			id, err := strconv.Atoi(secName[4:])
 			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
@@ -228,7 +228,7 @@ func readGoWorldConfig() *GoWorldConfig {
 	return &config
 }
 
-func readServerCommonConfig(section *ini.Section, scc *GameConfig) {
+func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.BootEntity = "Boot"
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
@@ -238,12 +238,12 @@ func readServerCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.PProfPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
 
-	_readServerConfig(section, scc)
+	_readGameConfig(section, scc)
 }
 
-func readServerConfig(sec *ini.Section, serverCommonConfig *GameConfig) *GameConfig {
+func readGameConfig(sec *ini.Section, serverCommonConfig *GameConfig) *GameConfig {
 	var sc GameConfig = *serverCommonConfig // copy from server_common
-	_readServerConfig(sec, &sc)
+	_readGameConfig(sec, &sc)
 	// validate game config
 	if sc.BootEntity == "" {
 		panic("boot_entity is not set in server config")
@@ -251,7 +251,7 @@ func readServerConfig(sec *ini.Section, serverCommonConfig *GameConfig) *GameCon
 	return &sc
 }
 
-func _readServerConfig(sec *ini.Section, sc *GameConfig) {
+func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "boot_entity" {

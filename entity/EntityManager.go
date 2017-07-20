@@ -332,7 +332,7 @@ func GetEntity(id EntityID) *Entity {
 	return entityManager.get(id)
 }
 
-func OnServerTerminating() {
+func OnGameTerminating() {
 	for _, e := range entityManager.entities {
 		e.Destroy()
 	}

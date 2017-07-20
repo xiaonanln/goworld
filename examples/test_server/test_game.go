@@ -55,10 +55,10 @@ func main() {
 }
 
 // Called when the game server is ready
-func (server serverDelegate) OnServerReady() {
-	server.GameDelegate.OnServerReady()
+func (server serverDelegate) OnGameReady() {
+	server.GameDelegate.OnGameReady()
 
-	if goworld.GetServerID() == 1 { // Create services on just 1 server
+	if goworld.GetGameID() == 1 { // Create services on just 1 server
 		for _, serviceName := range SERVICE_NAMES {
 			serviceName := serviceName
 			goworld.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
@@ -100,7 +100,4 @@ func (server serverDelegate) isAllServicesReady() bool {
 
 func (server serverDelegate) onAllServicesReady() {
 	gwlog.Info("All services are ready!")
-	//if goworld.GetServerID() == 1 {
-	//	goworld.CreateSpaceAnywhere(1)
-	//}
 }

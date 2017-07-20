@@ -436,7 +436,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	if oldClient != nil {
 		// send destroy entity to client
 		entityManager.onEntityLoseClient(oldClient.clientid)
-		dispatcher_client.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.serverid, oldClient.clientid)
+		dispatcher_client.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
 			oldClient.SendDestroyEntity(neighbor)
@@ -457,7 +457,7 @@ func (e *Entity) SetClient(client *GameClient) {
 
 		// set all filter properties to client
 		for key, val := range e.filterProps {
-			dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(client.serverid, client.clientid, key, val)
+			dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 		}
 	}
 
@@ -645,7 +645,7 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 	var clientsrv uint16
 	if e.client != nil {
 		clientid = e.client.clientid
-		clientsrv = e.client.serverid
+		clientsrv = e.client.gateid
 	}
 
 	e.destroyEntity(true) // disable the entity
@@ -696,7 +696,7 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	e.filterProps[key] = val
 	// send filter property to client
 	if e.client != nil {
-		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.serverid, e.client.clientid, key, val)
+		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 	}
 }
 

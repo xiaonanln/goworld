@@ -26,16 +26,16 @@ type packetQueueItem struct { // packet queue from dispatcher client
 type GameService struct {
 	config       *config.GameConfig
 	id           uint16
-	gameDelegate IServerDelegate
+	gameDelegate IGameDelegate
 	//registeredServices map[string]entity.EntityIDSet
 
-	packetQueue           chan packetQueueItem
-	isAllServersConnected bool
-	terminating           xnsyncutil.AtomicBool
-	terminated            *xnsyncutil.OneTimeCond
+	packetQueue         chan packetQueueItem
+	isAllGamesConnected bool
+	terminating         xnsyncutil.AtomicBool
+	terminated          *xnsyncutil.OneTimeCond
 }
 
-func newGameService(gameid uint16, delegate IServerDelegate) *GameService {
+func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
 	return &GameService{
 		id:           gameid,
 		gameDelegate: delegate,
@@ -50,12 +50,12 @@ func (gs *GameService) run() {
 }
 
 func (gs *GameService) serveRoutine() {
-	cfg := config.GetServer(gameid)
+	cfg := config.GetGame(gameid)
 	gs.config = cfg
 	gwlog.Info("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
-	// here begins the main loop of Server
+	// here begins the main loop of Game
 	for {
 		select {
 		case item := <-gs.packetQueue:
@@ -100,7 +100,7 @@ func (gs *GameService) serveRoutine() {
 				serviceName := pkt.ReadVarStr()
 				gs.HandleUndeclareService(eid, serviceName)
 			} else if msgtype == proto.MT_NOTIFY_ALL_SERVERS_CONNECTED {
-				gs.HandleNotifyAllServersConnected()
+				gs.HandleNotifyAllGamesConnected()
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 				if consts.DEBUG_MODE {
@@ -125,7 +125,7 @@ func (gs *GameService) serveRoutine() {
 
 func (gs *GameService) doTerminate() {
 	// destroy all entities
-	entity.OnServerTerminating()
+	entity.OnGameTerminating()
 	gwlog.Info("All entities saved & destroyed, game service terminated.")
 	gs.terminated.Signal() // signal terminated condition
 	for {                  // enter the endless loop, not serving anything anymore
@@ -167,9 +167,9 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
-func (gs *GameService) HandleNotifyAllServersConnected() {
+func (gs *GameService) HandleNotifyAllGamesConnected() {
 	// all games are connected
-	gs.gameDelegate.OnServerReady()
+	gs.gameDelegate.OnGameReady()
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
@@ -211,7 +211,7 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 
 func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
-	_ = pkt.ReadUint16() // targetServer is not userful
+	_ = pkt.ReadUint16() // targetGame is not userful
 
 	hasClient := pkt.ReadBool()
 	var clientid common.ClientID

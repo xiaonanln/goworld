@@ -49,14 +49,14 @@ func parseArgs() {
 	gameid = uint16(gameidArg)
 }
 
-func Run(delegate IServerDelegate) {
+func Run(delegate IGameDelegate) {
 	rand.Seed(time.Now().UnixNano())
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
 
-	gameConfig := config.GetServer(gameid)
+	gameConfig := config.GetGame(gameid)
 	if gameConfig.GoMaxProcs > 0 {
 		gwlog.Info("SET GOMAXPROCS = %d", gameConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gameConfig.GoMaxProcs)
@@ -124,6 +124,6 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	}
 }
 
-func GetServerID() uint16 {
+func GetGameID() uint16 {
 	return gameid
 }

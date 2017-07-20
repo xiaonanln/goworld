@@ -78,7 +78,7 @@ func setupSignals() {
 		for {
 			sig := <-signalChan
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
-				// terminating server ...
+				// terminating gate ...
 				gwlog.Info("Terminating gate service ...")
 				gateService.terminate()
 				gateService.terminated.Wait()
@@ -113,6 +113,6 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	}
 }
 
-func GetServerID() uint16 {
+func GetGateID() uint16 {
 	return gateid
 }

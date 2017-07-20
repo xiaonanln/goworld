@@ -2,13 +2,13 @@ package game
 
 import "github.com/xiaonanln/goworld/gwlog"
 
-type IServerDelegate interface {
-	OnServerReady()
+type IGameDelegate interface {
+	OnGameReady()
 }
 
 type GameDelegate struct {
 }
 
-func (gd *GameDelegate) OnServerReady() {
+func (gd *GameDelegate) OnGameReady() {
 	gwlog.Info("game %d is ready.", gameid)
 }
