@@ -373,14 +373,23 @@ func (e *Entity) OnDestroy() {
 
 // Default handlers for persistence
 
+// Return if the entity is persistent
+//
+// Default implementation check entity for persistent attributes
 func (e *Entity) IsPersistent() bool {
-	return false
+	return len(e.typeDesc.persistentAttrs) > 0
 }
 
+// Get the persistent data
+//
+// Returns persistent attributes by default
 func (e *Entity) GetPersistentData() map[string]interface{} {
 	return e.Attrs.ToMapWithFilter(e.typeDesc.persistentAttrs.Contains)
 }
 
+// Load persistent data
+//
+// Load persistent data to attributes
 func (e *Entity) LoadPersistentData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
