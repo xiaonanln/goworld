@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ func newGateService() *GateService {
 }
 
 func (gs *GateService) run() {
-	cfg := config.GetServer(serverid)
+	cfg := config.GetGate(gateid)
 	gwlog.Info("Compress connection: %v", cfg.CompressConnection)
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeForever(gs.handlePacketRoutine)
@@ -64,7 +64,7 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 		return
 	}
 
-	cfg := config.GetServer(serverid)
+	cfg := config.GetGate(gateid)
 	cp := newClientProxy(conn, cfg)
 
 	gs.clientProxiesLock.Lock()
@@ -206,6 +206,11 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 
 	gs.clientProxiesLock.RUnlock()
 	gs.filterTreesLock.Unlock()
+}
+
+type packetQueueItem struct { // packet queue from dispatcher client
+	msgtype proto.MsgType_t
+	packet  *netutil.Packet
 }
 
 func (gs *GateService) handlePacketRoutine() {

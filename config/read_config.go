@@ -38,11 +38,20 @@ var (
 	configLock     sync.Mutex
 )
 
-type ServerConfig struct {
+type GameConfig struct {
+	BootEntity   string
+	SaveInterval time.Duration
+	LogFile      string
+	LogStderr    bool
+	PProfIp      string
+	PProfPort    int
+	LogLevel     string
+	GoMaxProcs   int
+}
+
+type GateConfig struct {
 	Ip                 string
 	Port               int
-	BootEntity         string
-	SaveInterval       time.Duration
 	LogFile            string
 	LogStderr          bool
 	PProfIp            string
@@ -63,11 +72,13 @@ type DispatcherConfig struct {
 }
 
 type GoWorldConfig struct {
-	Dispatcher   DispatcherConfig
-	ServerCommon ServerConfig
-	Servers      map[int]*ServerConfig
-	Storage      StorageConfig
-	KVDB         KVDBConfig
+	Dispatcher DispatcherConfig
+	GameCommon GameConfig
+	GateCommon GateConfig
+	Games      map[int]*GameConfig
+	Gates      map[int]*GateConfig
+	Storage    StorageConfig
+	KVDB       KVDBConfig
 }
 
 type StorageConfig struct {
@@ -110,20 +121,39 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
-func GetServer(serverid uint16) *ServerConfig {
-	return Get().Servers[int(serverid)]
+func GetGame(serverid uint16) *GameConfig {
+	return Get().Games[int(serverid)]
 }
 
-func GetServerIDs() []uint16 {
+func GetGate(gateid uint16) *GateConfig {
+	return Get().Gates[int(gateid)]
+}
+
+func GetGameIDs() []uint16 {
 	cfg := Get()
-	serverIDs := make([]int, 0, len(cfg.Servers))
-	for id, _ := range cfg.Servers {
+	serverIDs := make([]int, 0, len(cfg.Games))
+	for id, _ := range cfg.Games {
 		serverIDs = append(serverIDs, id)
 	}
 	sort.Ints(serverIDs)
 
 	res := make([]uint16, len(serverIDs))
 	for i, id := range serverIDs {
+		res[i] = uint16(id)
+	}
+	return res
+}
+
+func GetGateIDs() []uint16 {
+	cfg := Get()
+	gateIDs := make([]int, 0, len(cfg.Gates))
+	for id, _ := range cfg.Gates {
+		gateIDs = append(gateIDs, id)
+	}
+	sort.Ints(gateIDs)
+
+	res := make([]uint16, len(gateIDs))
+	for i, id := range gateIDs {
 		res[i] = uint16(id)
 	}
 	return res
@@ -151,13 +181,16 @@ func DumpPretty(cfg interface{}) string {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		Servers: map[int]*ServerConfig{},
+		Games: map[int]*GameConfig{},
+		Gates: map[int]*GateConfig{},
 	}
 	gwlog.Info("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
 	serverCommonSec := iniFile.Section("server_common")
-	readServerCommonConfig(serverCommonSec, &config.ServerCommon)
+	readGameCommonConfig(serverCommonSec, &config.GameCommon)
+	gateCommonSec := iniFile.Section("gate_common")
+	readGateCommonConfig(gateCommonSec, &config.GateCommon)
 
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()
@@ -170,13 +203,17 @@ func readGoWorldConfig() *GoWorldConfig {
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.Dispatcher)
-		} else if secName == "server_common" {
-			// ignore server_common here
+		} else if secName == "server_common" || secName == "gate_common" {
+			// ignore common section here
 		} else if len(secName) > 6 && secName[:6] == "server" {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
-			config.Servers[id] = readServerConfig(sec, &config.ServerCommon)
+			config.Games[id] = readGameConfig(sec, &config.GameCommon)
+		} else if len(secName) > 4 && secName[:4] == "gate" {
+			id, err := strconv.Atoi(secName[4:])
+			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
+			config.Gates[id] = readGateConfig(sec, &config.GateCommon)
 		} else if secName == "storage" {
 			// storage config
 			readStorageConfig(sec, &config.Storage)
@@ -191,9 +228,8 @@ func readGoWorldConfig() *GoWorldConfig {
 	return &config
 }
 
-func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
+func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.BootEntity = "Boot"
-	scc.Ip = "0.0.0.0"
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
 	scc.LogLevel = DEFAULT_LOG_LEVEL
@@ -201,14 +237,13 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.PProfIp = DEFAULT_PPROF_IP
 	scc.PProfPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
-	scc.CompressConnection = false
 
-	_readServerConfig(section, scc)
+	_readGameConfig(section, scc)
 }
 
-func readServerConfig(sec *ini.Section, serverCommonConfig *ServerConfig) *ServerConfig {
-	var sc ServerConfig = *serverCommonConfig // copy from server_common
-	_readServerConfig(sec, &sc)
+func readGameConfig(sec *ini.Section, serverCommonConfig *GameConfig) *GameConfig {
+	var sc GameConfig = *serverCommonConfig // copy from server_common
+	_readGameConfig(sec, &sc)
 	// validate game config
 	if sc.BootEntity == "" {
 		panic("boot_entity is not set in server config")
@@ -216,17 +251,56 @@ func readServerConfig(sec *ini.Section, serverCommonConfig *ServerConfig) *Serve
 	return &sc
 }
 
-func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
+func _readGameConfig(sec *ini.Section, sc *GameConfig) {
+	for _, key := range sec.Keys() {
+		name := strings.ToLower(key.Name())
+		if name == "boot_entity" {
+			sc.BootEntity = key.MustString(sc.BootEntity)
+		} else if name == "save_interval" {
+			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
+		} else if name == "log_file" {
+			sc.LogFile = key.MustString(sc.LogFile)
+		} else if name == "log_stderr" {
+			sc.LogStderr = key.MustBool(sc.LogStderr)
+		} else if name == "pprof_ip" {
+			sc.PProfIp = key.MustString(sc.PProfIp)
+		} else if name == "pprof_port" {
+			sc.PProfPort = key.MustInt(sc.PProfPort)
+		} else if name == "log_level" {
+			sc.LogLevel = key.MustString(sc.LogLevel)
+		} else if name == "gomaxprocs" {
+			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+		}
+	}
+}
+
+func readGateCommonConfig(section *ini.Section, scc *GateConfig) {
+	scc.LogFile = "gate.log"
+	scc.LogStderr = true
+	scc.LogLevel = DEFAULT_LOG_LEVEL
+	scc.PProfIp = DEFAULT_PPROF_IP
+	scc.PProfPort = 0 // pprof not enabled by default
+	scc.GoMaxProcs = 0
+
+	_readGateConfig(section, scc)
+}
+
+func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig {
+	var sc GateConfig = *gateCommonConfig // copy from server_common
+	_readGateConfig(sec, &sc)
+	// validate game config
+	return &sc
+}
+
+func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
 			sc.Ip = key.MustString(sc.Ip)
 		} else if name == "port" {
 			sc.Port = key.MustInt(sc.Port)
-		} else if name == "boot_entity" {
-			sc.BootEntity = key.MustString(sc.BootEntity)
-		} else if name == "save_interval" {
-			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
 		} else if name == "log_file" {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {

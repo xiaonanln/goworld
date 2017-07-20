@@ -25,11 +25,20 @@ func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConn
 	}
 }
 
-func (gwc *GoWorldConnection) SendSetServerID(id uint16, isReconnect bool) error {
+func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_SET_SERVER_ID)
+	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(id)
 	packet.AppendBool(isReconnect)
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
+}
+
+func (gwc *GoWorldConnection) SendSetGateID(id uint16) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_SET_GATE_ID)
+	packet.AppendUint16(id)
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err
@@ -262,12 +271,12 @@ func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID Enti
 	return err
 }
 
-func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetServer uint16, targetSpace EntityID, x, y, z float32,
+func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetGame uint16, targetSpace EntityID, x, y, z float32,
 	typeName string, migrateData map[string]interface{}, clientid ClientID, clientsrv uint16) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)
-	packet.AppendUint16(targetServer)
+	packet.AppendUint16(targetGame)
 
 	if !clientid.IsNil() {
 		packet.AppendBool(true)

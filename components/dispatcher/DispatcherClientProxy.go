@@ -17,8 +17,9 @@ import (
 
 type DispatcherClientProxy struct {
 	*proto.GoWorldConnection
-	owner    *DispatcherService
-	serverid uint16
+	owner  *DispatcherService
+	gameid uint16
+	gateid uint16
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *DispatcherClientProxy {
@@ -90,11 +91,29 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			dcp.owner.HandleDeclareService(dcp, pkt)
-		} else if msgtype == proto.MT_SET_SERVER_ID {
-			serverid := pkt.ReadUint16()
+		} else if msgtype == proto.MT_SET_GAME_ID {
+			// this is a game server
+			gameid := pkt.ReadUint16()
 			isReconnect := pkt.ReadBool()
-			dcp.serverid = serverid
-			dcp.owner.HandleSetServerID(dcp, pkt, serverid, isReconnect)
+			if gameid <= 0 {
+				gwlog.Panicf("invalid gameid: %d", gameid)
+			}
+			if dcp.gameid > 0 || dcp.gateid > 0 {
+				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
+			}
+			dcp.gameid = gameid
+			dcp.owner.HandleSetGameID(dcp, pkt, gameid, isReconnect)
+		} else if msgtype == proto.MT_SET_GATE_ID {
+			// this is a gate
+			gateid := pkt.ReadUint16()
+			if gateid <= 0 {
+				gwlog.Panicf("invalid gateid: %d", gateid)
+			}
+			if dcp.gameid > 0 || dcp.gateid > 0 {
+				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
+			}
+			dcp.gateid = gateid
+			dcp.owner.HandleSetGateID(dcp, pkt, gateid)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 			if consts.DEBUG_MODE {
@@ -107,5 +126,11 @@ func (dcp *DispatcherClientProxy) serve() {
 }
 
 func (dcp *DispatcherClientProxy) String() string {
-	return fmt.Sprintf("DispatcherClientProxy<%d|%s>", dcp.serverid, dcp.RemoteAddr())
+	if dcp.gameid > 0 {
+		return fmt.Sprintf("DispatcherClientProxy<game%d|%s>", dcp.gameid, dcp.RemoteAddr())
+	} else if dcp.gateid > 0 {
+		return fmt.Sprintf("DispatcherClientProxy<gate%d|%s>", dcp.gateid, dcp.RemoteAddr())
+	} else {
+		return fmt.Sprintf("DispatcherClientProxy<%s>", dcp.RemoteAddr())
+	}
 }

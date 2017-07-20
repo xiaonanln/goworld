@@ -54,17 +54,17 @@ func (bot *ClientBot) run() {
 
 	gwlog.Info("%s is running ...", bot)
 
-	serverIDs := config.GetServerIDs()
-	// choose a random serverID
-	serverID := serverIDs[rand.Intn(len(serverIDs))]
-	gwlog.Debug("%s is connecting to server %d", bot, serverID)
-	cfg := config.GetServer(serverID)
+	gateIDs := config.GetGateIDs()
+	// choose a random gateid
+	gateid := gateIDs[rand.Intn(len(gateIDs))]
+	gwlog.Debug("%s is connecting to gate %d", bot, gateid)
+	cfg := config.GetGate(gateid)
 	cfg = cfg
 	var netconn net.Conn
 	var err error
 	for { // retry for ever
-		netconn, err = netutil.ConnectTCP("10.246.13.148", cfg.Port)
-		//netconn, err = netutil.ConnectTCP("localhost", cfg.Port)
+		//netconn, err = netutil.ConnectTCP("10.246.13.148", cfg.Port)
+		netconn, err = netutil.ConnectTCP("localhost", cfg.Port)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))

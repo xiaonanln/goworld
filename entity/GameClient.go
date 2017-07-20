@@ -11,13 +11,13 @@ import (
 
 type GameClient struct {
 	clientid common.ClientID
-	serverid uint16
+	gateid   uint16
 }
 
-func MakeGameClient(clientid common.ClientID, sid uint16) *GameClient {
+func MakeGameClient(clientid common.ClientID, gid uint16) *GameClient {
 	return &GameClient{
 		clientid: clientid,
-		serverid: sid,
+		gateid:   gid,
 	}
 }
 
@@ -25,7 +25,7 @@ func (client *GameClient) String() string {
 	if client == nil {
 		return "GameClient<nil>"
 	}
-	return fmt.Sprintf("GameClient<%s@%d>", client.clientid, client.serverid)
+	return fmt.Sprintf("GameClient<%s@%d>", client.clientid, client.gateid)
 }
 
 func (client *GameClient) SendCreateEntity(entity *Entity, isPlayer bool) {
@@ -42,7 +42,7 @@ func (client *GameClient) SendCreateEntity(entity *Entity, isPlayer bool) {
 
 	pos := entity.aoi.pos
 	yaw := entity.yaw
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID, isPlayer,
+	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID, isPlayer,
 		clientData, float32(pos.X), float32(pos.Y), float32(pos.Z), float32(yaw))
 }
 
@@ -50,14 +50,14 @@ func (client *GameClient) SendDestroyEntity(entity *Entity) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.serverid, client.clientid, entity.TypeName, entity.ID)
+	dispatcher_client.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID)
 }
 
 func (client *GameClient) call(entityID common.EntityID, method string, args ...interface{}) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethodOnClient(client.serverid, client.clientid, entityID, method, args)
+	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethodOnClient(client.gateid, client.clientid, entityID, method, args)
 }
 
 func (client *GameClient) SendNotifyAttrChange(entityID common.EntityID, path []string, key string, val interface{}) {
@@ -67,7 +67,7 @@ func (client *GameClient) SendNotifyAttrChange(entityID common.EntityID, path []
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.SendNotifyAttrChange: entityID=%s, path=%s, %s=%v", client, entityID, path, key, val)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrChangeOnClient(client.serverid, client.clientid, entityID, path, key, val)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrChangeOnClient(client.gateid, client.clientid, entityID, path, key, val)
 }
 
 func (client *GameClient) SendNotifyAttrDel(entityID common.EntityID, path []string, key string) {
@@ -77,7 +77,7 @@ func (client *GameClient) SendNotifyAttrDel(entityID common.EntityID, path []str
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.SendNotifyAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelOnClient(client.serverid, client.clientid, entityID, path, key)
+	dispatcher_client.GetDispatcherClientForSend().SendNotifyAttrDelOnClient(client.gateid, client.clientid, entityID, path, key)
 }
 
 func (client *GameClient) UpdatePositionOnClient(entityID common.EntityID, position Position) {
@@ -85,7 +85,7 @@ func (client *GameClient) UpdatePositionOnClient(entityID common.EntityID, posit
 		return
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendUpdatePositionOnClient(client.serverid, client.clientid, entityID,
+	dispatcher_client.GetDispatcherClientForSend().SendUpdatePositionOnClient(client.gateid, client.clientid, entityID,
 		float32(position.X), float32(position.Y), float32(position.Z))
 }
 
@@ -94,5 +94,5 @@ func (client *GameClient) UpdateYawOnClient(entityID common.EntityID, yaw Yaw) {
 		return
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendUpdateYawOnClient(client.serverid, client.clientid, entityID, float32(yaw))
+	dispatcher_client.GetDispatcherClientForSend().SendUpdateYawOnClient(client.gateid, client.clientid, entityID, float32(yaw))
 }

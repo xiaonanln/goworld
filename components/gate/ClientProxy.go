@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"net"
@@ -24,7 +24,7 @@ type ClientProxy struct {
 	filterProps map[string]string
 }
 
-func newClientProxy(netConn net.Conn, cfg *config.ServerConfig) *ClientProxy {
+func newClientProxy(netConn net.Conn, cfg *config.GateConfig) *ClientProxy {
 	tcpConn := netConn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
@@ -65,7 +65,7 @@ func (cp *ClientProxy) serve() {
 
 	for {
 		var msgtype proto.MsgType_t
-		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 100))
+		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
