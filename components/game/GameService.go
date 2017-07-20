@@ -24,9 +24,9 @@ type packetQueueItem struct { // packet queue from dispatcher client
 }
 
 type GameService struct {
-	config         *config.GameConfig
-	id             uint16
-	serverDelegate IServerDelegate
+	config       *config.GameConfig
+	id           uint16
+	gameDelegate IServerDelegate
 	//registeredServices map[string]entity.EntityIDSet
 
 	packetQueue           chan packetQueueItem
@@ -35,10 +35,10 @@ type GameService struct {
 	terminated            *xnsyncutil.OneTimeCond
 }
 
-func newGameService(serverid uint16, delegate IServerDelegate) *GameService {
+func newGameService(gameid uint16, delegate IServerDelegate) *GameService {
 	return &GameService{
-		id:             serverid,
-		serverDelegate: delegate,
+		id:           gameid,
+		gameDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
 		packetQueue: make(chan packetQueueItem, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
 		terminated:  xnsyncutil.NewOneTimeCond(),
@@ -50,9 +50,9 @@ func (gs *GameService) run() {
 }
 
 func (gs *GameService) serveRoutine() {
-	cfg := config.GetServer(serverid)
+	cfg := config.GetServer(gameid)
 	gs.config = cfg
-	gwlog.Info("Read server %d config: \n%s\n", serverid, config.DumpPretty(cfg))
+	gwlog.Info("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
 	ticker := time.Tick(consts.SERVER_TICK_INTERVAL)
 	// here begins the main loop of Server
@@ -111,7 +111,7 @@ func (gs *GameService) serveRoutine() {
 			pkt.Release()
 		case <-ticker:
 			if gs.terminating.Load() {
-				// server is terminating, run the terminating process
+				// game is terminating, run the terminating process
 				gs.doTerminate()
 			}
 
@@ -168,8 +168,8 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 }
 
 func (gs *GameService) HandleNotifyAllServersConnected() {
-	// all servers are connected
-	gs.serverDelegate.OnServerReady()
+	// all games are connected
+	gs.gameDelegate.OnServerReady()
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
@@ -203,7 +203,7 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 	spaceLoc := pkt.ReadUint16()
 
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("Entity %s is migrating to space %s at server %d", eid, spaceid, spaceLoc)
+		gwlog.Debug("Entity %s is migrating to space %s at game %d", eid, spaceid, spaceLoc)
 	}
 
 	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)

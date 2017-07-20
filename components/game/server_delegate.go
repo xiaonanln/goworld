@@ -10,5 +10,5 @@ type GameDelegate struct {
 }
 
 func (gd *GameDelegate) OnServerReady() {
-	gwlog.Info("server %d is ready.", serverid)
+	gwlog.Info("game %d is ready.", gameid)
 }

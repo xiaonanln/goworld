@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	serverid    uint16
+	gameid      uint16
 	configFile  string
 	logLevel    string
 	gameService *GameService
@@ -41,12 +41,12 @@ func init() {
 }
 
 func parseArgs() {
-	var serveridArg int
-	flag.IntVar(&serveridArg, "sid", 0, "set serverid")
+	var gameidArg int
+	flag.IntVar(&gameidArg, "sid", 0, "set gameid")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
 	flag.Parse()
-	serverid = uint16(serveridArg)
+	gameid = uint16(gameidArg)
 }
 
 func Run(delegate IServerDelegate) {
@@ -56,7 +56,7 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
-	gameConfig := config.GetServer(serverid)
+	gameConfig := config.GetServer(gameid)
 	if gameConfig.GoMaxProcs > 0 {
 		gwlog.Info("SET GOMAXPROCS = %d", gameConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gameConfig.GoMaxProcs)
@@ -74,7 +74,7 @@ func Run(delegate IServerDelegate) {
 
 	entity.SetSaveInterval(gameConfig.SaveInterval)
 
-	gameService = newGameService(serverid, delegate)
+	gameService = newGameService(gameid, delegate)
 
 	dispatcher_client.Initialize(&dispatcherClientDelegate{})
 
@@ -94,7 +94,7 @@ func setupSignals() {
 		for {
 			sig := <-signalChan
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
-				// terminating server ...
+				// terminating game ...
 				gwlog.Info("Terminating game service ...")
 				gameService.terminate()
 				gameService.terminated.Wait()
@@ -112,7 +112,7 @@ type dispatcherClientDelegate struct {
 
 func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
-	dispatcherClient.SendSetServerID(serverid, isReconnect)
+	dispatcherClient.SendSetServerID(gameid, isReconnect)
 }
 
 var lastWarnGateServiceQueueLen = 0
@@ -125,5 +125,5 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 }
 
 func GetServerID() uint16 {
-	return serverid
+	return gameid
 }
