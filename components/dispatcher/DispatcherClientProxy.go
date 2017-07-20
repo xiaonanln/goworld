@@ -91,7 +91,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
 			dcp.owner.HandleDeclareService(dcp, pkt)
-		} else if msgtype == proto.MT_SET_SERVER_ID {
+		} else if msgtype == proto.MT_SET_GAME_ID {
 			// this is a game server
 			gameid := pkt.ReadUint16()
 			isReconnect := pkt.ReadBool()
@@ -102,7 +102,7 @@ func (dcp *DispatcherClientProxy) serve() {
 				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 			}
 			dcp.gameid = gameid
-			dcp.owner.HandleSetServerID(dcp, pkt, gameid, isReconnect)
+			dcp.owner.HandleSetGameID(dcp, pkt, gameid, isReconnect)
 		} else if msgtype == proto.MT_SET_GATE_ID {
 			// this is a gate
 			gateid := pkt.ReadUint16()

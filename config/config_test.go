@@ -48,13 +48,13 @@ func TestGetDispatcher(t *testing.T) {
 	fmt.Printf("dispatcher config: %s", string(cfgStr))
 }
 
-func TestGetServer(t *testing.T) {
+func TestGetGame(t *testing.T) {
 	for id := 1; id <= 10; id++ {
 		cfg := GetGame(uint16(id))
 		if cfg == nil {
-			gwlog.Info("Server %d not found", id)
+			gwlog.Info("Game %d not found", id)
 		} else {
-			gwlog.Info("Server %d config: %v", id, cfg)
+			gwlog.Info("Game %d config: %v", id, cfg)
 		}
 	}
 }

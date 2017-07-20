@@ -99,7 +99,7 @@ func (gs *GameService) serveRoutine() {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
 				gs.HandleUndeclareService(eid, serviceName)
-			} else if msgtype == proto.MT_NOTIFY_ALL_SERVERS_CONNECTED {
+			} else if msgtype == proto.MT_NOTIFY_ALL_GAMES_CONNECTED {
 				gs.HandleNotifyAllGamesConnected()
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)

@@ -27,7 +27,7 @@ func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConn
 
 func (gwc *GoWorldConnection) SendSetServerID(id uint16, isReconnect bool) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_SET_SERVER_ID)
+	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(id)
 	packet.AppendBool(isReconnect)
 	err := gwc.SendPacket(packet)

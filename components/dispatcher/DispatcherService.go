@@ -70,8 +70,8 @@ type DispatcherService struct {
 	servicesLock       sync.Mutex
 	registeredServices map[string]entity.EntityIDSet
 
-	clientsLock          sync.RWMutex
-	targetServerOfClient map[common.ClientID]uint16
+	clientsLock        sync.RWMutex
+	targetGameOfClient map[common.ClientID]uint16
 }
 
 func newDispatcherService() *DispatcherService {
@@ -84,9 +84,9 @@ func newDispatcherService() *DispatcherService {
 		gateClients:       make([]*DispatcherClientProxy, gateCount),
 		chooseClientIndex: 0,
 
-		entityDispatchInfos:  map[common.EntityID]*EntityDispatchInfo{},
-		registeredServices:   map[string]entity.EntityIDSet{},
-		targetServerOfClient: map[common.ClientID]uint16{},
+		entityDispatchInfos: map[common.EntityID]*EntityDispatchInfo{},
+		registeredServices:  map[string]entity.EntityIDSet{},
+		targetGameOfClient:  map[common.ClientID]uint16{},
 	}
 }
 
@@ -189,9 +189,9 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 	client.serve()
 }
 
-func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, pkt *netutil.Packet, gameid uint16, isReconnect bool) {
+func (service *DispatcherService) HandleSetGameID(dcp *DispatcherClientProxy, pkt *netutil.Packet, gameid uint16, isReconnect bool) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.HandleSetServerID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)
+		gwlog.Debug("%s.HandleSetGameID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)
 	}
 	if gameid <= 0 {
 		gwlog.Panicf("invalid gameid: %d", gameid)
@@ -202,7 +202,7 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 	// notify all games that all games connected to dispatcher now!
 	if service.isAllGameClientsConnected() {
 		pkt.ClearPayload() // reuse this packet
-		pkt.AppendUint16(proto.MT_NOTIFY_ALL_SERVERS_CONNECTED)
+		pkt.AppendUint16(proto.MT_NOTIFY_ALL_GAMES_CONNECTED)
 		if olddcp == nil {
 			// for the first time that all games connected to dispatcher, notify all games
 			gwlog.Info("All games(%d) are connected", len(service.gameClients))
@@ -214,7 +214,7 @@ func (service *DispatcherService) HandleSetServerID(dcp *DispatcherClientProxy, 
 
 	if olddcp != nil && !isReconnect {
 		// game was connected, but a new instance is replaced, so we need to wipe the entities on that game
-		service.cleanupEntitiesOfServer(gameid)
+		service.cleanupEntitiesOfGame(gameid)
 	}
 
 	return
@@ -278,26 +278,26 @@ func (service *DispatcherService) HandleNotifyDestroyEntity(dcp *DispatcherClien
 
 func (service *DispatcherService) HandleNotifyClientConnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	clientid := pkt.ReadClientID()
-	targetServer := service.chooseGameDispatcherClient()
+	targetGame := service.chooseGameDispatcherClient()
 
 	service.clientsLock.Lock()
-	service.targetServerOfClient[clientid] = targetServer.gameid // owner is not determined yet, set to "" as placeholder
+	service.targetGameOfClient[clientid] = targetGame.gameid // owner is not determined yet, set to "" as placeholder
 	service.clientsLock.Unlock()
 
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("Target game of client %s is SET to %v on connected", clientid, targetServer.gameid)
+		gwlog.Debug("Target game of client %s is SET to %v on connected", clientid, targetGame.gameid)
 	}
 
 	pkt.AppendUint16(dcp.gateid)
-	targetServer.SendPacket(pkt)
+	targetGame.SendPacket(pkt)
 }
 
 func (service *DispatcherService) HandleNotifyClientDisconnected(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	clientid := pkt.ReadClientID() // client disconnected
 
 	service.clientsLock.Lock()
-	targetSid := service.targetServerOfClient[clientid]
-	delete(service.targetServerOfClient, clientid)
+	targetSid := service.targetGameOfClient[clientid]
+	delete(service.targetGameOfClient, clientid)
 	service.clientsLock.Unlock()
 
 	if consts.DEBUG_CLIENTS {
@@ -470,7 +470,7 @@ func (service *DispatcherService) HandleMigrateRequest(dcp *DispatcherClientProx
 func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	// get spaceID and make sure it exists
 	eid := pkt.ReadEntityID()
-	targetServer := pkt.ReadUint16() // target game of migration
+	targetGame := pkt.ReadUint16() // target game of migration
 	// target space is not checked for existence, because we relay the packet anyway
 
 	hasClient := pkt.ReadBool()
@@ -484,27 +484,27 @@ func (service *DispatcherService) HandleRealMigrate(dcp *DispatcherClientProxy, 
 	defer entityDispatchInfo.Unlock()
 
 	entityDispatchInfo.migrateTime = time.Time{} // mark the entity as NOT migrating
-	entityDispatchInfo.gameid = targetServer
+	entityDispatchInfo.gameid = targetGame
 	service.clientsLock.Lock()
-	service.targetServerOfClient[clientid] = targetServer // migrating also change target game of client
+	service.targetGameOfClient[clientid] = targetGame // migrating also change target game of client
 	service.clientsLock.Unlock()
 
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("Target game of client %s is migrated to %v along with owner %s", clientid, targetServer, eid)
+		gwlog.Debug("Target game of client %s is migrated to %v along with owner %s", clientid, targetGame, eid)
 	}
 
-	service.dispatcherClientOfGame(targetServer).SendPacket(pkt)
+	service.dispatcherClientOfGame(targetGame).SendPacket(pkt)
 	// send the cached calls to target game
 	service.sendPendingPackets(entityDispatchInfo)
 }
 
 func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *EntityDispatchInfo) {
-	targetServer := entityDispatchInfo.gameid
+	targetGame := entityDispatchInfo.gameid
 	// send the cached calls to target game
 	item, ok := entityDispatchInfo.pendingPacketQueue.TryPop()
 	for ok {
 		cachedPkt := item.(callQueueItem).packet
-		service.dispatcherClientOfGame(targetServer).SendPacket(cachedPkt)
+		service.dispatcherClientOfGame(targetGame).SendPacket(cachedPkt)
 		cachedPkt.Release()
 
 		item, ok = entityDispatchInfo.pendingPacketQueue.TryPop()
@@ -523,7 +523,7 @@ func (service *DispatcherService) broadcastToGateClients(pkt *netutil.Packet) {
 	}
 }
 
-func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
+func (service *DispatcherService) cleanupEntitiesOfGame(targetGame uint16) {
 	service.entityDispatchInfosLock.Lock()
 	defer service.entityDispatchInfosLock.Unlock()
 
@@ -532,7 +532,7 @@ func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
 
 	cleanEids := entity.EntityIDSet{} // get all clean eids
 	for eid, dispatchInfo := range service.entityDispatchInfos {
-		if dispatchInfo.gameid == targetServer {
+		if dispatchInfo.gameid == targetGame {
 			cleanEids.Add(eid)
 		}
 	}
@@ -540,16 +540,16 @@ func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
 	// for all services whose entity is cleaned, notify all games that the service is down
 	undeclaredServices := common.StringSet{}
 	for serviceName, serviceEids := range service.registeredServices {
-		var cleanEidsOfServer []common.EntityID
+		var cleanEidsOfGame []common.EntityID
 		for serviceEid := range serviceEids {
 			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
 				undeclaredServices.Add(serviceName)
-				cleanEidsOfServer = append(cleanEidsOfServer, serviceEid)
+				cleanEidsOfGame = append(cleanEidsOfGame, serviceEid)
 				service.handleServiceDown(serviceName, serviceEid)
 			}
 		}
 
-		for _, eid := range cleanEidsOfServer {
+		for _, eid := range cleanEidsOfGame {
 			serviceEids.Del(eid)
 		}
 	}
@@ -558,5 +558,5 @@ func (service *DispatcherService) cleanupEntitiesOfServer(targetServer uint16) {
 		delete(service.entityDispatchInfos, eid)
 	}
 
-	gwlog.Info("Server %d is rebooted, %d entities cleaned, undeclare services: %s", targetServer, len(cleanEids), undeclaredServices)
+	gwlog.Info("Game %d is rebooted, %d entities cleaned, undeclare services: %s", targetGame, len(cleanEids), undeclaredServices)
 }
