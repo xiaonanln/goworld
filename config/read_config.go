@@ -39,10 +39,19 @@ var (
 )
 
 type ServerConfig struct {
+	BootEntity   string
+	SaveInterval time.Duration
+	LogFile      string
+	LogStderr    bool
+	PProfIp      string
+	PProfPort    int
+	LogLevel     string
+	GoMaxProcs   int
+}
+
+type GateConfig struct {
 	Ip                 string
 	Port               int
-	BootEntity         string
-	SaveInterval       time.Duration
 	LogFile            string
 	LogStderr          bool
 	PProfIp            string
@@ -193,7 +202,6 @@ func readGoWorldConfig() *GoWorldConfig {
 
 func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.BootEntity = "Boot"
-	scc.Ip = "0.0.0.0"
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
 	scc.LogLevel = DEFAULT_LOG_LEVEL
@@ -201,7 +209,6 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	scc.PProfIp = DEFAULT_PPROF_IP
 	scc.PProfPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
-	scc.CompressConnection = false
 
 	_readServerConfig(section, scc)
 }
@@ -219,14 +226,53 @@ func readServerConfig(sec *ini.Section, serverCommonConfig *ServerConfig) *Serve
 func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
+		if name == "boot_entity" {
+			sc.BootEntity = key.MustString(sc.BootEntity)
+		} else if name == "save_interval" {
+			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
+		} else if name == "log_file" {
+			sc.LogFile = key.MustString(sc.LogFile)
+		} else if name == "log_stderr" {
+			sc.LogStderr = key.MustBool(sc.LogStderr)
+		} else if name == "pprof_ip" {
+			sc.PProfIp = key.MustString(sc.PProfIp)
+		} else if name == "pprof_port" {
+			sc.PProfPort = key.MustInt(sc.PProfPort)
+		} else if name == "log_level" {
+			sc.LogLevel = key.MustString(sc.LogLevel)
+		} else if name == "gomaxprocs" {
+			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+		}
+	}
+}
+
+func readGateCommonConfig(section *ini.Section, scc *GateConfig) {
+	scc.LogFile = "gate.log"
+	scc.LogStderr = true
+	scc.LogLevel = DEFAULT_LOG_LEVEL
+	scc.PProfIp = DEFAULT_PPROF_IP
+	scc.PProfPort = 0 // pprof not enabled by default
+	scc.GoMaxProcs = 0
+
+	_readGateConfig(section, scc)
+}
+
+func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig {
+	var sc GateConfig = *gateCommonConfig // copy from server_common
+	_readGateConfig(sec, &sc)
+	// validate game config
+	return &sc
+}
+
+func _readGateConfig(sec *ini.Section, sc *GateConfig) {
+	for _, key := range sec.Keys() {
+		name := strings.ToLower(key.Name())
 		if name == "ip" {
 			sc.Ip = key.MustString(sc.Ip)
 		} else if name == "port" {
 			sc.Port = key.MustInt(sc.Port)
-		} else if name == "boot_entity" {
-			sc.BootEntity = key.MustString(sc.BootEntity)
-		} else if name == "save_interval" {
-			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
 		} else if name == "log_file" {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
