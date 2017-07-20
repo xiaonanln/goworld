@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"flag"
@@ -37,7 +37,7 @@ var (
 	serverid    uint16
 	configFile  string
 	logLevel    string
-	gameService *GameService
+	gateService *GateService
 	signalChan  = make(chan os.Signal, 1)
 )
 
@@ -82,6 +82,9 @@ func Run(delegate IServerDelegate) {
 
 	entity.CreateSpaceLocally(0) // create to be the nil space
 
+	gateService = newGateService()
+	go gateService.run() // run gate service in another goroutine
+
 	setupSignals()
 
 	gameService.run()
@@ -97,10 +100,10 @@ func setupSignals() {
 			sig := <-signalChan
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// terminating server ...
+				gwlog.Info("Terminating gate service ...")
+				gateService.terminate()
+				gateService.terminated.Wait()
 				gwlog.Info("Terminating game service ...")
-				gameService.terminate()
-				gameService.terminated.Wait()
-				gwlog.Info("Server shutdown gracefully.")
 				os.Exit(0)
 			} else {
 				gwlog.Error("unexpected signal: %s", sig)
@@ -161,9 +164,21 @@ func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect() {
 var lastWarnGateServiceQueueLen = 0
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
-	gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
-		msgtype: msgtype,
-		packet:  packet,
+	if msgtype >= proto.MT_GATE_SERVICE_MSG_TYPE_START && msgtype <= proto.MT_GATE_SERVICE_MSG_TYPE_STOP {
+		gateService.packetQueue.Push(packetQueueItem{
+			msgtype: msgtype,
+			packet:  packet,
+		})
+		qlen := gateService.packetQueue.Len()
+		if qlen >= 1000 && qlen%1000 == 0 && lastWarnGateServiceQueueLen != qlen {
+			gwlog.Warn("Gate service queue length = %d", qlen)
+			lastWarnGateServiceQueueLen = qlen
+		}
+	} else {
+		gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
+			msgtype: msgtype,
+			packet:  packet,
+		}
 	}
 }
 
