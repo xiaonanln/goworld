@@ -93,16 +93,16 @@ func (dcp *DispatcherClientProxy) serve() {
 			dcp.owner.HandleDeclareService(dcp, pkt)
 		} else if msgtype == proto.MT_SET_SERVER_ID {
 			// this is a game server
-			serverid := pkt.ReadUint16()
+			gameid := pkt.ReadUint16()
 			isReconnect := pkt.ReadBool()
-			if serverid <= 0 {
-				gwlog.Panicf("invalid gameid: %d", serverid)
+			if gameid <= 0 {
+				gwlog.Panicf("invalid gameid: %d", gameid)
 			}
 			if dcp.gameid > 0 || dcp.gateid > 0 {
 				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 			}
-			dcp.gameid = serverid
-			dcp.owner.HandleSetServerID(dcp, pkt, serverid, isReconnect)
+			dcp.gameid = gameid
+			dcp.owner.HandleSetServerID(dcp, pkt, gameid, isReconnect)
 		} else if msgtype == proto.MT_SET_GATE_ID {
 			// this is a gate
 			gateid := pkt.ReadUint16()

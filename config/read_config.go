@@ -75,7 +75,7 @@ type GoWorldConfig struct {
 	Dispatcher   DispatcherConfig
 	ServerCommon GameConfig
 	GateCommon   GateConfig
-	Servers      map[int]*GameConfig
+	Games        map[int]*GameConfig
 	Gates        map[int]*GateConfig
 	Storage      StorageConfig
 	KVDB         KVDBConfig
@@ -122,7 +122,7 @@ func Reload() *GoWorldConfig {
 }
 
 func GetServer(serverid uint16) *GameConfig {
-	return Get().Servers[int(serverid)]
+	return Get().Games[int(serverid)]
 }
 
 func GetGate(gateid uint16) *GateConfig {
@@ -131,8 +131,8 @@ func GetGate(gateid uint16) *GateConfig {
 
 func GetServerIDs() []uint16 {
 	cfg := Get()
-	serverIDs := make([]int, 0, len(cfg.Servers))
-	for id, _ := range cfg.Servers {
+	serverIDs := make([]int, 0, len(cfg.Games))
+	for id, _ := range cfg.Games {
 		serverIDs = append(serverIDs, id)
 	}
 	sort.Ints(serverIDs)
@@ -181,8 +181,8 @@ func DumpPretty(cfg interface{}) string {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		Servers: map[int]*GameConfig{},
-		Gates:   map[int]*GateConfig{},
+		Games: map[int]*GameConfig{},
+		Gates: map[int]*GateConfig{},
 	}
 	gwlog.Info("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
@@ -209,7 +209,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
-			config.Servers[id] = readServerConfig(sec, &config.ServerCommon)
+			config.Games[id] = readServerConfig(sec, &config.ServerCommon)
 		} else if len(secName) > 4 && secName[:4] == "gate" {
 			id, err := strconv.Atoi(secName[4:])
 			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
