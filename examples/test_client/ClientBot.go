@@ -54,10 +54,10 @@ func (bot *ClientBot) run() {
 
 	gwlog.Info("%s is running ...", bot)
 
-	serverIDs := config.GetGateIDs()
+	gateIDs := config.GetGateIDs()
 	// choose a random gateid
-	gateid := serverIDs[rand.Intn(len(serverIDs))]
-	gwlog.Debug("%s is connecting to server %d", bot, gateid)
+	gateid := gateIDs[rand.Intn(len(gateIDs))]
+	gwlog.Debug("%s is connecting to gate %d", bot, gateid)
 	cfg := config.GetGate(gateid)
 	cfg = cfg
 	var netconn net.Conn
