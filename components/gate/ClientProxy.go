@@ -24,7 +24,7 @@ type ClientProxy struct {
 	filterProps map[string]string
 }
 
-func newClientProxy(netConn net.Conn, cfg *config.ServerConfig) *ClientProxy {
+func newClientProxy(netConn net.Conn, cfg *config.GateConfig) *ClientProxy {
 	tcpConn := netConn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)

@@ -74,7 +74,9 @@ type DispatcherConfig struct {
 type GoWorldConfig struct {
 	Dispatcher   DispatcherConfig
 	ServerCommon ServerConfig
+	GateCommon   GateConfig
 	Servers      map[int]*ServerConfig
+	Gates        map[int]*GateConfig
 	Storage      StorageConfig
 	KVDB         KVDBConfig
 }
@@ -123,6 +125,10 @@ func GetServer(serverid uint16) *ServerConfig {
 	return Get().Servers[int(serverid)]
 }
 
+func GetGate(gateid uint16) *GateConfig {
+	return Get().Gates[int(gateid)]
+}
+
 func GetServerIDs() []uint16 {
 	cfg := Get()
 	serverIDs := make([]int, 0, len(cfg.Servers))
@@ -161,12 +167,15 @@ func DumpPretty(cfg interface{}) string {
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
 		Servers: map[int]*ServerConfig{},
+		Gates:   map[int]*GateConfig{},
 	}
 	gwlog.Info("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
 	serverCommonSec := iniFile.Section("server_common")
 	readServerCommonConfig(serverCommonSec, &config.ServerCommon)
+	gateCommonSec := iniFile.Section("gate_common")
+	readGateCommonConfig(gateCommonSec, &config.GateCommon)
 
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()
@@ -179,13 +188,17 @@ func readGoWorldConfig() *GoWorldConfig {
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.Dispatcher)
-		} else if secName == "server_common" {
-			// ignore server_common here
+		} else if secName == "server_common" || secName == "gate_common" {
+			// ignore common section here
 		} else if len(secName) > 6 && secName[:6] == "server" {
 			// server config
 			id, err := strconv.Atoi(secName[6:])
 			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
 			config.Servers[id] = readServerConfig(sec, &config.ServerCommon)
+		} else if len(secName) > 4 && secName[:4] == "gate" {
+			id, err := strconv.Atoi(secName[4:])
+			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
+			config.Gates[id] = readGateConfig(sec, &config.GateCommon)
 		} else if secName == "storage" {
 			// storage config
 			readStorageConfig(sec, &config.Storage)
