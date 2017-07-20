@@ -1,7 +1,5 @@
 TODO: Service register and auto-creation in dispatcher
-TODO: Session based Connection Management
-TODO：Server Reboot without Client Awareness
-TODO: Seperate Gate & Game from Server ?
+TODO: Entity storage on redis
 
 # MISC
 TODO: make sure entity is destroyed if creation fails
