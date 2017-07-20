@@ -24,7 +24,7 @@ type packetQueueItem struct { // packet queue from dispatcher client
 }
 
 type GameService struct {
-	config         *config.ServerConfig
+	config         *config.GameConfig
 	id             uint16
 	serverDelegate IServerDelegate
 	//registeredServices map[string]entity.EntityIDSet

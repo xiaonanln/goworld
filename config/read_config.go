@@ -38,7 +38,7 @@ var (
 	configLock     sync.Mutex
 )
 
-type ServerConfig struct {
+type GameConfig struct {
 	BootEntity   string
 	SaveInterval time.Duration
 	LogFile      string
@@ -73,9 +73,9 @@ type DispatcherConfig struct {
 
 type GoWorldConfig struct {
 	Dispatcher   DispatcherConfig
-	ServerCommon ServerConfig
+	ServerCommon GameConfig
 	GateCommon   GateConfig
-	Servers      map[int]*ServerConfig
+	Servers      map[int]*GameConfig
 	Gates        map[int]*GateConfig
 	Storage      StorageConfig
 	KVDB         KVDBConfig
@@ -121,7 +121,7 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
-func GetServer(serverid uint16) *ServerConfig {
+func GetServer(serverid uint16) *GameConfig {
 	return Get().Servers[int(serverid)]
 }
 
@@ -181,7 +181,7 @@ func DumpPretty(cfg interface{}) string {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		Servers: map[int]*ServerConfig{},
+		Servers: map[int]*GameConfig{},
 		Gates:   map[int]*GateConfig{},
 	}
 	gwlog.Info("Using config file: %s", configFilePath)
@@ -228,7 +228,7 @@ func readGoWorldConfig() *GoWorldConfig {
 	return &config
 }
 
-func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
+func readServerCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.BootEntity = "Boot"
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
@@ -241,8 +241,8 @@ func readServerCommonConfig(section *ini.Section, scc *ServerConfig) {
 	_readServerConfig(section, scc)
 }
 
-func readServerConfig(sec *ini.Section, serverCommonConfig *ServerConfig) *ServerConfig {
-	var sc ServerConfig = *serverCommonConfig // copy from server_common
+func readServerConfig(sec *ini.Section, serverCommonConfig *GameConfig) *GameConfig {
+	var sc GameConfig = *serverCommonConfig // copy from server_common
 	_readServerConfig(sec, &sc)
 	// validate game config
 	if sc.BootEntity == "" {
@@ -251,7 +251,7 @@ func readServerConfig(sec *ini.Section, serverCommonConfig *ServerConfig) *Serve
 	return &sc
 }
 
-func _readServerConfig(sec *ini.Section, sc *ServerConfig) {
+func _readServerConfig(sec *ini.Section, sc *GameConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "boot_entity" {

@@ -56,23 +56,23 @@ func Run(delegate IServerDelegate) {
 		config.SetConfigFile(configFile)
 	}
 
-	serverConfig := config.GetServer(serverid)
-	if serverConfig.GoMaxProcs > 0 {
-		gwlog.Info("SET GOMAXPROCS = %d", serverConfig.GoMaxProcs)
-		runtime.GOMAXPROCS(serverConfig.GoMaxProcs)
+	gameConfig := config.GetServer(serverid)
+	if gameConfig.GoMaxProcs > 0 {
+		gwlog.Info("SET GOMAXPROCS = %d", gameConfig.GoMaxProcs)
+		runtime.GOMAXPROCS(gameConfig.GoMaxProcs)
 	}
 	if logLevel == "" {
-		logLevel = serverConfig.LogLevel
+		logLevel = gameConfig.LogLevel
 	}
-	binutil.SetupGWLog(logLevel, serverConfig.LogFile, serverConfig.LogStderr)
+	binutil.SetupGWLog(logLevel, gameConfig.LogFile, gameConfig.LogStderr)
 
 	storage.Initialize()
 	kvdb.Initialize()
 	crontab.Initialize()
 
-	binutil.SetupPprofServer(serverConfig.PProfIp, serverConfig.PProfPort)
+	binutil.SetupPprofServer(gameConfig.PProfIp, gameConfig.PProfPort)
 
-	entity.SetSaveInterval(serverConfig.SaveInterval)
+	entity.SetSaveInterval(gameConfig.SaveInterval)
 
 	gameService = newGameService(serverid, delegate)
 
