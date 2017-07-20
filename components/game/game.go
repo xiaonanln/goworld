@@ -1,4 +1,4 @@
-package server
+package game
 
 import (
 	"flag"

@@ -2,7 +2,7 @@ package goworld
 
 import (
 	. "github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/components/server"
+	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/storage"
 )
@@ -11,8 +11,8 @@ import (
 //
 // This is the main routine for the server and all entity logic,
 // and this function never quit
-func Run(delegate server.IServerDelegate) {
-	server.Run(delegate)
+func Run(delegate game.IServerDelegate) {
+	game.Run(delegate)
 }
 
 // Register the entity type
@@ -86,7 +86,7 @@ func GetEntity(id EntityID) *entity.Entity {
 // server ID is a uint16 number starts from 1, which should be different for each servers
 // server ID is also in the game config section name of goworld.ini
 func GetServerID() uint16 {
-	return server.GetServerID()
+	return game.GetServerID()
 }
 
 // Creates a new MapAttr

@@ -6,7 +6,7 @@ import (
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/components/server"
+	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -23,7 +23,7 @@ func init() {
 }
 
 type serverDelegate struct {
-	server.ServerDelegate
+	game.GameDelegate
 }
 
 func main() {
@@ -56,7 +56,7 @@ func main() {
 
 // Called when the game server is ready
 func (server serverDelegate) OnServerReady() {
-	server.ServerDelegate.OnServerReady()
+	server.GameDelegate.OnServerReady()
 
 	if goworld.GetServerID() == 1 { // Create services on just 1 server
 		for _, serviceName := range SERVICE_NAMES {
