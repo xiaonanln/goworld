@@ -411,6 +411,8 @@ func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 }
 
 // Client related utilities
+
+// Get client
 func (e *Entity) GetClient() *GameClient {
 	return e.client
 }
