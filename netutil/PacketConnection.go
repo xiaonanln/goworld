@@ -158,9 +158,6 @@ func (pc *PacketConnection) Flush() (err error) {
 		if err == nil {
 			err = pc.conn.Flush()
 		}
-		if err != nil {
-			err = errors.Wrap(err, "write packet data error")
-		}
 		return
 	}
 
@@ -185,7 +182,6 @@ send_packets_loop:
 				packet.Release()
 
 				if err != nil {
-					err = errors.Wrap(err, "write packet data error")
 					return
 				}
 				continue send_packets_loop
@@ -196,9 +192,6 @@ send_packets_loop:
 		n, _ := sendBuffer.Write(packetData)
 		if n != len(packetData) {
 			gwlog.Panicf("packet is not fully written")
-		}
-		if err != nil {
-			err = errors.Wrap(err, "write packet data error")
 		}
 		packet.Release()
 	}
@@ -223,8 +216,6 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		if pc.payloadLenBytesRecved < SIZE_FIELD_SIZE {
 			if err == nil {
 				err = errRecvAgain
-			} else {
-				err = errors.Wrap(err, "read payload len failed")
 			}
 			return nil, err // packet not finished yet
 		}
@@ -267,8 +258,6 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 
 	if err == nil {
 		err = errRecvAgain
-	} else {
-		err = errors.Wrap(err, "read payload failed")
 	}
 	return nil, err
 }
