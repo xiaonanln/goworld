@@ -263,7 +263,7 @@ func (e *Entity) triggerTimer(tid int, isRepeat bool) {
 		delete(e.timers, tid)
 	} else {
 		if !isRepeat {
-			e.addRawTimer(timerInfo.RepeatInterval, func() {
+			timerInfo.rawTimer = e.addRawTimer(timerInfo.RepeatInterval, func() {
 				e.triggerTimer(tid, true)
 			})
 		}
@@ -290,27 +290,26 @@ func (e *Entity) dumpTimers() ([]byte, error) {
 	}
 	e.timers = nil // no more AddCallback or AddTimer
 	data, err := timersPacker.PackMsg(timers, nil)
-	gwlog.Info("%s dump %d timers: %v", e, len(timers), data)
+	//gwlog.Info("%s dump %d timers: %v", e, len(timers), data)
 	return data, err
 }
 
 func (e *Entity) restoreTimers(data []byte) error {
-	gwlog.Info("Restoring timers %v", data)
 	var timers []*entityTimerInfo
 	if err := timersPacker.UnpackMsg(data, &timers); err != nil {
 		return err
 	}
-	gwlog.Info("Restoring timers %v: %d timers", data, len(timers))
+	gwlog.Debug("%s: %d timers restored: %v", e, len(timers), timers)
 	now := time.Now()
 	for _, timer := range timers {
+		//if timer.rawTimer != nil {
+		//	gwlog.Panicf("raw timer should be nil")
+		//}
+
 		tid := e.genTimerId()
 		e.timers[tid] = timer
 
-		if !timer.Repeat { // Callback
-		} else { // Timer
-		}
-
-		e.addRawCallback(timer.FireTime.Sub(now), func() {
+		timer.rawTimer = e.addRawCallback(timer.FireTime.Sub(now), func() {
 			e.triggerTimer(tid, false)
 		})
 	}
