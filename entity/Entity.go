@@ -33,7 +33,7 @@ type entityTimerInfo struct {
 	method         string
 	args           []interface{}
 	repeat         bool
-	timer          *timer.Timer
+	rawTimer       *timer.Timer
 }
 
 type Entity struct {
@@ -48,7 +48,7 @@ type Entity struct {
 	aoi       AOI
 	yaw       Yaw
 
-	innerTimers map[*timer.Timer]struct{}
+	rawTimers   map[*timer.Timer]struct{}
 	timers      map[int]*entityTimerInfo
 	lastTimerId int
 
@@ -111,7 +111,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 		gwutils.RunPanicless(e.I.OnMigrateOut)
 	}
 
-	e.clearTimers()
+	e.clearRawTimers()
 	e.timers = nil // prohibit further use
 
 	if !isMigrate {
@@ -167,7 +167,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 
 	e.typeDesc = registeredEntityTypes[typeName]
 
-	e.innerTimers = map[*timer.Timer]struct{}{}
+	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[int]*entityTimerInfo{}
 	e.declaredServices = StringSet{}
 	e.filterProps = map[string]string{}
@@ -181,7 +181,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 }
 
 func (e *Entity) setupSaveTimer() {
-	e.addTimer(saveInterval, e.Save)
+	e.addRawTimer(saveInterval, e.Save)
 }
 
 func SetSaveInterval(duration time.Duration) {
@@ -218,10 +218,10 @@ func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}
 		repeat:   false,
 	}
 	e.timers[tid] = info
-	info.timer = e.addCallback(d, func() {
+	info.rawTimer = e.addRawCallback(d, func() {
 		e.triggerTimer(tid)
 	})
-	gwlog.Info("%s.AddCallback %s: %d", e, method, tid)
+	gwlog.Debug("%s.AddCallback %s: %d", e, method, tid)
 	return tid
 }
 
@@ -240,11 +240,10 @@ func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) i
 		repeat:         true,
 	}
 	e.timers[tid] = info
-	info.timer = e.addTimer(d, func() {
+	info.rawTimer = e.addRawTimer(d, func() {
 		e.triggerTimer(tid)
 	})
-
-	gwlog.Info("%s.AddTimer %s: %d", e, method, tid)
+	gwlog.Debug("%s.AddTimer %s: %d", e, method, tid)
 	return tid
 }
 
@@ -254,12 +253,12 @@ func (e *Entity) CancelTimer(tid int) {
 		return // timer already fired or cancelled
 	}
 	delete(e.timers, tid)
-	timerInfo.timer.Cancel()
+	e.cancelRawTimer(timerInfo.rawTimer)
 }
 
 func (e *Entity) triggerTimer(tid int) {
 	timerInfo := e.timers[tid] // should never be nil
-	gwlog.Info("%s trigger timer %d: %v", e, tid, timerInfo)
+	gwlog.Debug("%s trigger timer %d: %v", e, tid, timerInfo)
 	if !timerInfo.repeat {
 		delete(e.timers, tid)
 	} else {
@@ -275,32 +274,32 @@ func (e *Entity) genTimerId() int {
 	return tid
 }
 
-func (e *Entity) addCallback(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
+func (e *Entity) addRawCallback(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
 	var t *timer.Timer
 	t = timer.AddCallback(d, func() {
-		delete(e.innerTimers, t)
+		delete(e.rawTimers, t)
 		cb()
 	})
-	e.innerTimers[t] = struct{}{}
+	e.rawTimers[t] = struct{}{}
 	return t
 }
 
-func (e *Entity) addTimer(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
+func (e *Entity) addRawTimer(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
 	t := timer.AddTimer(d, cb)
-	e.innerTimers[t] = struct{}{}
+	e.rawTimers[t] = struct{}{}
 	return t
 }
 
-func (e *Entity) cancelTimer(t *timer.Timer) {
-	delete(e.innerTimers, t)
+func (e *Entity) cancelRawTimer(t *timer.Timer) {
+	delete(e.rawTimers, t)
 	t.Cancel()
 }
 
-func (e *Entity) clearTimers() {
-	for t := range e.innerTimers {
+func (e *Entity) clearRawTimers() {
+	for t := range e.rawTimers {
 		t.Cancel()
 	}
-	e.innerTimers = map[*timer.Timer]struct{}{}
+	e.rawTimers = map[*timer.Timer]struct{}{}
 }
 
 // Post a function which will be executed immediately but not in the current stack frames
