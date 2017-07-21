@@ -49,8 +49,8 @@ type Entity struct {
 	yaw       Yaw
 
 	rawTimers   map[*timer.Timer]struct{}
-	timers      map[int]*entityTimerInfo
-	lastTimerId int
+	timers      map[EntityTimer]*entityTimerInfo
+	lastTimerId EntityTimer
 
 	client           *GameClient
 	declaredServices StringSet
@@ -168,7 +168,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 	e.typeDesc = registeredEntityTypes[typeName]
 
 	e.rawTimers = map[*timer.Timer]struct{}{}
-	e.timers = map[int]*entityTimerInfo{}
+	e.timers = map[EntityTimer]*entityTimerInfo{}
 	e.declaredServices = StringSet{}
 	e.filterProps = map[string]string{}
 
@@ -207,8 +207,9 @@ func (e *Entity) Neighbors() EntitySet {
 }
 
 // Timer & Callback Management
+type EntityTimer int
 
-func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}) int {
+func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}) EntityTimer {
 	tid := e.genTimerId()
 	now := time.Now()
 	info := &entityTimerInfo{
@@ -225,7 +226,7 @@ func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}
 	return tid
 }
 
-func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) int {
+func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) EntityTimer {
 	if d < time.Millisecond*10 { // minimal interval for repeat timer
 		d = time.Millisecond * 10
 	}
@@ -247,7 +248,7 @@ func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) i
 	return tid
 }
 
-func (e *Entity) CancelTimer(tid int) {
+func (e *Entity) CancelTimer(tid EntityTimer) {
 	timerInfo := e.timers[tid]
 	if timerInfo == nil {
 		return // timer already fired or cancelled
@@ -256,7 +257,7 @@ func (e *Entity) CancelTimer(tid int) {
 	e.cancelRawTimer(timerInfo.rawTimer)
 }
 
-func (e *Entity) triggerTimer(tid int, isRepeat bool) {
+func (e *Entity) triggerTimer(tid EntityTimer, isRepeat bool) {
 	timerInfo := e.timers[tid] // should never be nil
 	gwlog.Debug("%s trigger timer %d: %v", e, tid, timerInfo)
 	if !timerInfo.Repeat {
@@ -275,7 +276,7 @@ func (e *Entity) triggerTimer(tid int, isRepeat bool) {
 	e.onCallFromLocal(timerInfo.Method, timerInfo.Args)
 }
 
-func (e *Entity) genTimerId() int {
+func (e *Entity) genTimerId() EntityTimer {
 	e.lastTimerId += 1
 	tid := e.lastTimerId
 	return tid

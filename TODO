@@ -1,4 +1,5 @@
 TODO: 2 different kind of timer, intra-space or inter-space
+TODO: Let all public functions of entity to be SERVER  callable
 TODO: Wait for kvdb, storage to finish when quiting game ...
 TODO: Auto-reconnect to mongodb & redis for entity storage and kvdb
 TODO: Handle gate disconnection from dispatcher, and reconnection of gate?
