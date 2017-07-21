@@ -40,6 +40,10 @@ func (a Account) setAvatarID(username string, avatarID common.EntityID) {
 }
 
 func (a *Account) Login_Client(username string, password string) {
+	a.AddCallback(time.Millisecond*100, "LoginProcess", username, password)
+}
+
+func (a *Account) LoginProcess_Server(username string, password string) {
 	if a.logining {
 		// logining
 		gwlog.Error("%s is already logining", a)
@@ -103,11 +107,13 @@ func (a *Account) OnMigrateIn() {
 		a.onAvatarEntityFound(avatar)
 	} else {
 		// failed ? try again
-		a.AddCallback(time.Millisecond*time.Duration(rand.Intn(3000)), func() {
-			goworld.LoadEntityAnywhere("Avatar", loginAvatarID)
-			a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
-		})
+		a.AddCallback(time.Millisecond*time.Duration(rand.Intn(3000)), "RetryLoginToAvatar", loginAvatarID)
 	}
+}
+
+func (a *Account) RetryLoginToAvatar(loginAvatarID common.EntityID) {
+	goworld.LoadEntityAnywhere("Avatar", loginAvatarID)
+	a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
 }
 
 func (a *Account) OnMigrateOut() {

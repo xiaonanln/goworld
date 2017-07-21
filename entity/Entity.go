@@ -6,11 +6,11 @@ import (
 
 	"time"
 
+	timer "github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/common"
 
 	"unsafe"
 
-	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -27,18 +27,31 @@ var (
 
 type Yaw float32
 
+type entityTimerInfo struct {
+	fireTime       time.Time
+	repeatInterval time.Duration
+	method         string
+	args           []interface{}
+	repeat         bool
+	timer          *timer.Timer
+}
+
 type Entity struct {
 	ID       EntityID
 	TypeName string
 	I        IEntity
 	IV       reflect.Value
 
-	destroyed        bool
-	typeDesc         *EntityTypeDesc
-	Space            *Space
-	aoi              AOI
-	yaw              Yaw
-	timers           map[*timer.Timer]struct{}
+	destroyed bool
+	typeDesc  *EntityTypeDesc
+	Space     *Space
+	aoi       AOI
+	yaw       Yaw
+
+	innerTimers map[*timer.Timer]struct{}
+	timers      map[int]*entityTimerInfo
+	lastTimerId int
+
 	client           *GameClient
 	declaredServices StringSet
 	becamePlayer     bool
@@ -154,7 +167,8 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 
 	e.typeDesc = registeredEntityTypes[typeName]
 
-	e.timers = map[*timer.Timer]struct{}{}
+	e.innerTimers = map[*timer.Timer]struct{}{}
+	e.timers = map[int]*entityTimerInfo{}
 	e.declaredServices = StringSet{}
 	e.filterProps = map[string]string{}
 
@@ -167,7 +181,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 }
 
 func (e *Entity) setupSaveTimer() {
-	e.AddTimer(saveInterval, e.Save)
+	e.addTimer(saveInterval, e.Save)
 }
 
 func SetSaveInterval(duration time.Duration) {
@@ -194,43 +208,99 @@ func (e *Entity) Neighbors() EntitySet {
 
 // Timer & Callback Management
 
-// Type of a timer / callback added by entity
-type EntityTimer *timer.Timer
+func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}) int {
+	tid := e.genTimerId()
+	now := time.Now()
+	info := &entityTimerInfo{
+		fireTime: now.Add(d),
+		method:   method,
+		args:     args,
+		repeat:   false,
+	}
+	e.timers[tid] = info
+	info.timer = e.addCallback(d, func() {
+		e.triggerTimer(tid)
+	})
+	gwlog.Info("%s.AddCallback %s: %d", e, method, tid)
+	return tid
+}
 
-// Add a callback
-//
-// The callback will be automatically cancelled if entity is destroyed or migrated to other spaces
-func (e *Entity) AddCallback(d time.Duration, cb timer.CallbackFunc) EntityTimer {
+func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) int {
+	if d < time.Millisecond*10 { // minimal interval for repeat timer
+		d = time.Millisecond * 10
+	}
+
+	tid := e.genTimerId()
+	now := time.Now()
+	info := &entityTimerInfo{
+		fireTime:       now.Add(d),
+		repeatInterval: d,
+		method:         method,
+		args:           args,
+		repeat:         true,
+	}
+	e.timers[tid] = info
+	info.timer = e.addTimer(d, func() {
+		e.triggerTimer(tid)
+	})
+
+	gwlog.Info("%s.AddTimer %s: %d", e, method, tid)
+	return tid
+}
+
+func (e *Entity) CancelTimer(tid int) {
+	timerInfo := e.timers[tid]
+	if timerInfo == nil {
+		return // timer already fired or cancelled
+	}
+	delete(e.timers, tid)
+	timerInfo.timer.Cancel()
+}
+
+func (e *Entity) triggerTimer(tid int) {
+	timerInfo := e.timers[tid] // should never be nil
+	gwlog.Info("%s trigger timer %d: %v", e, tid, timerInfo)
+	if !timerInfo.repeat {
+		delete(e.timers, tid)
+	} else {
+		timerInfo.fireTime = time.Now().Add(timerInfo.repeatInterval)
+	}
+
+	e.onCallFromLocal(timerInfo.method, timerInfo.args)
+}
+
+func (e *Entity) genTimerId() int {
+	e.lastTimerId += 1
+	tid := e.lastTimerId
+	return tid
+}
+
+func (e *Entity) addCallback(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
 	var t *timer.Timer
 	t = timer.AddCallback(d, func() {
-		delete(e.timers, t)
+		delete(e.innerTimers, t)
 		cb()
 	})
-	e.timers[t] = struct{}{}
-	return EntityTimer(t)
+	e.innerTimers[t] = struct{}{}
+	return t
 }
 
-// Add a repeat timer
-//
-// The timer will be automatically cancelled if entity is destroyed or migrated to other spaces
-func (e *Entity) AddTimer(d time.Duration, cb timer.CallbackFunc) EntityTimer {
+func (e *Entity) addTimer(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
 	t := timer.AddTimer(d, cb)
-	e.timers[t] = struct{}{}
-	return EntityTimer(t)
+	e.innerTimers[t] = struct{}{}
+	return t
 }
 
-// Cancel a timer or callback
-func (e *Entity) CancelTimer(t EntityTimer) {
-	_t := (*timer.Timer)(t)
-	_t.Cancel()
-	delete(e.timers, _t)
+func (e *Entity) cancelTimer(t *timer.Timer) {
+	delete(e.innerTimers, t)
+	t.Cancel()
 }
 
 func (e *Entity) clearTimers() {
-	for t := range e.timers {
+	for t := range e.innerTimers {
 		t.Cancel()
 	}
-	e.timers = map[*timer.Timer]struct{}{}
+	e.innerTimers = map[*timer.Timer]struct{}{}
 }
 
 // Post a function which will be executed immediately but not in the current stack frames
@@ -259,8 +329,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	rpcDesc := e.typeDesc.rpcDescs[methodName]
 	if rpcDesc == nil {
 		// rpc not found
-		gwlog.Error("%s.onCallFromLocal: Method %s is not a valid RPC, args=%v", e, methodName, args)
-		return
+		gwlog.Panicf("%s.onCallFromLocal: Method %s is not a valid RPC, args=%v", e, methodName, args)
 	}
 
 	// rpc call from server
@@ -270,8 +339,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	}
 
 	if rpcDesc.NumArgs != len(args) {
-		gwlog.Error("%s.onCallFromLocal: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
-		return
+		gwlog.Panicf("%s.onCallFromLocal: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
 	}
 
 	methodType := rpcDesc.MethodType

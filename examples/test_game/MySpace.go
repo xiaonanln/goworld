@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/consts"
 	. "github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
@@ -17,7 +16,7 @@ const (
 type MySpace struct {
 	Space // Space type should always inherit from entity.Space
 
-	destroyCheckTimer *timer.Timer
+	destroyCheckTimer int
 }
 
 func (space *MySpace) OnSpaceCreated() {
@@ -57,27 +56,29 @@ func (space *MySpace) onAvatarLeaveSpace(entity *Entity) {
 }
 
 func (space *MySpace) setDestroyCheckTimer() {
-	if space.destroyCheckTimer != nil {
+	if space.destroyCheckTimer != 0 {
 		return
 	}
 
-	space.destroyCheckTimer = space.AddTimer(SPACE_DESTROY_CHECK_INTERVAL, func() {
-		avatarCount := space.CountEntities("Avatar")
-		if avatarCount != 0 {
-			gwlog.Panicf("Avatar count should be 0, but is %d", avatarCount)
-		}
+	space.destroyCheckTimer = space.AddTimer(SPACE_DESTROY_CHECK_INTERVAL, "CheckForDestroy")
+}
 
-		space.CallService("SpaceService", "RequestDestroy", space.Kind, space.ID)
-	})
+func (space *MySpace) CheckForDestroy() {
+	avatarCount := space.CountEntities("Avatar")
+	if avatarCount != 0 {
+		gwlog.Panicf("Avatar count should be 0, but is %d", avatarCount)
+	}
+
+	space.CallService("SpaceService", "RequestDestroy", space.Kind, space.ID)
 }
 
 func (space *MySpace) clearDestroyCheckTimer() {
-	if space.destroyCheckTimer == nil {
+	if space.destroyCheckTimer == 0 {
 		return
 	}
 
 	space.CancelTimer(space.destroyCheckTimer)
-	space.destroyCheckTimer = nil
+	space.destroyCheckTimer = 0
 }
 
 func (space *MySpace) ConfirmRequestDestroy_Server(ok bool) {

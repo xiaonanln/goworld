@@ -1,3 +1,4 @@
+TODO: 2 different kind of timer, intra-space or inter-space
 TODO: Wait for kvdb, storage to finish when quiting game ...
 TODO: Auto-reconnect to mongodb & redis for entity storage and kvdb
 TODO: Handle gate disconnection from dispatcher, and reconnection of gate?
@@ -8,6 +9,7 @@ TODO：Server Reboot without Client Awareness
 # MISC
 TODO: make sure entity is destroyed if creation fails
 TODO: not allow client connection if server is not ready
+TODO: Call RPC with nil arguments if less argument is provided
 
 # Subsystem to be implemented
 TODO: Client system on Unity3D *
