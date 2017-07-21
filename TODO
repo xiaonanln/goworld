@@ -1,3 +1,5 @@
+TODO: Wait for kvdb, storage to finish when quiting game ...
+TODO: Auto-reconnect to mongodb & redis for entity storage and kvdb
 TODO: Handle gate disconnection from dispatcher, and reconnection of gate?
 TODO: Service register and auto-creation in dispatcher
 TODO: Session based Connection Management

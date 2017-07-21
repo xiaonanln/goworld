@@ -41,6 +41,6 @@ func RegisterSpace(spacePtr ISpace) {
 	spaceType = spaceVal.Type()
 
 	RegisterEntity(SPACE_ENTITY_TYPE, spacePtr.(IEntity)).DefineAttrs(map[string][]string{
-		SPACE_KIND_ATTR_KEY: {"all_client"},
+		SPACE_KIND_ATTR_KEY: {"AllClients"}, // set to AllClients so that entities in space can visit space kind
 	})
 }

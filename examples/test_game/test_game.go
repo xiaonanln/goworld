@@ -37,13 +37,13 @@ func main() {
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{}).DefineAttrs(map[string][]string{
-		"name": {"all_client"},
+		"name": {"AllClients"},
 	})
 	// Register Avatar type and define attributes
 	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
-		"name":       {"all_client", "persistent"},
-		"level":      {"all_client", "persistent"},
-		"prof":       {"all_client", "persistent"},
+		"name":       {"AllClients", "persistent"},
+		"level":      {"AllClients", "persistent"},
+		"prof":       {"AllClients", "persistent"},
 		"exp":        {"client", "persistent"},
 		"spaceKind":  {"persistent"},
 		"lastMailID": {"persistent"},

@@ -32,7 +32,7 @@ var _VALID_ATTR_DEFS = StringSet{} // all valid attribute defs
 
 func init() {
 	_VALID_ATTR_DEFS.Add("client")
-	_VALID_ATTR_DEFS.Add("all_client")
+	_VALID_ATTR_DEFS.Add("AllClients")
 	_VALID_ATTR_DEFS.Add("persistent")
 }
 
@@ -47,7 +47,7 @@ func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 				gwlog.Panicf("attribute %s: invalid property: %s; all valid properties: %v", attr, def, _VALID_ATTR_DEFS.ToList())
 			}
 
-			if def == "all_client" {
+			if def == "AllClients" {
 				isAllClient = true
 				isClient = true
 			} else if def == "client" {
