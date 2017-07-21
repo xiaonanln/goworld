@@ -7,6 +7,8 @@ import (
 
 	"os"
 
+	"strings"
+
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
@@ -31,9 +33,9 @@ type EntityTypeDesc struct {
 var _VALID_ATTR_DEFS = StringSet{} // all valid attribute defs
 
 func init() {
-	_VALID_ATTR_DEFS.Add("client")
-	_VALID_ATTR_DEFS.Add("AllClients")
-	_VALID_ATTR_DEFS.Add("persistent")
+	_VALID_ATTR_DEFS.Add(strings.ToLower("Client"))
+	_VALID_ATTR_DEFS.Add(strings.ToLower("AllClients"))
+	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
 }
 
 func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
@@ -42,12 +44,14 @@ func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 		isAllClient, isClient, isPersistent := false, false, false
 
 		for _, def := range defs {
+			def := strings.ToLower(def)
+
 			if !_VALID_ATTR_DEFS.Contains(def) {
 				// not a valid def
 				gwlog.Panicf("attribute %s: invalid property: %s; all valid properties: %v", attr, def, _VALID_ATTR_DEFS.ToList())
 			}
 
-			if def == "AllClients" {
+			if def == "allclients" {
 				isAllClient = true
 				isClient = true
 			} else if def == "client" {
