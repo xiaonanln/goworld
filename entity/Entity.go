@@ -209,6 +209,10 @@ func (e *Entity) Neighbors() EntitySet {
 // Timer & Callback Management
 type EntityTimerID int
 
+func (tid EntityTimerID) IsValid() bool {
+	return tid > 0
+}
+
 func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}) EntityTimerID {
 	tid := e.genTimerId()
 	now := time.Now()

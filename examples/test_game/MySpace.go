@@ -16,7 +16,7 @@ const (
 type MySpace struct {
 	Space // Space type should always inherit from entity.Space
 
-	destroyCheckTimer int
+	destroyCheckTimer EntityTimerID
 }
 
 func (space *MySpace) OnSpaceCreated() {
