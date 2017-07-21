@@ -228,11 +228,12 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	typeName := pkt.ReadVarStr()
 	var migrateData map[string]interface{}
 	pkt.ReadData(&migrateData)
+	timerData := pkt.ReadVarBytes()
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.HandleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, clientid, clientsrv)
+		gwlog.Debug("%s.HandleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, timerData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, timerData, clientid, clientsrv)
 	}
 
-	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, clientid, clientsrv)
+	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
 }
 
 func (gs *GameService) terminate() {

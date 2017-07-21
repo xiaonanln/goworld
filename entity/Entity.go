@@ -28,11 +28,11 @@ var (
 type Yaw float32
 
 type entityTimerInfo struct {
-	fireTime       time.Time
-	repeatInterval time.Duration
-	method         string
-	args           []interface{}
-	repeat         bool
+	FireTime       time.Time
+	RepeatInterval time.Duration
+	Method         string
+	Args           []interface{}
+	Repeat         bool
 	rawTimer       *timer.Timer
 }
 
@@ -112,7 +112,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	}
 
 	e.clearRawTimers()
-	e.timers = nil // prohibit further use
+	e.rawTimers = nil // prohibit further use
 
 	if !isMigrate {
 		e.SetClient(nil) // always set client to nil before destroy
@@ -212,14 +212,14 @@ func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}
 	tid := e.genTimerId()
 	now := time.Now()
 	info := &entityTimerInfo{
-		fireTime: now.Add(d),
-		method:   method,
-		args:     args,
-		repeat:   false,
+		FireTime: now.Add(d),
+		Method:   method,
+		Args:     args,
+		Repeat:   false,
 	}
 	e.timers[tid] = info
 	info.rawTimer = e.addRawCallback(d, func() {
-		e.triggerTimer(tid)
+		e.triggerTimer(tid, false)
 	})
 	gwlog.Debug("%s.AddCallback %s: %d", e, method, tid)
 	return tid
@@ -233,15 +233,15 @@ func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) i
 	tid := e.genTimerId()
 	now := time.Now()
 	info := &entityTimerInfo{
-		fireTime:       now.Add(d),
-		repeatInterval: d,
-		method:         method,
-		args:           args,
-		repeat:         true,
+		FireTime:       now.Add(d),
+		RepeatInterval: d,
+		Method:         method,
+		Args:           args,
+		Repeat:         true,
 	}
 	e.timers[tid] = info
 	info.rawTimer = e.addRawTimer(d, func() {
-		e.triggerTimer(tid)
+		e.triggerTimer(tid, true)
 	})
 	gwlog.Debug("%s.AddTimer %s: %d", e, method, tid)
 	return tid
@@ -256,22 +256,65 @@ func (e *Entity) CancelTimer(tid int) {
 	e.cancelRawTimer(timerInfo.rawTimer)
 }
 
-func (e *Entity) triggerTimer(tid int) {
+func (e *Entity) triggerTimer(tid int, isRepeat bool) {
 	timerInfo := e.timers[tid] // should never be nil
 	gwlog.Debug("%s trigger timer %d: %v", e, tid, timerInfo)
-	if !timerInfo.repeat {
+	if !timerInfo.Repeat {
 		delete(e.timers, tid)
 	} else {
-		timerInfo.fireTime = time.Now().Add(timerInfo.repeatInterval)
+		if !isRepeat {
+			e.addRawTimer(timerInfo.RepeatInterval, func() {
+				e.triggerTimer(tid, true)
+			})
+		}
+
+		now := time.Now()
+		timerInfo.FireTime = now.Add(timerInfo.RepeatInterval)
 	}
 
-	e.onCallFromLocal(timerInfo.method, timerInfo.args)
+	e.onCallFromLocal(timerInfo.Method, timerInfo.Args)
 }
 
 func (e *Entity) genTimerId() int {
 	e.lastTimerId += 1
 	tid := e.lastTimerId
 	return tid
+}
+
+var timersPacker = netutil.MessagePackMsgPacker{}
+
+func (e *Entity) dumpTimers() ([]byte, error) {
+	timers := make([]*entityTimerInfo, 0, len(e.timers))
+	for _, t := range e.timers {
+		timers = append(timers, t)
+	}
+	e.timers = nil // no more AddCallback or AddTimer
+	data, err := timersPacker.PackMsg(timers, nil)
+	gwlog.Info("%s dump %d timers: %v", e, len(timers), data)
+	return data, err
+}
+
+func (e *Entity) restoreTimers(data []byte) error {
+	gwlog.Info("Restoring timers %v", data)
+	var timers []*entityTimerInfo
+	if err := timersPacker.UnpackMsg(data, &timers); err != nil {
+		return err
+	}
+	gwlog.Info("Restoring timers %v: %d timers", data, len(timers))
+	now := time.Now()
+	for _, timer := range timers {
+		tid := e.genTimerId()
+		e.timers[tid] = timer
+
+		if !timer.Repeat { // Callback
+		} else { // Timer
+		}
+
+		e.addRawCallback(timer.FireTime.Sub(now), func() {
+			e.triggerTimer(tid, false)
+		})
+	}
+	return nil
 }
 
 func (e *Entity) addRawCallback(d time.Duration, cb timer.CallbackFunc) *timer.Timer {
@@ -716,13 +759,21 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 	}
 
 	e.destroyEntity(true) // disable the entity
+	timerData, err := e.dumpTimers()
+	if err != nil { // dump timer fail ? should not happen
+		gwlog.Error("%s.realMigrateTo: dump timers failed: %v", e, err)
+	}
+
 	migrateData := e.I.GetMigrateData()
 
 	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
-		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, clientid, clientsrv)
+		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
 }
 
-func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeName string, migrateData map[string]interface{}, clientid ClientID, clientsrv uint16) {
+func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeName string,
+	migrateData map[string]interface{}, timerData []byte,
+	clientid ClientID, clientsrv uint16) {
+
 	if entityManager.get(entityID) != nil {
 		gwlog.Panicf("entity %s already exists", entityID)
 	}
@@ -734,7 +785,7 @@ func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeNam
 		client = MakeGameClient(clientid, clientsrv)
 	}
 	pos := Position{Coord(x), Coord(y), Coord(z)}
-	createEntity(typeName, space, pos, entityID, migrateData, client, true)
+	createEntity(typeName, space, pos, entityID, migrateData, timerData, client, true)
 }
 
 func (e *Entity) OnMigrateOut() {

@@ -40,10 +40,6 @@ func (a Account) setAvatarID(username string, avatarID common.EntityID) {
 }
 
 func (a *Account) Login_Client(username string, password string) {
-	a.AddCallback(time.Millisecond*100, "LoginProcess", username, password)
-}
-
-func (a *Account) LoginProcess_Server(username string, password string) {
 	if a.logining {
 		// logining
 		gwlog.Error("%s is already logining", a)

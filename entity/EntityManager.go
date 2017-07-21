@@ -178,7 +178,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	return entityTypeDesc
 }
 
-func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
+func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, timerData []byte, client *GameClient, isMigrate bool) EntityID {
 	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -195,11 +195,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 	var entity *Entity
 	var entityInstance reflect.Value
 
-	//if typeName != SPACE_ENTITY_TYPE {
 	entityInstance = reflect.New(entityTypeDesc.entityType)
-	//} else {
-	//	entityInstance = reflect.New(spaceType)
-	//}
 	entity = reflect.Indirect(entityInstance).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.init(typeName, entityID, entityInstance)
 	entity.Space = nilSpace
@@ -213,6 +209,10 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		}
 	} else {
 		entity.Save() // save immediately after creation
+	}
+
+	if timerData != nil {
+		entity.restoreTimers(timerData)
 	}
 
 	isPersistent := entity.I.IsPersistent()
@@ -262,7 +262,7 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Pos
 			return
 		}
 
-		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, false)
+		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, nil, false)
 	})
 }
 
@@ -275,7 +275,7 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 }
 
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
-	return createEntity(typeName, nil, Position{}, "", data, client, false)
+	return createEntity(typeName, nil, Position{}, "", data, nil, client, false)
 }
 
 func CreateEntityAnywhere(typeName string) {
