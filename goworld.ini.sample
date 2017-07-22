@@ -2,12 +2,18 @@
 type=mongodb
 url=mongodb://localhost:27017/
 db=goworld
+;type=redis
+;host=127.0.0.1:6379
+;db=0
 
 [kvdb]
 type=mongodb
 url=mongodb://127.0.0.1:27017/goworld
 db=goworld
 collection=__kv__
+;type=redis
+;host=127.0.0.1:6379
+;db=1
 
 [dispatcher]
 ip=127.0.0.1
@@ -18,22 +24,33 @@ pprof_ip=0.0.0.0
 pprof_port=13001
 log_level=debug
 
-
 [server_common]
-ip=0.0.0.0
 boot_entity=Account
 save_interval=600
 log_file=server.log
 log_stderr=true
 pprof_ip=0.0.0.0
 log_level=debug
-compress_connection=1
 ; gomaxprocs=0
 
 [server1]
-port=14001
-pprof_port=15001
-;
+pprof_port=14001
+
 ;[server2]
-;port=14002
-;pprof_port=15002
+;pprof_port=14002
+
+[gate_common]
+log_file=gate.log
+log_stderr=true
+pprof_ip=0.0.0.0
+log_level=debug
+compress_connection=0
+; gomaxprocs=0
+
+[gate1]
+port=15011
+pprof_port=15012
+
+;[gate2]
+;port=15021
+;pprof_port=15022
