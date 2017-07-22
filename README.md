@@ -13,4 +13,4 @@ Server Server Engine in Golang for MMORPGs
 5. Build and run gate: `cd components/gate; go build; ./gate -gid 1`
 6. Build and run test_client: `cd examples/test_client; go build; ./test_client -N 500`
 
-**中文站点：`http://goworldgs.com/?p=64`**
+_**中文站点：http://goworldgs.com/?p=64**_
