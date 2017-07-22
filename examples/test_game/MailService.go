@@ -50,7 +50,7 @@ func (s *MailService) OnCreated() {
 	})
 }
 
-func (s *MailService) SendMail_Server(senderID common.EntityID, senderName string, targetID common.EntityID, data MailData) {
+func (s *MailService) SendMail(senderID common.EntityID, senderName string, targetID common.EntityID, data MailData) {
 	gwlog.Debug("%s.SendMail: sender=%s,%s, target=%s, mail=%v", s, senderID, senderName, targetID, data)
 	if s.lastMailID == -1 {
 		// not ready
@@ -87,7 +87,7 @@ func (s *MailService) SendMail_Server(senderID common.EntityID, senderName strin
 }
 
 // GetMails request from Avatar
-func (s *MailService) GetMails_Server(avatarID common.EntityID, lastMailID int64) {
+func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int64) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
 	endMailKey := s.getMailKey(END_MAIL_ID, avatarID)
 

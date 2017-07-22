@@ -82,7 +82,7 @@ func (s *SpaceService) OnCreated() {
 	s.DeclareService("SpaceService")
 }
 
-func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
+func (s *SpaceService) EnterSpace(avatarId common.EntityID, kind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
 	}
@@ -102,7 +102,7 @@ func (s *SpaceService) EnterSpace_Server(avatarId common.EntityID, kind int) {
 	}
 }
 
-func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common.EntityID) {
+func (s *SpaceService) NotifySpaceLoaded(loadKind int, loadSpaceID common.EntityID) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
 	}
@@ -136,7 +136,7 @@ func (s *SpaceService) NotifySpaceLoaded_Server(loadKind int, loadSpaceID common
 	}
 }
 
-func (s *SpaceService) RequestDestroy_Server(kind int, spaceID common.EntityID) {
+func (s *SpaceService) RequestDestroy(kind int, spaceID common.EntityID) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
 	}

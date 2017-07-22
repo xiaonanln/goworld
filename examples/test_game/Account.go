@@ -74,7 +74,7 @@ func (a *Account) Login_Client(username string, password string) {
 	})
 }
 
-func (a *Account) OnGetAvatarSpaceID_Server(avatarID common.EntityID, spaceID common.EntityID) {
+func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.EntityID) {
 	// avatar may be in the same space with account, check again
 	avatar := goworld.GetEntity(avatarID)
 	if avatar != nil {

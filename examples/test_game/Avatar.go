@@ -40,7 +40,7 @@ func (a *Avatar) OnCreated() {
 	a.AddTimer(time.Second, "PerSecondTick", 1, "")
 }
 
-func (a *Avatar) PerSecondTick_Server(arg1 int, arg2 string) {
+func (a *Avatar) PerSecondTick(arg1 int, arg2 string) {
 	gwlog.Info("%s PerSecondTick %v %v", a, arg1, arg2)
 }
 
@@ -92,7 +92,7 @@ func (a *Avatar) EnterSpace_Client(kind int) {
 	a.enterSpace(kind)
 }
 
-func (a *Avatar) DoEnterSpace_Server(kind int, spaceID common.EntityID) {
+func (a *Avatar) DoEnterSpace(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
 	a.EnterSpace(spaceID, a.randomPosition())
 }
@@ -112,7 +112,7 @@ func (a *Avatar) OnEnterSpace() {
 	}
 }
 
-func (a *Avatar) GetSpaceID_Server(callerID common.EntityID) {
+func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
 }
 
@@ -124,12 +124,12 @@ func (a *Avatar) SendMail_Client(targetID common.EntityID, mail MailData) {
 	a.CallService("MailService", "SendMail", a.ID, a.GetStr("name"), targetID, mail)
 }
 
-func (a *Avatar) OnSendMail_Server(ok bool) {
+func (a *Avatar) OnSendMail(ok bool) {
 	a.CallClient("OnSendMail", ok)
 }
 
 // Avatar has received a mail, can query now
-func (a *Avatar) NotifyReceiveMail_Server() {
+func (a *Avatar) NotifyReceiveMail() {
 	//a.CallService("MailService", "GetMails", a.ID)
 }
 
@@ -137,10 +137,10 @@ func (a *Avatar) GetMails_Client() {
 	a.CallService("MailService", "GetMails", a.ID, a.GetInt("lastMailID"))
 }
 
-func (a *Avatar) OnGetMails_Server(lastMailID int, mails []interface{}) {
-	//gwlog.Info("%s.OnGetMails_Server: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
+func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
+	//gwlog.Info("%s.OnGetMails: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
 	if lastMailID != a.GetInt("lastMailID") {
-		gwlog.Warn("%s.OnGetMails_Server: lastMailID mismatch: local=%v, return=%v", a, a.GetInt("lastMailID"), lastMailID)
+		gwlog.Warn("%s.OnGetMails: lastMailID mismatch: local=%v, return=%v", a, a.GetInt("lastMailID"), lastMailID)
 		a.CallClient("OnGetMails", false)
 		return
 	}

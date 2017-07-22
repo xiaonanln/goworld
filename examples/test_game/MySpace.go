@@ -81,7 +81,7 @@ func (space *MySpace) clearDestroyCheckTimer() {
 	space.destroyCheckTimer = 0
 }
 
-func (space *MySpace) ConfirmRequestDestroy_Server(ok bool) {
+func (space *MySpace) ConfirmRequestDestroy(ok bool) {
 	if ok {
 		if space.CountEntities("Avatar") != 0 {
 			gwlog.Panicf("%s ConfirmRequestDestroy: avatar count is %d", space, space.CountEntities("Avatar"))
