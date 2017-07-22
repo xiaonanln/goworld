@@ -48,8 +48,7 @@ func main() {
 }
 
 func setupSignals() {
-	signal.Notify(sigChan, syscall.SIGINT)
-	signal.Notify(sigChan, syscall.SIGTERM)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for {
 			sig := <-sigChan

@@ -71,8 +71,7 @@ func main() {
 
 func setupSignals() {
 	gwlog.Info("Setup signals ...")
-	signal.Notify(signalChan, syscall.SIGINT)
-	signal.Notify(signalChan, syscall.SIGTERM)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		for {
