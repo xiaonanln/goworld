@@ -7,15 +7,14 @@ import (
 
 	"time"
 
-	"sync/atomic"
-
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/netutil"
 )
 
 type GoWorldConnection struct {
 	packetConn *netutil.PacketConnection
-	closed     int32
+	closed     xnsyncutil.AtomicBool
 }
 
 func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConnection {
@@ -333,13 +332,13 @@ func (gwc *GoWorldConnection) SetRecvDeadline(deadline time.Time) error {
 	return gwc.packetConn.SetRecvDeadline(deadline)
 }
 
-func (gwc *GoWorldConnection) Close() {
-	atomic.StoreInt32(&gwc.closed, 1)
-	gwc.packetConn.Close()
+func (gwc *GoWorldConnection) Close() error {
+	gwc.closed.Store(true)
+	return gwc.packetConn.Close()
 }
 
 func (gwc *GoWorldConnection) IsClosed() bool {
-	return atomic.LoadInt32(&gwc.closed) != 0
+	return gwc.closed.Load()
 }
 
 func (gwc *GoWorldConnection) RemoteAddr() net.Addr {

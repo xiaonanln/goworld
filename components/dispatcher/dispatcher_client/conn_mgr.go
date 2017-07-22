@@ -42,7 +42,7 @@ func assureConnectedDispatcherClient() *DispatcherClient {
 	var err error
 	dispatcherClient := getDispatcherClient()
 	//gwlog.Debug("assureConnectedDispatcherClient: _dispatcherClient", _dispatcherClient)
-	for dispatcherClient == nil {
+	for dispatcherClient == nil || dispatcherClient.IsClosed() {
 		dispatcherClient, err = connectDispatchClient()
 		if err != nil {
 			gwlog.Error("Connect to dispatcher failed: %s", err.Error())
@@ -106,7 +106,6 @@ func serveDispatcherClient() {
 
 			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
-			setDispatcherClient(nil)
 			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}

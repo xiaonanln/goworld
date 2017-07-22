@@ -269,8 +269,8 @@ func (pc *PacketConnection) resetRecvStates() {
 	pc.recvCompressed = false
 }
 
-func (pc *PacketConnection) Close() {
-	pc.conn.Close()
+func (pc *PacketConnection) Close() error {
+	return pc.conn.Close()
 }
 
 func (pc *PacketConnection) RemoteAddr() net.Addr {

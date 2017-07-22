@@ -20,3 +20,7 @@ func newDispatcherClient(conn net.Conn) *DispatcherClient {
 		GoWorldConnection: gwc,
 	}
 }
+
+func (dc *DispatcherClient) Close() error {
+	return dc.GoWorldConnection.Close()
+}
