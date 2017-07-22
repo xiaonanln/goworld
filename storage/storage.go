@@ -96,6 +96,10 @@ func ListEntityIDs(typeName string, callback ListCallbackFunc) {
 	checkOperationQueueLen()
 }
 
+func GetQueueLen() int {
+	return operationQueue.Len()
+}
+
 var recentWarnedQueueLen = 0
 
 func checkOperationQueueLen() {

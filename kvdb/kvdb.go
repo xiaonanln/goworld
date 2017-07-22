@@ -110,6 +110,10 @@ func NextLargerKey(key string) string {
 	return key + "\x00" // the next string that is larger than key, but smaller than any other keys > key
 }
 
+func GetQueueLen() int {
+	return kvdbOpQueue.Len()
+}
+
 var recentWarnedQueueLen = 0
 
 func checkOperationQueueLen() {
