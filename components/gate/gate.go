@@ -113,7 +113,10 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 }
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
-	gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
+	//gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
+	// if gate is disconnected from dispatcher, we just quit
+	gwlog.Info("Disconnected from dispatcher, gate has to quit.")
+	signalChan <- syscall.SIGTERM // let gate quit
 }
 
 func GetGateID() uint16 {
