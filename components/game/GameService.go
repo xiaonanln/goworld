@@ -101,6 +101,9 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleUndeclareService(eid, serviceName)
 			} else if msgtype == proto.MT_NOTIFY_ALL_GAMES_CONNECTED {
 				gs.HandleNotifyAllGamesConnected()
+			} else if msgtype == proto.MT_NOTIFY_GATE_DISCONNECTED {
+				gateid := pkt.ReadUint16()
+				gs.HandleGateDisconnected(gateid)
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 				if consts.DEBUG_MODE {
@@ -170,6 +173,10 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 func (gs *GameService) HandleNotifyAllGamesConnected() {
 	// all games are connected
 	gs.gameDelegate.OnGameReady()
+}
+
+func (gs *GameService) HandleGateDisconnected(gateid uint16) {
+	entity.OnGateDisconnected(gateid)
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {

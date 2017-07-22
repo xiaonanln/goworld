@@ -116,6 +116,16 @@ func (em *EntityManager) onClientDisconnected(clientid ClientID) {
 	}
 }
 
+func (em *EntityManager) onGateDisconnected(gateid uint16) {
+	for _, entity := range em.entities {
+		client := entity.client
+		if client != nil && client.gateid == gateid {
+			em.onEntityLoseClient(client.clientid)
+			entity.notifyClientDisconnected()
+		}
+	}
+}
+
 func (em *EntityManager) onDeclareService(serviceName string, eid EntityID) {
 	eids, ok := em.registeredServices[serviceName]
 	if !ok {
@@ -340,4 +350,9 @@ func OnGameTerminating() {
 	for _, e := range entityManager.entities {
 		e.Destroy()
 	}
+}
+
+func OnGateDisconnected(gateid uint16) {
+	gwlog.Warn("Gate %d disconnected", gateid)
+	entityManager.onGateDisconnected(gateid)
 }

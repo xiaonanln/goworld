@@ -251,6 +251,19 @@ func (service *DispatcherService) chooseGameDispatcherClient() *DispatcherClient
 
 func (service *DispatcherService) HandleDispatcherClientDisconnect(dcp *DispatcherClientProxy) {
 	// nothing to do when client disconnected
+	gwlog.Warn("%s disconnected", dcp)
+	if dcp.gateid > 0 {
+		// gate disconnected, notify all clients disconnected
+		service.handleGateDown(dcp.gateid)
+	}
+}
+
+func (service *DispatcherService) handleGateDown(gateid uint16) {
+	pkt := netutil.NewPacket()
+	pkt.AppendUint16(proto.MT_NOTIFY_GATE_DISCONNECTED)
+	pkt.AppendUint16(gateid)
+	service.broadcastToGameClients(pkt)
+	pkt.Release()
 }
 
 // Entity is create on the target game
