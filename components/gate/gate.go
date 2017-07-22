@@ -81,7 +81,7 @@ func setupSignals() {
 				gwlog.Info("Terminating gate service ...")
 				gateService.terminate()
 				gateService.terminated.Wait()
-				gwlog.Info("Terminating game service ...")
+				gwlog.Info("Gate %d terminated gracefully.", gateid)
 				os.Exit(0)
 			} else {
 				gwlog.Error("unexpected signal: %s", sig)
