@@ -113,26 +113,34 @@ func setupSignals() {
 
 func waitKVDBFinish() {
 	// wait until kvdb's queue is empty
+	lastWarnTime := time.Time{}
 	for {
 		qlen := kvdb.GetQueueLen()
 		if qlen == 0 {
 			break
 		}
 
-		gwlog.Info("KVDB queue length: %d", qlen)
+		if time.Now().Sub(lastWarnTime) >= time.Second*5 {
+			gwlog.Info("KVDB queue length: %d", qlen)
+			lastWarnTime = time.Now()
+		}
 		time.Sleep(time.Millisecond * 100)
 	}
 }
 
 func waitEntityStorageFinish() {
 	// wait until entity storage's queue is empty
+	lastWarnTime := time.Time{}
 	for {
 		qlen := storage.GetQueueLen()
 		if qlen == 0 {
 			break
 		}
 
-		gwlog.Info("Entity storage queue length: %d", qlen)
+		if time.Now().Sub(lastWarnTime) >= time.Second*5 {
+			gwlog.Info("Entity storage queue length: %d", qlen)
+			lastWarnTime = time.Now()
+		}
 		time.Sleep(time.Millisecond * 100)
 	}
 }
