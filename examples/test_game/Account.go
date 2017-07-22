@@ -103,11 +103,13 @@ func (a *Account) OnMigrateIn() {
 		a.onAvatarEntityFound(avatar)
 	} else {
 		// failed ? try again
-		a.AddCallback(time.Millisecond*time.Duration(rand.Intn(3000)), func() {
-			goworld.LoadEntityAnywhere("Avatar", loginAvatarID)
-			a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
-		})
+		a.AddCallback(time.Millisecond*time.Duration(rand.Intn(3000)), "RetryLoginToAvatar", loginAvatarID)
 	}
+}
+
+func (a *Account) RetryLoginToAvatar(loginAvatarID common.EntityID) {
+	goworld.LoadEntityAnywhere("Avatar", loginAvatarID)
+	a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
 }
 
 func (a *Account) OnMigrateOut() {

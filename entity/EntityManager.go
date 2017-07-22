@@ -7,6 +7,8 @@ import (
 
 	"os"
 
+	"strings"
+
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
@@ -31,9 +33,9 @@ type EntityTypeDesc struct {
 var _VALID_ATTR_DEFS = StringSet{} // all valid attribute defs
 
 func init() {
-	_VALID_ATTR_DEFS.Add("client")
-	_VALID_ATTR_DEFS.Add("all_client")
-	_VALID_ATTR_DEFS.Add("persistent")
+	_VALID_ATTR_DEFS.Add(strings.ToLower("Client"))
+	_VALID_ATTR_DEFS.Add(strings.ToLower("AllClients"))
+	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
 }
 
 func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
@@ -42,12 +44,14 @@ func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 		isAllClient, isClient, isPersistent := false, false, false
 
 		for _, def := range defs {
+			def := strings.ToLower(def)
+
 			if !_VALID_ATTR_DEFS.Contains(def) {
 				// not a valid def
 				gwlog.Panicf("attribute %s: invalid property: %s; all valid properties: %v", attr, def, _VALID_ATTR_DEFS.ToList())
 			}
 
-			if def == "all_client" {
+			if def == "allclients" {
 				isAllClient = true
 				isClient = true
 			} else if def == "client" {
@@ -174,7 +178,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	return entityTypeDesc
 }
 
-func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, client *GameClient, isMigrate bool) EntityID {
+func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, timerData []byte, client *GameClient, isMigrate bool) EntityID {
 	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -191,11 +195,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 	var entity *Entity
 	var entityInstance reflect.Value
 
-	//if typeName != SPACE_ENTITY_TYPE {
 	entityInstance = reflect.New(entityTypeDesc.entityType)
-	//} else {
-	//	entityInstance = reflect.New(spaceType)
-	//}
 	entity = reflect.Indirect(entityInstance).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.init(typeName, entityID, entityInstance)
 	entity.Space = nilSpace
@@ -209,6 +209,10 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		}
 	} else {
 		entity.Save() // save immediately after creation
+	}
+
+	if timerData != nil {
+		entity.restoreTimers(timerData)
 	}
 
 	isPersistent := entity.I.IsPersistent()
@@ -258,7 +262,7 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Pos
 			return
 		}
 
-		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, false)
+		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, nil, false)
 	})
 }
 
@@ -271,7 +275,7 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 }
 
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
-	return createEntity(typeName, nil, Position{}, "", data, client, false)
+	return createEntity(typeName, nil, Position{}, "", data, nil, client, false)
 }
 
 func CreateEntityAnywhere(typeName string) {

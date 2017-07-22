@@ -5,7 +5,7 @@ import . "github.com/xiaonanln/goworld/common"
 func CreateSpaceLocally(kind int) EntityID {
 	return createEntity(SPACE_ENTITY_TYPE, nil, Position{}, "", map[string]interface{}{
 		SPACE_KIND_ATTR_KEY: kind,
-	}, nil, false)
+	}, nil, nil, false)
 }
 
 func CreateSpaceAnywhere(kind int) {

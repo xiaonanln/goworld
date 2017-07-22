@@ -5,6 +5,8 @@ import (
 
 	"strconv"
 
+	"time"
+
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
@@ -34,6 +36,12 @@ func (a *Avatar) OnCreated() {
 
 	//gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
+
+	a.AddTimer(time.Second, "PerSecondTick", 1, "")
+}
+
+func (a *Avatar) PerSecondTick_Server(arg1 int, arg2 string) {
+	gwlog.Info("%s PerSecondTick %v %v", a, arg1, arg2)
 }
 
 func (a *Avatar) setDefaultAttrs() {

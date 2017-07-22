@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	sublog "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -20,12 +21,10 @@ var (
 	PANIC Level = Level(sublog.PanicLevel)
 	FATAL Level = Level(sublog.FatalLevel)
 
-	Debug  = sublog.Debugf
-	Info   = sublog.Infof
-	Warn   = sublog.Warnf
-	Error  = sublog.Errorf
-	Panic  = sublog.Panic
-	Panicf = sublog.Panicf
+	Debug = sublog.Debugf
+	Info  = sublog.Infof
+	Warn  = sublog.Warnf
+	Error = sublog.Errorf
 
 	outputWriter io.Writer
 )
@@ -55,6 +54,14 @@ func TraceError(format string, args ...interface{}) {
 func Fatal(format string, args ...interface{}) {
 	debug.PrintStack()
 	sublog.Fatalf(format, args...)
+}
+
+func Panic(v interface{}) {
+	panic(v)
+}
+
+func Panicf(format string, args ...interface{}) {
+	panic(errors.Errorf(format, args...))
 }
 
 func SetOutput(out io.Writer) {
