@@ -161,6 +161,10 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	}
 }
 
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
+	gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
+}
+
 func GetGameID() uint16 {
 	return gameid
 }

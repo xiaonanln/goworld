@@ -112,6 +112,10 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	}
 }
 
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
+	gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
+}
+
 func GetGateID() uint16 {
 	return gateid
 }

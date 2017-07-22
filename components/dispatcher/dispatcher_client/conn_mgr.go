@@ -75,6 +75,7 @@ func connectDispatchClient() (*DispatcherClient, error) {
 type IDispatcherClientDelegate interface {
 	OnDispatcherClientConnect(dispatcherClient *DispatcherClient, isReconnect bool)
 	HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet)
+	HandleDispatcherClientDisconnect()
 	//HandleDeclareService(entityID common.EntityID, serviceName string)
 	//HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }
@@ -106,6 +107,7 @@ func serveDispatcherClient() {
 
 			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
+			dispatcherClientDelegate.HandleDispatcherClientDisconnect()
 			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
