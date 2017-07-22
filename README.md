@@ -1,5 +1,14 @@
 # goworld
-Server Server Engine in Golang for MMORPGs
+Distributed Scalable Game Server Engine for MMORPGs writtin in Go
+
+GoWorld server adopts a entity framework, in which entities represent all players, monsters, NPCs.
+Entities in the same space can visit each other directly by calling methods or access attributes. 
+Entities in different spaces can call each over using RPC.
+
+A GoWorld server consists of one dispatcher, one or more games and one or more gates. 
+The gates are responsable for handling client connections and receive/send packets from/to clients. 
+The games manages all entities and runs all game logic. 
+The dispatcher is responsable for redirecting packets among games and between games and gates.  
 
 **Download goworld:**
 
