@@ -1,13 +1,12 @@
-TODO: Let all public functions of entity to be SERVER  callable
-TODO: Wait for kvdb, storage to finish when quiting game ...
-TODO: Auto-reconnect to mongodb & redis for entity storage and kvdb
-TODO: Handle gate disconnection from dispatcher, and reconnection of gate?
 TODO: Service register and auto-creation in dispatcher
-TODO: Session based Connection Management
 TODO：Server Reboot without Client Awareness
 
-# MISC
+Enhancing Fault-tolerance
+TODO: Auto-reconnect to mongodb & redis for entity storage and kvdb
+TODO: Handle gate disconnection from dispatcher, and reconnection of gate?
 TODO: make sure entity is destroyed if creation fails
+
+# MISC
 TODO: not allow client connection if server is not ready
 TODO: Call RPC with nil arguments if less argument is provided
 
@@ -20,6 +19,7 @@ TODO: Plugin system ?
 
 # Future works
 TODO: use protobuf
+TODO: Session based Connection Management
 TODO: implement ListAttr
 TODO: Entity Client Reconnect Mechianism
 TODO: use vendor for submodules
