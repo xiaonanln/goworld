@@ -16,10 +16,11 @@ const (
 )
 
 type MongoKVDB struct {
+	s *mgo.Session
 	c *mgo.Collection
 }
 
-func OpenMongoKVDB(url string, dbname string, collectionName string) (*MongoKVDB, error) {
+func OpenMongoKVDB(url string, dbname string, collectionName string) (KVDBEngine, error) {
 	gwlog.Debug("Connecting MongoDB ...")
 	session, err := mgo.Dial(url)
 	if err != nil {
@@ -34,6 +35,7 @@ func OpenMongoKVDB(url string, dbname string, collectionName string) (*MongoKVDB
 	db := session.DB(dbname)
 	c := db.C(collectionName)
 	return &MongoKVDB{
+		s: session,
 		c: c,
 	}, nil
 }
@@ -87,4 +89,12 @@ func (kvdb *MongoKVDB) Find(beginKey string, endKey string) Iterator {
 	return &MongoKVIterator{
 		it: it,
 	}
+}
+
+func (kvdb *MongoKVDB) Close() {
+	kvdb.s.Close()
+}
+
+func (kvdb *MongoKVDB) IsEOF(err error) bool {
+	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

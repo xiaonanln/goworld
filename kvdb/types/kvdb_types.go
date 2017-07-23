@@ -1,5 +1,13 @@
 package kvdb_types
 
+type KVDBEngine interface {
+	Get(key string) (val string, err error)
+	Put(key string, val string) (err error)
+	Find(beginKey string, endKey string) Iterator
+	Close()
+	IsEOF(err error) bool
+}
+
 // Interface for iterators for KVDB
 //
 // Next should returns the next item with error=nil whenever has next item

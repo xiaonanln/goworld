@@ -17,14 +17,8 @@ import (
 	"github.com/xiaonanln/goworld/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/storage/backend/mongodb"
 	"github.com/xiaonanln/goworld/storage/backend/redis"
+	. "github.com/xiaonanln/goworld/storage/storage_common"
 )
-
-type EntityStorage interface {
-	List(typeName string) ([]common.EntityID, error)
-	Write(typeName string, entityID common.EntityID, data interface{}) error
-	Read(typeName string, entityID common.EntityID) (interface{}, error)
-	Exists(typeName string, entityID common.EntityID) (bool, error)
-}
 
 var (
 	storageEngine  EntityStorage
@@ -111,7 +105,18 @@ func checkOperationQueueLen() {
 }
 
 func Initialize() {
-	var err error
+	err := assureStorageEngineReady()
+	if err != nil {
+		gwlog.Fatal("Storage engine is not ready: %s", err)
+	}
+	go storageRoutine()
+}
+
+func assureStorageEngineReady() (err error) {
+	if storageEngine != nil {
+		return
+	}
+
 	cfg := config.GetStorage()
 	if cfg.Type == "filesystem" {
 		storageEngine, err = entity_storage_filesystem.OpenDirectory(cfg.Directory)
@@ -129,11 +134,7 @@ func Initialize() {
 		}
 	}
 
-	if err != nil {
-		gwlog.Panic(err)
-	}
-
-	go storageRoutine()
+	return
 }
 
 func storageRoutine() {
@@ -147,6 +148,13 @@ func storageRoutine() {
 	}()
 
 	for {
+		err := assureStorageEngineReady()
+		if err != nil {
+			gwlog.Error("Storage engine is not ready: %s", err)
+			time.Sleep(time.Second)
+			continue
+		}
+
 		op := operationQueue.Pop()
 		var monop *opmon.Operation
 		if saveReq, ok := op.(saveRequest); ok {
@@ -156,12 +164,28 @@ func storageRoutine() {
 				if consts.DEBUG_SAVE_LOAD {
 					gwlog.Debug("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
 				}
-				err := storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)
+				err := assureStorageEngineReady()
+				if err != nil {
+					gwlog.Error("Storage engine is not ready: %s", err)
+					time.Sleep(time.Second) // wait for 1 second to retry
+					continue
+				}
+
+				if storageEngine == nil {
+					gwlog.Fatal("storage engine is nil")
+				}
+
+				err = storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)
 				if err != nil {
 					// save failed ?
-					gwlog.Error("storage: save failed: %s\nData: %v", err, saveReq.Data)
-					time.Sleep(time.Second) // wait for 1 second to retry
-					continue                // always retry if fail
+					gwlog.Error("storage: save failed: %s", err)
+
+					if err != nil && storageEngine.IsEOF(err) {
+						storageEngine.Close()
+						storageEngine = nil
+					}
+
+					continue // always retry if fail
 				} else {
 					monop.Finish(time.Millisecond * 100)
 					if saveReq.Callback != nil {
@@ -189,6 +213,11 @@ func storageRoutine() {
 					loadReq.Callback(data, err)
 				})
 			}
+
+			if err != nil && storageEngine.IsEOF(err) {
+				storageEngine.Close()
+				storageEngine = nil
+			}
 		} else if existsReq, ok := op.(existsRequest); ok {
 			monop = opmon.StartOperation("storage.exists")
 			exists, err := storageEngine.Exists(existsReq.TypeName, existsReq.EntityID)
@@ -197,6 +226,10 @@ func storageRoutine() {
 				post.Post(func() {
 					existsReq.Callback(exists, err)
 				})
+			}
+			if err != nil && storageEngine.IsEOF(err) {
+				storageEngine.Close()
+				storageEngine = nil
 			}
 		} else if listReq, ok := op.(listEntityIDsRequest); ok {
 			monop = opmon.StartOperation("storage.list")
@@ -209,6 +242,10 @@ func storageRoutine() {
 				post.Post(func() {
 					listReq.Callback(eids, err)
 				})
+			}
+			if err != nil && storageEngine.IsEOF(err) {
+				storageEngine.Close()
+				storageEngine = nil
 			}
 		} else {
 			gwlog.Panicf("storage: unknown operation: %v", op)

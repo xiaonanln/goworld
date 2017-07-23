@@ -1,10 +1,13 @@
 package entity_storage_redis
 
 import (
+	"io"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/netutil"
+	. "github.com/xiaonanln/goworld/storage/storage_common"
 )
 
 var (
@@ -15,7 +18,7 @@ type redisEntityStorage struct {
 	c redis.Conn
 }
 
-func OpenRedis(host string, dbindex int) (*redisEntityStorage, error) {
+func OpenRedis(host string, dbindex int) (EntityStorage, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
@@ -99,4 +102,12 @@ func (es *redisEntityStorage) Exists(typeName string, entityID common.EntityID) 
 	key := entityKey(typeName, entityID)
 	exists, err := redis.Bool(es.c.Do("EXISTS", key))
 	return exists, err
+}
+
+func (es *redisEntityStorage) Close() {
+	es.c.Close()
+}
+
+func (es *redisEntityStorage) IsEOF(err error) bool {
+	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

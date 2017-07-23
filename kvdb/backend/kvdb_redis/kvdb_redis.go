@@ -27,7 +27,7 @@ func (ki keyTreeItem) Less(_other btree.Item) bool {
 	return ki.key < _other.(keyTreeItem).key
 }
 
-func OpenRedisKVDB(host string, dbindex int) (*redisKVDB, error) {
+func OpenRedisKVDB(host string, dbindex int) (KVDBEngine, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
@@ -129,4 +129,12 @@ func (db *redisKVDB) Find(beginKey string, endKey string) Iterator {
 		db:       db,
 		leftKeys: keys,
 	}
+}
+
+func (db *redisKVDB) Close() {
+	db.c.Close()
+}
+
+func (db *redisKVDB) IsEOF(err error) bool {
+	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

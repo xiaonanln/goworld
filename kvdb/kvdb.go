@@ -23,12 +23,6 @@ var (
 	kvdbOpQueue sync_queue.SyncQueue
 )
 
-type KVDBEngine interface {
-	Get(key string) (val string, err error)
-	Put(key string, val string) (err error)
-	Find(beginKey string, endKey string) Iterator
-}
-
 type KVDBGetCallback func(val string, err error)
 type KVDBPutCallback func(err error)
 type KVDBGetRangeCallback func(items []KVItem, err error)
@@ -37,35 +31,37 @@ type KVDBGetRangeCallback func(items []KVItem, err error)
 //
 // Called by game server engine
 func Initialize() {
-	var err error
 	kvdbCfg := config.GetKVDB()
 	if kvdbCfg.Type == "" {
-		return // kvdb not enabled
+		return
 	}
 
 	gwlog.Info("KVDB initializing, config:\n%s", config.DumpPretty(kvdbCfg))
+	kvdbOpQueue = sync_queue.NewSyncQueue()
+
+	assureKVDBEngineReady()
+
+	go netutil.ServeForever(kvdbRoutine)
+}
+
+func assureKVDBEngineReady() (err error) {
+	if kvdbEngine != nil { // connection is valid
+		return
+	}
+
+	kvdbCfg := config.GetKVDB()
 
 	if kvdbCfg.Type == "mongodb" {
 		kvdbEngine, err = kvdb_mongo.OpenMongoKVDB(kvdbCfg.Url, kvdbCfg.DB, kvdbCfg.Collection)
-		if err != nil {
-			gwlog.Panic(err)
-		}
 	} else if kvdbCfg.Type == "redis" {
 		dbindex, err := strconv.Atoi(kvdbCfg.DB)
-		if err != nil {
-			gwlog.Panic(err)
-		}
-
-		kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
-		if err != nil {
-			gwlog.Panic(err)
+		if err == nil {
+			kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
 		}
 	} else {
 		gwlog.Fatal("KVDB type %s is not implemented", kvdbCfg.Type)
 	}
-
-	kvdbOpQueue = sync_queue.NewSyncQueue()
-	go netutil.ServeForever(kvdbRoutine)
+	return
 }
 
 type getReq struct {
@@ -126,6 +122,13 @@ func checkOperationQueueLen() {
 
 func kvdbRoutine() {
 	for {
+		err := assureKVDBEngineReady()
+		if err != nil {
+			gwlog.Error("KVDB engine is not ready: %s", err)
+			time.Sleep(time.Second)
+			continue
+		}
+
 		req := kvdbOpQueue.Pop()
 		var op *opmon.Operation
 		if getReq, ok := req.(*getReq); ok {
@@ -149,6 +152,11 @@ func handleGetReq(getReq *getReq) {
 			getReq.callback(val, err)
 		})
 	}
+
+	if err != nil && kvdbEngine.IsEOF(err) {
+		kvdbEngine.Close()
+		kvdbEngine = nil
+	}
 }
 
 func handlePutReq(putReq *putReq) {
@@ -157,6 +165,11 @@ func handlePutReq(putReq *putReq) {
 		post.Post(func() {
 			putReq.callback(err)
 		})
+	}
+
+	if err != nil && kvdbEngine.IsEOF(err) {
+		kvdbEngine.Close()
+		kvdbEngine = nil
 	}
 }
 

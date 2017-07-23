@@ -15,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
+	. "github.com/xiaonanln/goworld/storage/storage_common"
 )
 
 type FileSystemEntityStorage struct {
@@ -25,12 +26,12 @@ func getFileName(name string, entityID common.EntityID) string {
 	return name + "$" + base64.URLEncoding.EncodeToString([]byte(entityID))
 }
 
-func (ss *FileSystemEntityStorage) getFilePath(typeName string, entityID common.EntityID) string {
-	return filepath.Join(ss.directory, getFileName(typeName, entityID))
+func (es *FileSystemEntityStorage) getFilePath(typeName string, entityID common.EntityID) string {
+	return filepath.Join(es.directory, getFileName(typeName, entityID))
 }
 
-func (ss *FileSystemEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
-	stringSaveFile := ss.getFilePath(typeName, entityID)
+func (es *FileSystemEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
+	stringSaveFile := es.getFilePath(typeName, entityID)
 	dataBytes, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
@@ -42,8 +43,8 @@ func (ss *FileSystemEntityStorage) Write(typeName string, entityID common.Entity
 	return ioutil.WriteFile(stringSaveFile, dataBytes, 0644)
 }
 
-func (ss *FileSystemEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
-	stringSaveFile := ss.getFilePath(typeName, entityID)
+func (es *FileSystemEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
+	stringSaveFile := es.getFilePath(typeName, entityID)
 	dataBytes, err := ioutil.ReadFile(stringSaveFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -62,16 +63,16 @@ func (ss *FileSystemEntityStorage) Read(typeName string, entityID common.EntityI
 	return data, nil
 }
 
-func (ss *FileSystemEntityStorage) Exists(typeName string, entityID common.EntityID) (exists bool, err error) {
-	stringSaveFile := ss.getFilePath(typeName, entityID)
+func (es *FileSystemEntityStorage) Exists(typeName string, entityID common.EntityID) (exists bool, err error) {
+	stringSaveFile := es.getFilePath(typeName, entityID)
 	_, err = os.Stat(stringSaveFile)
 	exists = err == nil || os.IsExist(err)
 	return
 }
 
-func (ss *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, error) {
+func (es *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, error) {
 	prefix := typeName + "$"
-	pat := filepath.Join(ss.directory, prefix+"*")
+	pat := filepath.Join(es.directory, prefix+"*")
 	files, err := filepath.Glob(pat)
 	if err != nil {
 		return nil, err
@@ -94,7 +95,15 @@ func (ss *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, err
 	return res, nil
 }
 
-func OpenDirectory(directory string) (*FileSystemEntityStorage, error) {
+func (es *FileSystemEntityStorage) Close() {
+	// need to do nothing
+}
+
+func (es *FileSystemEntityStorage) IsEOF(err error) bool {
+	return false
+}
+
+func OpenDirectory(directory string) (EntityStorage, error) {
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		return nil, err
 	}
