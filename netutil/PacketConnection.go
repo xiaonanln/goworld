@@ -19,7 +19,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
-	"github.com/xiaonanln/goNewlessPool"
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/opmon"
@@ -41,7 +41,7 @@ const (
 var (
 	NETWORK_ENDIAN      = binary.LittleEndian
 	errRecvAgain        = _ErrRecvAgain{}
-	compressWritersPool = newless_pool.NewNewlessPool()
+	compressWritersPool = xnsyncutil.NewNewlessPool()
 )
 
 func init() {
