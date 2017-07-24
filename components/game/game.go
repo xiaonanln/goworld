@@ -32,6 +32,7 @@ var (
 	gameid      uint16
 	configFile  string
 	logLevel    string
+	restore     bool
 	gameService *GameService
 	signalChan  = make(chan os.Signal, 1)
 )
@@ -45,6 +46,7 @@ func parseArgs() {
 	flag.IntVar(&gameidArg, "sid", 0, "set gameid")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
+	flag.BoolVar(&restore, "restore", false, "restore from freezed state")
 	flag.Parse()
 	gameid = uint16(gameidArg)
 }
