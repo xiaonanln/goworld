@@ -356,3 +356,10 @@ func OnGateDisconnected(gateid uint16) {
 	gwlog.Warn("Gate %d disconnected", gateid)
 	entityManager.onGateDisconnected(gateid)
 }
+
+// Called by engine when server is freezing
+func OnGameFreezing() {
+	for _, e := range entityManager.entities {
+		e.Save()
+	}
+}

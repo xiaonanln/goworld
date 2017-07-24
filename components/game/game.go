@@ -87,7 +87,8 @@ func Run(delegate IGameDelegate) {
 
 func setupSignals() {
 	gwlog.Info("Setup signals ...")
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Ignore(syscall.Signal(12))
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.Signal(10))
 
 	go func() {
 		for {
@@ -96,18 +97,48 @@ func setupSignals() {
 				// terminating game ...
 				gwlog.Info("Terminating game service ...")
 				gameService.terminate()
-				gameService.terminated.Wait()
+				waitGameServiceStateSatisfied(func(rs int) bool {
+					return rs == rsTerminated
+				})
+
 				gwlog.Info("Waiting for KVDB to finish ...")
 				waitKVDBFinish()
 				gwlog.Info("Waiting for entity storage to finish ...")
 				waitEntityStorageFinish()
+
 				gwlog.Info("Game shutdown gracefully.")
+				os.Exit(0)
+			} else if sig == syscall.Signal(10) {
+				// SIGUSR1 => dump game and close
+				// freezing game ...
+				gwlog.Info("Freezing game service for dump ...")
+				gameService.freeze()
+				waitGameServiceStateSatisfied(func(rs int) bool {
+					return rs == rsFreezed
+				})
+
+				gwlog.Info("Waiting for KVDB to finish ...")
+				waitKVDBFinish()
+				gwlog.Info("Waiting for entity storage to finish ...")
+				waitEntityStorageFinish()
+
+				gwlog.Info("Game shutdown gracefully, dumping game states ...")
 				os.Exit(0)
 			} else {
 				gwlog.Error("unexpected signal: %s", sig)
 			}
 		}
 	}()
+}
+
+func waitGameServiceStateSatisfied(s func(rs int) bool) {
+	for {
+		state := gameService.runState.Load()
+		if s(state) {
+			break
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
 }
 
 func waitKVDBFinish() {

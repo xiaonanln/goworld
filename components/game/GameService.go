@@ -18,6 +18,15 @@ import (
 	"github.com/xiaonanln/goworld/proto"
 )
 
+const (
+	rsNotRunning = iota
+	rsRunning
+	rsTerminating
+	rsTerminated
+	rsFreezing
+	rsFreezed
+)
+
 type packetQueueItem struct { // packet queue from dispatcher client
 	msgtype proto.MsgType_t
 	packet  *netutil.Packet
@@ -31,8 +40,7 @@ type GameService struct {
 
 	packetQueue         chan packetQueueItem
 	isAllGamesConnected bool
-	terminating         xnsyncutil.AtomicBool
-	terminated          *xnsyncutil.OneTimeCond
+	runState            xnsyncutil.AtomicInt
 }
 
 func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
@@ -41,11 +49,14 @@ func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
 		gameDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
 		packetQueue: make(chan packetQueueItem, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
-		terminated:  xnsyncutil.NewOneTimeCond(),
+		//terminated:         xnsyncutil.NewOneTimeCond(),
+		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
+		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
 	}
 }
 
 func (gs *GameService) run() {
+	gs.runState.Store(rsRunning)
 	netutil.ServeForever(gs.serveRoutine)
 }
 
@@ -113,9 +124,13 @@ func (gs *GameService) serveRoutine() {
 
 			pkt.Release()
 		case <-ticker:
-			if gs.terminating.Load() {
+			runState := gs.runState.Load()
+			if runState == rsTerminating {
 				// game is terminating, run the terminating process
 				gs.doTerminate()
+			} else if runState == rsFreezing {
+				//game is freezing, run freeze process
+				gs.doFreeze()
 			}
 
 			timer.Tick()
@@ -126,14 +141,41 @@ func (gs *GameService) serveRoutine() {
 	}
 }
 
+func (gs *GameService) waitPostsComplete() {
+	post.Tick() // just tick is Ok, tick will consume all posts
+}
+
 func (gs *GameService) doTerminate() {
+	// wait for all posts to complete
+	gs.waitPostsComplete()
+
 	// destroy all entities
 	entity.OnGameTerminating()
 	gwlog.Info("All entities saved & destroyed, game service terminated.")
-	gs.terminated.Signal() // signal terminated condition
-	for {                  // enter the endless loop, not serving anything anymore
+	gs.runState.Store(rsTerminated)
+
+	for {
 		time.Sleep(time.Second)
 	}
+}
+
+func (gs *GameService) doFreeze() {
+	// wait for all posts to complete
+	gs.waitPostsComplete()
+
+	// destroy all entities
+	entity.OnGameFreezing()
+
+	gwlog.Info("All entities saved & freezed, game service terminated.")
+	gs.runState.Store(rsFreezing)
+
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+func (service *GameService) dumpStates() {
+
 }
 
 func (gs *GameService) String() string {
@@ -244,5 +286,9 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 }
 
 func (gs *GameService) terminate() {
-	gs.terminating.Store(true)
+	gs.runState.Store(rsTerminating)
+}
+
+func (gs *GameService) freeze() {
+	gs.runState.Store(rsFreezing)
 }

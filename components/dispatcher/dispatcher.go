@@ -48,6 +48,7 @@ func main() {
 }
 
 func setupSignals() {
+	signal.Ignore(syscall.Signal(10), syscall.Signal(12))
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for {

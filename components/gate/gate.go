@@ -71,6 +71,7 @@ func main() {
 
 func setupSignals() {
 	gwlog.Info("Setup signals ...")
+	signal.Ignore(syscall.Signal(10), syscall.Signal(12))
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
