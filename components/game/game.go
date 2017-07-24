@@ -80,11 +80,9 @@ func Run(delegate IGameDelegate) {
 
 	dispatcher_client.Initialize(&dispatcherClientDelegate{})
 
-	entity.CreateSpaceLocally(0) // create to be the nil space
-
 	setupSignals()
 
-	gameService.run()
+	gameService.run(restore)
 }
 
 func setupSignals() {
@@ -95,27 +93,28 @@ func setupSignals() {
 	go func() {
 		for {
 			sig := <-signalChan
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
-				// terminating game ...
-				gwlog.Info("Terminating game service ...")
-				gameService.terminate()
-				waitGameServiceStateSatisfied(func(rs int) bool {
-					return rs != rsTerminating
-				})
-				if gameService.runState.Load() != rsTerminated {
-					// game service is not terminated successfully, abort
-					gwlog.Error("Game service is not terminated successfully, back to running ...")
-					continue
-				}
-
-				gwlog.Info("Waiting for KVDB to finish ...")
-				waitKVDBFinish()
-				gwlog.Info("Waiting for entity storage to finish ...")
-				waitEntityStorageFinish()
-
-				gwlog.Info("Game %d shutdown gracefully.", gameid)
-				os.Exit(0)
-			} else if sig == syscall.Signal(10) {
+			//if sig == syscall.SIGINT || sig == syscall.SIGTERM {
+			//	// terminating game ...
+			//	gwlog.Info("Terminating game service ...")
+			//	gameService.terminate()
+			//	waitGameServiceStateSatisfied(func(rs int) bool {
+			//		return rs != rsTerminating
+			//	})
+			//	if gameService.runState.Load() != rsTerminated {
+			//		// game service is not terminated successfully, abort
+			//		gwlog.Error("Game service is not terminated successfully, back to running ...")
+			//		continue
+			//	}
+			//
+			//	gwlog.Info("Waiting for KVDB to finish ...")
+			//	waitKVDBFinish()
+			//	gwlog.Info("Waiting for entity storage to finish ...")
+			//	waitEntityStorageFinish()
+			//
+			//	gwlog.Info("Game %d shutdown gracefully.", gameid)
+			//	os.Exit(0)
+			//} else
+			if sig == syscall.Signal(10) || sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// SIGUSR1 => dump game and close
 				// freezing game ...
 				gwlog.Info("Freezing game service for dump ...")

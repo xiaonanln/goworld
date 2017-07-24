@@ -132,7 +132,7 @@ func check() {
 	unregisterCancelledHandles()
 
 	now := time.Now()
-	gwlog.Debug("Crontab: checking %d callbacks ...", now, len(entries))
+	gwlog.Debug("Crontab: checking %d callbacks ...", len(entries))
 	dayofweek, month, day, hour, minute := now.Weekday(), now.Month(), now.Day(), now.Hour(), now.Minute()
 
 	for _, entry := range entries {

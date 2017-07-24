@@ -9,6 +9,7 @@ import (
 
 	"strings"
 
+	"github.com/pkg/errors"
 	. "github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/consts"
@@ -16,6 +17,7 @@ import (
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/storage"
+	"github.com/xiaonanln/typeconv"
 )
 
 var (
@@ -189,7 +191,15 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	return entityTypeDesc
 }
 
-func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, timerData []byte, client *GameClient, isMigrate bool) EntityID {
+type createCause int
+
+const (
+	ccCreate createCause = 1
+	ccMigrate
+	ccRestore
+)
+
+func createEntity(typeName string, space *Space, pos Position, entityID EntityID, data map[string]interface{}, timerData []byte, client *GameClient, cause createCause) EntityID {
 	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -213,7 +223,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 
 	entityManager.put(entity)
 	if data != nil {
-		if !isMigrate {
+		if cause == ccCreate {
 			entity.I.LoadPersistentData(data)
 		} else {
 			entity.I.LoadMigrateData(data)
@@ -231,13 +241,13 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		entity.setupSaveTimer()
 	}
 
-	if !isMigrate {
+	if cause == ccCreate {
 		dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 	}
 
 	if client != nil {
 		// assign client to the newly created
-		if !isMigrate {
+		if cause == ccCreate {
 			entity.SetClient(client)
 		} else {
 			entity.client = client // assign client quietly if migrate
@@ -245,10 +255,12 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		}
 	}
 
-	if !isMigrate {
+	if cause == ccCreate {
 		gwutils.RunPanicless(entity.I.OnCreated)
-	} else {
+	} else if cause == ccMigrate {
 		gwutils.RunPanicless(entity.I.OnMigrateIn)
+	} else if cause == ccRestore {
+		// restore should be silent
 	}
 
 	if space != nil {
@@ -273,7 +285,7 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Pos
 			return
 		}
 
-		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, nil, false)
+		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, nil, ccCreate)
 	})
 }
 
@@ -286,7 +298,7 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 }
 
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
-	return createEntity(typeName, nil, Position{}, "", data, nil, client, false)
+	return createEntity(typeName, nil, Position{}, "", data, nil, client, ccCreate)
 }
 
 func CreateEntityAnywhere(typeName string) {
@@ -368,12 +380,101 @@ func SaveAllEntities() {
 var freezePacker = netutil.JSONMsgPacker{}
 
 func FreezeEntities(gameid uint16) ([]byte, error) {
-	entityFreezeInfos := map[EntityID]interface{}{}
+	entityFreezeInfos := map[EntityID]map[string]interface{}{}
+	foundNilSpace := false
 	for _, e := range entityManager.entities {
 		entityFreezeInfos[e.ID] = e.GetFreezeData()
+		if e.IsSpaceEntity() {
+			if e.ToSpace().IsNil() {
+				if foundNilSpace {
+					return nil, errors.Errorf("found duplicate nil space")
+				}
+				foundNilSpace = true
+			}
+		}
+	}
+
+	if !foundNilSpace { // there should be exactly one nil space!
+		return nil, errors.Errorf("nil space not found")
 	}
 
 	// save all freeze entity infos to filesystem
 	freezeData, err := freezePacker.PackMsg(entityFreezeInfos, nil)
 	return freezeData, err
+}
+
+func RestoreFreezedEntities(data []byte) (err error) {
+	defer func() {
+		_err := recover()
+		if _err != nil {
+			err = errors.Wrap(_err.(error), "panic during restore")
+		}
+
+	}()
+
+	var entityFreezeInfos map[EntityID]map[string]interface{}
+	if err = freezePacker.UnpackMsg(data, &entityFreezeInfos); err != nil {
+		err = errors.Wrap(err, "unpack freeze data failed")
+		return
+	}
+
+	// step 1: restore the nil space
+	for eid, info := range entityFreezeInfos {
+		typeName := info["type"].(string)
+		if typeName == SPACE_ENTITY_TYPE {
+			attrs := info["attrs"].(map[string]interface{})
+			spaceKind := typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
+			var timerData []byte
+			if info["timers"] != nil {
+				timerData = info["timers"].([]byte)
+			}
+
+			if spaceKind == 0 {
+				// this is the nil space, restore it
+				createEntity(typeName, nil, Position{}, eid, attrs, timerData, nil, ccRestore)
+				gwlog.Info("Restored %s<%s>", typeName, eid)
+				break
+			}
+		}
+	}
+
+	// step 2: restore all other spaces
+	for eid, info := range entityFreezeInfos {
+		typeName := info["type"].(string)
+		if typeName == SPACE_ENTITY_TYPE {
+			attrs := info["attrs"].(map[string]interface{})
+			spaceKind := typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
+			var timerData []byte
+			if info["timers"] != nil {
+				timerData = info["timers"].([]byte)
+			}
+			if spaceKind != 0 {
+				// this is the nil space, restore it
+				createEntity(typeName, nil, Position{}, eid, attrs, timerData, nil, ccRestore)
+				gwlog.Info("Restored %s<%s>", typeName, eid)
+			}
+		}
+	}
+
+	// step  3: restore all other spaces
+	for eid, info := range entityFreezeInfos {
+		typeName := info["type"].(string)
+		if typeName != SPACE_ENTITY_TYPE {
+			attrs := info["attrs"].(map[string]interface{})
+			var timerData []byte
+			if info["timers"] != nil {
+				timerData = info["timers"].([]byte)
+			}
+			spaceID := EntityID(info["spaceID"].(string))
+			space := spaceManager.getSpace(spaceID)
+			if space == nil {
+				gwlog.Warn("Entity %s<%s> lost space while restoring", typeName, eid)
+			}
+			// this is the nil space, restore it
+			createEntity(typeName, space, Position{}, eid, attrs, timerData, nil, ccRestore)
+			gwlog.Info("Restored %s<%s>", typeName, eid)
+		}
+	}
+
+	return nil
 }

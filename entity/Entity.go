@@ -808,7 +808,7 @@ func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeNam
 		client = MakeGameClient(clientid, clientsrv)
 	}
 	pos := Position{Coord(x), Coord(y), Coord(z)}
-	createEntity(typeName, space, pos, entityID, migrateData, timerData, client, true)
+	createEntity(typeName, space, pos, entityID, migrateData, timerData, client, ccMigrate)
 }
 
 func (e *Entity) OnMigrateOut() {

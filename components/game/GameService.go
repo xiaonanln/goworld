@@ -57,8 +57,19 @@ func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
 	}
 }
 
-func (gs *GameService) run() {
+func (gs *GameService) run(restore bool) {
 	gs.runState.Store(rsRunning)
+
+	if !restore {
+		entity.CreateSpaceLocally(0) // create to be the nil space
+	} else {
+		// restoring from freezed states
+		err := gs.doRestore()
+		if err != nil {
+			gwlog.Fatal("Restore from freezed states failed: %+v", err)
+		}
+	}
+
 	netutil.ServeForever(gs.serveRoutine)
 }
 
@@ -178,7 +189,7 @@ func (gs *GameService) doFreeze() {
 
 	gs.runState.Store(rsFreezed)
 	gwlog.Info("All entities saved & freezed, game service terminated.")
-	freezeFilename := fmt.Sprintf("game%d_freeze.dat", gameid)
+	freezeFilename := freezeFilename(gameid)
 	err = ioutil.WriteFile(freezeFilename, freezeData, 0644)
 	if err != nil {
 		gwlog.Error("Game freeze failed: %s", err)
@@ -191,8 +202,18 @@ func (gs *GameService) doFreeze() {
 	}
 }
 
-func (service *GameService) dumpStates() {
+func freezeFilename(gameid uint16) string {
+	return fmt.Sprintf("game%d_freezed.dat", gameid)
+}
 
+func (gs *GameService) doRestore() error {
+	freezeFilename := freezeFilename(gameid)
+	data, err := ioutil.ReadFile(freezeFilename)
+	if err != nil {
+		return err
+	}
+
+	return entity.RestoreFreezedEntities(data)
 }
 
 func (gs *GameService) String() string {
@@ -231,6 +252,7 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 
 func (gs *GameService) HandleNotifyAllGamesConnected() {
 	// all games are connected
+	gwlog.Info("All games connected.")
 	gs.gameDelegate.OnGameReady()
 }
 

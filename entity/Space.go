@@ -62,6 +62,7 @@ func (space *Space) OnCreated() {
 		}
 		nilSpace = space
 		nilSpace.Space = nilSpace
+		gwlog.Info("Created nil space: %s", nilSpace)
 		return
 	}
 
@@ -99,7 +100,7 @@ func (space *Space) IsNil() bool {
 }
 
 func (space *Space) CreateEntity(typeName string, pos Position) {
-	createEntity(typeName, space, pos, "", nil, nil, nil, false)
+	createEntity(typeName, space, pos, "", nil, nil, nil, ccCreate)
 }
 
 func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Position) {
