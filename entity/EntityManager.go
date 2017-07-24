@@ -14,6 +14,7 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
+	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/storage"
 )
 
@@ -357,9 +358,22 @@ func OnGateDisconnected(gateid uint16) {
 	entityManager.onGateDisconnected(gateid)
 }
 
-// Called by engine when server is freezing
-func OnGameFreezing() {
+func SaveAllEntities() {
 	for _, e := range entityManager.entities {
 		e.Save()
 	}
+}
+
+// Called by engine when server is freezing
+var freezePacker = netutil.JSONMsgPacker{}
+
+func FreezeEntities(gameid uint16) ([]byte, error) {
+	entityFreezeInfos := map[EntityID]interface{}{}
+	for _, e := range entityManager.entities {
+		entityFreezeInfos[e.ID] = e.GetFreezeData()
+	}
+
+	// save all freeze entity infos to filesystem
+	freezeData, err := freezePacker.PackMsg(entityFreezeInfos, nil)
+	return freezeData, err
 }

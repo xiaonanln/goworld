@@ -288,15 +288,18 @@ func (e *Entity) genTimerId() EntityTimerID {
 
 var timersPacker = netutil.MessagePackMsgPacker{}
 
-func (e *Entity) dumpTimers() ([]byte, error) {
+func (e *Entity) dumpTimers() []byte {
 	timers := make([]*entityTimerInfo, 0, len(e.timers))
 	for _, t := range e.timers {
 		timers = append(timers, t)
 	}
 	e.timers = nil // no more AddCallback or AddTimer
 	data, err := timersPacker.PackMsg(timers, nil)
+	if err != nil {
+		gwlog.TraceError("%s dump timers failed: %s", e, err)
+	}
 	//gwlog.Info("%s dump %d timers: %v", e, len(timers), data)
-	return data, err
+	return data
 }
 
 func (e *Entity) restoreTimers(data []byte) error {
@@ -522,6 +525,18 @@ func (e *Entity) GetMigrateData() map[string]interface{} {
 
 func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
+}
+
+func (e *Entity) GetFreezeData() map[string]interface{} {
+	freezeData := map[string]interface{}{}
+	freezeData["timers"] = e.dumpTimers()
+	freezeData["attrs"] = e.Attrs.ToMap()
+	freezeData["x"] = e.aoi.pos.X
+	freezeData["y"] = e.aoi.pos.Y
+	freezeData["z"] = e.aoi.pos.Z
+	freezeData["yaw"] = e.yaw
+	freezeData["spaceID"] = e.Space.ID
+	return freezeData
 }
 
 // Client related utilities
@@ -763,11 +778,7 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 	}
 
 	e.destroyEntity(true) // disable the entity
-	timerData, err := e.dumpTimers()
-	if err != nil { // dump timer fail ? should not happen
-		gwlog.Error("%s.realMigrateTo: dump timers failed: %v", e, err)
-	}
-
+	timerData := e.dumpTimers()
 	migrateData := e.I.GetMigrateData()
 
 	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,

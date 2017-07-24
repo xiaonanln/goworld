@@ -98,8 +98,13 @@ func setupSignals() {
 				gwlog.Info("Terminating game service ...")
 				gameService.terminate()
 				waitGameServiceStateSatisfied(func(rs int) bool {
-					return rs == rsTerminated
+					return rs != rsTerminating
 				})
+				if gameService.runState.Load() != rsTerminated {
+					// game service is not terminated successfully, abort
+					gwlog.Error("Game service is not terminated successfully, back to running ...")
+					continue
+				}
 
 				gwlog.Info("Waiting for KVDB to finish ...")
 				waitKVDBFinish()
@@ -114,8 +119,14 @@ func setupSignals() {
 				gwlog.Info("Freezing game service for dump ...")
 				gameService.freeze()
 				waitGameServiceStateSatisfied(func(rs int) bool {
-					return rs == rsFreezed
+					return rs != rsFreezing
 				})
+
+				if gameService.runState.Load() != rsFreezed {
+					// game service is not freezed successfully, abort
+					gwlog.Error("Game service is not freezed successfully, back to running ...")
+					continue
+				}
 
 				gwlog.Info("Waiting for KVDB to finish ...")
 				waitKVDBFinish()

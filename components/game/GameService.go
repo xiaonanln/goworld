@@ -6,6 +6,8 @@ import (
 
 	"time"
 
+	"io/ioutil"
+
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
@@ -161,13 +163,28 @@ func (gs *GameService) doTerminate() {
 
 func (gs *GameService) doFreeze() {
 	// wait for all posts to complete
+	gs.runState.Store(rsFreezing)
 	gs.waitPostsComplete()
 
+	// save all entities
+	entity.SaveAllEntities()
 	// destroy all entities
-	entity.OnGameFreezing()
+	freezeData, err := entity.FreezeEntities(gameid)
+	if err != nil {
+		gwlog.Error("Game freeze failed: %s", err)
+		gs.runState.Store(rsRunning)
+		return
+	}
 
+	gs.runState.Store(rsFreezed)
 	gwlog.Info("All entities saved & freezed, game service terminated.")
-	gs.runState.Store(rsFreezing)
+	freezeFilename := fmt.Sprintf("game%d_freeze.dat", gameid)
+	err = ioutil.WriteFile(freezeFilename, freezeData, 0644)
+	if err != nil {
+		gwlog.Error("Game freeze failed: %s", err)
+		gs.runState.Store(rsRunning)
+		return
+	}
 
 	for {
 		time.Sleep(time.Second)
