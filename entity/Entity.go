@@ -289,6 +289,10 @@ func (e *Entity) genTimerId() EntityTimerID {
 var timersPacker = netutil.MessagePackMsgPacker{}
 
 func (e *Entity) dumpTimers() []byte {
+	if len(e.timers) == 0 {
+		return nil
+	}
+
 	timers := make([]*entityTimerInfo, 0, len(e.timers))
 	for _, t := range e.timers {
 		timers = append(timers, t)
@@ -303,6 +307,9 @@ func (e *Entity) dumpTimers() []byte {
 }
 
 func (e *Entity) restoreTimers(data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
 	var timers []*entityTimerInfo
 	if err := timersPacker.UnpackMsg(data, &timers); err != nil {
 		return err
@@ -529,6 +536,7 @@ func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 
 func (e *Entity) GetFreezeData() map[string]interface{} {
 	freezeData := map[string]interface{}{}
+	freezeData["type"] = e.TypeName
 	freezeData["timers"] = e.dumpTimers()
 	freezeData["attrs"] = e.Attrs.ToMap()
 	freezeData["x"] = e.aoi.pos.X

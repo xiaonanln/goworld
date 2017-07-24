@@ -49,5 +49,8 @@ killdispatcher:
 killgame:
 	killall test_game
 
+freezegame:
+	killall -10 test_game
+
 killclient:
 	killall test_client
