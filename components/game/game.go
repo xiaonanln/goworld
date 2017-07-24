@@ -111,7 +111,7 @@ func setupSignals() {
 				gwlog.Info("Waiting for entity storage to finish ...")
 				waitEntityStorageFinish()
 
-				gwlog.Info("Game shutdown gracefully.")
+				gwlog.Info("Game %d shutdown gracefully.", gameid)
 				os.Exit(0)
 			} else if sig == syscall.Signal(10) {
 				// SIGUSR1 => dump game and close
@@ -133,7 +133,7 @@ func setupSignals() {
 				gwlog.Info("Waiting for entity storage to finish ...")
 				waitEntityStorageFinish()
 
-				gwlog.Info("Game shutdown gracefully, dumping game states ...")
+				gwlog.Info("Game %d freezed gracefully.", gameid)
 				os.Exit(0)
 			} else {
 				gwlog.Error("unexpected signal: %s", sig)
