@@ -27,9 +27,10 @@ const (
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
-	ENTER_SPACE_REQUEST_TIMEOUT = DISPATCHER_MIGRATE_TIMEOUT + time.Minute // enter space should finish in limited seconds
-	DISPATCHER_MIGRATE_TIMEOUT  = time.Minute * 5
-	DISPATCHER_LOAD_TIMEOUT     = time.Minute * 5
+	ENTER_SPACE_REQUEST_TIMEOUT    = DISPATCHER_MIGRATE_TIMEOUT + time.Minute // enter space should finish in limited seconds
+	DISPATCHER_MIGRATE_TIMEOUT     = time.Minute * 5
+	DISPATCHER_LOAD_TIMEOUT        = time.Minute * 5
+	DISPATCHER_FREEZE_GAME_TIMEOUT = time.Minute * 5
 	// For Storage
 	// For Operation Monitor
 	OPMON_DUMP_INTERVAL = time.Second * 10

@@ -59,6 +59,11 @@ func Run(delegate IGameDelegate) {
 	}
 
 	gameConfig := config.GetGame(gameid)
+	if gameConfig == nil {
+		gwlog.Error("game %d's config is not found", gameid)
+		os.Exit(1)
+	}
+
 	if gameConfig.GoMaxProcs > 0 {
 		gwlog.Info("SET GOMAXPROCS = %d", gameConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gameConfig.GoMaxProcs)
@@ -192,7 +197,12 @@ type dispatcherClientDelegate struct {
 
 func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
-	dispatcherClient.SendSetGameID(gameid, isReconnect)
+	var isRestore bool
+	if !isReconnect {
+		isRestore = restore
+	}
+
+	dispatcherClient.SendSetGameID(gameid, isReconnect, isRestore)
 }
 
 var lastWarnGateServiceQueueLen = 0

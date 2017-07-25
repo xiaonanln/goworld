@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
@@ -128,6 +129,8 @@ func (gs *GameService) serveRoutine() {
 			} else if msgtype == proto.MT_NOTIFY_GATE_DISCONNECTED {
 				gateid := pkt.ReadUint16()
 				gs.HandleGateDisconnected(gateid)
+			} else if msgtype == proto.MT_START_FREEZE_GAME_ACK {
+				gs.HandleStartFreezeGameAck()
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 				if consts.DEBUG_MODE {
@@ -260,6 +263,10 @@ func (gs *GameService) HandleGateDisconnected(gateid uint16) {
 	entity.OnGateDisconnected(gateid)
 }
 
+func (gs *GameService) HandleStartFreezeGameAck() {
+
+}
+
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
@@ -329,5 +336,5 @@ func (gs *GameService) terminate() {
 }
 
 func (gs *GameService) freeze() {
-	gs.runState.Store(rsFreezing)
+	dispatcher_client.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
 }

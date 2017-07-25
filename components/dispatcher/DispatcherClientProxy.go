@@ -95,6 +95,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			// this is a game server
 			gameid := pkt.ReadUint16()
 			isReconnect := pkt.ReadBool()
+			isRestore := pkt.ReadBool()
 			if gameid <= 0 {
 				gwlog.Panicf("invalid gameid: %d", gameid)
 			}
@@ -102,7 +103,7 @@ func (dcp *DispatcherClientProxy) serve() {
 				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 			}
 			dcp.gameid = gameid
-			dcp.owner.HandleSetGameID(dcp, pkt, gameid, isReconnect)
+			dcp.owner.HandleSetGameID(dcp, pkt, gameid, isReconnect, isRestore)
 		} else if msgtype == proto.MT_SET_GATE_ID {
 			// this is a gate
 			gateid := pkt.ReadUint16()
@@ -114,6 +115,9 @@ func (dcp *DispatcherClientProxy) serve() {
 			}
 			dcp.gateid = gateid
 			dcp.owner.HandleSetGateID(dcp, pkt, gateid)
+		} else if msgtype == proto.MT_START_FREEZE_GAME {
+			// freeze the game
+			dcp.owner.HandleStartFreezeGame(dcp, pkt)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 			if consts.DEBUG_MODE {

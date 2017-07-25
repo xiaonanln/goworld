@@ -23,11 +23,12 @@ func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConn
 	}
 }
 
-func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool) error {
+func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isRestore bool) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(id)
 	packet.AppendBool(isReconnect)
+	packet.AppendBool(isRestore)
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err
@@ -292,6 +293,14 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetGame uint16, t
 	packet.AppendData(migrateData)
 	packet.AppendVarBytes(timerData)
 
+	err := gwc.SendPacket(packet)
+	packet.Release()
+	return err
+}
+
+func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_START_FREEZE_GAME)
 	err := gwc.SendPacket(packet)
 	packet.Release()
 	return err
