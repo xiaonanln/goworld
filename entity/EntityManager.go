@@ -438,7 +438,14 @@ func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
 				if info["timers"] != nil {
 					timerData = info["timers"].([]byte)
 				}
-				createEntity(typeName, nil, Position{}, eid, attrs, timerData, nil, ccRestore)
+
+				spaceID := EntityID(info["spaceID"].(string))
+				var space *Space
+				if typeName != SPACE_ENTITY_TYPE {
+					space = spaceManager.getSpace(spaceID)
+				}
+
+				createEntity(typeName, space, Position{}, eid, attrs, timerData, nil, ccRestore)
 				gwlog.Info("Restored %s<%s>", typeName, eid)
 
 			}
