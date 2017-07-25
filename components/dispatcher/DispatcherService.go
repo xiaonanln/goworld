@@ -218,6 +218,10 @@ func (service *DispatcherService) HandleSetGameID(dcp *DispatcherClientProxy, pk
 		service.cleanupEntitiesOfGame(gameid)
 	}
 
+	if isRestore {
+		gwlog.Debug("Game %d restored: %s", dcp.gameid, dcp)
+	}
+
 	return
 }
 
@@ -227,12 +231,16 @@ func (service *DispatcherService) HandleSetGateID(dcp *DispatcherClientProxy, pk
 
 func (service *DispatcherService) HandleStartFreezeGame(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	// freeze the game, which block all entities of that game
+	gwlog.Info("Handling start freeze game ...")
+	gameid := dcp.gameid
 	service.entityDispatchInfosLock.RLock()
 
 	for _, info := range service.entityDispatchInfos {
 		info.Lock()
-		info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
-		info.Lock()
+		if info.gameid == gameid {
+			info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
+		}
+		info.Unlock()
 	}
 
 	service.entityDispatchInfosLock.RUnlock()

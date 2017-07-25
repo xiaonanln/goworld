@@ -122,8 +122,12 @@ func setupSignals() {
 			if sig == syscall.Signal(10) || sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// SIGUSR1 => dump game and close
 				// freezing game ...
-				gwlog.Info("Freezing game service for dump ...")
+				gwlog.Info("Freezing game service ...")
+
 				gameService.freeze()
+				waitGameServiceStateSatisfied(func(rs int) bool { // wait until not running
+					return rs != rsRunning
+				})
 				waitGameServiceStateSatisfied(func(rs int) bool {
 					return rs != rsFreezing
 				})
@@ -151,6 +155,7 @@ func setupSignals() {
 func waitGameServiceStateSatisfied(s func(rs int) bool) {
 	for {
 		state := gameService.runState.Load()
+		gwlog.Info("game service status: %d", state)
 		if s(state) {
 			break
 		}

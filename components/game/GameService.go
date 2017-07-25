@@ -177,7 +177,6 @@ func (gs *GameService) doTerminate() {
 
 func (gs *GameService) doFreeze() {
 	// wait for all posts to complete
-	gs.runState.Store(rsFreezing)
 	gs.waitPostsComplete()
 
 	// save all entities
@@ -264,7 +263,8 @@ func (gs *GameService) HandleGateDisconnected(gateid uint16) {
 }
 
 func (gs *GameService) HandleStartFreezeGameAck() {
-
+	gwlog.Info("Start freeze game ACK received, start freezing ...")
+	gs.runState.Store(rsFreezing)
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {

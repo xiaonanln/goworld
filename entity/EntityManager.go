@@ -80,6 +80,7 @@ type EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[ClientID]EntityID
 	registeredServices map[string]EntityIDSet
+
 }
 
 func newEntityManager() *EntityManager {
@@ -194,7 +195,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 type createCause int
 
 const (
-	ccCreate createCause = 1
+	ccCreate createCause = 1 + iota
 	ccMigrate
 	ccRestore
 )
@@ -255,6 +256,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		}
 	}
 
+	gwlog.Debug("Entity %s created, cause=%d, client=%s", entity, cause, client)
 	if cause == ccCreate {
 		gwutils.RunPanicless(entity.I.OnCreated)
 	} else if cause == ccMigrate {
