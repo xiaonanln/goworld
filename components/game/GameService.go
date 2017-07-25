@@ -175,6 +175,8 @@ func (gs *GameService) doTerminate() {
 	}
 }
 
+var freezePacker = netutil.JSONMsgPacker{}
+
 func (gs *GameService) doFreeze() {
 	// wait for all posts to complete
 	gs.waitPostsComplete()
@@ -182,15 +184,20 @@ func (gs *GameService) doFreeze() {
 	// save all entities
 	entity.SaveAllEntities()
 	// destroy all entities
-	freezeData, err := entity.FreezeEntities(gameid)
+	freezeEntity, err := entity.Freeze(gameid)
 	if err != nil {
 		gwlog.Error("Game freeze failed: %s", err)
 		gs.runState.Store(rsRunning)
 		return
 	}
 
-	gs.runState.Store(rsFreezed)
-	gwlog.Info("All entities saved & freezed, game service terminated.")
+	freezeData, err := freezePacker.PackMsg(freezeEntity, nil)
+	if err != nil {
+		gwlog.Error("Game freeze failed: %s", err)
+		gs.runState.Store(rsRunning)
+		return
+	}
+
 	freezeFilename := freezeFilename(gameid)
 	err = ioutil.WriteFile(freezeFilename, freezeData, 0644)
 	if err != nil {
@@ -199,6 +206,8 @@ func (gs *GameService) doFreeze() {
 		return
 	}
 
+	gs.runState.Store(rsFreezed)
+	gwlog.Info("All entities saved & freezed, game service terminated.")
 	for {
 		time.Sleep(time.Second)
 	}
@@ -215,7 +224,10 @@ func (gs *GameService) doRestore() error {
 		return err
 	}
 
-	return entity.RestoreFreezedEntities(data)
+	var freezeEntity map[string]interface{}
+	freezePacker.UnpackMsg(data, &freezeEntity)
+
+	return entity.RestoreFreezedEntities(freezeEntity)
 }
 
 func (gs *GameService) String() string {

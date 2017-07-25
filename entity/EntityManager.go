@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
-	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/storage"
 	"github.com/xiaonanln/typeconv"
 )
@@ -80,7 +79,6 @@ type EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[ClientID]EntityID
 	registeredServices map[string]EntityIDSet
-
 }
 
 func newEntityManager() *EntityManager {
@@ -379,9 +377,10 @@ func SaveAllEntities() {
 }
 
 // Called by engine when server is freezing
-var freezePacker = netutil.JSONMsgPacker{}
 
-func FreezeEntities(gameid uint16) ([]byte, error) {
+func Freeze(gameid uint16) (map[string]interface{}, error) {
+	freeze := map[string]interface{}{}
+
 	entityFreezeInfos := map[EntityID]map[string]interface{}{}
 	foundNilSpace := false
 	for _, e := range entityManager.entities {
@@ -400,12 +399,17 @@ func FreezeEntities(gameid uint16) ([]byte, error) {
 		return nil, errors.Errorf("nil space not found")
 	}
 
-	// save all freeze entity infos to filesystem
-	freezeData, err := freezePacker.PackMsg(entityFreezeInfos, nil)
-	return freezeData, err
+	freeze["entities"] = entityFreezeInfos
+	registeredServices := make(map[string][]EntityID, len(entityManager.registeredServices))
+	for serviceName, eids := range entityManager.registeredServices {
+		registeredServices[serviceName] = eids.ToList()
+	}
+	freeze["services"] = registeredServices
+
+	return freeze, nil
 }
 
-func RestoreFreezedEntities(data []byte) (err error) {
+func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
 	defer func() {
 		_err := recover()
 		if _err != nil {
@@ -414,68 +418,54 @@ func RestoreFreezedEntities(data []byte) (err error) {
 
 	}()
 
-	var entityFreezeInfos map[EntityID]map[string]interface{}
-	if err = freezePacker.UnpackMsg(data, &entityFreezeInfos); err != nil {
-		err = errors.Wrap(err, "unpack freeze data failed")
-		return
-	}
+	var entityFreezeInfos map[string]interface{}
+	entityFreezeInfos = freeze["entities"].(map[string]interface{})
 
-	// step 1: restore the nil space
-	for eid, info := range entityFreezeInfos {
-		typeName := info["type"].(string)
-		if typeName == SPACE_ENTITY_TYPE {
-			attrs := info["attrs"].(map[string]interface{})
-			spaceKind := typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
-			var timerData []byte
-			if info["timers"] != nil {
-				timerData = info["timers"].([]byte)
+	restoreEntities := func(filter func(typeName string, spaceKind int64) bool) {
+		for _eid, _info := range entityFreezeInfos {
+			eid := EntityID(_eid)
+			info := _info.(map[string]interface{})
+			typeName := info["type"].(string)
+			var spaceKind int64
+			if typeName == SPACE_ENTITY_TYPE {
+				attrs := info["attrs"].(map[string]interface{})
+				spaceKind = typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
 			}
 
-			if spaceKind == 0 {
-				// this is the nil space, restore it
+			if filter(typeName, spaceKind) {
+				attrs := info["attrs"].(map[string]interface{})
+				var timerData []byte
+				if info["timers"] != nil {
+					timerData = info["timers"].([]byte)
+				}
 				createEntity(typeName, nil, Position{}, eid, attrs, timerData, nil, ccRestore)
 				gwlog.Info("Restored %s<%s>", typeName, eid)
-				break
+
 			}
 		}
 	}
+	// step 1: restore the nil space
+	restoreEntities(func(typeName string, spaceKind int64) bool {
+		return typeName == SPACE_ENTITY_TYPE && spaceKind == 0
+	})
 
 	// step 2: restore all other spaces
-	for eid, info := range entityFreezeInfos {
-		typeName := info["type"].(string)
-		if typeName == SPACE_ENTITY_TYPE {
-			attrs := info["attrs"].(map[string]interface{})
-			spaceKind := typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
-			var timerData []byte
-			if info["timers"] != nil {
-				timerData = info["timers"].([]byte)
-			}
-			if spaceKind != 0 {
-				// this is the nil space, restore it
-				createEntity(typeName, nil, Position{}, eid, attrs, timerData, nil, ccRestore)
-				gwlog.Info("Restored %s<%s>", typeName, eid)
-			}
-		}
-	}
+	restoreEntities(func(typeName string, spaceKind int64) bool {
+		return typeName == SPACE_ENTITY_TYPE && spaceKind != 0
+	})
 
 	// step  3: restore all other spaces
-	for eid, info := range entityFreezeInfos {
-		typeName := info["type"].(string)
-		if typeName != SPACE_ENTITY_TYPE {
-			attrs := info["attrs"].(map[string]interface{})
-			var timerData []byte
-			if info["timers"] != nil {
-				timerData = info["timers"].([]byte)
-			}
-			spaceID := EntityID(info["spaceID"].(string))
-			space := spaceManager.getSpace(spaceID)
-			if space == nil {
-				gwlog.Warn("Entity %s<%s> lost space while restoring", typeName, eid)
-			}
-			// this is the nil space, restore it
-			createEntity(typeName, space, Position{}, eid, attrs, timerData, nil, ccRestore)
-			gwlog.Info("Restored %s<%s>", typeName, eid)
+	restoreEntities(func(typeName string, spaceKind int64) bool {
+		return typeName != SPACE_ENTITY_TYPE
+	})
+
+	registeredServices := freeze["services"].(map[string]interface{})
+	for serviceName, _eids := range registeredServices {
+		eids := EntityIDSet{}
+		for _, eid := range _eids.([]interface{}) {
+			eids.Add(EntityID(eid.(string)))
 		}
+		entityManager.registeredServices[serviceName] = eids
 	}
 
 	return nil
