@@ -379,10 +379,15 @@ func SaveAllEntities() {
 
 // Called by engine when server is freezing
 
-func Freeze(gameid uint16) (map[string]interface{}, error) {
-	freeze := map[string]interface{}{}
+type FreezeData struct {
+	Entities map[EntityID]*entityFreezeData
+	Services map[string][]EntityID
+}
 
-	entityFreezeInfos := map[EntityID]map[string]interface{}{}
+func Freeze(gameid uint16) (*FreezeData, error) {
+	freeze := FreezeData{}
+
+	entityFreezeInfos := map[EntityID]*entityFreezeData{}
 	foundNilSpace := false
 	for _, e := range entityManager.entities {
 		entityFreezeInfos[e.ID] = e.GetFreezeData()
@@ -400,17 +405,17 @@ func Freeze(gameid uint16) (map[string]interface{}, error) {
 		return nil, errors.Errorf("nil space not found")
 	}
 
-	freeze["entities"] = entityFreezeInfos
+	freeze.Entities = entityFreezeInfos
 	registeredServices := make(map[string][]EntityID, len(entityManager.registeredServices))
 	for serviceName, eids := range entityManager.registeredServices {
 		registeredServices[serviceName] = eids.ToList()
 	}
-	freeze["services"] = registeredServices
+	freeze.Services = registeredServices
 
-	return freeze, nil
+	return &freeze, nil
 }
 
-func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
+func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	defer func() {
 		_err := recover()
 		if _err != nil {
@@ -419,34 +424,26 @@ func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
 
 	}()
 
-	var entityFreezeInfos map[string]interface{}
-	entityFreezeInfos = freeze["entities"].(map[string]interface{})
-
 	restoreEntities := func(filter func(typeName string, spaceKind int64) bool) {
-		for _eid, _info := range entityFreezeInfos {
-			eid := EntityID(_eid)
-			info := _info.(map[string]interface{})
-			typeName := info["type"].(string)
+		for eid, info := range freeze.Entities {
+			typeName := info.Type
 			var spaceKind int64
 			if typeName == SPACE_ENTITY_TYPE {
-				attrs := info["attrs"].(map[string]interface{})
+				attrs := info.Attrs
 				spaceKind = typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
 			}
 
 			if filter(typeName, spaceKind) {
-				attrs := info["attrs"].(map[string]interface{})
-				var timerData []byte
-				if info["timers"] != nil {
-					timerData = []byte(info["timers"].(string))
-				}
-
-				spaceID := EntityID(info["spaceID"].(string))
 				var space *Space
 				if typeName != SPACE_ENTITY_TYPE {
-					space = spaceManager.getSpace(spaceID)
+					space = spaceManager.getSpace(info.SpaceID)
 				}
 
-				createEntity(typeName, space, Position{}, eid, attrs, timerData, nil, ccRestore)
+				var client *GameClient
+				if info.Client != nil {
+					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
+				}
+				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, client, ccRestore)
 				gwlog.Info("Restored %s<%s> in space %s", typeName, eid, space)
 
 			}
@@ -467,11 +464,10 @@ func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
 		return typeName != SPACE_ENTITY_TYPE
 	})
 
-	registeredServices := freeze["services"].(map[string]interface{})
-	for serviceName, _eids := range registeredServices {
+	for serviceName, _eids := range freeze.Services {
 		eids := EntityIDSet{}
-		for _, eid := range _eids.([]interface{}) {
-			eids.Add(EntityID(eid.(string)))
+		for _, eid := range _eids {
+			eids.Add(eid)
 		}
 		entityManager.registeredServices[serviceName] = eids
 	}

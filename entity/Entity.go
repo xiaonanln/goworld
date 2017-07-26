@@ -539,17 +539,37 @@ func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
 
-func (e *Entity) GetFreezeData() map[string]interface{} {
-	freezeData := map[string]interface{}{}
-	freezeData["type"] = e.TypeName
-	freezeData["timers"] = e.dumpTimers()
-	freezeData["attrs"] = e.Attrs.ToMap()
-	freezeData["x"] = e.aoi.pos.X
-	freezeData["y"] = e.aoi.pos.Y
-	freezeData["z"] = e.aoi.pos.Z
-	freezeData["yaw"] = e.yaw
-	freezeData["spaceID"] = e.Space.ID
-	return freezeData
+type clientData struct {
+	ClientID ClientID
+	GateID   uint16
+}
+
+type entityFreezeData struct {
+	Type      string
+	TimerData []byte
+	Pos       Position
+	Attrs     map[string]interface{}
+	Yaw       Yaw
+	SpaceID   EntityID
+	Client    *clientData
+}
+
+func (e *Entity) GetFreezeData() *entityFreezeData {
+	data := &entityFreezeData{
+		Type:      e.TypeName,
+		TimerData: e.dumpTimers(),
+		Attrs:     e.Attrs.ToMap(),
+		Pos:       e.aoi.pos,
+		Yaw:       e.yaw,
+		SpaceID:   e.Space.ID,
+	}
+	if e.client != nil {
+		data.Client = &clientData{
+			ClientID: e.client.clientid,
+			GateID:   e.client.gateid,
+		}
+	}
+	return data
 }
 
 // Client related utilities

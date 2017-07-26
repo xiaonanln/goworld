@@ -224,10 +224,10 @@ func (gs *GameService) doRestore() error {
 		return err
 	}
 
-	var freezeEntity map[string]interface{}
+	var freezeEntity entity.FreezeData
 	freezePacker.UnpackMsg(data, &freezeEntity)
 
-	return entity.RestoreFreezedEntities(freezeEntity)
+	return entity.RestoreFreezedEntities(&freezeEntity)
 }
 
 func (gs *GameService) String() string {
