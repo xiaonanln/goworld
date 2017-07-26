@@ -23,6 +23,10 @@ rungate: gate
 rungame: test_game
 	examples/test_game/test_game -sid=1
 
+restoregame:
+	examples/test_game/test_game -sid=1 -log info -restore &
+	examples/test_game/test_game -sid=2 -log info -restore &
+
 runclient: test_client
 	examples/test_client/test_client -N $(N)
 
