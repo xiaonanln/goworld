@@ -1,5 +1,5 @@
 # goworld
-Scalable Distributed Game Server Engine with Hot Reloading for MMORPGs Written in Go
+Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Go
 
 GoWorld server adopts a entity framework, in which entities represent all players, monsters, NPCs.
 Entities in the same space can visit each other directly by calling methods or access attributes. 
@@ -10,8 +10,8 @@ The gates are responsable for handling client connections and receive/send packe
 The games manages all entities and runs all game logic. 
 The dispatcher is responsable for redirecting packets among games and between games and gates.  
 
-The game processes are **hot-reloadable**. 
-We can reload a game by sending SIGUSR1 to the process and restart the process with **-restore** parameter to bring game 
+The game processes are **hot-swappable**. 
+We can swap a game by sending SIGUSR1 to the process and restart the process with **-restore** parameter to bring game 
 back to work but with the latest executive image. This feature enables updating server-side logic or fixing server bugs
  transparently without significant interference of online players. 
 
