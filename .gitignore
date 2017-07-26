@@ -28,3 +28,4 @@ fc
 examples/*/*.sh
 storage/backend/filesystem/test_entity_storage/
 *.bat
+*.dat
