@@ -1,4 +1,9 @@
-# goworld
+# GoWorld - game server engine in Go
+
+_Working towards alpha_ 
+
+_**中文站点：http://goworldgs.com/?p=64**_
+
 Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Go
 
 GoWorld server adopts a entity framework, in which entities represent all players, monsters, NPCs.
@@ -30,4 +35,4 @@ If you don't have govendor already, install by executing:
 5. Build and run gate: `cd components/gate; go build; ./gate -gid 1`
 6. Build and run test_client: `cd examples/test_client; go build; ./test_client -N 500`
 
-_**中文站点：http://goworldgs.com/?p=64**_
+
