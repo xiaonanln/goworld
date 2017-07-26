@@ -3,6 +3,18 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "appengine",
+			"revision": ""
+		},
+		{
+			"path": "appengine_internal",
+			"revision": ""
+		},
+		{
+			"path": "appengine_internal/base",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "2avCvSn0XonfApKKuTMyiQmk7s0=",
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "3ec0642a7fb6488f65b06f9040adc67e3990296a",
@@ -45,7 +57,7 @@
 			"revisionTime": "2016-11-23T14:27:37Z"
 		},
 		{
-			"checksumSHA1": "hGsUEoEc+LGxvET2DHmh9ADuT90=",
+			"checksumSHA1": "v6SPZcsXeJooud3tINP5XEpk8Lg=",
 			"path": "github.com/xiaonanln/goTimer",
 			"revision": "0940cb3c36ac90349295a7ca0fcb467dc2e90aac",
 			"revisionTime": "2017-07-15T15:16:58Z"
@@ -58,10 +70,9 @@
 		},
 		{
 			"checksumSHA1": "8q7QoczBgqS265i+vg4oKfs7RiE=",
-			"origin": "github.com/xiaonanln/go-xnsyncutil/vendor/gopkg.in/eapache/queue.v1",
 			"path": "gopkg.in/eapache/queue.v1",
-			"revision": "db42ec5c925479ce42f1bfb6bc58a53f03baa783",
-			"revisionTime": "2017-07-23T05:46:50Z"
+			"revision": "ded5959c0d4e360646dc9e9908cff48666781367",
+			"revisionTime": "2015-06-06T11:53:03Z"
 		},
 		{
 			"checksumSHA1": "WNjUTH01NMhPWjpwnsaL3SW52Gw=",
@@ -100,13 +111,13 @@
 			"revisionTime": "2016-08-18T02:01:20Z"
 		},
 		{
-			"checksumSHA1": "yA1Ja5VOCv5aiLkq9ThgBkEwEUg=",
+			"checksumSHA1": "s9kmn5x8Gub406hXp9hARGXdNvA=",
 			"path": "gopkg.in/vmihailenco/msgpack.v2",
 			"revision": "38f3708c44f1402aeb2f137dd9a9dfb12bae2204",
 			"revisionTime": "2016-08-19T09:55:48Z"
 		},
 		{
-			"checksumSHA1": "NRVVzl0LAklfAN4NyH8g2dhqoSc=",
+			"checksumSHA1": "KqVHe5SB85yaDcseNq2CogozjRk=",
 			"path": "gopkg.in/vmihailenco/msgpack.v2/codes",
 			"revision": "38f3708c44f1402aeb2f137dd9a9dfb12bae2204",
 			"revisionTime": "2016-08-19T09:55:48Z"
