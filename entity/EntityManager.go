@@ -261,6 +261,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		gwutils.RunPanicless(entity.I.OnMigrateIn)
 	} else if cause == ccRestore {
 		// restore should be silent
+		gwutils.RunPanicless(entity.I.OnRestored)
 	}
 
 	if space != nil {
@@ -436,7 +437,7 @@ func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
 				attrs := info["attrs"].(map[string]interface{})
 				var timerData []byte
 				if info["timers"] != nil {
-					timerData = info["timers"].([]byte)
+					timerData = []byte(info["timers"].(string))
 				}
 
 				spaceID := EntityID(info["spaceID"].(string))
@@ -446,7 +447,7 @@ func RestoreFreezedEntities(freeze map[string]interface{}) (err error) {
 				}
 
 				createEntity(typeName, space, Position{}, eid, attrs, timerData, nil, ccRestore)
-				gwlog.Info("Restored %s<%s>", typeName, eid)
+				gwlog.Info("Restored %s<%s> in space %s", typeName, eid, space)
 
 			}
 		}

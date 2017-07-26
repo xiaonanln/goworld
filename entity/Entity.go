@@ -75,6 +75,8 @@ type IEntity interface {
 	// Migration
 	OnMigrateOut() // Called just before entity is migrating out
 	OnMigrateIn()  // Called just after entity is migrating in
+	// Freeze && Restore
+	OnRestored() // Called when entity is restored
 	// Space Operations
 	OnEnterSpace()             // Called when entity leaves space
 	OnLeaveSpace(space *Space) // Called when entity enters space
@@ -477,6 +479,9 @@ func (e *Entity) OnInit() {
 
 func (e *Entity) OnCreated() {
 	//gwlog.Debug("%s.OnCreated", e)
+}
+
+func (e *Entity) OnRestored() {
 }
 
 // Space Utilities

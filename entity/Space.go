@@ -53,6 +53,23 @@ func (space *Space) OnSpaceInit() {
 }
 
 func (space *Space) OnCreated() {
+	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
+	space.onSpaceCreated()
+	if space.IsNil() {
+		return
+	}
+
+	if consts.DEBUG_SPACES {
+		gwlog.Debug("%s.OnCreated", space)
+	}
+	gwutils.RunPanicless(space.I.OnSpaceCreated)
+}
+
+func (space *Space) OnRestored() {
+	space.onSpaceCreated()
+}
+
+func (space *Space) onSpaceCreated() {
 	space.Kind = space.GetInt(SPACE_KIND_ATTR_KEY)
 	spaceManager.putSpace(space)
 
@@ -65,12 +82,6 @@ func (space *Space) OnCreated() {
 		gwlog.Info("Created nil space: %s", nilSpace)
 		return
 	}
-
-	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
-	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.OnCreated", space)
-	}
-	gwutils.RunPanicless(space.I.OnSpaceCreated)
 }
 
 func (space *Space) OnSpaceCreated() {
