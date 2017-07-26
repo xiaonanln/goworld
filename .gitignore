@@ -30,3 +30,4 @@ storage/backend/filesystem/test_entity_storage/
 *.bat
 *.dat
 vendor/
+.idea.bak/
