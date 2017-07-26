@@ -98,7 +98,7 @@ func setupSignals() {
 	go func() {
 		for {
 			sig := <-signalChan
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
+			if sig == syscall.SIGTERM {
 				// terminating game ...
 				gwlog.Info("Terminating game service ...")
 				gameService.terminate()
@@ -118,7 +118,7 @@ func setupSignals() {
 
 				gwlog.Info("Game %d shutdown gracefully.", gameid)
 				os.Exit(0)
-			} else if sig == syscall.Signal(10) {
+			} else if sig == syscall.Signal(10) || sig == syscall.SIGINT {
 				// SIGUSR1 => dump game and close
 				// freezing game ...
 				gwlog.Info("Freezing game service ...")
