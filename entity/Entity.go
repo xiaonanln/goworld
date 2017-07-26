@@ -750,7 +750,7 @@ func (e *Entity) enterLocalSpace(space *Space, pos Position) {
 
 		//gwlog.Info("%s.enterLocalSpace ==> %s", e, space)
 		e.Space.leave(e)
-		space.enter(e, pos)
+		space.enter(e, pos, false)
 	})
 }
 

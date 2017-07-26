@@ -265,7 +265,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 	}
 
 	if space != nil {
-		space.enter(entity, pos)
+		space.enter(entity, pos, cause == ccRestore)
 	}
 
 	return entityID

@@ -118,7 +118,7 @@ func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Po
 	loadEntityLocally(typeName, entityID, space, pos)
 }
 
-func (space *Space) enter(entity *Entity, pos Position) {
+func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))
 	}
@@ -133,21 +133,26 @@ func (space *Space) enter(entity *Entity, pos Position) {
 
 	entity.Space = space
 	space.entities.Add(entity)
-	entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
 	space.aoiCalc.Enter(&entity.aoi, pos)
-	for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
-		neighbor := neighborAOI.getEntity()
-		entity.interest(neighbor)
-		neighbor.interest(entity)
+
+	if !isRestore {
+		entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
+		for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
+			neighbor := neighborAOI.getEntity()
+			entity.interest(neighbor)
+			neighbor.interest(entity)
+		}
+		gwutils.RunPanicless(func() {
+			space.I.OnEntityEnterSpace(entity)
+			entity.I.OnEnterSpace()
+		})
+	} else {
+		for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
+			neighbor := neighborAOI.getEntity()
+			entity.aoi.interest(neighbor)
+			neighbor.aoi.interest(entity)
+		}
 	}
-
-	//gwlog.Info("%s entered with %d neighbors", entity, len(entity.Neighbors()))
-
-	gwutils.RunPanicless(func() {
-		space.I.OnEntityEnterSpace(entity)
-	})
-
-	entity.I.OnEnterSpace()
 }
 
 func (space *Space) leave(entity *Entity) {
