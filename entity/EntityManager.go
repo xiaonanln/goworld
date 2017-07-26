@@ -240,7 +240,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 		entity.setupSaveTimer()
 	}
 
-	if cause == ccCreate {
+	if cause == ccCreate || cause == ccRestore {
 		dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 	}
 
