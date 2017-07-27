@@ -13,14 +13,14 @@ import (
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_mongodb"
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_redis"
 	. "github.com/xiaonanln/goworld/kvdb/types"
-	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/opmon"
 	"github.com/xiaonanln/goworld/post"
 )
 
 var (
-	kvdbEngine  KVDBEngine
-	kvdbOpQueue *xnsyncutil.SyncQueue
+	kvdbEngine     KVDBEngine
+	kvdbOpQueue    *xnsyncutil.SyncQueue
+	kvdbTerminated *xnsyncutil.OneTimeCond
 )
 
 type KVDBGetCallback func(val string, err error)
@@ -38,10 +38,11 @@ func Initialize() {
 
 	gwlog.Info("KVDB initializing, config:\n%s", config.DumpPretty(kvdbCfg))
 	kvdbOpQueue = xnsyncutil.NewSyncQueue()
+	kvdbTerminated = xnsyncutil.NewOneTimeCond()
 
 	assureKVDBEngineReady()
 
-	go netutil.ServeForever(kvdbRoutine)
+	go kvdbRoutine()
 }
 
 func assureKVDBEngineReady() (err error) {
@@ -106,8 +107,8 @@ func NextLargerKey(key string) string {
 	return key + "\x00" // the next string that is larger than key, but smaller than any other keys > key
 }
 
-func GetQueueLen() int {
-	return kvdbOpQueue.Len()
+func Close() {
+	kvdbOpQueue.Close()
 }
 
 var recentWarnedQueueLen = 0
@@ -130,6 +131,11 @@ func kvdbRoutine() {
 		}
 
 		req := kvdbOpQueue.Pop()
+		if req == nil { // queue is closed, returning nil
+			kvdbEngine.Close()
+			break
+		}
+
 		var op *opmon.Operation
 		if getReq, ok := req.(*getReq); ok {
 			op = opmon.StartOperation("kvdb.get")
@@ -143,6 +149,12 @@ func kvdbRoutine() {
 		}
 		op.Finish(time.Millisecond * 100)
 	}
+
+	kvdbTerminated.Signal()
+}
+
+func WaitTerminated() {
+	kvdbTerminated.Wait()
 }
 
 func handleGetReq(getReq *getReq) {

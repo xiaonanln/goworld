@@ -16,6 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/entity"
 	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/kvdb"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/proto"
@@ -179,29 +180,36 @@ var freezePacker = netutil.JSONMsgPacker{}
 
 func (gs *GameService) doFreeze() {
 	// wait for all posts to complete
+
+	kvdb.Close()
+	kvdb.WaitTerminated()
 	gs.waitPostsComplete()
 
 	// save all entities
 	entity.SaveAllEntities()
 	// destroy all entities
-	freezeEntity, err := entity.Freeze(gameid)
-	if err != nil {
-		gwlog.Error("Game freeze failed: %s", err)
-		gs.runState.Store(rsRunning)
-		return
+	freeze := func() error {
+		freezeEntity, err := entity.Freeze(gameid)
+		if err != nil {
+			return err
+		}
+		freezeData, err := freezePacker.PackMsg(freezeEntity, nil)
+		if err != nil {
+			return err
+		}
+		freezeFilename := freezeFilename(gameid)
+		err = ioutil.WriteFile(freezeFilename, freezeData, 0644)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	freezeData, err := freezePacker.PackMsg(freezeEntity, nil)
+	err := freeze()
 	if err != nil {
 		gwlog.Error("Game freeze failed: %s", err)
-		gs.runState.Store(rsRunning)
-		return
-	}
-
-	freezeFilename := freezeFilename(gameid)
-	err = ioutil.WriteFile(freezeFilename, freezeData, 0644)
-	if err != nil {
-		gwlog.Error("Game freeze failed: %s", err)
+		kvdb.Initialize() // restore kvdb module
 		gs.runState.Store(rsRunning)
 		return
 	}

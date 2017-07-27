@@ -22,10 +22,7 @@ back to work but with the latest executive image. This feature enables updating 
 
 **Download goworld:**
 
-`govendor get github.com/xiaonanln/goworld`
-
-If you don't have govendor already, install by executing: 
-`go get -u github.com/kardianos/govendor`
+`get github.com/xiaonanln/goworld`
 
 **Run goworld example server:**
 1. Get MongoDB or Redis Running
