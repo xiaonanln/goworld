@@ -1,5 +1,8 @@
 TODO: Service register and auto-creation in dispatcher
-TODO：Server Reboot without Client Awareness
+
+# FREEZE & RESTORE
+TODO: Make sure EnterSpace(migration) continues after restore
+TODO: Make sure kvdb/storage callbacks get executed during restore
 
 Enhancing Fault-tolerance
 TODO: make sure entity is destroyed if creation fails
