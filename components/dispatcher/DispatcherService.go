@@ -11,7 +11,7 @@ import (
 
 	"sync/atomic"
 
-	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
@@ -30,12 +30,12 @@ type EntityDispatchInfo struct {
 
 	gameid             uint16
 	blockUntilTime     time.Time
-	pendingPacketQueue sync_queue.SyncQueue
+	pendingPacketQueue *xnsyncutil.SyncQueue
 }
 
 func newEntityDispatchInfo() *EntityDispatchInfo {
 	return &EntityDispatchInfo{
-		pendingPacketQueue: sync_queue.NewSyncQueue(),
+		pendingPacketQueue: xnsyncutil.NewSyncQueue(),
 	}
 }
 
@@ -122,25 +122,6 @@ func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID
 	service.entityDispatchInfosLock.Unlock()
 }
 
-//func (service *DispatcherService) setEntityDispatcherInfo(entityID common.EntityID) (info *EntityDispatchInfo) {
-//	service.entityDispatchInfosLock.RUnlock()
-//	info = service.entityDispatchInfos[entityID]
-//	service.entityDispatchInfosLock.RUnlock()
-//
-//	if info == nil {
-//		service.entityDispatchInfosLock.Lock()
-//		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
-//		if info == nil {
-//			info = &EntityDispatchInfo{
-//				pendingPacketQueue: sync_queue.NewSyncQueue(),
-//			}
-//			service.entityDispatchInfos[entityID] = info
-//		}
-//		service.entityDispatchInfosLock.Unlock()
-//	}
-//	return
-//}
-
 func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID common.EntityID) (info *EntityDispatchInfo) {
 	service.entityDispatchInfosLock.RLock()
 	info = service.entityDispatchInfos[entityID]
@@ -156,7 +137,7 @@ func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID commo
 		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
 		if info == nil {
 			info = &EntityDispatchInfo{
-				pendingPacketQueue: sync_queue.NewSyncQueue(),
+				pendingPacketQueue: xnsyncutil.NewSyncQueue(),
 			}
 			service.entityDispatchInfos[entityID] = info
 		}

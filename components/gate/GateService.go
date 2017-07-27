@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
-	"github.com/xiaonanln/goSyncQueue"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
 	"github.com/xiaonanln/goworld/config"
@@ -26,7 +25,7 @@ type GateService struct {
 	listenAddr        string
 	clientProxies     map[common.ClientID]*ClientProxy
 	clientProxiesLock sync.RWMutex
-	packetQueue       sync_queue.SyncQueue
+	packetQueue       *xnsyncutil.SyncQueue
 
 	filterTreesLock sync.Mutex
 	filterTrees     map[string]*FilterTree
@@ -39,7 +38,7 @@ func newGateService() *GateService {
 	return &GateService{
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies: map[common.ClientID]*ClientProxy{},
-		packetQueue:   sync_queue.NewSyncQueue(),
+		packetQueue:   xnsyncutil.NewSyncQueue(),
 		filterTrees:   map[string]*FilterTree{},
 		terminated:    xnsyncutil.NewOneTimeCond(),
 	}

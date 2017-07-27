@@ -7,7 +7,7 @@ import (
 
 	"strconv"
 
-	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_mongodb"
@@ -20,7 +20,7 @@ import (
 
 var (
 	kvdbEngine  KVDBEngine
-	kvdbOpQueue sync_queue.SyncQueue
+	kvdbOpQueue *xnsyncutil.SyncQueue
 )
 
 type KVDBGetCallback func(val string, err error)
@@ -37,7 +37,7 @@ func Initialize() {
 	}
 
 	gwlog.Info("KVDB initializing, config:\n%s", config.DumpPretty(kvdbCfg))
-	kvdbOpQueue = sync_queue.NewSyncQueue()
+	kvdbOpQueue = xnsyncutil.NewSyncQueue()
 
 	assureKVDBEngineReady()
 

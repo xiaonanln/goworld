@@ -7,7 +7,7 @@ import (
 
 	"strconv"
 
-	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
@@ -22,7 +22,7 @@ import (
 
 var (
 	storageEngine  EntityStorage
-	operationQueue = sync_queue.NewSyncQueue()
+	operationQueue = xnsyncutil.NewSyncQueue()
 )
 
 type saveRequest struct {
