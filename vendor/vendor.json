@@ -45,13 +45,6 @@
 			"revisionTime": "2017-07-23T05:46:50Z"
 		},
 		{
-			"checksumSHA1": "rCpQggg0lQaf04HGaOKc+23DCMQ=",
-			"origin": "github.com/xiaonanln/goworld/vendor/github.com/xiaonanln/goSyncQueue",
-			"path": "github.com/xiaonanln/goSyncQueue",
-			"revision": "a31f9b6ee0a77ca6dc0851c9d9513565ca3f29c3",
-			"revisionTime": "2016-11-23T14:27:37Z"
-		},
-		{
 			"checksumSHA1": "hGsUEoEc+LGxvET2DHmh9ADuT90=",
 			"origin": "github.com/xiaonanln/goworld/vendor/github.com/xiaonanln/goTimer",
 			"path": "github.com/xiaonanln/goTimer",
