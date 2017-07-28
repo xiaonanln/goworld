@@ -26,18 +26,46 @@ type entry struct {
 }
 
 func (entry *entry) match(minute int, hour int, day int, month time.Month, weekday time.Weekday) bool {
-	if entry.minute >= 0 && entry.minute != minute {
-		return false
+	if entry.minute >= 0 {
+		if entry.minute != minute {
+			return false
+		}
+	} else { // minute < 0
+		if minute%-entry.minute != 0 {
+			return false
+		}
 	}
-	if entry.hour >= 0 && entry.hour != hour {
-		return false
+
+	if entry.hour >= 0 {
+		if entry.hour != hour {
+			return false
+		}
+	} else { // hour < 0
+		if hour%-entry.hour != 0 {
+			return false
+		}
 	}
-	if entry.day >= 0 && entry.day != day {
-		return false
+
+	if entry.day >= 0 {
+		if entry.day != day {
+			return false
+		}
+	} else {
+		if day%-entry.day != 0 {
+			return false
+		}
 	}
-	if entry.month >= 0 && entry.month != int(month) {
-		return false
+
+	if entry.month >= 0 {
+		if entry.month != int(month) {
+			return false
+		}
+	} else {
+		if int(month)%-entry.month != 0 {
+			return false
+		}
 	}
+
 	if entry.dayofweek >= 0 {
 		if entry.dayofweek >= 1 && entry.dayofweek <= 6 {
 			if entry.dayofweek != int(weekday) {
@@ -50,17 +78,18 @@ func (entry *entry) match(minute int, hour int, day int, month time.Month, weekd
 		} else { // invalid dayofweek, never happen
 			return false
 		}
-	}
+	} // else dayofweek == -1
+
 	return true
 }
 
 // Register a callack which will be executed when time condition is satisfied
 //
-// param minute: time condition satisfied on the specified minute, or every minute if minute == -1
-// param hour: time condition satisfied on the specified hour, or any hour when hour == -1
-// param day: time condition satisfied on the specified day, or any day when day == -1
-// param month: time condition satisfied on the specified month, or any month when month == -1
-// param dayofweek: time condition satisfied on the specified week day, or any day when dayofweek == -1
+// param minute: time condition satisfied on the specified minute, or every -minute if minute is negative
+// param hour: time condition satisfied on the specified hour, or every -hour when hour is negative
+// param day: time condition satisfied on the specified day, or every -day when day is negative
+// param month: time condition satisfied on the specified month, or every -month when month is negative
+// param dayofweek: time condition satisfied on the specified week day, or every -dayofweek when dayofweek is negative
 // param cb: callback function to be executed when time is satisfied
 func Register(minute, hour, day, month, dayofweek int, cb func()) Handle {
 	validateTime(minute, hour, day, month, dayofweek)
@@ -78,20 +107,20 @@ func Register(minute, hour, day, month, dayofweek int, cb func()) Handle {
 }
 
 func validateTime(minute, hour, day, month, dayofweek int) {
-	if (minute < 0 || minute > 59) && minute != -1 {
+	if minute > 59 || minute < -60 {
 		gwlog.Panicf("invalid minute = %d", minute)
 	}
 
-	if (hour < 0 || hour > 23) && hour != -1 {
+	if hour > 23 || hour < -24 {
 		gwlog.Panicf("invalid hour = %d", hour)
 	}
-	if (day < 1 || day > 31) && day != -1 {
+	if day > 31 || day < -31 || day == 0 {
 		gwlog.Panicf("invalid day = %d", day)
 	}
-	if (month < 1 && month > 12) && month != -1 {
+	if month > 12 || month < -12 || month == 0 {
 		gwlog.Panicf("invalid month = %d", month)
 	}
-	if (dayofweek < 0 && dayofweek > 7) && dayofweek != -1 {
+	if dayofweek > 7 || dayofweek < -1 {
 		gwlog.Panicf("invalid dayofweek = %d", dayofweek)
 	}
 }
@@ -121,7 +150,7 @@ func Initialize() {
 	}
 
 	d -= time.Nanosecond * time.Duration(now.Nanosecond())
-	gwlog.Info("current time is %s, will setup repeat time after %s", now, d)
+	gwlog.Debug("current time is %s, will setup repeat time after %s", now, d)
 	timer.AddCallback(d, func() {
 		setupRepeatTimer()
 		check()
@@ -145,7 +174,7 @@ func check() {
 }
 
 func setupRepeatTimer() {
-	gwlog.Info("crontab: setup repeat timer at time %s", time.Now())
+	gwlog.Debug("Crontab: setup repeat timer at time %s", time.Now())
 	timer.AddTimer(time.Minute, check)
 }
 
