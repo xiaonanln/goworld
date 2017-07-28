@@ -28,25 +28,25 @@ back to work but with the latest executive image. This feature enables updating 
 > `go get -u github.com/Sirupsen/logrus`
 >
 > `go get -u github.com/garyburd/redigo`
-
+>
 > `go get -u github.com/google/btree`
-
+>
 > `go get -u github.com/pkg/errors`
-
+>
 > `go get -u gopkg.in/eapache/queue.v1`
-
+>
 > `go get -u github.com/xiaonanln/go-xnsyncutil/xnsyncutil`
-
+>
 > `go get -u github.com/xiaonanln/goTimer`
-
+>
 > `go get -u github.com/xiaonanln/typeconv`
-
+>
 > `go get -u golang.org/x/net/context`
-
+>
 > `go get -u gopkg.in/ini.v1`
-
+>
 > `go get -u gopkg.in/mgo.v2`
-
+>
 > `go get -u gopkg.in/vmihailenco/msgpack.v2`
 
 **Run goworld example server:**
@@ -56,22 +56,22 @@ back to work but with the latest executive image. This feature enables updating 
 
 3. Build and run dispatcher:
     > `make dispatcher`
-
+    >
     > `components/dispatcher/dispatcher`
 
 4. Build and run gate:
     > `make gate`
-
+    >
     > `components/gate/gate -gid 1`
 
 5. Build and run test_game:
     > `make test_game`
-
+    >
     > `examples/test_game/test_game -sid 1`
 
 6. Build and run test_client:
     > `make test_client`
-
+    >
     > `examples/test_client/test_client -N 500`
 
 
