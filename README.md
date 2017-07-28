@@ -6,7 +6,7 @@
 
 **Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Go**
 
-GoWorld server adopts a entity framework, in which entities represent all players, monsters, NPCs.
+GoWorld server adopts an entity framework, in which entities represent all players, monsters, NPCs.
 Entities in the same space can visit each other directly by calling methods or access attributes. 
 Entities in different spaces can call each over using RPC.
 
