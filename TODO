@@ -1,6 +1,5 @@
-TODO: Service register and auto-creation in dispatcher
-
-# FREEZE & RESTORE
+TODO: Re-implement Service Architecture: auto creation, auto dispatch
+TODO: Fix Crontab Module
 
 Enhancing Fault-tolerance
 TODO: make sure entity is destroyed if creation fails
