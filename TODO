@@ -1,15 +1,12 @@
 TODO: Service register and auto-creation in dispatcher
 
 # FREEZE & RESTORE
-TODO: Make sure EnterSpace(migration) continues after restore
-TODO: Make sure kvdb/storage callbacks get executed during restore
 
 Enhancing Fault-tolerance
 TODO: make sure entity is destroyed if creation fails
 
 # MISC
 TODO: not allow client connection if server is not ready
-TODO: Call RPC with nil arguments if less argument is provided
 
 # Subsystem to be implemented
 TODO: Client system on Unity3D *

@@ -63,6 +63,7 @@ type Entity struct {
 		EnterPos    Position
 		RequestTime int64
 	}
+
 	filterProps map[string]string
 }
 
@@ -554,6 +555,11 @@ type clientData struct {
 	GateID   uint16
 }
 
+type enteringSpaceRequestData struct {
+	SpaceID  EntityID
+	EnterPos Position
+}
+
 type entityFreezeData struct {
 	Type      string
 	TimerData []byte
@@ -562,6 +568,7 @@ type entityFreezeData struct {
 	Yaw       Yaw
 	SpaceID   EntityID
 	Client    *clientData
+	ESR       *enteringSpaceRequestData
 }
 
 func (e *Entity) GetFreezeData() *entityFreezeData {
@@ -579,6 +586,11 @@ func (e *Entity) GetFreezeData() *entityFreezeData {
 			GateID:   e.client.gateid,
 		}
 	}
+
+	if !e.enteringSpaceRequest.SpaceID.IsNil() {
+		data.ESR = &enteringSpaceRequestData{e.enteringSpaceRequest.SpaceID, e.enteringSpaceRequest.EnterPos}
+	}
+
 	return data
 }
 
