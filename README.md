@@ -1,8 +1,8 @@
 # GoWorld - game server engine in Go
 
 > _Working towards alpha_
-
-> _**中文站点：http://goworldgs.com/?p=64**_
+>
+> **QQ群：`662182346`** _**中文站点：http://goworldgs.com/?p=64**_
 
 **Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Go**
 
