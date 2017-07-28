@@ -13,6 +13,9 @@ _**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written
 * **Distributed**: increase server capacity by using more machines
 * **Hot-Swappable**: update game logic by restarting server process
 
+## Architecture
+![GoWorld Architecture](http://goworldgs.com/static/goworld_arch.png "GoWorld Architecture")
+
 ## Introduction
 GoWorld server adopts an entity framework, in which entities represent all players, monsters, NPCs.
 Entities in the same space can visit each other directly by calling methods or access attributes. 
