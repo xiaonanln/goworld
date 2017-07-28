@@ -7,7 +7,7 @@ import (
 
 	"strconv"
 
-	"github.com/xiaonanln/goSyncQueue"
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	storageEngine  EntityStorage
-	operationQueue = sync_queue.NewSyncQueue()
+	storageEngine            EntityStorage
+	operationQueue           = xnsyncutil.NewSyncQueue()
+	storageRoutineTerminated = xnsyncutil.NewOneTimeCond()
 )
 
 type saveRequest struct {
@@ -104,6 +105,14 @@ func checkOperationQueueLen() {
 	}
 }
 
+func Close() {
+	operationQueue.Close()
+}
+
+func WaitTerminated() {
+	storageRoutineTerminated.Wait()
+}
+
 func Initialize() {
 	err := assureStorageEngineReady()
 	if err != nil {
@@ -140,11 +149,14 @@ func assureStorageEngineReady() (err error) {
 func storageRoutine() {
 	defer func() {
 		err := recover()
-		gwlog.TraceError("storage routine paniced: %s, restarting ...", err)
-		if consts.DEBUG_MODE {
-			os.Exit(2)
+		if err != nil {
+			gwlog.TraceError("storage routine paniced: %s, restarting ...", err)
+			go storageRoutine() // restart the storage routine
+		} else {
+			// normal quit
+			storageEngine.Close()
+			storageRoutineTerminated.Signal()
 		}
-		go storageRoutine() // restart the storage routine
 	}()
 
 	for {
@@ -156,6 +168,10 @@ func storageRoutine() {
 		}
 
 		op := operationQueue.Pop()
+		if op == nil { // entity storage closed
+			break
+		}
+
 		var monop *opmon.Operation
 		if saveReq, ok := op.(saveRequest); ok {
 			// handle save request

@@ -111,9 +111,7 @@ func setupSignals() {
 					continue
 				}
 
-				gwlog.Info("Waiting for KVDB to finish ...")
 				waitKVDBFinish()
-				gwlog.Info("Waiting for entity storage to finish ...")
 				waitEntityStorageFinish()
 
 				gwlog.Info("Game %d shutdown gracefully.", gameid)
@@ -137,9 +135,7 @@ func setupSignals() {
 					continue
 				}
 
-				gwlog.Info("Waiting for KVDB to finish ...")
 				waitKVDBFinish()
-				gwlog.Info("Waiting for entity storage to finish ...")
 				waitEntityStorageFinish()
 
 				gwlog.Info("Game %d freezed gracefully.", gameid)
@@ -164,36 +160,17 @@ func waitGameServiceStateSatisfied(s func(rs int) bool) {
 
 func waitKVDBFinish() {
 	// wait until kvdb's queue is empty
-	lastWarnTime := time.Time{}
-	for {
-		qlen := kvdb.GetQueueLen()
-		if qlen == 0 {
-			break
-		}
-
-		if time.Now().Sub(lastWarnTime) >= time.Second*5 {
-			gwlog.Info("KVDB queue length: %d", qlen)
-			lastWarnTime = time.Now()
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
+	gwlog.Info("Closing KVDB ...")
+	kvdb.Close()
+	kvdb.WaitTerminated()
 }
 
 func waitEntityStorageFinish() {
 	// wait until entity storage's queue is empty
-	lastWarnTime := time.Time{}
-	for {
-		qlen := storage.GetQueueLen()
-		if qlen == 0 {
-			break
-		}
-
-		if time.Now().Sub(lastWarnTime) >= time.Second*5 {
-			gwlog.Info("Entity storage queue length: %d", qlen)
-			lastWarnTime = time.Now()
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
+	gwlog.Info("Closing Entity Storage ...")
+	storage.Close()
+	storage.WaitTerminated()
+	gwlog.Info("*** DB OK ***")
 }
 
 type dispatcherClientDelegate struct {
