@@ -20,44 +20,21 @@ const (
 // MailService to handle mail sending & receiving
 type MailService struct {
 	entity.Entity // Entity type should always inherit entity.Entity
-	lastMailID    int64
 	mailPacker    netutil.MsgPacker
 }
 
 func (s *MailService) OnInit() {
-	s.lastMailID = -1
 	s.mailPacker = netutil.MessagePackMsgPacker{}
 }
 
 func (s *MailService) OnCreated() {
 	gwlog.Info("Registering MailService ...")
+	s.Attrs.SetDefault("lastMailID", 0)
 	s.DeclareService("MailService")
-
-	kvdb.Get("lastMailID", func(val string, err error) {
-		if err != nil {
-			gwlog.Panic(err)
-		}
-		var lastMailID int
-		if val == "" {
-			lastMailID = 0
-		} else {
-			lastMailID, err = strconv.Atoi(val)
-			if err != nil {
-				gwlog.Panic(err)
-			}
-		}
-		s.lastMailID = int64(lastMailID)
-	})
 }
 
 func (s *MailService) SendMail(senderID common.EntityID, senderName string, targetID common.EntityID, data MailData) {
 	gwlog.Debug("%s.SendMail: sender=%s,%s, target=%s, mail=%v", s, senderID, senderName, targetID, data)
-	if s.lastMailID == -1 {
-		// not ready
-		gwlog.Warn("%s is not ready for send mail", s)
-		s.Call(senderID, "OnSendMail", false)
-		return
-	}
 
 	mailID := s.genMailID()
 	mailKey := s.getMailKey(mailID, targetID)
@@ -87,7 +64,7 @@ func (s *MailService) SendMail(senderID common.EntityID, senderName string, targ
 }
 
 // GetMails request from Avatar
-func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int64) {
+func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
 	endMailKey := s.getMailKey(END_MAIL_ID, avatarID)
 
@@ -106,16 +83,13 @@ func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int64) {
 	})
 }
 
-func (s *MailService) genMailID() int64 {
-	s.lastMailID += 1
-	lastMailID := s.lastMailID
-	kvdb.Put("lastMailID", strconv.Itoa(int(lastMailID)), func(err error) {
-		gwlog.Debug("Save lastMailID %d: error=%s", lastMailID, err)
-	})
+func (s *MailService) genMailID() int {
+	lastMailID := s.Attrs.GetInt("lastMailID") + 1
+	s.Attrs.Set("lastMailID", lastMailID)
 	return lastMailID
 }
 
-func (s *MailService) getMailKey(mailID int64, targetID common.EntityID) string {
+func (s *MailService) getMailKey(mailID int, targetID common.EntityID) string {
 	return fmt.Sprintf("mail$%s$%010d", targetID, mailID)
 }
 

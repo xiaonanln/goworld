@@ -33,7 +33,9 @@ func main() {
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("OnlineService", &OnlineService{})
 	goworld.RegisterEntity("SpaceService", &SpaceService{})
-	goworld.RegisterEntity("MailService", &MailService{})
+	goworld.RegisterEntity("MailService", &MailService{}).DefineAttrs(map[string][]string{
+		"lastMailID": {"Persistent"},
+	})
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{}).DefineAttrs(map[string][]string{

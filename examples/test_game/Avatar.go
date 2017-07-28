@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
+	"os"
 
 	"strconv"
 
@@ -41,7 +43,7 @@ func (a *Avatar) OnCreated() {
 }
 
 func (a *Avatar) PerSecondTick(arg1 int, arg2 string) {
-	gwlog.Info("%s PerSecondTick %v %v", a, arg1, arg2)
+	fmt.Fprintf(os.Stderr, "!")
 }
 
 func (a *Avatar) setDefaultAttrs() {

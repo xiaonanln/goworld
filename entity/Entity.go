@@ -63,6 +63,7 @@ type Entity struct {
 		EnterPos    Position
 		RequestTime int64
 	}
+
 	filterProps map[string]string
 }
 
@@ -396,17 +397,22 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 		gwlog.Panicf("%s.onCallFromLocal: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 	}
 
-	if rpcDesc.NumArgs != len(args) {
-		gwlog.Panicf("%s.onCallFromLocal: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
+	if rpcDesc.NumArgs < len(args) {
+		gwlog.Panicf("%s.onCallFromLocal: Method %s receives %d arguments, but given %d", e, methodName, rpcDesc.NumArgs, len(args))
 	}
 
 	methodType := rpcDesc.MethodType
-	in := make([]reflect.Value, len(args)+1)
+	in := make([]reflect.Value, rpcDesc.NumArgs+1)
 	in[0] = reflect.ValueOf(e.I) // first argument is the bind instance (self)
 
 	for i, arg := range args {
 		argType := methodType.In(i + 1)
 		in[i+1] = typeconv.Convert(arg, argType)
+	}
+
+	for i := len(args); i < rpcDesc.NumArgs; i++ { // use zero value for missing arguments
+		argType := methodType.In(i + 1)
+		in[i+1] = reflect.Zero(argType)
 	}
 
 	rpcDesc.Func.Call(in)
@@ -443,12 +449,12 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 		}
 	}
 
-	if rpcDesc.NumArgs != len(args) {
-		gwlog.Error("%s.onCallFromRemote: Method %s receives %d arguments, but given %d: %v", e, methodName, rpcDesc.NumArgs, len(args), args)
+	if rpcDesc.NumArgs < len(args) {
+		gwlog.Error("%s.onCallFromRemote: Method %s receives %d arguments, but given %d", e, methodName, rpcDesc.NumArgs, len(args))
 		return
 	}
 
-	in := make([]reflect.Value, len(args)+1)
+	in := make([]reflect.Value, rpcDesc.NumArgs+1)
 	in[0] = reflect.ValueOf(e.I) // first argument is the bind instance (self)
 
 	for i, arg := range args {
@@ -461,6 +467,11 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 		}
 
 		in[i+1] = reflect.Indirect(argValPtr)
+	}
+
+	for i := len(args); i < rpcDesc.NumArgs; i++ { // use zero value for missing arguments
+		argType := methodType.In(i + 1)
+		in[i+1] = reflect.Zero(argType)
 	}
 
 	rpcDesc.Func.Call(in)
@@ -544,6 +555,11 @@ type clientData struct {
 	GateID   uint16
 }
 
+type enteringSpaceRequestData struct {
+	SpaceID  EntityID
+	EnterPos Position
+}
+
 type entityFreezeData struct {
 	Type      string
 	TimerData []byte
@@ -552,6 +568,7 @@ type entityFreezeData struct {
 	Yaw       Yaw
 	SpaceID   EntityID
 	Client    *clientData
+	ESR       *enteringSpaceRequestData
 }
 
 func (e *Entity) GetFreezeData() *entityFreezeData {
@@ -569,6 +586,11 @@ func (e *Entity) GetFreezeData() *entityFreezeData {
 			GateID:   e.client.gateid,
 		}
 	}
+
+	if !e.enteringSpaceRequest.SpaceID.IsNil() {
+		data.ESR = &enteringSpaceRequestData{e.enteringSpaceRequest.SpaceID, e.enteringSpaceRequest.EnterPos}
+	}
+
 	return data
 }
 
