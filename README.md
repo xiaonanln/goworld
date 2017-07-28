@@ -1,11 +1,19 @@
-# GoWorld - game server engine in Go
+# GoWorld - game server engine in Golang
 
+_**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Golang**_
+
+>  
+> 
 > _Working towards alpha_
 >
 > **QQ群：`662182346`** _**中文站点：http://goworldgs.com/?p=64**_
 
-**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Go**
+## Features
+* **Spaces & Entities**: manage multiple spaces and entities with AOI support
+* **Distributed**: increase server capacity by using more machines
+* **Hot-Swappable**: update game logic by restarting server process
 
+## Introduction
 GoWorld server adopts an entity framework, in which entities represent all players, monsters, NPCs.
 Entities in the same space can visit each other directly by calling methods or access attributes. 
 Entities in different spaces can call each over using RPC.
@@ -20,6 +28,7 @@ We can swap a game by sending SIGUSR1 to the process and restart the process wit
 back to work but with the latest executive image. This feature enables updating server-side logic or fixing server bugs
  transparently without significant interference of online players. 
 
+## Get GoWorld
 **Download goworld:**
 
 > `get github.com/xiaonanln/goworld`
@@ -49,7 +58,7 @@ back to work but with the latest executive image. This feature enables updating 
 >
 > `go get -u gopkg.in/vmihailenco/msgpack.v2`
 
-**Run goworld example server:**
+## Run Example Server & Client
 1. Get MongoDB or Redis Running
 2. Copy goworld.ini.sample to goworld.ini, and configure accordingly
     > `cp goworld.ini.sample goworld.ini`
