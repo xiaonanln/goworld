@@ -43,13 +43,14 @@ func main() {
 	})
 	// Register Avatar type and define attributes
 	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
-		"name":       {"AllClients", "Persistent"},
-		"level":      {"AllClients", "Persistent"},
-		"prof":       {"AllClients", "Persistent"},
-		"exp":        {"Client", "Persistent"},
-		"spaceKind":  {"Persistent"},
-		"lastMailID": {"Persistent"},
-		"mails":      {"Client", "Persistent"},
+		"name":          {"AllClients", "Persistent"},
+		"level":         {"AllClients", "Persistent"},
+		"prof":          {"AllClients", "Persistent"},
+		"exp":           {"Client", "Persistent"},
+		"spaceKind":     {"Persistent"},
+		"lastMailID":    {"Persistent"},
+		"mails":         {"Client", "Persistent"},
+		"testListField": {"Client"},
 	})
 
 	// Run the game server

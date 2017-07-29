@@ -7,17 +7,13 @@ import (
 
 type MapAttr struct {
 	owner  *Entity
-	parent *MapAttr
-	pkey   string // key of this item in parent
+	parent interface{}
+	pkey   interface{} // key of this item in parent
 	attrs  map[string]interface{}
 }
 
 func (ma *MapAttr) Size() int {
 	return len(ma.attrs)
-}
-
-func (ma *MapAttr) getOwner() *Entity {
-	return ma.owner
 }
 
 func (ma *MapAttr) HasKey(key string) bool {
@@ -27,17 +23,28 @@ func (ma *MapAttr) HasKey(key string) bool {
 
 func (ma *MapAttr) Set(key string, val interface{}) {
 	ma.attrs[key] = val
-	if subma, ok := val.(*MapAttr); ok {
+	if sa, ok := val.(*MapAttr); ok {
 		// val is MapAttr, set parent and owner accordingly
-		if subma.parent != nil || subma.owner != nil || subma.pkey != "" {
+		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in key %s", key)
 		}
 
-		subma.parent = ma
-		subma.owner = ma.owner
-		subma.pkey = key
+		sa.parent = ma
+		sa.owner = ma.owner
+		sa.pkey = key
 
-		ma.sendAttrChangeToClients(key, subma.ToMap())
+		ma.sendAttrChangeToClients(key, sa.ToMap())
+	} else if sa, ok := val.(*ListAttr); ok {
+		// val is ListATtr, set parent and owner accordingly
+		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
+			gwlog.Panicf("ListAttr reused in key %s", key)
+		}
+
+		sa.parent = ma
+		sa.owner = ma.owner
+		sa.pkey = key
+
+		ma.sendAttrChangeToClients(key, sa.ToList())
 	} else {
 		ma.sendAttrChangeToClients(key, val)
 	}
@@ -49,34 +56,26 @@ func (ma *MapAttr) SetDefault(key string, val interface{}) {
 }
 
 func (ma *MapAttr) sendAttrChangeToClients(key string, val interface{}) {
-	owner := ma.getOwner()
-	if owner != nil {
+	if owner := ma.owner; owner != nil {
 		// send the change to owner's client
-		owner.sendAttrChangeToClients(ma, key, val)
+		owner.sendMapAttrChangeToClients(ma, key, val)
 	}
 }
 
 func (ma *MapAttr) sendAttrDelToClients(key string) {
-	owner := ma.getOwner()
-	if owner != nil {
-		owner.sendAttrDelToClients(ma, key)
+	if owner := ma.owner; owner != nil {
+		owner.sendMapAttrDelToClients(ma, key)
 	}
 }
 
-func (ma *MapAttr) getPathFromOwner() []string {
-	path := make([]string, 0, 4) // preallocate some Space
-	for {
-		if ma.parent != nil {
-			path = append(path, ma.pkey)
-			ma = ma.parent
-		} else { // ma.parent  == nil, must be the root attr
-			if ma != ma.owner.Attrs {
-				gwlog.Panicf("Root attrs is not found")
-			}
-			break
-		}
+func (ma *MapAttr) getPathFromOwner() []interface{} {
+	path := make([]interface{}, 0, 4)
+	if ma.parent != nil {
+		path = append(path, ma.pkey)
+		return getPathFromOwner(ma.parent, path)
+	} else {
+		return path
 	}
-	return path
 }
 
 func (ma *MapAttr) Get(key string) interface{} {
@@ -122,6 +121,11 @@ func (ma *MapAttr) GetMapAttr(key string) *MapAttr {
 	return val.(*MapAttr)
 }
 
+func (ma *MapAttr) GetListAttr(key string) *ListAttr {
+	val := ma.Get(key)
+	return val.(*ListAttr)
+}
+
 // Delete a key in attrs
 func (ma *MapAttr) Pop(key string) interface{} {
 	val, ok := ma.attrs[key]
@@ -130,10 +134,14 @@ func (ma *MapAttr) Pop(key string) interface{} {
 	}
 
 	delete(ma.attrs, key)
-	if subma, ok := val.(*MapAttr); ok {
-		subma.parent = nil // clear parent and owner when attribute is poped
-		subma.pkey = ""
-		subma.owner = nil
+	if sa, ok := val.(*MapAttr); ok {
+		sa.parent = nil // clear parent and owner when attribute is poped
+		sa.pkey = ""
+		sa.owner = nil
+	} else if sa, ok := val.(*ListAttr); ok {
+		sa.parent = nil // clear parent and owner when attribute is poped
+		sa.pkey = ""
+		sa.owner = nil
 	}
 
 	ma.sendAttrDelToClients(key)
@@ -170,9 +178,10 @@ func (ma *MapAttr) GetValues() []interface{} {
 func (ma *MapAttr) ToMap() map[string]interface{} {
 	doc := map[string]interface{}{}
 	for k, v := range ma.attrs {
-		innerMapAttr, isInnerMapAttr := v.(*MapAttr)
-		if isInnerMapAttr {
-			doc[k] = innerMapAttr.ToMap()
+		if a, ok := v.(*MapAttr); ok {
+			doc[k] = a.ToMap()
+		} else if a, ok := v.(*ListAttr); ok {
+			doc[k] = a.ToList()
 		} else {
 			doc[k] = v
 		}
@@ -187,9 +196,10 @@ func (ma *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interfac
 			continue
 		}
 
-		innerMapAttr, isInnerMapAttr := v.(*MapAttr)
-		if isInnerMapAttr {
-			doc[k] = innerMapAttr.ToMap()
+		if a, ok := v.(*MapAttr); ok {
+			doc[k] = a.ToMap()
+		} else if a, ok := v.(*ListAttr); ok {
+			doc[k] = a.ToList()
 		} else {
 			doc[k] = v
 		}
@@ -197,36 +207,46 @@ func (ma *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interfac
 	return doc
 }
 
-func (ma *MapAttr) AssignMap(doc map[string]interface{}) *MapAttr {
+func (ma *MapAttr) AssignMap(doc map[string]interface{}) {
 	for k, v := range doc {
-		innerMap, ok := v.(map[string]interface{})
-		if ok {
-			innerMapAttr := NewMapAttr()
-			innerMapAttr.AssignMap(innerMap)
-			ma.Set(k, innerMapAttr)
+		if iv, ok := v.(map[string]interface{}); ok {
+			ia := NewMapAttr()
+			ia.AssignMap(iv)
+			ma.Set(k, ia)
+		} else if iv, ok := v.([]interface{}); ok {
+			ia := NewListAttr()
+			ia.AssignList(iv)
+			ma.Set(k, ia)
 		} else {
 			ma.Set(k, v)
 		}
 	}
-	return ma
 }
 
-func (ma *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(string) bool) *MapAttr {
+func (ma *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(string) bool) {
 	for k, v := range doc {
 		if !filter(k) {
 			continue
 		}
 
-		innerMap, ok := v.(map[string]interface{})
-		if ok {
-			innerMapAttr := NewMapAttr()
-			innerMapAttr.AssignMap(innerMap)
-			ma.Set(k, innerMapAttr)
+		if iv, ok := v.(map[string]interface{}); ok {
+			ia := NewMapAttr()
+			ia.AssignMap(iv)
+			ma.Set(k, ia)
+		} else if iv, ok := v.([]interface{}); ok {
+			ia := NewListAttr()
+			ia.AssignList(iv)
+			ma.Set(k, ia)
 		} else {
 			ma.Set(k, v)
 		}
 	}
-	return ma
+}
+
+func (ma *MapAttr) clearOwner() {
+	ma.owner = nil
+	ma.parent = nil
+	ma.pkey = nil
 }
 
 func NewMapAttr() *MapAttr {

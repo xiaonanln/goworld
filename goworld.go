@@ -94,6 +94,11 @@ func MapAttr() *entity.MapAttr {
 	return entity.NewMapAttr()
 }
 
+// Create a new ListAttr
+func ListAttr() *entity.ListAttr {
+	return entity.NewListAttr()
+}
+
 // Register the space entity type
 //
 // All spaces will be created as an instance of this type

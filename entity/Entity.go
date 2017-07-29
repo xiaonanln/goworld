@@ -266,7 +266,6 @@ func (e *Entity) CancelTimer(tid EntityTimerID) {
 
 func (e *Entity) triggerTimer(tid EntityTimerID, isRepeat bool) {
 	timerInfo := e.timers[tid] // should never be nil
-	gwlog.Debug("%s trigger timer %d: %v", e, tid, timerInfo)
 	if !timerInfo.Repeat {
 		delete(e.timers, tid)
 	} else {
@@ -709,14 +708,29 @@ func (e *Entity) OnBecomePlayer() {
 	gwlog.Info("%s.OnBecomePlayer: client=%s", e, e.client)
 }
 
-func (e *Entity) sendAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
+func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
 	path := ma.getPathFromOwner()
-	e.client.SendNotifyAttrChange(e.ID, path, key, val)
+	e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
 }
 
-func (e *Entity) sendAttrDelToClients(ma *MapAttr, key string) {
+func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 	path := ma.getPathFromOwner()
-	e.client.SendNotifyAttrDel(e.ID, path, key)
+	e.client.SendNotifyMapAttrDel(e.ID, path, key)
+}
+
+func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interface{}) {
+	path := la.getPathFromOwner()
+	e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+}
+
+func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
+	path := la.getPathFromOwner()
+	e.client.SendNotifyListAttrPop(e.ID, path)
+}
+
+func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
+	path := la.getPathFromOwner()
+	e.client.SendNotifyListAttrAppend(e.ID, path, val)
 }
 
 // Define Attributes Properties
@@ -732,6 +746,14 @@ func (e *Entity) GetStr(key string) string {
 
 func (e *Entity) GetFloat(key string) float64 {
 	return e.Attrs.GetFloat(key)
+}
+
+func (e *Entity) GetMapAttr(key string) *MapAttr {
+	return e.Attrs.GetMapAttr(key)
+}
+
+func (e *Entity) GetListAttr(key string) *ListAttr {
+	return e.Attrs.GetListAttr(key)
 }
 
 // Enter Space

@@ -121,24 +121,55 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		_ = packet.ReadClientID() // TODO: strip these two fields ? seems a little difficult, maybe later.
 	}
 
-	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
+	if msgtype == proto.MT_NOTIFY_MAP_ATTR_CHANGE_ON_CLIENT {
 		entityID := packet.ReadEntityID()
-		path := packet.ReadStringList()
+		var path []interface{}
+		packet.ReadData(&path)
 		key := packet.ReadVarStr()
 		var val interface{}
 		packet.ReadData(&val)
 		if !quiet {
 			gwlog.Debug("Entity %s Attribute %v: set %s=%v", entityID, path, key, val)
 		}
-		bot.applyAttrChange(entityID, path, key, val)
-	} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
+		bot.applyMapAttrChange(entityID, path, key, val)
+	} else if msgtype == proto.MT_NOTIFY_MAP_ATTR_DEL_ON_CLIENT {
 		entityID := packet.ReadEntityID()
-		path := packet.ReadStringList()
+		var path []interface{}
+		packet.ReadData(&path)
 		key := packet.ReadVarStr()
 		if !quiet {
 			gwlog.Debug("Entity %s Attribute %v deleted %s", entityID, path, key)
 		}
-		bot.applyAttrDel(entityID, path, key)
+		bot.applyMapAttrDel(entityID, path, key)
+	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_CHANGE_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		var path []interface{}
+		packet.ReadData(&path)
+		index := packet.ReadUint32()
+		var val interface{}
+		packet.ReadData(&val)
+		if !quiet {
+			gwlog.Debug("Entity %s Attribute %v: set [%d]=%v", entityID, path, index, val)
+		}
+		bot.applyListAttrChange(entityID, path, int(index), val)
+	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_APPEND_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		var path []interface{}
+		packet.ReadData(&path)
+		var val interface{}
+		packet.ReadData(&val)
+		if !quiet {
+			gwlog.Debug("Entity %s Attribute %v: append %v", entityID, path, val)
+		}
+		bot.applyListAttrAppend(entityID, path, val)
+	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_POP_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		var path []interface{}
+		packet.ReadData(&path)
+		if !quiet {
+			gwlog.Debug("Entity %s Attribute %v: pop", entityID, path)
+		}
+		bot.applyListAttrPop(entityID, path)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		isPlayer := packet.ReadBool()
 		entityID := packet.ReadEntityID()
@@ -206,7 +237,6 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		}
 	}
 }
-
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Position) {
 	//gwlog.Debug("updateEntityPosition %s => %s", entityID, position)
 	if bot.entities[entityID] == nil {
@@ -229,24 +259,52 @@ func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) 
 	entity.onUpdateYaw()
 }
 
-func (bot *ClientBot) applyAttrChange(entityID common.EntityID, path []string, key string, val interface{}) {
+func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {
 	//gwlog.Info("SET ATTR %s.%v: set %s=%v", entityID, path, key, val)
 	if bot.entities[entityID] == nil {
 		gwlog.Error("entity %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
-	entity.applyAttrChange(path, key, val)
+	entity.applyMapAttrChange(path, key, val)
 }
 
-func (bot *ClientBot) applyAttrDel(entityID common.EntityID, path []string, key string) {
+func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface{}, key string) {
 	//gwlog.Info("DEL ATTR %s.%v: del %s", entityID, path, key)
 	if bot.entities[entityID] == nil {
 		gwlog.Error("entity %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
-	entity.applyAttrDel(path, key)
+	entity.applyMapAttrDel(path, key)
+}
+
+func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []interface{}, index int, val interface{}) {
+	if bot.entities[entityID] == nil {
+		gwlog.Error("entity %s not found")
+		return
+	}
+	entity := bot.entities[entityID]
+	entity.applyListAttrChange(path, index, val)
+}
+
+func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []interface{}, val interface{}) {
+	if bot.entities[entityID] == nil {
+		gwlog.Error("entity %s not found")
+		return
+	}
+	entity := bot.entities[entityID]
+	entity.applyListAttrAppend(path, val)
+}
+
+func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interface{}) {
+	if bot.entities[entityID] == nil {
+		gwlog.Error("entity %s not found")
+		return
+	}
+	entity := bot.entities[entityID]
+	entity.applyListAttrPop(path)
+
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
