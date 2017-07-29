@@ -60,7 +60,7 @@ func (client *GameClient) call(entityID common.EntityID, method string, args ...
 	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethodOnClient(client.gateid, client.clientid, entityID, method, args)
 }
 
-func (client *GameClient) SendNotifyMapAttrChange(entityID common.EntityID, path []string, key string, val interface{}) {
+func (client *GameClient) SendNotifyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {
 	if client == nil {
 		return
 	}
@@ -70,7 +70,7 @@ func (client *GameClient) SendNotifyMapAttrChange(entityID common.EntityID, path
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyMapAttrChangeOnClient(client.gateid, client.clientid, entityID, path, key, val)
 }
 
-func (client *GameClient) SendNotifyMapAttrDel(entityID common.EntityID, path []string, key string) {
+func (client *GameClient) SendNotifyMapAttrDel(entityID common.EntityID, path []interface{}, key string) {
 	if client == nil {
 		return
 	}
@@ -80,7 +80,7 @@ func (client *GameClient) SendNotifyMapAttrDel(entityID common.EntityID, path []
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyMapAttrDelOnClient(client.gateid, client.clientid, entityID, path, key)
 }
 
-func (client *GameClient) SendNotifyListAttrChange(entityID common.EntityID, path []string, index uint32, val interface{}) {
+func (client *GameClient) SendNotifyListAttrChange(entityID common.EntityID, path []interface{}, index uint32, val interface{}) {
 	if client == nil {
 		return
 	}
@@ -90,7 +90,7 @@ func (client *GameClient) SendNotifyListAttrChange(entityID common.EntityID, pat
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrChangeOnClient(client.gateid, client.clientid, entityID, path, index, val)
 }
 
-func (client *GameClient) SendNotifyListAttrPop(entityID common.EntityID, path []string) {
+func (client *GameClient) SendNotifyListAttrPop(entityID common.EntityID, path []interface{}) {
 	if client == nil {
 		return
 	}
@@ -100,7 +100,7 @@ func (client *GameClient) SendNotifyListAttrPop(entityID common.EntityID, path [
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrPopOnClient(client.gateid, client.clientid, entityID, path)
 }
 
-func (client *GameClient) SendNotifyListAttrAppend(entityID common.EntityID, path []string, val interface{}) {
+func (client *GameClient) SendNotifyListAttrAppend(entityID common.EntityID, path []interface{}, val interface{}) {
 	if client == nil {
 		return
 	}

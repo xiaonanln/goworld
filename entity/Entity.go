@@ -719,18 +719,18 @@ func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 	e.client.SendNotifyMapAttrDel(e.ID, path, key)
 }
 
-func (e *Entity) sendListAttrChangeToClients(ma *ListAttr, index int, val interface{}) {
-	path := ma.getPathFromOwner()
+func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interface{}) {
+	path := la.getPathFromOwner()
 	e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
 }
 
-func (e *Entity) sendListAttrPopToClients(ma *ListAttr) {
-	path := ma.getPathFromOwner()
+func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
+	path := la.getPathFromOwner()
 	e.client.SendNotifyListAttrPop(e.ID, path)
 }
 
-func (e *Entity) sendListAttrAppendToClients(ma *ListAttr, val interface{}) {
-	path := ma.getPathFromOwner()
+func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
+	path := la.getPathFromOwner()
 	e.client.SendNotifyListAttrAppend(e.ID, path, val)
 }
 

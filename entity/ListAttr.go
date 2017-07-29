@@ -16,19 +16,35 @@ func (la *ListAttr) Size() int {
 	return len(la.items)
 }
 
+func (la *ListAttr) clearOwner() {
+	la.owner = nil
+	la.parent = nil
+	la.pkey = nil
+}
+
 func (la *ListAttr) Set(index int, val interface{}) {
 	la.items[index] = val
-	if subma, ok := val.(*MapAttr); ok {
+	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
-		if subma.parent != nil || subma.owner != nil || subma.pkey != nil {
-			gwlog.Panicf("ListAttr reused in index %s", index)
+		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
+			gwlog.Panicf("MapAttr reused in index %s", index)
 		}
 
-		subma.parent = la
-		subma.owner = la.owner
-		subma.pkey = index
+		sa.parent = la
+		sa.owner = la.owner
+		sa.pkey = index
 
-		la.sendListAttrChangeToClients(index, subma.ToMap())
+		la.sendListAttrChangeToClients(index, sa.ToMap())
+	} else if sa, ok := val.(*ListAttr); ok {
+		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
+			gwlog.Panicf("MapAttr reused in index %s", index)
+		}
+
+		sa.parent = la
+		sa.owner = la.owner
+		sa.pkey = index
+
+		la.sendListAttrChangeToClients(index, sa.ToList())
 	} else {
 		la.sendListAttrChangeToClients(index, val)
 	}
@@ -42,20 +58,49 @@ func (la *ListAttr) sendListAttrChangeToClients(index int, val interface{}) {
 	}
 }
 
-func (la *ListAttr) getPathFromOwner() []string {
-	path := make([]string, 0, 4) // preallocate some Space
+func (la *ListAttr) sendListAttrPopToClients() {
+	if owner := la.owner; owner != nil {
+		owner.sendListAttrPopToClients(la)
+	}
+}
+
+func (la *ListAttr) sendListAttrAppendToClients(val interface{}) {
+	if owner := la.owner; owner != nil {
+		owner.sendListAttrAppendToClients(la, val)
+	}
+}
+
+func getPathFromOwner(a interface{}, path []interface{}) []interface{} {
 	for {
-		if la.parent != nil {
-			path = append(path, la.pkey)
-			la = la.parent
-		} else { // la.parent  == nil, must be the root attr
-			if la != la.owner.Attrs {
-				gwlog.Panicf("Root attrs is not found")
+		if ma, ok := a.(*MapAttr); ok {
+			if ma.parent != nil {
+				path = append(path, ma.pkey)
+				a = ma.parent
+			} else {
+				break
 			}
-			break
+		} else {
+			la := a.(*ListAttr)
+			if la.parent != nil {
+				path = append(path, la.pkey)
+				a = la.parent
+			} else {
+				break
+			}
 		}
 	}
+
 	return path
+}
+
+func (la *ListAttr) getPathFromOwner() []interface{} {
+	path := make([]interface{}, 0, 4)
+	if la.parent != nil {
+		path = append(path, la.pkey)
+		return getPathFromOwner(la.parent, path)
+	} else {
+		return path
+	}
 }
 
 func (la *ListAttr) Get(index int) interface{} {
@@ -78,132 +123,122 @@ func (la *ListAttr) GetUint64(index int) uint64 {
 	return uint64(typeconv.Int(val))
 }
 
-func (la *ListAttr) GetStr(key string) string {
-	val := la.Get(key)
+func (la *ListAttr) GetStr(index int) string {
+	val := la.Get(index)
 	return val.(string)
 }
 
-func (la *ListAttr) GetFloat(key string) float64 {
-	val := la.Get(key)
+func (la *ListAttr) GetFloat(index int) float64 {
+	val := la.Get(index)
 	return val.(float64)
 }
 
-func (la *ListAttr) GetBool(key string) bool {
-	val := la.Get(key)
+func (la *ListAttr) GetBool(index int) bool {
+	val := la.Get(index)
 	return val.(bool)
 }
 
-func (la *ListAttr) GetListAttr(key string) *ListAttr {
-	val := la.Get(key)
+func (la *ListAttr) GetListAttr(index int) *ListAttr {
+	val := la.Get(index)
 	return val.(*ListAttr)
 }
 
 // Delete a key in attrs
-func (la *ListAttr) Pop(key string) interface{} {
-	val, ok := la.items[key]
-	if !ok {
-		gwlog.Panicf("key not exists: %s", key)
+func (la *ListAttr) Pop() interface{} {
+	size := len(la.items)
+	val := la.items[size-1]
+	la.items = la.items[:size-1]
+
+	if sa, ok := val.(*MapAttr); ok {
+		sa.clearOwner()
+	} else if sa, ok := val.(*ListAttr); ok {
+		sa.clearOwner()
 	}
 
-	delete(la.items, key)
-	if subma, ok := val.(*ListAttr); ok {
-		subma.parent = nil // clear parent and owner when attribute is poped
-		subma.pkey = ""
-		subma.owner = nil
-	}
-
-	la.sendAttrDelToClients(key)
+	la.sendListAttrPopToClients()
 	return val
 }
 
-func (la *ListAttr) Del(key string) {
-	la.Pop(key)
-}
-
-func (la *ListAttr) PopListAttr(key string) *ListAttr {
-	val := la.Pop(key)
+func (la *ListAttr) PopListAttr() *ListAttr {
+	val := la.Pop()
 	return val.(*ListAttr)
 }
 
-func (la *ListAttr) GetKeys() []string {
-	size := len(la.items)
-	keys := make([]string, 0, size)
-	for k, _ := range la.items {
-		keys = append(keys, k)
+func (la *ListAttr) Append(val interface{}) {
+	la.items = append(la.items, val)
+	index := len(la.items) - 1
+
+	if sa, ok := val.(*MapAttr); ok {
+		// val is ListAttr, set parent and owner accordingly
+		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
+			gwlog.Panicf("MapAttr reused in append", index)
+		}
+
+		sa.parent = la
+		sa.owner = la.owner
+		sa.pkey = index
+
+		la.sendListAttrAppendToClients(sa.ToMap())
+	} else if sa, ok := val.(*ListAttr); ok {
+		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
+			gwlog.Panicf("MapAttr reused in append", index)
+		}
+
+		sa.parent = la
+		sa.owner = la.owner
+		sa.pkey = index
+
+		la.sendListAttrAppendToClients(sa.ToList())
+	} else {
+		la.sendListAttrAppendToClients(val)
 	}
-	return keys
 }
 
-func (la *ListAttr) GetValues() []interface{} {
-	size := len(la.items)
-	vals := make([]interface{}, 0, size)
-	for _, v := range la.items {
-		vals = append(vals, v)
-	}
-	return vals
-}
+func (la *ListAttr) ToList() []interface{} {
+	l := make([]interface{}, len(la.items))
 
-func (la *ListAttr) ToMap() map[string]interface{} {
-	doc := map[string]interface{}{}
-	for k, v := range la.items {
-		innerListAttr, isInnerListAttr := v.(*ListAttr)
-		if isInnerListAttr {
-			doc[k] = innerListAttr.ToMap()
+	for i, v := range la.items {
+		if ma, ok := v.(*MapAttr); ok {
+			l[i] = ma.ToMap()
+		} else if la, ok := v.(*ListAttr); ok {
+			l[i] = la.ToList()
 		} else {
-			doc[k] = v
+			l[i] = v
 		}
 	}
-	return doc
+	return l
 }
 
-func (la *ListAttr) ToMapWithFilter(filter func(string) bool) map[string]interface{} {
-	doc := map[string]interface{}{}
-	for k, v := range la.items {
-		if !filter(k) {
-			continue
-		}
-
-		innerListAttr, isInnerListAttr := v.(*ListAttr)
-		if isInnerListAttr {
-			doc[k] = innerListAttr.ToMap()
+func (la *ListAttr) AssignList(l []interface{}) {
+	for _, v := range l {
+		if iv, ok := v.(map[string]interface{}); ok {
+			ia := NewMapAttr()
+			ia.AssignMap(iv)
+			la.Append(ia)
+		} else if iv, ok := v.([]interface{}); ok {
+			ia := NewListAttr()
+			ia.AssignList(iv)
+			la.Append(ia)
 		} else {
-			doc[k] = v
+			la.Append(v)
 		}
 	}
-	return doc
 }
 
-func (la *ListAttr) AssignMap(doc map[string]interface{}) *ListAttr {
-	for k, v := range doc {
-		innerMap, ok := v.(map[string]interface{})
-		if ok {
-			innerListAttr := NewListAttr()
-			innerListAttr.AssignMap(innerMap)
-			la.Set(k, innerListAttr)
-		} else {
-			la.Set(k, v)
-		}
-	}
-	return la
-}
-
-func (la *ListAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(string) bool) *ListAttr {
-	for k, v := range doc {
-		if !filter(k) {
-			continue
-		}
-
-		innerMap, ok := v.(map[string]interface{})
-		if ok {
-			innerListAttr := NewListAttr()
-			innerListAttr.AssignMap(innerMap)
-			la.Set(k, innerListAttr)
-		} else {
-			la.Set(k, v)
-		}
-	}
-	return la
-}
+//func (la *ListAttr) AssignList(l []interface{}) *ListAttr {
+//
+//	for idx, v := l {
+//		innerMap, ok := v.(map[string]interface{})
+//		if ok {
+//			innerListAttr := NewListAttr()
+//			innerListAttr.AssignMap(innerMap)
+//			la.Set(idx, innerListAttr)
+//		} else {
+//			la.Set(idx, v)
+//		}
+//	}
+//	return la
+//}
 
 func NewListAttr() *ListAttr {
 	return &ListAttr{

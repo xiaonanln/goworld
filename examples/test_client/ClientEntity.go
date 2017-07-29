@@ -315,40 +315,63 @@ func (e *ClientEntity) CallServer(method string, args ...interface{}) {
 	e.owner.CallServer(e.ID, method, args)
 }
 
-func (e *ClientEntity) applyAttrChange(path []string, key string, val interface{}) {
-	attr := e.findAttrByPath(path)
-	var rootkey string
-	if len(path) > 0 {
-		rootkey = path[len(path)-1]
-	} else {
-		rootkey = key
-	}
-
-	if _, ok := val.(map[interface{}]interface{}); ok {
-		val = typeconv.MapStringAnything(val)
-	}
+func (e *ClientEntity) applyMapAttrChange(path []interface{}, key string, val interface{}) {
+	_attr, _, _ := e.findAttrByPath(path)
+	attr := _attr.(map[string]interface{})
+	//if _, ok := val.(map[interface{}]interface{}); ok {
+	//	val = typeconv.MapStringAnything(val)
+	//}
 	attr[key] = val
-
-	callbackFuncName := "OnAttrChange_" + rootkey
-	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
-	if !callbackMethod.IsValid() {
-		gwlog.Debug("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
-		return
-	}
-	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
+	e.onAttrChange(path, key)
 }
 
-func (e *ClientEntity) applyAttrDel(path []string, key string) {
-	attr := e.findAttrByPath(path)
+func (e *ClientEntity) applyMapAttrDel(path []interface{}, key string) {
+	_attr, _, _ := e.findAttrByPath(path)
+	attr := _attr.(map[string]interface{})
+	delete(attr, key)
+	e.onAttrChange(path, key)
+}
+
+func (e *ClientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
+	_attr, _, _ := e.findAttrByPath(path)
+	attr := _attr.([]interface{})
+	attr[index] = val
+	e.onAttrChange(path, "")
+}
+
+func (e *ClientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
+	_attr, parent, pkey := e.findAttrByPath(path)
+	attr := _attr.([]interface{})
+
+	if parentmap, ok := parent.(map[string]interface{}); ok {
+		parentmap[pkey.(string)] = append(attr, val)
+	} else if parentlist, ok := parent.([]interface{}); ok {
+		parentlist[pkey.(int64)] = append(attr, val)
+	}
+
+	e.onAttrChange(path, "")
+}
+func (e *ClientEntity) applyListAttrPop(path []interface{}) {
+	_attr, parent, pkey := e.findAttrByPath(path)
+	attr := _attr.([]interface{})
+
+	if parentmap, ok := parent.(map[string]interface{}); ok {
+		parentmap[pkey.(string)] = attr[:len(attr)-1]
+	} else if parentlist, ok := parent.([]interface{}); ok {
+		parentlist[pkey.(int64)] = attr[:len(attr)-1]
+	}
+
+	e.onAttrChange(path, "")
+}
+
+func (e *ClientEntity) onAttrChange(path []interface{}, key string) {
 	var rootkey string
 	if len(path) > 0 {
-		rootkey = path[len(path)-1]
+		rootkey = path[len(path)-1].(string)
 	} else {
 		rootkey = key
 	}
 
-	delete(attr, key)
-
 	callbackFuncName := "OnAttrChange_" + rootkey
 	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
 	if !callbackMethod.IsValid() {
@@ -358,15 +381,27 @@ func (e *ClientEntity) applyAttrDel(path []string, key string) {
 	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
 }
 
-func (entity *ClientEntity) findAttrByPath(path []string) map[string]interface{} {
+func (entity *ClientEntity) findAttrByPath(path []interface{}) (attr interface{}, parent interface{}, pkey interface{}) {
 	// note that path is reversed
-	attr := entity.Attrs // root attr
+	parent, pkey = nil, nil
+	attr = map[string]interface{}(entity.Attrs) // root attr
+
 	plen := len(path)
 	for i := plen - 1; i >= 0; i-- {
-		name := path[i]
-		attr = attr[name].(map[string]interface{})
+		parent = attr
+		pkey = path[i]
+
+		if mapattr, ok := attr.(map[string]interface{}); ok {
+			key := path[i].(string)
+			attr = mapattr[key]
+		} else if listattr, ok := attr.([]interface{}); ok {
+			index := path[i].(int)
+			attr = listattr[index]
+		} else {
+			gwlog.Panicf("Attr is neither map nor list: %T", attr)
+		}
 	}
-	return attr
+	return
 }
 
 func (attrs ClientAttrs) GetInt(key string) int {

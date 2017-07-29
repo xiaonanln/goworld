@@ -54,6 +54,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("spaceKind", 1+rand.Intn(100))
 	a.Attrs.SetDefault("lastMailID", 0)
 	a.Attrs.SetDefault("mails", goworld.MapAttr())
+	a.Attrs.SetDefault("testListField", goworld.ListAttr())
 }
 
 func (a *Avatar) enterSpace(spaceKind int) {
