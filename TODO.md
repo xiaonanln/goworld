@@ -1,4 +1,4 @@
-# v0.1
+# Features for v0.1
 * ListAttr
 * Support MySQL for kvdb and entity storage
 * Connection Encryption

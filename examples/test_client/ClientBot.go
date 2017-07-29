@@ -121,7 +121,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		_ = packet.ReadClientID() // TODO: strip these two fields ? seems a little difficult, maybe later.
 	}
 
-	if msgtype == proto.MT_NOTIFY_ATTR_CHANGE_ON_CLIENT {
+	if msgtype == proto.MT_NOTIFY_MAP_ATTR_CHANGE_ON_CLIENT {
 		entityID := packet.ReadEntityID()
 		path := packet.ReadStringList()
 		key := packet.ReadVarStr()
@@ -131,7 +131,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 			gwlog.Debug("Entity %s Attribute %v: set %s=%v", entityID, path, key, val)
 		}
 		bot.applyAttrChange(entityID, path, key, val)
-	} else if msgtype == proto.MT_NOTIFY_ATTR_DEL_ON_CLIENT {
+	} else if msgtype == proto.MT_NOTIFY_MAP_ATTR_DEL_ON_CLIENT {
 		entityID := packet.ReadEntityID()
 		path := packet.ReadStringList()
 		key := packet.ReadVarStr()

@@ -709,14 +709,29 @@ func (e *Entity) OnBecomePlayer() {
 	gwlog.Info("%s.OnBecomePlayer: client=%s", e, e.client)
 }
 
-func (e *Entity) sendAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
+func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
 	path := ma.getPathFromOwner()
-	e.client.SendNotifyAttrChange(e.ID, path, key, val)
+	e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
 }
 
-func (e *Entity) sendAttrDelToClients(ma *MapAttr, key string) {
+func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 	path := ma.getPathFromOwner()
-	e.client.SendNotifyAttrDel(e.ID, path, key)
+	e.client.SendNotifyMapAttrDel(e.ID, path, key)
+}
+
+func (e *Entity) sendListAttrChangeToClients(ma *ListAttr, index int, val interface{}) {
+	path := ma.getPathFromOwner()
+	e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+}
+
+func (e *Entity) sendListAttrPopToClients(ma *ListAttr) {
+	path := ma.getPathFromOwner()
+	e.client.SendNotifyListAttrPop(e.ID, path)
+}
+
+func (e *Entity) sendListAttrAppendToClients(ma *ListAttr, val interface{}) {
+	path := ma.getPathFromOwner()
+	e.client.SendNotifyListAttrAppend(e.ID, path, val)
 }
 
 // Define Attributes Properties

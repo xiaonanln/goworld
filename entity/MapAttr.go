@@ -7,17 +7,17 @@ import (
 
 type MapAttr struct {
 	owner  *Entity
-	parent *MapAttr
-	pkey   string // key of this item in parent
+	parent interface{}
+	pkey   interface{} // key of this item in parent
 	attrs  map[string]interface{}
+}
+
+func (ma *MapAttr) CustomAttr() *customAttr {
+	return &ma.customAttr
 }
 
 func (ma *MapAttr) Size() int {
 	return len(ma.attrs)
-}
-
-func (ma *MapAttr) getOwner() *Entity {
-	return ma.owner
 }
 
 func (ma *MapAttr) HasKey(key string) bool {
@@ -69,7 +69,7 @@ func (ma *MapAttr) getPathFromOwner() []string {
 		if ma.parent != nil {
 			path = append(path, ma.pkey)
 			ma = ma.parent
-		} else { // ma.parent  == nil, must be the root attr
+		} else { // la.parent  == nil, must be the root attr
 			if ma != ma.owner.Attrs {
 				gwlog.Panicf("Root attrs is not found")
 			}
