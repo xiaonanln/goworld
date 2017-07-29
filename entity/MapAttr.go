@@ -121,6 +121,11 @@ func (ma *MapAttr) GetMapAttr(key string) *MapAttr {
 	return val.(*MapAttr)
 }
 
+func (ma *MapAttr) GetListAttr(key string) *ListAttr {
+	val := ma.Get(key)
+	return val.(*ListAttr)
+}
+
 // Delete a key in attrs
 func (ma *MapAttr) Pop(key string) interface{} {
 	val, ok := ma.attrs[key]

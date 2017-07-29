@@ -163,6 +163,7 @@ var (
 		{"DoSayInWorldChannel", 5, time.Minute},
 		{"DoSayInProfChannel", 5, time.Minute},
 		{"DoMoveInSpace", 30, time.Minute},
+		{"DoTestListField", 10, time.Minute},
 	}
 )
 
@@ -303,6 +304,28 @@ func (e *ClientEntity) onUpdateYaw() {
 
 }
 
+func (e *ClientEntity) DoTestListField() {
+	e.CallServer("TestListField")
+}
+
+func (e *ClientEntity) OnTestListField(serverList []interface{}) {
+	clientList := e.Attrs["testListField"].([]interface{})
+	gwlog.Debug("OnTestListField: server=%v, client=%v", serverList, clientList)
+	if len(serverList) != len(clientList) {
+		gwlog.Panicf("Server list size is %d, but client list size is %d", len(serverList), len(clientList))
+	}
+
+	for i, cv := range clientList {
+		cv := typeconv.Int(cv)
+		sv := typeconv.Int(serverList[i])
+		if cv != sv {
+			gwlog.Panicf("Server item is %T %v, but client item is %T %v", sv, sv, cv, cv)
+		}
+	}
+
+	e.notifyThingDone("DoTestListField")
+}
+
 func (e *ClientEntity) onAccountCreated() {
 	post.Post(func() {
 		username := e.owner.username()
@@ -333,6 +356,7 @@ func (e *ClientEntity) applyMapAttrDel(path []interface{}, key string) {
 }
 
 func (e *ClientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
+	gwlog.Debug("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 	attr[index] = val
@@ -340,6 +364,7 @@ func (e *ClientEntity) applyListAttrChange(path []interface{}, index int, val in
 }
 
 func (e *ClientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
+	gwlog.Debug("applyListAttrAppend: path=%v, val=%v, attrs=%v", path, val, e.Attrs)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 
@@ -352,6 +377,7 @@ func (e *ClientEntity) applyListAttrAppend(path []interface{}, val interface{}) 
 	e.onAttrChange(path, "")
 }
 func (e *ClientEntity) applyListAttrPop(path []interface{}) {
+	gwlog.Debug("applyListAttrPop: path=%v", path)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 

@@ -266,7 +266,6 @@ func (e *Entity) CancelTimer(tid EntityTimerID) {
 
 func (e *Entity) triggerTimer(tid EntityTimerID, isRepeat bool) {
 	timerInfo := e.timers[tid] // should never be nil
-	gwlog.Debug("%s trigger timer %d: %v", e, tid, timerInfo)
 	if !timerInfo.Repeat {
 		delete(e.timers, tid)
 	} else {
@@ -747,6 +746,14 @@ func (e *Entity) GetStr(key string) string {
 
 func (e *Entity) GetFloat(key string) float64 {
 	return e.Attrs.GetFloat(key)
+}
+
+func (e *Entity) GetMapAttr(key string) *MapAttr {
+	return e.Attrs.GetMapAttr(key)
+}
+
+func (e *Entity) GetListAttr(key string) *ListAttr {
+	return e.Attrs.GetListAttr(key)
 }
 
 // Enter Space
