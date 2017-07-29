@@ -1,5 +1,8 @@
 # v0.1
 * ListAttr
+* Support MySQL for kvdb and entity storage
+* Connection Encryption
+* Logging system improvement
 * Chatroom Demo with Cocos2d-x Client?
 
 # Optimizations
@@ -26,3 +29,4 @@
 * use termui for server status monitoring
 * use UDP : e.x. KCP
 * What is websocket?
+* The state machine server programming mechanism
