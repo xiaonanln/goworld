@@ -2,7 +2,6 @@ language: go
 
 go:
   - 1.8.x
-  - master
 
 install:
   - go get github.com/xiaonanln/go-xnsyncutil/xnsyncutil
