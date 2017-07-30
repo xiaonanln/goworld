@@ -1,4 +1,4 @@
-# GoWorld - game server engine in Golang
+# GoWorld [![Build Status](https://api.travis-ci.org/xiaonanln/goworld.svg?branch=master)](https://travis-ci.org/xiaonanln/goworld)
 
 _**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Golang**_
 
