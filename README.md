@@ -80,7 +80,7 @@ go get -u gopkg.in/vmihailenco/msgpack.v2
 5. Build and run test_game:
     ```bash
     make test_game
-    examples/test_game/test_game -sid 1
+    examples/test_game/test_game -gid 1
     ```
 
 6. Build and run test_client:
