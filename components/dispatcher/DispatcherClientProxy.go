@@ -62,11 +62,12 @@ func (dcp *DispatcherClientProxy) serve() {
 		if consts.DEBUG_PACKETS {
 			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
-
-		if msgtype == proto.MT_CALL_ENTITY_METHOD {
+		if msgtype == proto.MT_UPDATE_POSITION_YAW_FROM_CLIENT {
+			dcp.owner.HandleUpdatePositionYawFromClient(dcp, pkt)
+		} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			dcp.owner.HandleCallEntityMethod(dcp, pkt)
 		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
-			dcp.owner.HandleDoSomethingOnSpecifiedClient(dcp, pkt)
+			dcp.owner.HandleDoSomethingOnSpecifiedClient(dcp, pkt) // DATA RACE can happen here, but it's OK
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {

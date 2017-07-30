@@ -376,6 +376,11 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 	callEntity(serviceEid, method, args)
 }
 
+func (e *Entity) updatePositionYawFromClient(x, y, z Coord, yaw Yaw, clientid ClientID) {
+	//gwlog.Info("%s.updatePositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
+	e.setPosition(Position{x, y, z}, true)
+}
+
 func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
@@ -993,6 +998,10 @@ func (e *Entity) GetPosition() Position {
 }
 
 func (e *Entity) SetPosition(pos Position) {
+	e.setPosition(pos, false)
+}
+
+func (e *Entity) setPosition(pos Position, fromClient bool) {
 	space := e.Space
 	if space == nil {
 		gwlog.Warn("%s.SetPosition(%s): space is nil", e, pos)
@@ -1001,9 +1010,14 @@ func (e *Entity) SetPosition(pos Position) {
 
 	space.move(e, pos)
 	pos = e.aoi.pos
-	e.ForAllClients(func(client *GameClient) {
-		client.UpdatePositionOnClient(e.ID, pos)
-	})
+
+	if !fromClient {
+		e.client.UpdatePositionOnClient(e.ID, pos)
+	}
+
+	for neighbor := range e.Neighbors() {
+		neighbor.client.UpdatePositionOnClient(e.ID, pos)
+	}
 }
 
 func (e *Entity) GetYaw() Yaw {

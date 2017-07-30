@@ -35,6 +35,7 @@ type ClientBot struct {
 	currentSpace       *ClientSpace
 	logined            bool
 	startedDoingThings bool
+	syncPosTime        time.Time
 }
 
 func newClientBot(id int, waiter *sync.WaitGroup) *ClientBot {
@@ -105,6 +106,15 @@ func (bot *ClientBot) loop() {
 		} else if err != nil && !netutil.IsTemporaryNetError(err) {
 			// bad error
 			gwlog.Panic(err)
+		}
+
+		if bot.player != nil && bot.player.TypeName == "Avatar" {
+			now := time.Now()
+			if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
+				player := bot.player
+				bot.conn.SendUpdatePositionYaw(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+				bot.syncPosTime = now
+			}
 		}
 
 		bot.conn.Flush()
@@ -245,7 +255,6 @@ func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position en
 	}
 	entity := bot.entities[entityID]
 	entity.pos = position
-	entity.onUpdatePosition()
 }
 
 func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) {
@@ -256,7 +265,6 @@ func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) 
 	}
 	entity := bot.entities[entityID]
 	entity.yaw = yaw
-	entity.onUpdateYaw()
 }
 
 func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {

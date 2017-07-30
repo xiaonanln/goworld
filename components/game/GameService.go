@@ -86,7 +86,9 @@ func (gs *GameService) serveRoutine() {
 		select {
 		case item := <-gs.packetQueue:
 			msgtype, pkt := item.msgtype, item.packet
-			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
+			if msgtype == proto.MT_UPDATE_POSITION_YAW_FROM_CLIENT {
+				gs.HandleUpdatePositionYawFromClient(pkt)
+			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
@@ -285,6 +287,16 @@ func (gs *GameService) HandleGateDisconnected(gateid uint16) {
 func (gs *GameService) HandleStartFreezeGameAck() {
 	gwlog.Info("Start freeze game ACK received, start freezing ...")
 	gs.runState.Store(rsFreezing)
+}
+
+func (gs *GameService) HandleUpdatePositionYawFromClient(pkt *netutil.Packet) {
+	eid := pkt.ReadEntityID()
+	x := pkt.ReadUint32()
+	y := pkt.ReadUint32()
+	z := pkt.ReadUint32()
+	yaw := pkt.ReadUint32()
+	clientid := pkt.ReadClientID()
+	entity.OnUpdatePositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw), clientid)
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
