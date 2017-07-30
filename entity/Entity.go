@@ -708,29 +708,99 @@ func (e *Entity) OnBecomePlayer() {
 	gwlog.Info("%s.OnBecomePlayer: client=%s", e, e.client)
 }
 
+func (e *Entity) getAttrFlag(attrName string) (flag attrFlag) {
+	if e.typeDesc.allClientAttrs.Contains(attrName) {
+		flag = afAllClient
+	} else if e.typeDesc.clientAttrs.Contains(attrName) {
+		flag = afClient
+	}
+
+	return
+}
+
 func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interface{}) {
-	path := ma.getPathFromOwner()
-	e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+	var flag attrFlag
+	if ma == e.Attrs {
+		// this is the root attr
+		flag = e.getAttrFlag(key)
+	} else {
+		flag = ma.flag
+	}
+
+	if flag&afAllClient != 0 {
+		path := ma.getPathFromOwner()
+		e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+		for neighbor := range e.aoi.neighbors {
+			neighbor.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+		}
+	} else if flag&afClient != 0 {
+		path := ma.getPathFromOwner()
+		e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+	}
 }
 
 func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
-	path := ma.getPathFromOwner()
-	e.client.SendNotifyMapAttrDel(e.ID, path, key)
+	var flag attrFlag
+	if ma == e.Attrs {
+		// this is the root attr
+		flag = e.getAttrFlag(key)
+	} else {
+		flag = ma.flag
+	}
+
+	if flag&afAllClient != 0 {
+		path := ma.getPathFromOwner()
+		e.client.SendNotifyMapAttrDel(e.ID, path, key)
+		for neighbor := range e.aoi.neighbors {
+			neighbor.client.SendNotifyMapAttrDel(e.ID, path, key)
+		}
+	} else if flag&afClient != 0 {
+		path := ma.getPathFromOwner()
+		e.client.SendNotifyMapAttrDel(e.ID, path, key)
+	}
 }
 
 func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interface{}) {
-	path := la.getPathFromOwner()
-	e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+	flag := la.flag
+
+	if flag&afAllClient != 0 {
+		path := la.getPathFromOwner()
+		e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+		for neighbor := range e.aoi.neighbors {
+			neighbor.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+		}
+	} else if flag&afClient != 0 {
+		path := la.getPathFromOwner()
+		e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+	}
 }
 
 func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
-	path := la.getPathFromOwner()
-	e.client.SendNotifyListAttrPop(e.ID, path)
+	flag := la.flag
+	if flag&afAllClient != 0 {
+		path := la.getPathFromOwner()
+		e.client.SendNotifyListAttrPop(e.ID, path)
+		for neighbor := range e.aoi.neighbors {
+			neighbor.client.SendNotifyListAttrPop(e.ID, path)
+		}
+	} else if flag&afClient != 0 {
+		path := la.getPathFromOwner()
+		e.client.SendNotifyListAttrPop(e.ID, path)
+	}
 }
 
 func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
-	path := la.getPathFromOwner()
-	e.client.SendNotifyListAttrAppend(e.ID, path, val)
+	flag := la.flag
+	if flag&afAllClient != 0 {
+		path := la.getPathFromOwner()
+		e.client.SendNotifyListAttrAppend(e.ID, path, val)
+		for neighbor := range e.aoi.neighbors {
+			neighbor.client.SendNotifyListAttrAppend(e.ID, path, val)
+		}
+	} else if flag&afClient != 0 {
+		path := la.getPathFromOwner()
+		e.client.SendNotifyListAttrAppend(e.ID, path, val)
+	}
 }
 
 // Define Attributes Properties
