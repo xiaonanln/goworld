@@ -50,7 +50,7 @@ go get -u github.com/xiaonanln/goTimer
 go get -u github.com/xiaonanln/typeconv
 go get -u golang.org/x/net/context
 go get -u github.com/Sirupsen/logrus
-go get -u github.com/garyburd/redigo
+go get -u github.com/garyburd/redigo/redis
 go get -u github.com/google/btree
 go get -u github.com/pkg/errors
 go get -u gopkg.in/eapache/queue.v1
