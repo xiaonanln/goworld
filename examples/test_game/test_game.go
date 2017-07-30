@@ -50,7 +50,7 @@ func main() {
 		"spaceKind":     {"Persistent"},
 		"lastMailID":    {"Persistent"},
 		"mails":         {"Client", "Persistent"},
-		"testListField": {"Client"},
+		"testListField": {"AllClients"},
 	})
 
 	// Run the game server
