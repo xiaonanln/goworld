@@ -1,6 +1,5 @@
 # Features for v0.1
 * ListAttr
-* Support MySQL for kvdb and entity storage
 * Connection Encryption
 * Logging system improvement
 * Chatroom Demo with Cocos2d-x Client?

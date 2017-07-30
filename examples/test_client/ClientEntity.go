@@ -162,7 +162,6 @@ var (
 		{"DoGetMails", 10, time.Minute},
 		{"DoSayInWorldChannel", 5, time.Minute},
 		{"DoSayInProfChannel", 5, time.Minute},
-		{"DoMoveInSpace", 30, time.Minute},
 		{"DoTestListField", 10, time.Minute},
 	}
 )
@@ -286,22 +285,6 @@ func (e *ClientEntity) OnSay(senderID EntityID, senderName string, channel strin
 	} else if channel == "prof" && senderID == e.ID {
 		e.notifyThingDone("DoSayInProfChannel")
 	}
-}
-
-func (e *ClientEntity) DoMoveInSpace() {
-	e.CallServer("Move", entity.Position{
-		X: entity.Coord(-200 + rand.Intn(400)),
-		Y: entity.Coord(-200 + rand.Intn(400)),
-		Z: entity.Coord(-200 + rand.Intn(400)),
-	})
-}
-
-func (e *ClientEntity) onUpdatePosition() {
-	e.notifyThingDone("DoMoveInSpace")
-}
-
-func (e *ClientEntity) onUpdateYaw() {
-
 }
 
 func (e *ClientEntity) DoTestListField() {

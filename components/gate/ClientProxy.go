@@ -68,7 +68,9 @@ func (cp *ClientProxy) serve() {
 		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
-			if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
+			if msgtype == proto.MT_UPDATE_POSITION_YAW_FROM_CLIENT {
+				cp.handleUpdatePositionYawFromClient(pkt)
+			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				cp.handleCallEntityMethodFromClient(pkt)
 			} else {
 				if consts.DEBUG_MODE {
@@ -86,6 +88,11 @@ func (cp *ClientProxy) serve() {
 
 		cp.Flush()
 	}
+}
+
+func (cp *ClientProxy) handleUpdatePositionYawFromClient(pkt *netutil.Packet) {
+	pkt.AppendClientID(cp.clientid) // append clientid to the packet
+	dispatcher_client.GetDispatcherClientForSend().SendPacket(pkt)
 }
 
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {

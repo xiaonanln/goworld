@@ -10,6 +10,7 @@ import (
 
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_mongodb"
 	"github.com/xiaonanln/goworld/kvdb/backend/kvdb_redis"
+	. "github.com/xiaonanln/goworld/kvdb/types"
 )
 
 func TestMongoBackend_Set(t *testing.T) {

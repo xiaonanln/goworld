@@ -253,7 +253,7 @@ func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *Dispatc
 func (service *DispatcherService) chooseGameDispatcherClient() *DispatcherClientProxy {
 	index := atomic.LoadInt64(&service.chooseClientIndex)
 	client := service.gameClients[index]
-	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.gameClients)))
+	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.gameClients))) // DATA RACE can happen here, but it's OK
 	return client
 }
 
@@ -419,6 +419,19 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 			gwlog.Error("%s.HandleCallEntityMethod %s: packet queue too long, packet dropped", service, entityID)
 		}
 	}
+}
+
+func (service *DispatcherService) HandleUpdatePositionYawFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	entityID := pkt.ReadEntityID()
+
+	entityDispatchInfo := service.getEntityDispatcherInfoForRead(entityID)
+	if entityDispatchInfo == nil {
+		gwlog.Error("%s.HandleCallEntityMethodFromClient: entity %s is not found: %v", service, entityID, service.entityDispatchInfos)
+		return
+	}
+
+	service.dispatcherClientOfGame(entityDispatchInfo.gameid).SendPacket(pkt)
+	defer entityDispatchInfo.RUnlock()
 }
 
 func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
