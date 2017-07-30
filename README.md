@@ -7,7 +7,11 @@ _**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written
 > _Working towards alpha_
 >
 > **QQ群：`662182346`** _**中文站点：http://goworldgs.com/?p=64**_
-
+---------------------------------------
+  * [Features](#features)
+  * [Architecture](#architecture)
+  * [Introduction](#introduction)
+---------------------------------------  
 ## Features
 * **Spaces & Entities**: manage multiple spaces and entities with AOI support
 * **Distributed**: increase server capacity by using more machines
@@ -33,57 +37,54 @@ back to work but with the latest executive image. This feature enables updating 
 
 ## Get GoWorld
 **Download goworld:**
-
-> `get github.com/xiaonanln/goworld`
+```bash
+get github.com/xiaonanln/goworld
+```
 
 **Install dependencies**
-> `go get -u github.com/Sirupsen/logrus`
->
-> `go get -u github.com/garyburd/redigo`
->
-> `go get -u github.com/google/btree`
->
-> `go get -u github.com/pkg/errors`
->
-> `go get -u gopkg.in/eapache/queue.v1`
->
-> `go get -u github.com/xiaonanln/go-xnsyncutil/xnsyncutil`
->
-> `go get -u github.com/xiaonanln/goTimer`
->
-> `go get -u github.com/xiaonanln/typeconv`
->
-> `go get -u golang.org/x/net/context`
->
-> `go get -u gopkg.in/ini.v1`
->
-> `go get -u gopkg.in/mgo.v2`
->
-> `go get -u gopkg.in/vmihailenco/msgpack.v2`
+```bash
+go get -u github.com/xiaonanln/go-xnsyncutil/xnsyncutil
+go get -u github.com/xiaonanln/goTimer
+go get -u github.com/xiaonanln/typeconv
+go get -u golang.org/x/net/context
+go get -u github.com/Sirupsen/logrus
+go get -u github.com/garyburd/redigo
+go get -u github.com/google/btree
+go get -u github.com/pkg/errors
+go get -u gopkg.in/eapache/queue.v1
+go get -u gopkg.in/ini.v1
+go get -u gopkg.in/mgo.v2
+go get -u gopkg.in/vmihailenco/msgpack.v2
+```
 
 ## Run Example Server & Client
 1. Get MongoDB or Redis Running
 2. Copy goworld.ini.sample to goworld.ini, and configure accordingly
-    > `cp goworld.ini.sample goworld.ini`
-
+    ```bash
+    cp goworld.ini.sample goworld.ini
+    ```
 3. Build and run dispatcher:
-    > `make dispatcher`
-    >
-    > `components/dispatcher/dispatcher`
+    ```bash
+    make dispatcher
+    components/dispatcher/dispatcher
+    ```
 
 4. Build and run gate:
-    > `make gate`
-    >
-    > `components/gate/gate -gid 1`
+    ```bash
+    make gate
+    components/gate/gate -gid 1
+    ```
 
 5. Build and run test_game:
-    > `make test_game`
-    >
-    > `examples/test_game/test_game -sid 1`
+    ```bash
+    make test_game
+    examples/test_game/test_game -sid 1
+    ```
 
 6. Build and run test_client:
-    > `make test_client`
-    >
-    > `examples/test_client/test_client -N 500`
+    ```bash
+    make test_client
+    examples/test_client/test_client -N 500
+    ```
 
 
