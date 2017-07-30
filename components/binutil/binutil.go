@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/xiaonanln/goworld/gwlog"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func SetupPprofServer(ip string, port int) {
@@ -33,12 +34,17 @@ func SetupGWLog(logLevel string, logFile string, logStderr bool) {
 
 	outputWriters := make([]io.Writer, 0, 2)
 	if logFile != "" {
-		f, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-		if err != nil {
-			panic(err)
+		var logFileWriter io.Writer
+		logFileWriter = &lumberjack.Logger{
+			Filename:   logFile,
+			MaxSize:    100, // megabytes
+			MaxBackups: 100,
+			MaxAge:     30, //days
 		}
-		outputWriters = append(outputWriters, f)
+
+		outputWriters = append(outputWriters, logFileWriter)
 	}
+
 	if logStderr {
 		outputWriters = append(outputWriters, os.Stderr)
 	}

@@ -57,6 +57,7 @@ go get -u gopkg.in/eapache/queue.v1
 go get -u gopkg.in/ini.v1
 go get -u gopkg.in/mgo.v2
 go get -u gopkg.in/vmihailenco/msgpack.v2
+go get -u gopkg.in/natefinch/lumberjack.v2
 ```
 
 ## Run Example Server & Client
