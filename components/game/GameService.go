@@ -105,8 +105,8 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleRealMigrate(pkt)
 			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
 				clientid := pkt.ReadClientID()
-				sid := pkt.ReadUint16()
-				gs.HandleNotifyClientConnected(clientid, sid)
+				gid := pkt.ReadUint16()
+				gs.HandleNotifyClientConnected(clientid, gid)
 			} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
 				clientid := pkt.ReadClientID()
 				gs.HandleNotifyClientDisconnected(clientid)
@@ -306,8 +306,8 @@ func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method s
 	entity.OnCall(entityID, method, args, clientid)
 }
 
-func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, sid uint16) {
-	client := entity.MakeGameClient(clientid, sid)
+func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gid uint16) {
+	client := entity.MakeGameClient(clientid, gid)
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleNotifyClientConnected: %s", gs, client)
 	}

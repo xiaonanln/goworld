@@ -43,7 +43,7 @@ func init() {
 
 func parseArgs() {
 	var gameidArg int
-	flag.IntVar(&gameidArg, "sid", 0, "set gameid")
+	flag.IntVar(&gameidArg, "gid", 0, "set gameid")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
 	flag.BoolVar(&restore, "restore", false, "restore from freezed state")

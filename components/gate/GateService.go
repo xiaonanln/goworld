@@ -106,7 +106,7 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 	}
 
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
-		_ = packet.ReadUint16() // sid
+		_ = packet.ReadUint16() // gid
 		clientid := packet.ReadClientID()
 
 		gs.clientProxiesLock.RLock()
