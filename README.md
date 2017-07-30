@@ -11,7 +11,8 @@ _**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written
   * [Features](#features)
   * [Architecture](#architecture)
   * [Introduction](#introduction)
-  * [Get GoWorld](#get_goworld)
+  * [Get GoWorld](#get-goworld)
+  * [Run Example Server & Client](#run-example-server--client)
 ---------------------------------------  
 ## Features
 * **Spaces & Entities**: manage multiple spaces and entities with AOI support
