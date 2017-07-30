@@ -1,4 +1,4 @@
-# GoWorld - game server engine in Golang
+# GoWorld [![GoDoc](https://godoc.org/github.com/xiaonanln/goworld?status.png)](https://godoc.org/github.com/xiaonanln/goworld) [![Build Status](https://api.travis-ci.org/xiaonanln/goworld.svg?branch=master)](https://travis-ci.org/xiaonanln/goworld)
 
 _**Scalable Distributed Game Server Engine with Hot Swapping for MMORPGs Written in Golang**_
 
@@ -50,7 +50,7 @@ go get -u github.com/xiaonanln/goTimer
 go get -u github.com/xiaonanln/typeconv
 go get -u golang.org/x/net/context
 go get -u github.com/Sirupsen/logrus
-go get -u github.com/garyburd/redigo
+go get -u github.com/garyburd/redigo/redis
 go get -u github.com/google/btree
 go get -u github.com/pkg/errors
 go get -u gopkg.in/eapache/queue.v1
