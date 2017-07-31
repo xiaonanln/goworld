@@ -420,13 +420,13 @@ func (p *Packet) setPayloadLenCompressed(plen uint32, compressed bool) {
 	}
 }
 
-func (p *Packet) compress(cw *flate.Writer) {
-	if p.isCompressed() {
-		return
-	}
+func (p *Packet) requireCompress() bool {
+	return !p.isCompressed() && p.GetPayloadLen() >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD
+}
 
-	if p.GetPayloadLen() < consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD {
-		return // payload is too short, compress is ignored
+func (p *Packet) compress(cw *flate.Writer) {
+	if !p.requireCompress() {
+		return
 	}
 
 	payloadCap := p.PayloadCap()

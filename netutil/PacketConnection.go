@@ -137,19 +137,20 @@ func (pc *PacketConnection) Flush() (err error) {
 	defer op.Finish(time.Millisecond * 100)
 
 	var cw *flate.Writer
-	if pc.compressed {
-		_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
-		if _cw != nil {
-			cw = _cw.(*flate.Writer)
-			defer compressWritersPool.Put(cw)
-		} else {
-			gwlog.Warn("Fail to get compressor, packet is not compressed")
-		}
-	}
 
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
+		if cw == nil && pc.compressed && packet.requireCompress() {
+			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
+			if _cw != nil {
+				cw = _cw.(*flate.Writer)
+				defer compressWritersPool.Put(cw)
+			} else {
+				gwlog.Warn("Fail to get compressor, packet is not compressed")
+			}
+		}
+
 		if cw != nil {
 			packet.compress(cw)
 		}
@@ -165,6 +166,16 @@ func (pc *PacketConnection) Flush() (err error) {
 
 send_packets_loop:
 	for _, packet := range packets {
+		if cw == nil && pc.compressed && packet.requireCompress() {
+			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
+			if _cw != nil {
+				cw = _cw.(*flate.Writer)
+				defer compressWritersPool.Put(cw)
+			} else {
+				gwlog.Warn("Fail to get compressor, packet is not compressed")
+			}
+		}
+
 		if cw != nil {
 			packet.compress(cw)
 		}
