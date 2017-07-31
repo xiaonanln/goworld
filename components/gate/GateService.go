@@ -207,6 +207,38 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 	gs.filterTreesLock.Unlock()
 }
 
+func (gs *GateService) handleDispatcherClientBeforeFlush() {
+	gs.clientProxiesLock.RLock()
+	//type t struct {
+	//	clientid       common.ClientID
+	//	clientSyncInfo *clientSyncInfo
+	//}
+	clientSyncInfos := make([]*clientSyncInfo, 0, len(gs.clientProxies)/2)
+
+	for _, cp := range gs.clientProxies {
+		if cp.clientSyncInfo.IsEmpty() {
+			continue
+		}
+		clientSyncInfos = append(clientSyncInfos, &cp.clientSyncInfo)
+	}
+
+	gs.clientProxiesLock.RUnlock()
+
+	if len(clientSyncInfos) > 0 {
+		// all client sync infos collected, send to dispatcher in one packet
+		packet := netutil.NewPacket()
+		for _, info := range clientSyncInfos {
+			packet.AppendEntityID(info.EntityID)
+			packet.AppendFloat32(info.X)
+			packet.AppendFloat32(info.Y)
+			packet.AppendFloat32(info.Z)
+			packet.AppendFloat32(info.Yaw)
+		}
+
+		dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+	}
+}
+
 type packetQueueItem struct { // packet queue from dispatcher client
 	msgtype proto.MsgType_t
 	packet  *netutil.Packet

@@ -110,12 +110,12 @@ func (client *GameClient) SendNotifyListAttrAppend(entityID common.EntityID, pat
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrAppendOnClient(client.gateid, client.clientid, entityID, path, val)
 }
 
-func (client *GameClient) UpdatePositionOnClient(entityID common.EntityID, position Position) {
+func (client *GameClient) SyncPositionOnClient(entityID common.EntityID, position Position) {
 	if client == nil {
 		return
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendUpdatePositionOnClient(client.gateid, client.clientid, entityID,
+	dispatcher_client.GetDispatcherClientForSend().SendSyncPositionOnClient(client.gateid, client.clientid, entityID,
 		float32(position.X), float32(position.Y), float32(position.Z))
 }
 

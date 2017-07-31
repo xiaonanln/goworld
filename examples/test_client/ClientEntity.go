@@ -225,10 +225,14 @@ func (e *ClientEntity) DoEnterRandomSpace() {
 		curSpaceKind = e.owner.currentSpace.Kind
 	}
 
-	spaceKind := SPACE_KIND_MIN + rand.Intn(SPACE_KIND_MAX-SPACE_KIND_MIN+1)
+	spaceKindMax := N / 100
+	if spaceKindMax < 2 {
+		spaceKindMax = 2 // use at least 2 space
+	}
+	spaceKind := 1 + rand.Intn(spaceKindMax)
 	for spaceKind == curSpaceKind {
-		if spaceKind == SPACE_KIND_MAX {
-			spaceKind = SPACE_KIND_MIN
+		if spaceKind == spaceKindMax {
+			spaceKind = 1
 		} else {
 			spaceKind += 1
 		}

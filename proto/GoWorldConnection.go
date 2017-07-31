@@ -148,9 +148,9 @@ func (gwc *GoWorldConnection) SendCreateEntityOnClient(gid uint16, clientid Clie
 	return err
 }
 
-func (gwc *GoWorldConnection) SendUpdatePositionYaw(entityID EntityID, x, y, z float32, yaw float32) error {
+func (gwc *GoWorldConnection) SendSyncPositionYawFromClient(entityID EntityID, x, y, z float32, yaw float32) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_UPDATE_POSITION_YAW_FROM_CLIENT)
+	packet.AppendUint16(MT_SYNC_POSITION_YAW_FROM_CLIENT)
 	packet.AppendEntityID(entityID)
 	packet.AppendFloat32(x)
 	packet.AppendFloat32(y)
@@ -161,7 +161,7 @@ func (gwc *GoWorldConnection) SendUpdatePositionYaw(entityID EntityID, x, y, z f
 	return err
 }
 
-func (gwc *GoWorldConnection) SendUpdatePositionOnClient(gid uint16, clientid ClientID, entityID EntityID, x, y, z float32) error {
+func (gwc *GoWorldConnection) SendSyncPositionOnClient(gid uint16, clientid ClientID, entityID EntityID, x, y, z float32) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_UPDATE_POSITION_ON_CLIENT)
 	packet.AppendUint16(gid)

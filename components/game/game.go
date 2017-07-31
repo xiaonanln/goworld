@@ -199,6 +199,10 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
 }
 
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
+
+}
+
 func GetGameID() uint16 {
 	return gameid
 }

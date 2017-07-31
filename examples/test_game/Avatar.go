@@ -111,7 +111,7 @@ func (a *Avatar) DoEnterSpace(kind int, spaceID common.EntityID) {
 }
 
 func (a *Avatar) randomPosition() entity.Position {
-	minCoord, maxCoord := -200, 200
+	minCoord, maxCoord := -400, 400
 	return entity.Position{
 		X: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
 		Y: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),

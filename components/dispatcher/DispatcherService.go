@@ -421,17 +421,9 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	}
 }
 
-func (service *DispatcherService) HandleUpdatePositionYawFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	entityID := pkt.ReadEntityID()
-
-	entityDispatchInfo := service.getEntityDispatcherInfoForRead(entityID)
-	if entityDispatchInfo == nil {
-		gwlog.Error("%s.HandleCallEntityMethodFromClient: entity %s is not found: %v", service, entityID, service.entityDispatchInfos)
-		return
-	}
-
-	service.dispatcherClientOfGame(entityDispatchInfo.gameid).SendPacket(pkt)
-	defer entityDispatchInfo.RUnlock()
+func (service *DispatcherService) HandleSyncPositionYawFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	// This sync packet contains position-yaw of multiple entities. Cache the packet to be send before flush ?
+	gwlog.Info("HandleSyncPositionYawFromClient: payload len %d", pkt.GetPayloadLen())
 }
 
 func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
