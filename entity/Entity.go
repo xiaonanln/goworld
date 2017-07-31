@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 
 	"time"
@@ -1015,9 +1016,14 @@ func (e *Entity) setPosition(pos Position, fromClient bool) {
 		e.client.UpdatePositionOnClient(e.ID, pos)
 	}
 
-	for neighbor := range e.Neighbors() {
-		neighbor.client.UpdatePositionOnClient(e.ID, pos)
+	neighborCount := 0
+	for neighbor := range e.aoi.neighbors {
+		if neighbor.client != nil {
+			neighbor.client.UpdatePositionOnClient(e.ID, pos)
+			neighborCount += 1
+		}
 	}
+	fmt.Fprintf(os.Stderr, "%d!", neighborCount)
 }
 
 func (e *Entity) GetYaw() Yaw {

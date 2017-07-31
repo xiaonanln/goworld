@@ -21,19 +21,19 @@ rungate: gate
 	components/gate/gate -gid 1
 
 rungame: test_game
-	examples/test_game/test_game -sid=1
+	examples/test_game/test_game -gid=1
 
 restoregame:
-	examples/test_game/test_game -sid=1 -log info -restore &
-	examples/test_game/test_game -sid=2 -log info -restore &
+	examples/test_game/test_game -gid=1 -log info -restore &
+	examples/test_game/test_game -gid=2 -log info -restore &
 
 runclient: test_client
 	examples/test_client/test_client -N $(N)
 
 start: dispatcher gate test_game
 	components/dispatcher/dispatcher &
-	examples/test_game/test_game -sid=1 -log info &
-	examples/test_game/test_game -sid=2 -log info &
+	examples/test_game/test_game -gid=1 -log info &
+	examples/test_game/test_game -gid=2 -log info &
 	components/gate/gate -gid 1 -log info &
 	components/gate/gate -gid 2 -log info &
 
