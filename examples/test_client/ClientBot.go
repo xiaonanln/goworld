@@ -110,7 +110,7 @@ func (bot *ClientBot) loop() {
 
 		if bot.player != nil && bot.player.TypeName == "Avatar" {
 			now := time.Now()
-			if now.Sub(bot.syncPosTime) > time.Millisecond*200 {
+			if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
 				player := bot.player
 				bot.conn.SendUpdatePositionYaw(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
 				bot.syncPosTime = now
