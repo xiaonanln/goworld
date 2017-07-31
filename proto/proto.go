@@ -61,6 +61,10 @@ const ( // Message types that should be handled by GateService
 	MT_GATE_SERVICE_MSG_TYPE_STOP
 )
 
+const (
+	CLIENT_SYNC_INFO_SIZE_PER_ENTITY = 16
+)
+
 //const ( // Message types that can be received from client
 //
 //)

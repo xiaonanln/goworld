@@ -102,16 +102,8 @@ func (cp *ClientProxy) serve() {
 }
 
 func (cp *ClientProxy) handleSyncPositionYawFromClient(pkt *netutil.Packet) {
-	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	eid := pkt.ReadEntityID()
-	x := pkt.ReadFloat32()
-	y := pkt.ReadFloat32()
-	z := pkt.ReadFloat32()
-	yaw := pkt.ReadFloat32()
-
-	cp.clientSyncInfo = clientSyncInfo{
-		eid, x, y, z, yaw,
-	}
+	// client syncing entity info, cache the packet for further process
+	gateService.handleSyncPositionYawFromClient(pkt)
 }
 
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {

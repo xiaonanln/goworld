@@ -28,11 +28,27 @@ func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *Dispatc
 	//	conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
 	//}
 	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn), false)
-	gwc.SetAutoFlush(time.Millisecond * 10)
-	return &DispatcherClientProxy{
+
+	dcp := &DispatcherClientProxy{
 		GoWorldConnection: gwc,
 		owner:             owner,
 	}
+	return dcp
+}
+
+func (dcp *DispatcherClientProxy) startAutoFlush() {
+	go func() {
+		gwc := dcp.GoWorldConnection
+		defer gwlog.Debug("%s: auto flush routine quited", gwc)
+		for !gwc.IsClosed() {
+			time.Sleep(time.Millisecond * 10)
+			dcp.beforeFlush()
+			err := gwc.Flush()
+			if err != nil {
+				break
+			}
+		}
+	}()
 }
 
 func (dcp *DispatcherClientProxy) serve() {
@@ -104,6 +120,7 @@ func (dcp *DispatcherClientProxy) serve() {
 				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 			}
 			dcp.gameid = gameid
+			dcp.startAutoFlush()
 			dcp.owner.HandleSetGameID(dcp, pkt, gameid, isReconnect, isRestore)
 		} else if msgtype == proto.MT_SET_GATE_ID {
 			// this is a gate
@@ -115,6 +132,7 @@ func (dcp *DispatcherClientProxy) serve() {
 				gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 			}
 			dcp.gateid = gateid
+			dcp.startAutoFlush()
 			dcp.owner.HandleSetGateID(dcp, pkt, gateid)
 		} else if msgtype == proto.MT_START_FREEZE_GAME {
 			// freeze the game
@@ -137,5 +155,20 @@ func (dcp *DispatcherClientProxy) String() string {
 		return fmt.Sprintf("DispatcherClientProxy<gate%d|%s>", dcp.gateid, dcp.RemoteAddr())
 	} else {
 		return fmt.Sprintf("DispatcherClientProxy<%s>", dcp.RemoteAddr())
+	}
+}
+
+func (dcp *DispatcherClientProxy) beforeFlush() {
+	// Collect all entity sync infos to this game before flush
+	if dcp.gameid > 0 {
+		entitySyncInfos := dcp.owner.popEntitySyncInfosToGame(dcp.gameid)
+		if len(entitySyncInfos) > 0 {
+			// send the entity sync infos to this game
+			packet := netutil.NewPacket()
+			packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+			packet.AppendBytes(entitySyncInfos)
+			dcp.SendPacket(packet)
+			packet.Release()
+		}
 	}
 }

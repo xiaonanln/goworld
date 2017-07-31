@@ -70,6 +70,9 @@ type DispatcherService struct {
 
 	clientsLock        sync.RWMutex
 	targetGameOfClient map[common.ClientID]uint16
+
+	entitySyncInfosToGameLock sync.Mutex
+	entitySyncInfosToGame     [][]byte // cache entity sync infos to gates
 }
 
 func newDispatcherService() *DispatcherService {
@@ -85,6 +88,8 @@ func newDispatcherService() *DispatcherService {
 		entityDispatchInfos: map[common.EntityID]*EntityDispatchInfo{},
 		registeredServices:  map[string]entity.EntityIDSet{},
 		targetGameOfClient:  map[common.ClientID]uint16{},
+
+		entitySyncInfosToGame: make([][]byte, gameCount),
 	}
 }
 
@@ -385,7 +390,6 @@ func (service *DispatcherService) handleServiceDown(serviceName string, eid comm
 	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
 	pkt.AppendEntityID(eid)
 	pkt.AppendVarStr(serviceName)
-
 	service.broadcastToGameClients(pkt)
 	pkt.Release()
 }
@@ -422,8 +426,31 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 }
 
 func (service *DispatcherService) HandleSyncPositionYawFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
-	// This sync packet contains position-yaw of multiple entities. Cache the packet to be send before flush ?
-	gwlog.Info("HandleSyncPositionYawFromClient: payload len %d", pkt.GetPayloadLen())
+	// This sync packet contains position-yaw of multiple entities from a gate. Cache the packet to be send before flush?
+	payload := pkt.UnreadPayload()
+	service.entitySyncInfosToGameLock.Lock()
+
+	for i := 0; i < len(payload); i += (proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH) {
+		eid := common.EntityID(payload[i : i+common.ENTITYID_LENGTH]) // the first bytes of each entry is the EntityID
+
+		entityDispatchInfo := service.getEntityDispatcherInfoForRead(eid)
+		gameid := entityDispatchInfo.gameid
+		entityDispatchInfo.RUnlock()
+
+		// put this sync info to the pending queue of target game
+		// concat to the end of queue
+		service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
+	}
+
+	service.entitySyncInfosToGameLock.Unlock()
+}
+
+func (service *DispatcherService) popEntitySyncInfosToGame(gameid uint16) []byte {
+	service.entitySyncInfosToGameLock.Lock()
+	entitySyncInfos := service.entitySyncInfosToGame[gameid-1]
+	service.entitySyncInfosToGame[gameid-1] = make([]byte, 0, len(entitySyncInfos))
+	service.entitySyncInfosToGameLock.Unlock()
+	return entitySyncInfos
 }
 
 func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {

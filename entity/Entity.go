@@ -2,7 +2,6 @@ package entity
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 
 	"time"
@@ -66,7 +65,16 @@ type Entity struct {
 	}
 
 	filterProps map[string]string
+
+	syncInfoFlag syncInfoFlag
 }
+
+type syncInfoFlag int
+
+const (
+	sifSyncOwnClient syncInfoFlag = 1 << iota
+	sifSyncNeighborClients
+)
 
 // Functions declared by IEntity can be override in Entity subclasses
 type IEntity interface {
@@ -377,9 +385,9 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 	callEntity(serviceEid, method, args)
 }
 
-func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw, clientid ClientID) {
+func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
 	//gwlog.Info("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
-	e.setPosition(Position{x, y, z}, true)
+	e.setPositionYaw(Position{x, y, z}, yaw, true)
 }
 
 func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
@@ -999,10 +1007,10 @@ func (e *Entity) GetPosition() Position {
 }
 
 func (e *Entity) SetPosition(pos Position) {
-	e.setPosition(pos, false)
+	e.setPositionYaw(pos, e.yaw, false)
 }
 
-func (e *Entity) setPosition(pos Position, fromClient bool) {
+func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 	space := e.Space
 	if space == nil {
 		gwlog.Warn("%s.SetPosition(%s): space is nil", e, pos)
@@ -1011,19 +1019,14 @@ func (e *Entity) setPosition(pos Position, fromClient bool) {
 
 	space.move(e, pos)
 	pos = e.aoi.pos
+	e.yaw = yaw
 
+	// mark the entity as needing sync
+	// Real sync packets will be sent before flushing dispatcher client
+	e.syncInfoFlag |= sifSyncNeighborClients
 	if !fromClient {
-		e.client.SyncPositionOnClient(e.ID, pos)
+		e.syncInfoFlag |= sifSyncOwnClient
 	}
-
-	neighborCount := 0
-	for neighbor := range e.aoi.neighbors {
-		if neighbor.client != nil {
-			neighbor.client.SyncPositionOnClient(e.ID, pos)
-			neighborCount += 1
-		}
-	}
-	fmt.Fprintf(os.Stderr, "%d!", neighborCount)
 }
 
 func (e *Entity) GetYaw() Yaw {

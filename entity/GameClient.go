@@ -110,7 +110,7 @@ func (client *GameClient) SendNotifyListAttrAppend(entityID common.EntityID, pat
 	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrAppendOnClient(client.gateid, client.clientid, entityID, path, val)
 }
 
-func (client *GameClient) SyncPositionOnClient(entityID common.EntityID, position Position) {
+func (client *GameClient) SyncPositionYawOnClient(entityID common.EntityID, position Position, yaw Yaw) {
 	if client == nil {
 		return
 	}

@@ -357,7 +357,7 @@ func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 	e.onCallFromRemote(method, args, clientID)
 }
 
-func OnSyncPositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw, clientid ClientID) {
+func OnSyncPositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw) {
 	e := entityManager.get(eid)
 	if e == nil {
 		// entity not found, may destroyed before call
@@ -365,7 +365,7 @@ func OnSyncPositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw, clientid 
 		return
 	}
 
-	e.syncPositionYawFromClient(x, y, z, yaw, clientid)
+	e.syncPositionYawFromClient(x, y, z, yaw)
 }
 
 func GetEntity(id EntityID) *Entity {

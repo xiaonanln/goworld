@@ -200,7 +200,8 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 }
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
-
+	// collect all sync infos from entities and group them by target gates
+	entity.CollectEntitySyncInfos()
 }
 
 func GetGameID() uint16 {

@@ -162,6 +162,18 @@ func (p *Packet) Payload() []byte {
 	return p.bytes[PREPAYLOAD_SIZE : PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }
 
+func (p *Packet) UnreadPayload() []byte {
+	pos := p.readCursor + PREPAYLOAD_SIZE
+	payloadEnd := PREPAYLOAD_SIZE + p.GetPayloadLen()
+	return p.bytes[pos:payloadEnd]
+}
+
+func (p *Packet) HasUnreadPayload() bool {
+	pos := p.readCursor + PREPAYLOAD_SIZE
+	plen := p.GetPayloadLen()
+	return pos < plen
+}
+
 func (p *Packet) data() []byte {
 	return p.bytes[0 : PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }

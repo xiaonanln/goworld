@@ -290,13 +290,24 @@ func (gs *GameService) HandleStartFreezeGameAck() {
 }
 
 func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
-	eid := pkt.ReadEntityID()
-	x := pkt.ReadUint32()
-	y := pkt.ReadUint32()
-	z := pkt.ReadUint32()
-	yaw := pkt.ReadUint32()
-	clientid := pkt.ReadClientID()
-	entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw), clientid)
+	//gwlog.Info("HandleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
+	payload := pkt.UnreadPayload()
+	payloadLen := len(payload)
+	for i := 0; i < payloadLen; i += proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH {
+		eid := common.EntityID(payload[i : i+common.ENTITYID_LENGTH])
+		x := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH : i+common.ENTITYID_LENGTH+4])
+		y := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+4 : i+common.ENTITYID_LENGTH+8])
+		z := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+8 : i+common.ENTITYID_LENGTH+12])
+		yaw := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+12 : i+common.ENTITYID_LENGTH+16])
+		entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw))
+	}
+	//eid := pkt.ReadEntityID()
+	//x := pkt.ReadUint32()
+	//y := pkt.ReadUint32()
+	//z := pkt.ReadUint32()
+	//yaw := pkt.ReadUint32()
+	//clientid := pkt.ReadClientID()
+	//entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw), clientid)
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {

@@ -30,6 +30,9 @@ type GateService struct {
 	filterTreesLock sync.Mutex
 	filterTrees     map[string]*FilterTree
 
+	pendingSyncPackets     []*netutil.Packet
+	pendingSyncPacketsLock sync.Mutex
+
 	terminating xnsyncutil.AtomicBool
 	terminated  *xnsyncutil.OneTimeCond
 }
@@ -37,10 +40,11 @@ type GateService struct {
 func newGateService() *GateService {
 	return &GateService{
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
-		clientProxies: map[common.ClientID]*ClientProxy{},
-		packetQueue:   xnsyncutil.NewSyncQueue(),
-		filterTrees:   map[string]*FilterTree{},
-		terminated:    xnsyncutil.NewOneTimeCond(),
+		clientProxies:      map[common.ClientID]*ClientProxy{},
+		packetQueue:        xnsyncutil.NewSyncQueue(),
+		filterTrees:        map[string]*FilterTree{},
+		pendingSyncPackets: []*netutil.Packet{},
+		terminated:         xnsyncutil.NewOneTimeCond(),
 	}
 }
 
@@ -207,36 +211,42 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 	gs.filterTreesLock.Unlock()
 }
 
+func (gs *GateService) handleSyncPositionYawFromClient(packet *netutil.Packet) {
+	packet.AddRefCount(1)
+	gs.pendingSyncPacketsLock.Lock()
+	gs.pendingSyncPackets = append(gs.pendingSyncPackets, packet)
+	gs.pendingSyncPacketsLock.Unlock()
+	//eid := packet.ReadEntityID()
+	//x := packet.ReadFloat32()
+	//y := packet.ReadFloat32()
+	//z := packet.ReadFloat32()
+	//yaw := packet.ReadFloat32()
+}
+
 func (gs *GateService) handleDispatcherClientBeforeFlush() {
-	gs.clientProxiesLock.RLock()
-	//type t struct {
-	//	clientid       common.ClientID
-	//	clientSyncInfo *clientSyncInfo
-	//}
-	clientSyncInfos := make([]*clientSyncInfo, 0, len(gs.clientProxies)/2)
+	gs.pendingSyncPacketsLock.Lock()
+	pendingSyncPackets := gs.pendingSyncPackets
+	gs.pendingSyncPackets = make([]*netutil.Packet, 0, len(pendingSyncPackets))
+	gs.pendingSyncPacketsLock.Unlock()
+	// merge all client sync packets, and send in one packet (to reduce dispatcher overhead)
 
-	for _, cp := range gs.clientProxies {
-		if cp.clientSyncInfo.IsEmpty() {
-			continue
-		}
-		clientSyncInfos = append(clientSyncInfos, &cp.clientSyncInfo)
+	if len(pendingSyncPackets) == 0 {
+		return
 	}
 
-	gs.clientProxiesLock.RUnlock()
-
-	if len(clientSyncInfos) > 0 {
-		// all client sync infos collected, send to dispatcher in one packet
-		packet := netutil.NewPacket()
-		for _, info := range clientSyncInfos {
-			packet.AppendEntityID(info.EntityID)
-			packet.AppendFloat32(info.X)
-			packet.AppendFloat32(info.Y)
-			packet.AppendFloat32(info.Z)
-			packet.AppendFloat32(info.Yaw)
-		}
-
-		dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+	packet := pendingSyncPackets[0] // use the first packet for sending
+	if len(packet.UnreadPayload()) != common.ENTITYID_LENGTH+proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY {
+		gwlog.Panicf("%s.handleDispatcherClientBeforeFlush: entity sync info size should be %d, but received %d", gs, proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
 	}
+
+	//gwlog.Info("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))
+	for _, syncPkt := range pendingSyncPackets[1:] { // merge other packets to the first packet
+		//gwlog.Info("sycn packet unread %d", len(syncPkt.UnreadPayload()))
+		packet.AppendBytes(syncPkt.UnreadPayload())
+		syncPkt.Release()
+	}
+	dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+	packet.Release()
 }
 
 type packetQueueItem struct { // packet queue from dispatcher client
