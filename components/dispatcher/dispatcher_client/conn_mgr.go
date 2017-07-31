@@ -76,6 +76,7 @@ type IDispatcherClientDelegate interface {
 	OnDispatcherClientConnect(dispatcherClient *DispatcherClient, isReconnect bool)
 	HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet)
 	HandleDispatcherClientDisconnect()
+	HandleDispatcherClientBeforeFlush()
 	//HandleDeclareService(entityID common.EntityID, serviceName string)
 	//HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }

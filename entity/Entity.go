@@ -377,8 +377,8 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 	callEntity(serviceEid, method, args)
 }
 
-func (e *Entity) updatePositionYawFromClient(x, y, z Coord, yaw Yaw, clientid ClientID) {
-	//gwlog.Info("%s.updatePositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
+func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw, clientid ClientID) {
+	//gwlog.Info("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
 	e.setPosition(Position{x, y, z}, true)
 }
 
@@ -1013,13 +1013,13 @@ func (e *Entity) setPosition(pos Position, fromClient bool) {
 	pos = e.aoi.pos
 
 	if !fromClient {
-		e.client.UpdatePositionOnClient(e.ID, pos)
+		e.client.SyncPositionOnClient(e.ID, pos)
 	}
 
 	neighborCount := 0
 	for neighbor := range e.aoi.neighbors {
 		if neighbor.client != nil {
-			neighbor.client.UpdatePositionOnClient(e.ID, pos)
+			neighbor.client.SyncPositionOnClient(e.ID, pos)
 			neighborCount += 1
 		}
 	}

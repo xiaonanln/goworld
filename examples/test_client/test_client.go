@@ -13,11 +13,6 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
-const (
-	SPACE_KIND_MIN = 1
-	SPACE_KIND_MAX = 100
-)
-
 var (
 	quiet      bool
 	configFile string

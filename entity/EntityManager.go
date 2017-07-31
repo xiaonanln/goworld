@@ -357,15 +357,15 @@ func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 	e.onCallFromRemote(method, args, clientID)
 }
 
-func OnUpdatePositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw, clientid ClientID) {
+func OnSyncPositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw, clientid ClientID) {
 	e := entityManager.get(eid)
 	if e == nil {
 		// entity not found, may destroyed before call
-		gwlog.Error("OnUpdatePositionYawFromClient: entity %s is not found", eid)
+		gwlog.Error("OnSyncPositionYawFromClient: entity %s is not found", eid)
 		return
 	}
 
-	e.updatePositionYawFromClient(x, y, z, yaw, clientid)
+	e.syncPositionYawFromClient(x, y, z, yaw, clientid)
 }
 
 func GetEntity(id EntityID) *Entity {

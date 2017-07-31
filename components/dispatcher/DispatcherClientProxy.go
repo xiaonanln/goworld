@@ -62,8 +62,8 @@ func (dcp *DispatcherClientProxy) serve() {
 		if consts.DEBUG_PACKETS {
 			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
-		if msgtype == proto.MT_UPDATE_POSITION_YAW_FROM_CLIENT {
-			dcp.owner.HandleUpdatePositionYawFromClient(dcp, pkt)
+		if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
+			dcp.owner.HandleSyncPositionYawFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			dcp.owner.HandleCallEntityMethod(dcp, pkt)
 		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {

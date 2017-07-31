@@ -112,7 +112,7 @@ func (bot *ClientBot) loop() {
 			now := time.Now()
 			if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
 				player := bot.player
-				bot.conn.SendUpdatePositionYaw(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+				bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
 				bot.syncPosTime = now
 			}
 		}

@@ -63,8 +63,8 @@ func main() {
 	binutil.SetupGWLog(logLevel, gateConfig.LogFile, gateConfig.LogStderr)
 
 	binutil.SetupPprofServer(gateConfig.PProfIp, gateConfig.PProfPort)
-	dispatcher_client.Initialize(&dispatcherClientDelegate{})
 	gateService = newGateService()
+	dispatcher_client.Initialize(&dispatcherClientDelegate{})
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
 }
@@ -118,6 +118,10 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	// if gate is disconnected from dispatcher, we just quit
 	gwlog.Info("Disconnected from dispatcher, gate has to quit.")
 	signalChan <- syscall.SIGTERM // let gate quit
+}
+
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
+	gateService.handleDispatcherClientBeforeFlush()
 }
 
 func GetGateID() uint16 {

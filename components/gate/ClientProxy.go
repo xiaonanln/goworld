@@ -18,10 +18,21 @@ import (
 	"github.com/xiaonanln/goworld/proto"
 )
 
+type clientSyncInfo struct {
+	EntityID common.EntityID
+	X, Y, Z  float32
+	Yaw      float32
+}
+
+func (info *clientSyncInfo) IsEmpty() bool {
+	return info.EntityID == ""
+}
+
 type ClientProxy struct {
 	*proto.GoWorldConnection
-	clientid    common.ClientID
-	filterProps map[string]string
+	clientid       common.ClientID
+	filterProps    map[string]string
+	clientSyncInfo clientSyncInfo
 }
 
 func newClientProxy(netConn net.Conn, cfg *config.GateConfig) *ClientProxy {
@@ -68,8 +79,8 @@ func (cp *ClientProxy) serve() {
 		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
-			if msgtype == proto.MT_UPDATE_POSITION_YAW_FROM_CLIENT {
-				cp.handleUpdatePositionYawFromClient(pkt)
+			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
+				cp.handleSyncPositionYawFromClient(pkt)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				cp.handleCallEntityMethodFromClient(pkt)
 			} else {
@@ -90,9 +101,17 @@ func (cp *ClientProxy) serve() {
 	}
 }
 
-func (cp *ClientProxy) handleUpdatePositionYawFromClient(pkt *netutil.Packet) {
+func (cp *ClientProxy) handleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	dispatcher_client.GetDispatcherClientForSend().SendPacket(pkt)
+	eid := pkt.ReadEntityID()
+	x := pkt.ReadFloat32()
+	y := pkt.ReadFloat32()
+	z := pkt.ReadFloat32()
+	yaw := pkt.ReadFloat32()
+
+	cp.clientSyncInfo = clientSyncInfo{
+		eid, x, y, z, yaw,
+	}
 }
 
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {

@@ -86,8 +86,8 @@ func (gs *GameService) serveRoutine() {
 		select {
 		case item := <-gs.packetQueue:
 			msgtype, pkt := item.msgtype, item.packet
-			if msgtype == proto.MT_UPDATE_POSITION_YAW_FROM_CLIENT {
-				gs.HandleUpdatePositionYawFromClient(pkt)
+			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
+				gs.HandleSyncPositionYawFromClient(pkt)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
@@ -289,14 +289,14 @@ func (gs *GameService) HandleStartFreezeGameAck() {
 	gs.runState.Store(rsFreezing)
 }
 
-func (gs *GameService) HandleUpdatePositionYawFromClient(pkt *netutil.Packet) {
+func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
 	x := pkt.ReadUint32()
 	y := pkt.ReadUint32()
 	z := pkt.ReadUint32()
 	yaw := pkt.ReadUint32()
 	clientid := pkt.ReadClientID()
-	entity.OnUpdatePositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw), clientid)
+	entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw), clientid)
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
