@@ -83,7 +83,7 @@ func (dcp *DispatcherClientProxy) serve() {
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
 			dcp.owner.HandleCallEntityMethod(dcp, pkt)
 		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
-			dcp.owner.HandleDoSomethingOnSpecifiedClient(dcp, pkt) // DATA RACE can happen here, but it's OK
+			dcp.owner.HandleDoSomethingOnSpecifiedClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {

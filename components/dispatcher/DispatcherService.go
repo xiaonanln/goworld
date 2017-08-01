@@ -258,7 +258,7 @@ func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *Dispatc
 func (service *DispatcherService) chooseGameDispatcherClient() *DispatcherClientProxy {
 	index := atomic.LoadInt64(&service.chooseClientIndex)
 	client := service.gameClients[index]
-	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.gameClients))) // DATA RACE can happen here, but it's OK
+	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.gameClients)))
 	return client
 }
 
@@ -484,7 +484,7 @@ func (service *DispatcherService) HandleCallEntityMethodFromClient(dcp *Dispatch
 
 }
 
-func (service DispatcherService) HandleDoSomethingOnSpecifiedClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+func (service *DispatcherService) HandleDoSomethingOnSpecifiedClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	gid := pkt.ReadUint16()
 	service.dispatcherClientOfGate(gid).SendPacket(pkt)
 }
