@@ -235,8 +235,8 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 	}
 
 	packet := pendingSyncPackets[0] // use the first packet for sending
-	if len(packet.UnreadPayload()) != common.ENTITYID_LENGTH+proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY {
-		gwlog.Panicf("%s.handleDispatcherClientBeforeFlush: entity sync info size should be %d, but received %d", gs, proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
+	if len(packet.UnreadPayload()) != common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY {
+		gwlog.Panicf("%s.handleDispatcherClientBeforeFlush: entity sync info size should be %d, but received %d", gs, proto.SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
 	}
 
 	//gwlog.Info("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))

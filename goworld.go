@@ -105,3 +105,6 @@ func ListAttr() *entity.ListAttr {
 func RegisterSpace(spacePtr entity.ISpace) {
 	entity.RegisterSpace(spacePtr)
 }
+
+// Get all entities as an EntityMap (do not modify it!)
+var Entities = entity.Entities

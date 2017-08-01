@@ -1,5 +1,11 @@
 package proto
 
+import (
+	"unsafe"
+
+	"github.com/xiaonanln/goworld/gwlog"
+)
+
 var (
 	msgTypeToString = map[int]string{}
 )
@@ -62,8 +68,19 @@ const ( // Message types that should be handled by GateService
 )
 
 const (
-	CLIENT_SYNC_INFO_SIZE_PER_ENTITY = 16
+	SYNC_INFO_SIZE_PER_ENTITY = 16
 )
+
+type EntitySyncInfo struct {
+	X, Y, Z float32
+	Yaw     float32
+}
+
+func init() {
+	if unsafe.Sizeof(EntitySyncInfo{}) != SYNC_INFO_SIZE_PER_ENTITY {
+		gwlog.Fatal("Wrong type defintion for EntitySyncInfo: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfo{}), SYNC_INFO_SIZE_PER_ENTITY)
+	}
+}
 
 //const ( // Message types that can be received from client
 //

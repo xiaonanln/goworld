@@ -494,3 +494,7 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 
 	return nil
 }
+
+func Entities() EntityMap {
+	return entityManager.entities
+}

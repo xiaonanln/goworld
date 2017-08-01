@@ -1029,6 +1029,23 @@ func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 	}
 }
 
+func CollectEntitySyncInfos() {
+	for eid, e := range entityManager.entities {
+		var syncInfoFlag syncInfoFlag
+
+		syncInfoFlag:=e.syncInfoFlag
+		if syncInfoFlag == 0 {
+			continue
+		}
+
+		e.syncInfoFlag = 0
+		if syncInfoFlag &
+		if syncInfoFlag & sifSyncNeighborClients {
+
+		}
+	}
+}
+
 func (e *Entity) GetYaw() Yaw {
 	return e.yaw
 }

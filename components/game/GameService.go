@@ -293,7 +293,7 @@ func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	//gwlog.Info("HandleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
 	payload := pkt.UnreadPayload()
 	payloadLen := len(payload)
-	for i := 0; i < payloadLen; i += proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH {
+	for i := 0; i < payloadLen; i += proto.SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH {
 		eid := common.EntityID(payload[i : i+common.ENTITYID_LENGTH])
 		x := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH : i+common.ENTITYID_LENGTH+4])
 		y := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+4 : i+common.ENTITYID_LENGTH+8])

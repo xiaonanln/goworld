@@ -430,7 +430,7 @@ func (service *DispatcherService) HandleSyncPositionYawFromClient(dcp *Dispatche
 	payload := pkt.UnreadPayload()
 	service.entitySyncInfosToGameLock.Lock()
 
-	for i := 0; i < len(payload); i += (proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH) {
+	for i := 0; i < len(payload); i += (proto.SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH) {
 		eid := common.EntityID(payload[i : i+common.ENTITYID_LENGTH]) // the first bytes of each entry is the EntityID
 
 		entityDispatchInfo := service.getEntityDispatcherInfoForRead(eid)
@@ -439,7 +439,7 @@ func (service *DispatcherService) HandleSyncPositionYawFromClient(dcp *Dispatche
 
 		// put this sync info to the pending queue of target game
 		// concat to the end of queue
-		service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.CLIENT_SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
+		service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
 	}
 
 	service.entitySyncInfosToGameLock.Unlock()
