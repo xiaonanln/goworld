@@ -126,7 +126,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 	bot.Lock()
 	defer bot.Unlock()
 
-	if msgtype != proto.MT_CALL_FILTERED_CLIENTS {
+	if msgtype != proto.MT_CALL_FILTERED_CLIENTS && msgtype != proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
 		_ = packet.ReadUint16()
 		_ = packet.ReadClientID() // TODO: strip these two fields ? seems a little difficult, maybe later.
 	}
@@ -236,10 +236,20 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		y := entity.Coord(packet.ReadFloat32())
 		z := entity.Coord(packet.ReadFloat32())
 		bot.updateEntityPosition(entityID, entity.Position{x, y, z})
-	} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT {
+	} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT { // todo: this msgtype useful ?
 		entityID := packet.ReadEntityID()
 		yaw := entity.Yaw(packet.ReadFloat32())
 		bot.updateEntityYaw(entityID, yaw)
+	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
+		for packet.HasUnreadPayload() {
+			entityID := packet.ReadEntityID()
+			x := entity.Coord(packet.ReadFloat32())
+			y := entity.Coord(packet.ReadFloat32())
+			z := entity.Coord(packet.ReadFloat32())
+			yaw := entity.Yaw(packet.ReadFloat32())
+			bot.updateEntityPosition(entityID, entity.Position{x, y, z})
+			bot.updateEntityYaw(entityID, yaw)
+		}
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
 		if consts.DEBUG_MODE {
@@ -250,7 +260,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Position) {
 	//gwlog.Debug("updateEntityPosition %s => %s", entityID, position)
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("entity %s not found", entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -260,7 +270,7 @@ func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position en
 func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) {
 	//gwlog.Debug("updateEntityYaw %s => %s", entityID, yaw)
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("entity %s not found", entityID)
 		return
 	}
 	entity := bot.entities[entityID]

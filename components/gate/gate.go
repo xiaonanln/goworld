@@ -64,7 +64,7 @@ func main() {
 
 	binutil.SetupPprofServer(gateConfig.PProfIp, gateConfig.PProfPort)
 	gateService = newGateService()
-	dispatcher_client.Initialize(&dispatcherClientDelegate{})
+	dispatcher_client.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
 }

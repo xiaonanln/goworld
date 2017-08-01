@@ -12,7 +12,7 @@ type XZListAOICalculator struct {
 	zSweepList *zAOIList
 }
 
-func newSweepAndPruneAOICalculator() *XZListAOICalculator {
+func newXZListAOICalculator() *XZListAOICalculator {
 	return &XZListAOICalculator{
 		xSweepList: newXAOIList(),
 		zSweepList: newZAOIList(),

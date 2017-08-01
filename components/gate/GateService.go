@@ -130,6 +130,8 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 			// client already disconnected, but the game service seems not knowing it, so tell it
 			dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 		}
+	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
+		gs.handleSyncPositionYawOnClients(packet)
 	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
 		gs.handleCallFilteredClientProxies(packet)
 	} else {
@@ -187,6 +189,35 @@ func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, pa
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Debug("CLEAR CLIENT %s FILTER PROPS", clientproxy)
 	}
+}
+
+func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
+	_ = packet.ReadUint16() // read useless gateid
+	payload := packet.UnreadPayload()
+	payloadLen := len(payload)
+	dispatch := map[common.ClientID][]byte{}
+	for i := 0; i < payloadLen; i += common.CLIENTID_LENGTH + common.ENTITYID_LENGTH + proto.SYNC_INFO_SIZE_PER_ENTITY {
+		clientid := common.ClientID(payload[i : i+common.CLIENTID_LENGTH])
+		data := payload[i+common.CLIENTID_LENGTH : i+common.CLIENTID_LENGTH+common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY]
+		dispatch[clientid] = append(dispatch[clientid], data...)
+	}
+
+	// multiple entity sync infos are received from game->dispatcher, gate need to dispatcher these infos to different clients
+	gs.clientProxiesLock.RLock()
+
+	for clientid, data := range dispatch {
+		clientproxy := gs.clientProxies[clientid]
+		if clientproxy != nil {
+			packet := netutil.NewPacket()
+			packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
+			packet.AppendBytes(data)
+			packet.SetNotCompress() // too many these packets, giveup compress to save time
+			clientproxy.SendPacket(packet)
+			packet.Release()
+		}
+	}
+
+	gs.clientProxiesLock.RUnlock()
 }
 
 func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {

@@ -25,6 +25,7 @@ var (
 	isReconnect               = false
 	_dispatcherClient         *DispatcherClient // DO NOT access it directly
 	dispatcherClientDelegate  IDispatcherClientDelegate
+	dispatcherClientAutoFlush bool
 	errDispatcherNotConnected = errors.New("dispatcher not connected")
 )
 
@@ -69,7 +70,7 @@ func connectDispatchClient() (*DispatcherClient, error) {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetReadBuffer(consts.DISPATCHER_CLIENT_READ_BUFFER_SIZE)
 	tcpConn.SetWriteBuffer(consts.DISPATCHER_CLIENT_WRITE_BUFFER_SIZE)
-	return newDispatcherClient(conn), nil
+	return newDispatcherClient(conn, dispatcherClientAutoFlush), nil
 }
 
 type IDispatcherClientDelegate interface {
@@ -81,8 +82,9 @@ type IDispatcherClientDelegate interface {
 	//HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }
 
-func Initialize(delegate IDispatcherClientDelegate) {
+func Initialize(delegate IDispatcherClientDelegate, autoFlush bool) {
 	dispatcherClientDelegate = delegate
+	dispatcherClientAutoFlush = autoFlush
 
 	assureConnectedDispatcherClient()
 	go netutil.ServeForever(serveDispatcherClient) // start the recv routine

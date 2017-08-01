@@ -44,7 +44,7 @@ func (space *Space) String() string {
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
-	space.aoiCalc = newSweepAndPruneAOICalculator()
+	space.aoiCalc = newXZListAOICalculator()
 	gwutils.RunPanicless(space.I.OnSpaceInit)
 }
 
@@ -183,6 +183,7 @@ func (space *Space) leave(entity *Entity) {
 
 func (space *Space) move(entity *Entity, newPos Position) {
 	space.aoiCalc.Move(&entity.aoi, newPos)
+
 	interestedAOIs := space.aoiCalc.Interested(&entity.aoi)
 	// uninterest all entities that is not interested
 	var uninterestNeighbors []*Entity

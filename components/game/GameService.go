@@ -45,6 +45,8 @@ type GameService struct {
 	packetQueue         chan packetQueueItem
 	isAllGamesConnected bool
 	runState            xnsyncutil.AtomicInt
+	//collectEntitySyncInfosRequest chan struct{}
+	//collectEntitySycnInfosReply   chan interface{}
 }
 
 func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
@@ -56,6 +58,8 @@ func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
 		//terminated:         xnsyncutil.NewOneTimeCond(),
 		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
 		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
+		//collectEntitySyncInfosRequest: make(chan struct{}),
+		//collectEntitySycnInfosReply:   make(chan interface{}),
 	}
 }
 
@@ -153,6 +157,11 @@ func (gs *GameService) serveRoutine() {
 			}
 
 			timer.Tick()
+
+			gameDispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
+			dispatcher_client.GetDispatcherClientForSend().Flush()
+			//case <-gs.collectEntitySyncInfosRequest: //
+			//	gs.collectEntitySycnInfosReply <- 1
 		}
 
 		// after handling packets or firing timers, check the posted functions

@@ -3,6 +3,7 @@ package proto
 import (
 	"unsafe"
 
+	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/gwlog"
 )
 
@@ -40,8 +41,7 @@ const (
 )
 
 const ( // Message types that should be handled by GateService
-	MT_GATE_SERVICE_MSG_TYPE_START = 1000 + iota
-
+	MT_GATE_SERVICE_MSG_TYPE_START          = 1000 + iota
 	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START // messages that should be redirected to client proxy
 
 	MT_CREATE_ENTITY_ON_CLIENT
@@ -63,6 +63,7 @@ const ( // Message types that should be handled by GateService
 	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP
 
 	MT_CALL_FILTERED_CLIENTS
+	MT_SYNC_POSITION_YAW_ON_CLIENTS
 
 	MT_GATE_SERVICE_MSG_TYPE_STOP
 )
@@ -76,9 +77,18 @@ type EntitySyncInfo struct {
 	Yaw     float32
 }
 
+type EntitySyncInfoToClient struct {
+	ClientID common.ClientID
+	EntityID common.EntityID
+	EntitySyncInfo
+}
+
 func init() {
 	if unsafe.Sizeof(EntitySyncInfo{}) != SYNC_INFO_SIZE_PER_ENTITY {
 		gwlog.Fatal("Wrong type defintion for EntitySyncInfo: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfo{}), SYNC_INFO_SIZE_PER_ENTITY)
+	}
+	if unsafe.Sizeof(EntitySyncInfoToClient{}) != SYNC_INFO_SIZE_PER_ENTITY+common.CLIENTID_LENGTH+common.ENTITYID_LENGTH {
+		gwlog.Fatal("Wrong type defintion for EntitySyncInfoToClient: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfoToClient{}), SYNC_INFO_SIZE_PER_ENTITY+common.CLIENTID_LENGTH)
 	}
 }
 

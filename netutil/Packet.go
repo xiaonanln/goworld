@@ -92,6 +92,7 @@ func getPayloadCapOfPayloadLen(payloadLen uint32) uint32 {
 type Packet struct {
 	readCursor uint32
 
+	notCompress  bool
 	refcount     int64
 	bytes        []byte
 	initialBytes [PREPAYLOAD_SIZE + MIN_PAYLOAD_CAP]byte
@@ -100,6 +101,10 @@ type Packet struct {
 func allocPacket() *Packet {
 	pkt := packetPool.Get().(*Packet)
 	pkt.refcount = 1
+
+	if pkt.notCompress {
+		gwlog.Panicf("notCompress should be false")
+	}
 
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
@@ -127,6 +132,10 @@ func NewPacket() *Packet {
 //
 //	return allocPacket(allocPayloadCap)
 //}
+
+func (p *Packet) SetNotCompress() {
+	p.notCompress = true
+}
 
 func (p *Packet) assureCapacity(need uint32) {
 	requireCap := p.GetPayloadLen() + need
@@ -200,6 +209,7 @@ func (p *Packet) Release() {
 
 		p.readCursor = 0
 		p.setPayloadLenCompressed(0, false)
+		p.notCompress = false
 		packetPool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
@@ -433,7 +443,7 @@ func (p *Packet) setPayloadLenCompressed(plen uint32, compressed bool) {
 }
 
 func (p *Packet) requireCompress() bool {
-	return !p.isCompressed() && p.GetPayloadLen() >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD
+	return !p.notCompress && !p.isCompressed() && p.GetPayloadLen() >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD
 }
 
 func (p *Packet) compress(cw *flate.Writer) {

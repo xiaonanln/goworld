@@ -425,6 +425,11 @@ func (service *DispatcherService) HandleCallEntityMethod(dcp *DispatcherClientPr
 	}
 }
 
+func (service *DispatcherService) HandleSyncPositionYawOnClients(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
+	gateid := pkt.ReadUint16()
+	service.dispatcherClientOfGate(gateid).SendPacket(pkt)
+}
+
 func (service *DispatcherService) HandleSyncPositionYawFromClient(dcp *DispatcherClientProxy, pkt *netutil.Packet) {
 	// This sync packet contains position-yaw of multiple entities from a gate. Cache the packet to be send before flush?
 	payload := pkt.UnreadPayload()

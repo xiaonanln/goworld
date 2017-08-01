@@ -12,11 +12,13 @@ import (
 	"unsafe"
 
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/config"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
 	"github.com/xiaonanln/goworld/post"
+	"github.com/xiaonanln/goworld/proto"
 	"github.com/xiaonanln/goworld/storage"
 	"github.com/xiaonanln/typeconv"
 )
@@ -1030,19 +1032,69 @@ func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 }
 
 func CollectEntitySyncInfos() {
-	for eid, e := range entityManager.entities {
-		var syncInfoFlag syncInfoFlag
+	cfg := config.Get()
+	gateCount := len(cfg.Gates)
+	entitySyncInfosToGate := make([]*netutil.Packet, gateCount)
+	for gateid := 1; gateid <= gateCount; gateid++ {
+		packet := netutil.NewPacket()
+		packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
+		packet.AppendUint16(uint16(gateid))
+		entitySyncInfosToGate[gateid-1] = packet
+	}
 
-		syncInfoFlag:=e.syncInfoFlag
+	for eid, e := range entityManager.entities {
+		syncInfoFlag := e.syncInfoFlag
 		if syncInfoFlag == 0 {
 			continue
 		}
 
 		e.syncInfoFlag = 0
-		if syncInfoFlag &
-		if syncInfoFlag & sifSyncNeighborClients {
-
+		syncInfo := e.getSyncInfo()
+		if syncInfoFlag&sifSyncOwnClient != 0 && e.client != nil {
+			gateid := e.client.gateid
+			packet := entitySyncInfosToGate[gateid-1]
+			packet.AppendClientID(e.client.clientid)
+			packet.AppendEntityID(eid)
+			packet.AppendFloat32(syncInfo.X)
+			packet.AppendFloat32(syncInfo.Y)
+			packet.AppendFloat32(syncInfo.Z)
+			packet.AppendFloat32(syncInfo.Yaw)
 		}
+		if syncInfoFlag&sifSyncNeighborClients != 0 {
+			for neighbor := range e.aoi.neighbors {
+				client := neighbor.client
+				if client != nil {
+					gateid := client.gateid
+					packet := entitySyncInfosToGate[gateid-1]
+					packet.AppendClientID(client.clientid)
+					packet.AppendEntityID(eid)
+					packet.AppendFloat32(syncInfo.X)
+					packet.AppendFloat32(syncInfo.Y)
+					packet.AppendFloat32(syncInfo.Z)
+					packet.AppendFloat32(syncInfo.Yaw)
+				}
+			}
+		}
+	}
+
+	// send to dispatcher, one gate by one gate
+	for _, packet := range entitySyncInfosToGate {
+		//gwlog.Info("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
+
+		if packet.GetPayloadLen() > 4 {
+			dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+		}
+
+		packet.Release()
+	}
+}
+
+func (e *Entity) getSyncInfo() proto.EntitySyncInfo {
+	return proto.EntitySyncInfo{
+		float32(e.aoi.pos.X),
+		float32(e.aoi.pos.Y),
+		float32(e.aoi.pos.Z),
+		float32(e.yaw),
 	}
 }
 

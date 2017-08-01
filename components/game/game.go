@@ -29,12 +29,13 @@ import (
 )
 
 var (
-	gameid      uint16
-	configFile  string
-	logLevel    string
-	restore     bool
-	gameService *GameService
-	signalChan  = make(chan os.Signal, 1)
+	gameid                       uint16
+	configFile                   string
+	logLevel                     string
+	restore                      bool
+	gameService                  *GameService
+	signalChan                   = make(chan os.Signal, 1)
+	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
 )
 
 func init() {
@@ -83,7 +84,7 @@ func Run(delegate IGameDelegate) {
 
 	gameService = newGameService(gameid, delegate)
 
-	dispatcher_client.Initialize(&dispatcherClientDelegate{})
+	dispatcher_client.Initialize(gameDispatcherClientDelegate, false)
 
 	setupSignals()
 
@@ -183,6 +184,16 @@ func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherCl
 		isRestore = restore
 	}
 
+	//go func() {
+	//	for !dispatcherClient.IsClosed() {
+	//		time.Sleep(time.Millisecond * 10)
+	//		err := dispatcherClient.Flush()
+	//		if err != nil {
+	//			break
+	//		}
+	//	}
+	//}()
+
 	dispatcherClient.SendSetGameID(gameid, isReconnect, isRestore)
 }
 
@@ -202,7 +213,6 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
 	// collect all sync infos from entities and group them by target gates
 	entity.CollectEntitySyncInfos()
-
 }
 
 func GetGameID() uint16 {
