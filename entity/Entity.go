@@ -17,6 +17,7 @@ import (
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
 	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/opmon"
 	"github.com/xiaonanln/goworld/post"
 	"github.com/xiaonanln/goworld/proto"
 	"github.com/xiaonanln/goworld/storage"
@@ -1032,6 +1033,7 @@ func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 }
 
 func CollectEntitySyncInfos() {
+	opmon := opmon.StartOperation("CollectEntitySyncInfos")
 	cfg := config.Get()
 	gateCount := len(cfg.Gates)
 	entitySyncInfosToGate := make([]*netutil.Packet, gateCount)
@@ -1061,6 +1063,7 @@ func CollectEntitySyncInfos() {
 			packet.AppendFloat32(syncInfo.Yaw)
 		}
 		if syncInfoFlag&sifSyncNeighborClients != 0 {
+			fmt.Printf("%d!", len(e.aoi.neighbors))
 			for neighbor := range e.aoi.neighbors {
 				client := neighbor.client
 				if client != nil {
@@ -1087,6 +1090,7 @@ func CollectEntitySyncInfos() {
 
 		packet.Release()
 	}
+	opmon.Finish(time.Millisecond * 100)
 }
 
 func (e *Entity) getSyncInfo() proto.EntitySyncInfo {

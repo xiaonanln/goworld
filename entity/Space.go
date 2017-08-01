@@ -3,10 +3,13 @@ package entity
 import (
 	"fmt"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/common"
 	"github.com/xiaonanln/goworld/consts"
 	"github.com/xiaonanln/goworld/gwlog"
 	"github.com/xiaonanln/goworld/gwutils"
+	"github.com/xiaonanln/goworld/opmon"
 )
 
 const (
@@ -182,6 +185,8 @@ func (space *Space) leave(entity *Entity) {
 }
 
 func (space *Space) move(entity *Entity, newPos Position) {
+	opmon := opmon.StartOperation("Space.move")
+
 	space.aoiCalc.Move(&entity.aoi, newPos)
 
 	interestedAOIs := space.aoiCalc.Interested(&entity.aoi)
@@ -208,7 +213,7 @@ func (space *Space) move(entity *Entity, newPos Position) {
 		entity.interest(neighbor)
 		neighbor.interest(entity)
 	}
-
+	opmon.Finish(time.Millisecond * 10)
 }
 
 func (space *Space) OnEntityEnterSpace(entity *Entity) {

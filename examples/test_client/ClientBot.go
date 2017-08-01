@@ -111,8 +111,17 @@ func (bot *ClientBot) loop() {
 		if bot.player != nil && bot.player.TypeName == "Avatar" {
 			now := time.Now()
 			if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
+
 				player := bot.player
-				bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+				const moveRange = 0.01
+				if rand.Float32() < 0.5 { // let the posibility of avatar moving to be 50%
+					player.pos.X += entity.Coord(-moveRange + moveRange*2*rand.Float32())
+					player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
+					gwlog.Info("move to %f, %f", player.pos.X, player.pos.Z)
+					player.yaw = entity.Yaw(rand.Float32() * 3.14)
+					bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+				}
+
 				bot.syncPosTime = now
 			}
 		}
