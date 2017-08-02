@@ -87,6 +87,7 @@ func (gs *GameService) serveRoutine() {
 	ticker := time.Tick(consts.GAME_SERVICE_TICK_INTERVAL)
 	// here begins the main loop of Game
 	for {
+		isTick := false
 		select {
 		case item := <-gs.packetQueue:
 			msgtype, pkt := item.msgtype, item.packet
@@ -147,6 +148,7 @@ func (gs *GameService) serveRoutine() {
 
 			pkt.Release()
 		case <-ticker:
+			isTick = true
 			runState := gs.runState.Load()
 			if runState == rsTerminating {
 				// game is terminating, run the terminating process
@@ -158,14 +160,16 @@ func (gs *GameService) serveRoutine() {
 
 			timer.Tick()
 
-			gameDispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
-			dispatcher_client.GetDispatcherClientForSend().Flush()
 			//case <-gs.collectEntitySyncInfosRequest: //
 			//	gs.collectEntitySycnInfosReply <- 1
 		}
 
 		// after handling packets or firing timers, check the posted functions
 		post.Tick()
+		if isTick {
+			gameDispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
+			dispatcher_client.GetDispatcherClientForSend().Flush()
+		}
 	}
 }
 
