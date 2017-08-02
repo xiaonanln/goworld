@@ -129,13 +129,15 @@ func (sl *xAOIList) Mark(aoi *AOI) {
 	prev := aoi.xPrev
 	coord := aoi.pos.X
 
-	for prev != nil && prev.pos.X >= coord-DEFAULT_AOI_DISTANCE {
+	minCoord := coord - DEFAULT_AOI_DISTANCE
+	for prev != nil && prev.pos.X >= minCoord {
 		prev.markVal += 1
 		prev = prev.xPrev
 	}
 
 	next := aoi.xNext
-	for next != nil && next.pos.X <= coord+DEFAULT_AOI_DISTANCE {
+	maxCoord := coord + DEFAULT_AOI_DISTANCE
+	for next != nil && next.pos.X <= maxCoord {
 		next.markVal += 1
 		next = next.xNext
 	}
@@ -144,8 +146,8 @@ func (sl *xAOIList) Mark(aoi *AOI) {
 func (sl *xAOIList) GetClearMarkedNeighbors(aoi *AOI) (enter []*AOI) {
 	prev := aoi.xPrev
 	coord := aoi.pos.X
-
-	for prev != nil && prev.pos.X >= coord-DEFAULT_AOI_DISTANCE {
+	minCoord := coord - DEFAULT_AOI_DISTANCE
+	for prev != nil && prev.pos.X >= minCoord {
 		if prev.markVal == 2 {
 			enter = append(enter, prev)
 		}
@@ -154,7 +156,8 @@ func (sl *xAOIList) GetClearMarkedNeighbors(aoi *AOI) (enter []*AOI) {
 	}
 
 	next := aoi.xNext
-	for next != nil && next.pos.X <= coord+DEFAULT_AOI_DISTANCE {
+	maxCoord := coord + DEFAULT_AOI_DISTANCE
+	for next != nil && next.pos.X <= maxCoord {
 		if next.markVal == 2 {
 			enter = append(enter, next)
 		}
@@ -163,22 +166,3 @@ func (sl *xAOIList) GetClearMarkedNeighbors(aoi *AOI) (enter []*AOI) {
 	}
 	return
 }
-
-//func (sl *xAOIList) Interested(aoi *AOI) AOISet {
-//	s := AOISet{}
-//	prev := aoi.xPrev
-//	coord := aoi.pos.X
-//
-//	for prev != nil && prev.pos.X >= coord-DEFAULT_AOI_DISTANCE {
-//		s.Add(prev)
-//		prev = prev.xPrev
-//	}
-//
-//	next := aoi.xNext
-//	for next != nil && next.pos.X <= coord+DEFAULT_AOI_DISTANCE {
-//		s.Add(next)
-//		next = next.xNext
-//	}
-//
-//	return s
-//}

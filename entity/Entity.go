@@ -396,7 +396,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
 		if err != nil {
-			gwlog.TraceError("%s.%s%v paniced: %s", e, methodName, args, err)
+			gwlog.TraceError("%s.%s paniced: %s", e, methodName, err)
 		}
 	}()
 
@@ -437,7 +437,7 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 	defer func() {
 		err := recover() // recover from any error during RPC call
 		if err != nil {
-			gwlog.TraceError("%s.%s%v paniced: %s", e, methodName, args, err)
+			gwlog.TraceError("%s.%s paniced: %s", e, methodName, err)
 		}
 	}()
 

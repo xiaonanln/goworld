@@ -166,7 +166,8 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 			gwlog.Panicf("mail ID should be increasing")
 		}
 		if mailsAttr.HasKey(strconv.Itoa(mailId)) {
-			gwlog.Panicf("mail %d received multiple times", mailId)
+			gwlog.Error("mail %d received multiple times", mailId)
+			continue
 		}
 		mail := typeconv.String(item[1])
 		mailsAttr.Set(strconv.Itoa(mailId), mail)

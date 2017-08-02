@@ -208,7 +208,7 @@ func (space *Space) move(entity *Entity, newPos Position) {
 	}
 
 	//space.verifyAOICorrectness(entity)
-	opmon.Finish(time.Millisecond * 10)
+	//opmon.Finish(time.Millisecond * 10)
 }
 
 //func (space *Space) verifyAOICorrectness(entity *Entity) {
