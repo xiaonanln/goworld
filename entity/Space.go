@@ -137,7 +137,6 @@ func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 	entity.Space = space
 	space.entities.Add(entity)
 
-	entity.aoi.pos = pos // set entity to new pos
 	space.aoiCalc.Enter(&entity.aoi, pos)
 	entity.syncInfoFlag |= (sifSyncOwnClient | sifSyncNeighborClients)
 

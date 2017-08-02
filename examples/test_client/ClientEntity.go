@@ -226,7 +226,7 @@ func (e *ClientEntity) DoEnterRandomSpace() {
 		curSpaceKind = e.owner.currentSpace.Kind
 	}
 
-	spaceKindMax := N / 100
+	spaceKindMax := N / 200
 	if spaceKindMax < 2 {
 		spaceKindMax = 2 // use at least 2 space
 	}
