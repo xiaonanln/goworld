@@ -32,6 +32,7 @@ type AOI struct {
 	xPrev     *AOI
 	zNext     *AOI
 	zPrev     *AOI
+	markVal   int
 }
 
 func initAOI(aoi *AOI) {

@@ -142,22 +142,30 @@ func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 
 	if !isRestore {
 		entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
-		for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
-			neighbor := neighborAOI.getEntity()
+
+		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
+		gwlog.Info("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
+
+		for _, naoi := range enter {
+			neighbor := naoi.getEntity()
 			entity.interest(neighbor)
 			neighbor.interest(entity)
 		}
+
 		gwutils.RunPanicless(func() {
 			space.I.OnEntityEnterSpace(entity)
 			entity.I.OnEnterSpace()
 		})
 	} else {
-		for neighborAOI := range space.aoiCalc.Interested(&entity.aoi) {
-			neighbor := neighborAOI.getEntity()
+		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
+		for _, naoi := range enter {
+			neighbor := naoi.getEntity()
 			entity.aoi.interest(neighbor)
 			neighbor.aoi.interest(entity)
 		}
 	}
+
+	//space.verifyAOICorrectness(entity)
 }
 
 func (space *Space) leave(entity *Entity) {
@@ -190,35 +198,46 @@ func (space *Space) move(entity *Entity, newPos Position) {
 	opmon := opmon.StartOperation("Space.move")
 
 	space.aoiCalc.Move(&entity.aoi, newPos)
+	enter, leave := space.aoiCalc.Adjust(&entity.aoi)
 
-	interestedAOIs := space.aoiCalc.Interested(&entity.aoi)
-
-	//gwlog.Info("Moved to %v, interested %d", newPos, len(interestedAOIs))
-	// uninterest all entities that is not interested
-	var uninterestNeighbors []*Entity
-	for neighbor := range entity.Neighbors() {
-		if !interestedAOIs.Contains(&neighbor.aoi) {
-			// this neighbor is not interested anymore
-			uninterestNeighbors = append(uninterestNeighbors, neighbor)
-		} else {
-			// this neighbor is still interested
-			interestedAOIs.Del(&neighbor.aoi)
-		}
-	}
-
-	for _, neighbor := range uninterestNeighbors {
+	for _, naoi := range leave {
+		neighbor := naoi.getEntity()
 		entity.uninterest(neighbor)
 		neighbor.uninterest(entity)
 	}
 
-	// all entities in interestedAOIs now should be interested
-	for neighborAOI := range interestedAOIs {
-		neighbor := neighborAOI.getEntity()
+	for _, naoi := range enter {
+		neighbor := naoi.getEntity()
 		entity.interest(neighbor)
 		neighbor.interest(entity)
 	}
+
+	//space.verifyAOICorrectness(entity)
 	opmon.Finish(time.Millisecond * 10)
 }
+
+//func (space *Space) verifyAOICorrectness(entity *Entity) {
+//	if space.IsNil() {
+//		return
+//	}
+//
+//	for e := range space.entities {
+//		if e.aoi.markVal != 0 {
+//			gwlog.Fatal("%s: wrong AOI mark val = %d", e.aoi.markVal)
+//		}
+//
+//		if e == entity {
+//			continue
+//		}
+//
+//		isNeighbor := e.aoi.pos.X >= entity.aoi.pos.X-DEFAULT_AOI_DISTANCE && e.aoi.pos.X <= entity.aoi.pos.X+DEFAULT_AOI_DISTANCE && e.aoi.pos.Z >= entity.aoi.pos.Z-DEFAULT_AOI_DISTANCE && e.aoi.pos.Z <= entity.aoi.pos.Z+DEFAULT_AOI_DISTANCE
+//		if entity.aoi.neighbors.Contains(e) && !isNeighbor {
+//			gwlog.Fatal("space %s: %s: wrong neighbor: %s, pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
+//		} else if !entity.aoi.neighbors.Contains(e) && isNeighbor {
+//			gwlog.Fatal("space %s: %s: wrong not neighbor: %s: pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
+//		}
+//	}
+//}
 
 func (space *Space) OnEntityEnterSpace(entity *Entity) {
 	if consts.DEBUG_SPACES {

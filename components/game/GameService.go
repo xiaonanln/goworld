@@ -314,13 +314,6 @@ func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 		yaw := netutil.UnpackFloat32(netutil.NETWORK_ENDIAN, payload[i+common.ENTITYID_LENGTH+12:i+common.ENTITYID_LENGTH+16])
 		entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw))
 	}
-	//eid := pkt.ReadEntityID()
-	//x := pkt.ReadUint32()
-	//y := pkt.ReadUint32()
-	//z := pkt.ReadUint32()
-	//yaw := pkt.ReadUint32()
-	//clientid := pkt.ReadClientID()
-	//entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw), clientid)
 }
 
 func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {

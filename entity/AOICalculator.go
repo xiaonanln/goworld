@@ -4,7 +4,7 @@ type AOICalculator interface {
 	Enter(aoi *AOI, pos Position)
 	Leave(aoi *AOI)
 	Move(aoi *AOI, newPos Position)
-	Interested(aoi *AOI) AOISet
+	Adjust(aoi *AOI) (enter []*AOI, leave []*AOI)
 }
 
 type XZListAOICalculator struct {
@@ -46,14 +46,31 @@ func (cal *XZListAOICalculator) Move(aoi *AOI, pos Position) {
 	if oldPos.Z != pos.Z {
 		cal.zSweepList.Move(aoi, oldPos.Z)
 	}
-
 }
 
-func (cal *XZListAOICalculator) Interested(aoi *AOI) AOISet {
-	s1 := cal.xSweepList.Interested(aoi)
-	s2 := cal.zSweepList.Interested(aoi)
-	interestedAOIs := s1.Join(s2)
-	return interestedAOIs
+func (cal *XZListAOICalculator) Adjust(aoi *AOI) (enter []*AOI, leave []*AOI) {
+	cal.xSweepList.Mark(aoi)
+	cal.zSweepList.Mark(aoi)
+	// aoi marked twice are neighbors
+	for neighbor := range aoi.neighbors {
+		naoi := &neighbor.aoi
+		if naoi.markVal == 2 {
+			// neighbors kept
+			naoi.markVal = -2 // mark this as neighbor
+		} else { // markVal < 2
+			// was neighbor, but not any more
+			leave = append(leave, naoi)
+		}
+	}
+
+	// travel in X list again to find all new neighbors, whose markVal == 2
+	enter = cal.xSweepList.GetClearMarkedNeighbors(aoi)
+	// travel in Z list again to unmark all
+	cal.zSweepList.ClearMark(aoi)
+
+	// now all marked neighbors are cleared
+	// travel in neighbors
+	return
 }
 
 type aoiListOperator interface {
