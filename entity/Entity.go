@@ -850,14 +850,15 @@ func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
 		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
 		return
 	}
+	e.requestMigrateTo(spaceID, pos)
 
-	//e.requestMigrateTo(spaceID, pos)
-	localSpace := spaceManager.getSpace(spaceID)
-	if localSpace != nil { // target space is local, just enter
-		e.enterLocalSpace(localSpace, pos)
-	} else { // else request migrating to other space
-		e.requestMigrateTo(spaceID, pos)
-	}
+	// todo: prohibit local enter for test only, uncomment
+	//localSpace := spaceManager.getSpace(spaceID)
+	//if localSpace != nil { // target space is local, just enter
+	//	e.enterLocalSpace(localSpace, pos)
+	//} else { // else request migrating to other space
+	//	e.requestMigrateTo(spaceID, pos)
+	//}
 }
 func (e *Entity) enterLocalSpace(space *Space, pos Position) {
 	if space == e.Space {

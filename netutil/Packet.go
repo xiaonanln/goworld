@@ -278,6 +278,17 @@ func (p *Packet) AppendUint64(v uint64) {
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 8
 }
 
+func PackFloat32(order binary.ByteOrder, b []byte, f float32) {
+	fi := *(*uint32)(unsafe.Pointer(&f)) // convert bits from float32 to uint32
+	order.PutUint32(b, fi)
+}
+
+func UnpackFloat32(order binary.ByteOrder, b []byte) (f float32) {
+	fi := order.Uint32(b)
+	f = *(*float32)(unsafe.Pointer(&fi))
+	return
+}
+
 func (p *Packet) AppendFloat32(f float32) {
 	p.AppendUint32(*(*uint32)(unsafe.Pointer(&f)))
 }

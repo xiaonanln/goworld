@@ -90,6 +90,7 @@ func (e *ClientEntity) OnCreated() {
 }
 
 func (e *ClientEntity) onAvatarCreated() {
+	gwlog.Info("Avatar created on pos %v yaw %v", e.pos, e.yaw)
 }
 
 func (e *ClientEntity) doSomethingLater() {
@@ -170,8 +171,13 @@ func (e *ClientEntity) doSomething() {
 	if e.currentThing != "" {
 		gwlog.Panicf("%s can not do something while doing %s", e, e.currentThing)
 	}
+	var thing *_Something
+	if e.currentSpaceKind() == 0 {
+		thing = DO_THINGS[0]
+	} else {
+		thing = e.chooseThingByWeight()
+	}
 
-	thing := e.chooseThingByWeight()
 	e.currentThing = thing.Method
 	e.currentThingStartTime = time.Now()
 	e.currentTimeoutTimer = e.AddCallback(thing.Timeout, func() {
@@ -219,13 +225,17 @@ func (e *ClientEntity) chooseThingByWeight() *_Something {
 	return nil
 }
 
-func (e *ClientEntity) DoEnterRandomSpace() {
+func (e *ClientEntity) currentSpaceKind() int {
 	curSpaceKind := 0
 	if e.owner.currentSpace != nil {
 		curSpaceKind = e.owner.currentSpace.Kind
 	}
+	return curSpaceKind
+}
 
-	spaceKindMax := N / 100
+func (e *ClientEntity) DoEnterRandomSpace() {
+	curSpaceKind := e.currentSpaceKind()
+	spaceKindMax := N / 400
 	if spaceKindMax < 2 {
 		spaceKindMax = 2 // use at least 2 space
 	}

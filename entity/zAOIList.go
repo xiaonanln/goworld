@@ -125,21 +125,53 @@ func (sl *zAOIList) Move(aoi *AOI, oldCoord Coord) {
 	}
 }
 
-func (sl *zAOIList) Interested(aoi *AOI) AOISet {
-	s := AOISet{}
+func (sl *zAOIList) Mark(aoi *AOI) {
 	prev := aoi.zPrev
 	coord := aoi.pos.Z
 
 	for prev != nil && prev.pos.Z >= coord-DEFAULT_AOI_DISTANCE {
-		s.Add(prev)
+		prev.markVal += 1
 		prev = prev.zPrev
 	}
 
 	next := aoi.zNext
 	for next != nil && next.pos.Z <= coord+DEFAULT_AOI_DISTANCE {
-		s.Add(next)
+		next.markVal += 1
 		next = next.zNext
 	}
-
-	return s
 }
+
+func (sl *zAOIList) ClearMark(aoi *AOI) {
+	prev := aoi.zPrev
+	coord := aoi.pos.Z
+
+	for prev != nil && prev.pos.Z >= coord-DEFAULT_AOI_DISTANCE {
+		prev.markVal = 0
+		prev = prev.zPrev
+	}
+
+	next := aoi.zNext
+	for next != nil && next.pos.Z <= coord+DEFAULT_AOI_DISTANCE {
+		next.markVal = 0
+		next = next.zNext
+	}
+}
+
+//func (sl *zAOIList) Interested(aoi *AOI) AOISet {
+//	s := AOISet{}
+//	prev := aoi.zPrev
+//	coord := aoi.pos.Z
+//
+//	for prev != nil && prev.pos.Z >= coord-DEFAULT_AOI_DISTANCE {
+//		s.Add(prev)
+//		prev = prev.zPrev
+//	}
+//
+//	next := aoi.zNext
+//	for next != nil && next.pos.Z <= coord+DEFAULT_AOI_DISTANCE {
+//		s.Add(next)
+//		next = next.zNext
+//	}
+//
+//	return s
+//}
