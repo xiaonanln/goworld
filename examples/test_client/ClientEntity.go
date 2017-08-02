@@ -90,6 +90,7 @@ func (e *ClientEntity) OnCreated() {
 }
 
 func (e *ClientEntity) onAvatarCreated() {
+	gwlog.Info("Avatar created on pos %v yaw %v", e.pos, e.yaw)
 }
 
 func (e *ClientEntity) doSomethingLater() {

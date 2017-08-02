@@ -136,7 +136,10 @@ func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 
 	entity.Space = space
 	space.entities.Add(entity)
+
+	entity.aoi.pos = pos // set entity to new pos
 	space.aoiCalc.Enter(&entity.aoi, pos)
+	entity.syncInfoFlag |= (sifSyncOwnClient | sifSyncNeighborClients)
 
 	if !isRestore {
 		entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
@@ -190,6 +193,8 @@ func (space *Space) move(entity *Entity, newPos Position) {
 	space.aoiCalc.Move(&entity.aoi, newPos)
 
 	interestedAOIs := space.aoiCalc.Interested(&entity.aoi)
+
+	//gwlog.Info("Moved to %v, interested %d", newPos, len(interestedAOIs))
 	// uninterest all entities that is not interested
 	var uninterestNeighbors []*Entity
 	for neighbor := range entity.Neighbors() {

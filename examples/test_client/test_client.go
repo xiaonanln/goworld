@@ -16,6 +16,7 @@ import (
 var (
 	quiet      bool
 	configFile string
+	serverAddr string
 	N          int
 )
 
@@ -23,6 +24,7 @@ func parseArgs() {
 	flag.BoolVar(&quiet, "quiet", false, "run client quietly with much less output")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.IntVar(&N, "N", 1000, "Number of clients")
+	flag.StringVar(&serverAddr, "server", "localhost", "replace server address")
 	flag.Parse()
 }
 

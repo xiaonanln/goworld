@@ -304,10 +304,10 @@ func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	payloadLen := len(payload)
 	for i := 0; i < payloadLen; i += proto.SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH {
 		eid := common.EntityID(payload[i : i+common.ENTITYID_LENGTH])
-		x := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH : i+common.ENTITYID_LENGTH+4])
-		y := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+4 : i+common.ENTITYID_LENGTH+8])
-		z := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+8 : i+common.ENTITYID_LENGTH+12])
-		yaw := netutil.PACKET_ENDIAN.Uint32(payload[i+common.ENTITYID_LENGTH+12 : i+common.ENTITYID_LENGTH+16])
+		x := netutil.UnpackFloat32(netutil.NETWORK_ENDIAN, payload[i+common.ENTITYID_LENGTH:i+common.ENTITYID_LENGTH+4])
+		y := netutil.UnpackFloat32(netutil.NETWORK_ENDIAN, payload[i+common.ENTITYID_LENGTH+4:i+common.ENTITYID_LENGTH+8])
+		z := netutil.UnpackFloat32(netutil.NETWORK_ENDIAN, payload[i+common.ENTITYID_LENGTH+8:i+common.ENTITYID_LENGTH+12])
+		yaw := netutil.UnpackFloat32(netutil.NETWORK_ENDIAN, payload[i+common.ENTITYID_LENGTH+12:i+common.ENTITYID_LENGTH+16])
 		entity.OnSyncPositionYawFromClient(eid, entity.Coord(x), entity.Coord(y), entity.Coord(z), entity.Yaw(yaw))
 	}
 	//eid := pkt.ReadEntityID()
