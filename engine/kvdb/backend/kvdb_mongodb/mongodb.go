@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	. "github.com/xiaonanln/goworld/engine/kvdbne/kvdb/types"
+	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 	"gopkg.in/mgo.v2/bson"
 )
 

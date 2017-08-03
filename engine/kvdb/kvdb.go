@@ -10,9 +10,9 @@ import (
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/kvdbne/kvdb/backend/kvdb_mongodb"
-	"github.com/xiaonanln/goworld/engine/kvdbne/kvdb/backend/kvdb_redis"
-	. "github.com/xiaonanln/goworld/engine/kvdbne/kvdb/types"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_redis"
+	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/post"
 )
