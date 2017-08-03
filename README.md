@@ -1,18 +1,18 @@
 # GoWorld [![GoDoc](https://godoc.org/github.com/xiaonanln/goworld?status.png)](https://godoc.org/github.com/xiaonanln/goworld) [![Build Status](https://api.travis-ci.org/xiaonanln/goworld.svg?branch=master)](https://travis-ci.org/xiaonanln/goworld)
 
-_**Scalable Distributed Game Server Engine with Hot Swapping in Golang**_
-
->  
-> 
-> _Working towards alpha_
->
-> **QQ群：`662182346`** _**中文站点：http://goworldgs.com/?p=64**_
+_**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
+> _Working towards v0.01_
 ---------------------------------------
   * [Features](#features)
   * [Architecture](#architecture)
   * [Introduction](#introduction)
   * [Get GoWorld](#get-goworld)
   * [Run Example Server & Client](#run-example-server--client)
+---------------------------------------
+>  中文资料：
+> [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
+> [目录结构说明](https://github.com/xiaonanln/goworld/wiki/GoWorld%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84) 
+> **欢迎加入Go服务端开发交流群：`662182346`**
 ---------------------------------------  
 ## Features
 * **Spaces & Entities**: manage multiple spaces and entities with AOI support
