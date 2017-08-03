@@ -1,9 +1,11 @@
 package goworld
 
 import (
-	. "github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/game"
+	. "github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/kvdb"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
@@ -107,4 +109,21 @@ func RegisterSpace(spacePtr entity.ISpace) {
 }
 
 // Get all entities as an EntityMap (do not modify it!)
-var Entities = entity.Entities
+func Entities() entity.EntityMap {
+	return entity.Entities()
+}
+
+// Post a callback to be executed
+func Post(callback post.PostCallback) {
+	post.Post(callback)
+}
+
+// Get from KVDB
+func GetKVDB(key string, callback kvdb.KVDBGetCallback) {
+	kvdb.Get(key, callback)
+}
+
+// Put to KVDB
+func PutKVDB(key string, val string, callback kvdb.KVDBPutCallback) {
+	kvdb.Put(key, val, callback)
+}

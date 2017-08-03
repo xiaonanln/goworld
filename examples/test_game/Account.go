@@ -4,11 +4,10 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/common"
-	"github.com/xiaonanln/goworld/engine"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/kvdb"
 )
 
 // Account entity for login process
@@ -27,7 +26,7 @@ func (a *Account) OnCreated() {
 }
 
 func (a *Account) getAvatarID(username string, callback func(entityID common.EntityID, err error)) {
-	kvdb.Get(username, func(val string, err error) {
+	goworld.GetKVDB(username, func(val string, err error) {
 		if a.IsDestroyed() {
 			return
 		}
@@ -36,7 +35,7 @@ func (a *Account) getAvatarID(username string, callback func(entityID common.Ent
 }
 
 func (a Account) setAvatarID(username string, avatarID common.EntityID) {
-	kvdb.Put(username, string(avatarID), nil)
+	goworld.PutKVDB(username, string(avatarID), nil)
 }
 
 func (a *Account) Login_Client(username string, password string) {
