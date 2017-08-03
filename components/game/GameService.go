@@ -10,16 +10,16 @@ import (
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	timer "github.com/xiaonanln/goTimer"
-	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/consts"
-	"github.com/xiaonanln/goworld/entity"
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/kvdb"
-	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/post"
-	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/kvdb"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 const (

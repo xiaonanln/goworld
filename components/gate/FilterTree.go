@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/google/btree"
-	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/engine/common"
 )
 
 const (

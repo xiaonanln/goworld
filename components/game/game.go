@@ -18,14 +18,14 @@ import (
 
 	"github.com/xiaonanln/goworld/components/binutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/crontab"
-	"github.com/xiaonanln/goworld/entity"
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/kvdb"
-	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/proto"
-	"github.com/xiaonanln/goworld/storage"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/crontab"
+	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/kvdb"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/storage"
 )
 
 var (

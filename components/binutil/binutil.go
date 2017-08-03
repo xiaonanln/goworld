@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 

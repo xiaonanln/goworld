@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goTimer"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 var (

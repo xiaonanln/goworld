@@ -1,9 +1,9 @@
 package main
 
 import (
-	. "github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/entity"
-	"github.com/xiaonanln/goworld/gwlog"
+	. "github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 type AvatarInfo struct {

@@ -11,14 +11,14 @@ import (
 	"os"
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
-	"github.com/xiaonanln/goworld/common"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/consts"
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/opmon"
-	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/opmon"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 type GateService struct {

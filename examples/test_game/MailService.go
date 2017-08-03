@@ -5,12 +5,12 @@ import (
 
 	"strconv"
 
-	"github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/entity"
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/kvdb"
-	"github.com/xiaonanln/goworld/kvdb/types"
-	"github.com/xiaonanln/goworld/netutil"
+	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/kvdb"
+	"github.com/xiaonanln/goworld/engine/kvdb/types"
+	"github.com/xiaonanln/goworld/engine/netutil"
 )
 
 const (

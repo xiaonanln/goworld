@@ -18,10 +18,10 @@ import (
 
 	"github.com/xiaonanln/goworld/components/binutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 var (

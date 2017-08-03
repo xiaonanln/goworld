@@ -5,9 +5,9 @@ import (
 
 	"time"
 
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 type DispatcherClient struct {

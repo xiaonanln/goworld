@@ -12,8 +12,8 @@ import (
 	"os/signal"
 
 	"github.com/xiaonanln/goworld/components/binutil"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/gwlog"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 var (

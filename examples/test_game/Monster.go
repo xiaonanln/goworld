@@ -1,6 +1,6 @@
 package main
 
-import "github.com/xiaonanln/goworld/entity"
+import "github.com/xiaonanln/goworld/engine/entity"
 
 // Monsters to be killed
 type Monster struct {

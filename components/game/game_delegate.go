@@ -1,6 +1,6 @@
 package game
 
-import "github.com/xiaonanln/goworld/gwlog"
+import "github.com/xiaonanln/goworld/engine/gwlog"
 
 type IGameDelegate interface {
 	OnGameReady()

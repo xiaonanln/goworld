@@ -14,14 +14,14 @@ import (
 
 	"os"
 
-	"github.com/xiaonanln/goworld/common"
-	"github.com/xiaonanln/goworld/config"
-	"github.com/xiaonanln/goworld/consts"
-	"github.com/xiaonanln/goworld/entity"
-	"github.com/xiaonanln/goworld/gwlog"
-	"github.com/xiaonanln/goworld/netutil"
-	"github.com/xiaonanln/goworld/post"
-	"github.com/xiaonanln/goworld/proto"
+	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 type ClientBot struct {
