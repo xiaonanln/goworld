@@ -53,11 +53,13 @@ go get -u github.com/Sirupsen/logrus
 go get -u github.com/garyburd/redigo/redis
 go get -u github.com/google/btree
 go get -u github.com/pkg/errors
+go get -u github.com/gorilla/websocket
 go get -u gopkg.in/eapache/queue.v1
 go get -u gopkg.in/ini.v1
 go get -u gopkg.in/mgo.v2
 go get -u gopkg.in/vmihailenco/msgpack.v2
 go get -u gopkg.in/natefinch/lumberjack.v2
+
 ```
 
 ## Run Example Server & Client
