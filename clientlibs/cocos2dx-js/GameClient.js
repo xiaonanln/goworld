@@ -1,4 +1,5 @@
 var msgpack = require("msgpack");
+var ClientEntity = require("ClientEntity")
 
 const _RECV_PAYLOAD_LENGTH = 1
 const _RECV_PAYLOAD = 2
@@ -60,6 +61,7 @@ cc.Class({
         this.recvBuf = new ArrayBuffer()
         this.recvStatus = _RECV_PAYLOAD_LENGTH
         this.recvPayloadLen = 0
+        this.entities = {}
         this.connect()
     },
 
@@ -131,7 +133,12 @@ cc.Class({
                 var [clientData,payload] = this.readVarBytes(payload)
                 clientData = msgpack.decode(clientData)
                 console.log("MT_CREATE_ENTITY_ON_CLIENT", "isPlayer", isPlayer, 'eid', eid,"typeName", typeName, 'position', x, y, z, 'yaw', yaw, 'clientData', JSON.stringify(clientData))
-
+                
+                var e = new ClientEntity()
+                e.create( typeName, eid )
+                this.entities[eid] = e
+                this.onEntityCreated(e)
+                e.onCreated()
             }
     },
 
@@ -211,5 +218,10 @@ cc.Class({
            window.onbeforeunload = function () {
                console.log("onbeforeunload");
            }
+    },
+    
+    onEntityCreated: function(e) {
+        console.log("entity created:", e.toString())
     }
+    
 });
