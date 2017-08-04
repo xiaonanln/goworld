@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net"
-
 	"fmt"
 
 	"os"
@@ -35,8 +33,7 @@ type ClientProxy struct {
 	clientSyncInfo clientSyncInfo
 }
 
-func newClientProxy(netConn net.Conn, cfg *config.GateConfig) *ClientProxy {
-	var conn netutil.Connection = netutil.NetConnection{netConn}
+func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
 	conn = netutil.NewBufferedReadConnection(conn)
 	//if cfg.CompressConnection {
 	// compressing connection, use CompressedConnection
