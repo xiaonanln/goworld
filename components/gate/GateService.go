@@ -72,18 +72,20 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 
 func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
 	//gwlog.Info("WebSocket Conn: %s", wsConn.RemoteAddr())
-	var netconn net.Conn = wsConn
-	gs.handleClientConnection(netconn)
+	//var conn netutil.Connection = NewWebSocketConn(wsConn)
+	wsConn.PayloadType = websocket.BinaryFrame
+	gs.handleClientConnection(wsConn)
 }
 
-func (gs *GateService) handleClientConnection(conn net.Conn) {
+func (gs *GateService) handleClientConnection(netconn net.Conn) {
 	if gs.terminating.Load() {
 		// server terminating, not accepting more connectionsF
-		conn.Close()
+		netconn.Close()
 		return
 	}
 
 	cfg := config.GetGate(gateid)
+	conn := netutil.NetConnection{netconn}
 	cp := newClientProxy(conn, cfg)
 
 	gs.clientProxiesLock.Lock()
