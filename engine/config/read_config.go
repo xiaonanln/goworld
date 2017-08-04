@@ -27,7 +27,7 @@ const (
 	DEFAULT_CONFIG_FILE   = "goworld.ini"
 	DEFAULT_LOCALHOST_IP  = "127.0.0.1"
 	DEFAULT_SAVE_ITNERVAL = time.Minute * 5
-	DEFAULT_PPROF_IP      = "127.0.0.1"
+	DEFAULT_HTTP_IP       = "127.0.0.1"
 	DEFAULT_LOG_LEVEL     = "debug"
 	DEFAULT_STORAGE_DB    = "goworld"
 )
@@ -43,8 +43,8 @@ type GameConfig struct {
 	SaveInterval time.Duration
 	LogFile      string
 	LogStderr    bool
-	PProfIp      string
-	PProfPort    int
+	HTTPIp       string
+	HTTPPort     int
 	LogLevel     string
 	GoMaxProcs   int
 }
@@ -52,10 +52,11 @@ type GameConfig struct {
 type GateConfig struct {
 	Ip                 string
 	Port               int
+	WSPort             int
 	LogFile            string
 	LogStderr          bool
-	PProfIp            string
-	PProfPort          int
+	HTTPIp             string
+	HTTPPort           int
 	LogLevel           string
 	GoMaxProcs         int
 	CompressConnection bool
@@ -66,8 +67,8 @@ type DispatcherConfig struct {
 	Port      int
 	LogFile   string
 	LogStderr bool
-	PProfIp   string
-	PProfPort int
+	HTTPIp    string
+	HTTPPort  int
 	LogLevel  string
 }
 
@@ -234,8 +235,8 @@ func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.LogStderr = true
 	scc.LogLevel = DEFAULT_LOG_LEVEL
 	scc.SaveInterval = DEFAULT_SAVE_ITNERVAL
-	scc.PProfIp = DEFAULT_PPROF_IP
-	scc.PProfPort = 0 // pprof not enabled by default
+	scc.HTTPIp = DEFAULT_HTTP_IP
+	scc.HTTPPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
 
 	_readGameConfig(section, scc)
@@ -262,10 +263,10 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
 			sc.LogStderr = key.MustBool(sc.LogStderr)
-		} else if name == "pprof_ip" {
-			sc.PProfIp = key.MustString(sc.PProfIp)
-		} else if name == "pprof_port" {
-			sc.PProfPort = key.MustInt(sc.PProfPort)
+		} else if name == "http_ip" {
+			sc.HTTPIp = key.MustString(sc.HTTPIp)
+		} else if name == "http_port" {
+			sc.HTTPPort = key.MustInt(sc.HTTPPort)
 		} else if name == "log_level" {
 			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else if name == "gomaxprocs" {
@@ -280,8 +281,8 @@ func readGateCommonConfig(section *ini.Section, scc *GateConfig) {
 	scc.LogFile = "gate.log"
 	scc.LogStderr = true
 	scc.LogLevel = DEFAULT_LOG_LEVEL
-	scc.PProfIp = DEFAULT_PPROF_IP
-	scc.PProfPort = 0 // pprof not enabled by default
+	scc.HTTPIp = DEFAULT_HTTP_IP
+	scc.HTTPPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
 
 	_readGateConfig(section, scc)
@@ -301,14 +302,16 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 			sc.Ip = key.MustString(sc.Ip)
 		} else if name == "port" {
 			sc.Port = key.MustInt(sc.Port)
+		} else if name == "ws_port" {
+			sc.WSPort = key.MustInt(sc.WSPort)
 		} else if name == "log_file" {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
 			sc.LogStderr = key.MustBool(sc.LogStderr)
-		} else if name == "pprof_ip" {
-			sc.PProfIp = key.MustString(sc.PProfIp)
-		} else if name == "pprof_port" {
-			sc.PProfPort = key.MustInt(sc.PProfPort)
+		} else if name == "http_ip" {
+			sc.HTTPIp = key.MustString(sc.HTTPIp)
+		} else if name == "http_port" {
+			sc.HTTPPort = key.MustInt(sc.HTTPPort)
 		} else if name == "log_level" {
 			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else if name == "gomaxprocs" {
@@ -326,8 +329,8 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	config.LogFile = ""
 	config.LogStderr = true
 	config.LogLevel = DEFAULT_LOG_LEVEL
-	config.PProfIp = DEFAULT_PPROF_IP
-	config.PProfPort = 0
+	config.HTTPIp = DEFAULT_HTTP_IP
+	config.HTTPPort = 0
 
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
@@ -339,10 +342,10 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 			config.LogFile = key.MustString(config.LogFile)
 		} else if name == "log_stderr" {
 			config.LogStderr = key.MustBool(config.LogStderr)
-		} else if name == "pprof_ip" {
-			config.PProfIp = key.MustString(config.PProfIp)
-		} else if name == "pprof_port" {
-			config.PProfPort = key.MustInt(config.PProfPort)
+		} else if name == "http_ip" {
+			config.HTTPIp = key.MustString(config.HTTPIp)
+		} else if name == "http_port" {
+			config.HTTPPort = key.MustInt(config.HTTPPort)
 		} else if name == "log_level" {
 			config.LogLevel = key.MustString(config.LogLevel)
 		} else {

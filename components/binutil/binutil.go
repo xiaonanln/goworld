@@ -8,23 +8,30 @@ import (
 	"os"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"golang.org/x/net/websocket"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func SetupPprofServer(ip string, port int) {
+func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 	if port == 0 {
 		// pprof not enabled
 		gwlog.Info("pprof server not enabled")
 		return
 	}
 
-	pprofHost := fmt.Sprintf("%s:%d", ip, port)
-	gwlog.Info("pprof server listening on http://%s/debug/pprof/ ... available commands: ", pprofHost)
-	gwlog.Info("    go tool pprof http://%s/debug/pprof/heap", pprofHost)
-	gwlog.Info("    go tool pprof http://%s/debug/pprof/profile", pprofHost)
+	httpHost := fmt.Sprintf("%s:%d", ip, port)
+	gwlog.Info("http server listening on %s", httpHost)
+	gwlog.Info("pprof http://%s/debug/pprof/ ... available commands: ", httpHost)
+	gwlog.Info("    go tool pprof http://%s/debug/pprof/heap", httpHost)
+	gwlog.Info("    go tool pprof http://%s/debug/pprof/profile", httpHost)
+
+	//http.Handle("/", http.FileServer(http.Dir(".")))
+	if wsHandler != nil {
+		http.Handle("/ws", websocket.Handler(wsHandler))
+	}
 
 	go func() {
-		http.ListenAndServe(pprofHost, nil)
+		http.ListenAndServe(httpHost, nil)
 	}()
 }
 

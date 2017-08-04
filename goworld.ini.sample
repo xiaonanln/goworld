@@ -20,8 +20,8 @@ ip=127.0.0.1
 port=13000
 log_file=dispatcher.log
 log_stderr=true
-pprof_ip=0.0.0.0
-pprof_port=13001
+http_ip=0.0.0.0
+http_port=13001
 log_level=debug
 
 [server_common]
@@ -29,28 +29,28 @@ boot_entity=Account
 save_interval=600
 log_file=game.log
 log_stderr=true
-pprof_ip=0.0.0.0
+http_ip=0.0.0.0
 log_level=debug
 ; gomaxprocs=0
 
 [server1]
-pprof_port=14001
+http_port=14001
 
 ;[server2]
-;pprof_port=14002
+;http_port=14002
 
 [gate_common]
 log_file=gate.log
 log_stderr=true
-pprof_ip=0.0.0.0
+http_ip=0.0.0.0
 log_level=debug
 compress_connection=0
 ; gomaxprocs=0
 
 [gate1]
 port=15011
-pprof_port=15012
+http_port=15012
 
 ;[gate2]
 ;port=15021
-;pprof_port=15022
+;http_port=15022

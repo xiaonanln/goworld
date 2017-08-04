@@ -9,8 +9,8 @@ import (
 
 	"time"
 
-	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -36,10 +36,6 @@ type ClientProxy struct {
 }
 
 func newClientProxy(netConn net.Conn, cfg *config.GateConfig) *ClientProxy {
-	tcpConn := netConn.(*net.TCPConn)
-	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
-	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
-
 	var conn netutil.Connection = netutil.NetConnection{netConn}
 	conn = netutil.NewBufferedReadConnection(conn)
 	//if cfg.CompressConnection {
