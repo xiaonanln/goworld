@@ -34,8 +34,8 @@ start: dispatcher gate test_game
 	components/dispatcher/dispatcher &
 	examples/test_game/test_game -gid=1 -log info &
 	examples/test_game/test_game -gid=2 -log info &
-	components/gate/gate -gid 1 -log info &
-	components/gate/gate -gid 2 -log info &
+	components/gate/gate -gid 1 -log debug &
+	components/gate/gate -gid 2 -log debug &
 
 killall:
 	-make killclient

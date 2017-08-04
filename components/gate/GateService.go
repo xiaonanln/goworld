@@ -71,7 +71,7 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 }
 
 func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
-	//gwlog.Info("WebSocket Conn: %s", wsConn.RemoteAddr())
+	gwlog.Debug("WebSocket Connection: %s", wsConn.RemoteAddr())
 	var netconn net.Conn = wsConn
 	gs.handleClientConnection(netconn)
 }
