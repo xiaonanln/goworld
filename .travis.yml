@@ -12,7 +12,7 @@ install:
   - go get github.com/garyburd/redigo/redis
   - go get github.com/google/btree
   - go get github.com/pkg/errors
-  - go get github.com/gorilla/websocket
+  - go get golang.org/x/net/websocket
   - go get gopkg.in/eapache/queue.v1
   - go get gopkg.in/ini.v1
   - go get gopkg.in/mgo.v2
