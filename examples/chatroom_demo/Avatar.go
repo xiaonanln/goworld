@@ -35,5 +35,5 @@ func (a *Avatar) GetSpaceID(callerID EntityID) {
 }
 
 func (a *Avatar) SendChat_Client(text string) {
-	a.CallFitleredClients("chatroom", "1", "OnRecvChat", text)
+	a.CallFitleredClients("chatroom", "1", "OnRecvChat", a.GetStr("name"), text)
 }
