@@ -1,9 +1,6 @@
 package main
 
 import (
-	"math/rand"
-	"time"
-
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -25,21 +22,28 @@ func (a *Account) OnCreated() {
 	//gwlog.Info("%s created: client=%v", a, a.GetClient())
 }
 
-func (a *Account) getAvatarID(username string, callback func(entityID common.EntityID, err error)) {
-	goworld.GetKVDB(username, func(val string, err error) {
-		if a.IsDestroyed() {
-			return
-		}
-		callback(common.EntityID(val), err)
-	})
-}
-
-func (a Account) setAvatarID(username string, avatarID common.EntityID) {
-	goworld.PutKVDB(username, string(avatarID), nil)
-}
-
 func (a *Account) Register_Client(username string, password string) {
 	gwlog.Debug("Register %s %s", username, password)
+	goworld.GetKVDB("password$"+username, func(val string, err error) {
+		if err != nil {
+			a.CallClient("ShowError", "服务器错误："+err.Error())
+			return
+		}
+
+		if val != "" {
+			a.CallClient("ShowError", "这个账号已经存在")
+			return
+		}
+		goworld.PutKVDB("password$"+username, password, func(err error) {
+			avatarID := goworld.CreateEntityLocally("Avatar") // 创建一个Avatar对象然后立刻销毁，产生一次存盘
+			avatar := goworld.GetEntity(avatarID)
+			avatar.Attrs.Set("name", username)
+			avatar.Destroy()
+			goworld.PutKVDB("avatarID$"+username, string(avatarID), func(err error) {
+				a.CallClient("ShowInfo", "注册成功，请点击登录")
+			})
+		})
+	})
 }
 
 func (a *Account) Login_Client(username string, password string) {
@@ -50,30 +54,30 @@ func (a *Account) Login_Client(username string, password string) {
 	}
 
 	gwlog.Info("%s logining with username %s password %s ...", a, username, password)
-	if password != "123456" {
-		a.CallClient("OnLogin", false)
-		return
-	}
-
 	a.logining = true
-	a.CallClient("OnLogin", true)
-	a.getAvatarID(username, func(avatarID common.EntityID, err error) {
+	goworld.GetKVDB("password$"+username, func(correctPassword string, err error) {
 		if err != nil {
-			gwlog.Panic(err)
+			a.logining = false
+			a.CallClient("ShowError", "服务器错误："+err.Error())
+			return
 		}
 
-		gwlog.Debug("Username %s get avatar id = %s", username, avatarID)
-		if avatarID.IsNil() {
-			// avatar not found, create new avatar
-			avatarID = goworld.CreateEntityLocally("Avatar")
-			a.setAvatarID(username, avatarID)
+		if password != correctPassword {
+			a.logining = false
+			a.CallClient("ShowError", "密码错误")
+			return
+		}
 
-			avatar := goworld.GetEntity(avatarID)
-			a.onAvatarEntityFound(avatar)
-		} else {
+		goworld.GetKVDB("avatarID$"+username, func(_avatarID string, err error) {
+			if err != nil {
+				a.logining = false
+				a.CallClient("ShowError", "服务器错误："+err.Error())
+				return
+			}
+			avatarID := common.EntityID(_avatarID)
 			goworld.LoadEntityAnywhere("Avatar", avatarID)
-			a.Call(avatarID, "GetSpaceID", a.ID) // request for avatar space ID
-		}
+			a.Call(avatarID, "GetSpaceID", a.ID)
+		})
 	})
 }
 
@@ -90,6 +94,7 @@ func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.En
 }
 
 func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
+	a.logining = false
 	a.GiveClientTo(avatar)
 }
 
@@ -105,14 +110,10 @@ func (a *Account) OnMigrateIn() {
 	if avatar != nil {
 		a.onAvatarEntityFound(avatar)
 	} else {
-		// failed ? try again
-		a.AddCallback(time.Millisecond*time.Duration(rand.Intn(3000)), "RetryLoginToAvatar", loginAvatarID)
+		// failed
+		a.CallClient("ShowError", "登录失败，请重试")
+		a.logining = false
 	}
-}
-
-func (a *Account) RetryLoginToAvatar(loginAvatarID common.EntityID) {
-	goworld.LoadEntityAnywhere("Avatar", loginAvatarID)
-	a.Call(loginAvatarID, "GetSpaceID", a.ID) // request for avatar space ID
 }
 
 func (a *Account) OnMigrateOut() {

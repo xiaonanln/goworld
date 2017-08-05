@@ -1,6 +1,7 @@
 package main
 
 import (
+	. "github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -24,4 +25,15 @@ func (a *Avatar) OnCreated() {
 }
 
 func (a *Avatar) setDefaultAttrs() {
+	a.Attrs.SetDefault("name", "noname")
+
+	a.SetFilterProp("chatroom", "1")
+}
+
+func (a *Avatar) GetSpaceID(callerID EntityID) {
+	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
+}
+
+func (a *Avatar) SendChat_Client(text string) {
+	a.CallFitleredClients("chatroom", "1", "OnRecvChat", text)
 }
