@@ -49,5 +49,5 @@ const (
 
 //  System level configurations
 const (
-	DEBUG_MODE = true
+	DEBUG_MODE = false
 )
