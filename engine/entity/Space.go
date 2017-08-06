@@ -192,6 +192,10 @@ func (space *Space) leave(entity *Entity) {
 }
 
 func (space *Space) move(entity *Entity, newPos Position) {
+	if space.IsNil() {
+		return // never move in nil space
+	}
+
 	space.aoiCalc.Move(&entity.aoi, newPos)
 	enter, leave := space.aoiCalc.Adjust(&entity.aoi)
 
