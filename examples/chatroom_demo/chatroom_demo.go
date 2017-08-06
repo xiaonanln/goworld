@@ -11,9 +11,7 @@ import (
 )
 
 var (
-	SERVICE_NAMES = []string{
-	//"OnlineService",
-	}
+	SERVICE_NAMES = []string{}
 )
 
 func init() {
@@ -29,11 +27,10 @@ func main() {
 
 	// Register each entity types
 	goworld.RegisterEntity("Account", &Account{})
-	//goworld.RegisterEntity("OnlineService", &OnlineService{})
-
 	// Register Avatar type and define attributes
 	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
-		"name": {"Client", "Persistent"},
+		"name":     {"Client", "Persistent"},
+		"chatroom": {"Client"},
 	})
 
 	// Run the game server
