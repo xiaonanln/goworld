@@ -2,6 +2,11 @@ package consts
 
 import "time"
 
+// Optimizations
+const (
+	OPTIMIZE_LOCAL_ENTITIES = false // should be true for performance, set to false for testing
+)
+
 // Tunable Options
 const (
 	// For Packets Send & Recv

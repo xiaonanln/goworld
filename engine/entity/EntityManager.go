@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	. "github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	. "github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
@@ -332,17 +332,18 @@ func GetServiceProviders(serviceName string) EntityIDSet {
 }
 
 func callEntity(id EntityID, method string, args []interface{}) {
-	callRemote(id, method, args)
-
-	// TODO: prohibit local call for test only, uncomment
-	//e := entityManager.get(id)
-	//if e != nil { // this entity is local, just call entity directly
-	//	e.Post(func() { // TODO: what if the taret entity is migrating ? callRemote instead ?
-	//		e.onCallFromLocal(method, args)
-	//	})
-	//} else {
-	//	callRemote(id, method, args)
-	//}
+	if consts.OPTIMIZE_LOCAL_ENTITIES {
+		e := entityManager.get(id)
+		if e != nil { // this entity is local, just call entity directly
+			e.Post(func() { // TODO: what if the taret entity is migrating ? callRemote instead ?
+				e.onCallFromLocal(method, args)
+			})
+		} else {
+			callRemote(id, method, args)
+		}
+	} else {
+		callRemote(id, method, args)
+	}
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {
