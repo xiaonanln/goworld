@@ -78,7 +78,7 @@ func Run(delegate IGameDelegate) {
 	kvdb.Initialize()
 	crontab.Initialize()
 
-	binutil.SetupPprofServer(gameConfig.PProfIp, gameConfig.PProfPort)
+	binutil.SetupHTTPServer(gameConfig.HTTPIp, gameConfig.HTTPPort, nil)
 
 	entity.SetSaveInterval(gameConfig.SaveInterval)
 

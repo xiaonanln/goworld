@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/net/websocket"
+
 	"net"
 
 	"sync"
@@ -11,8 +13,8 @@ import (
 	"os"
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
-	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -52,8 +54,8 @@ func (gs *GateService) run() {
 	cfg := config.GetGate(gateid)
 	gwlog.Info("Compress connection: %v", cfg.CompressConnection)
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
-	go netutil.ServeForever(gs.handlePacketRoutine)
-	netutil.ServeTCPForever(gs.listenAddr, gs)
+	go netutil.ServeTCPForever(gs.listenAddr, gs)
+	netutil.ServeForever(gs.handlePacketRoutine)
 }
 
 func (gs *GateService) String() string {
@@ -61,13 +63,29 @@ func (gs *GateService) String() string {
 }
 
 func (gs *GateService) ServeTCPConnection(conn net.Conn) {
+	tcpConn := conn.(*net.TCPConn)
+	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
+	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
+
+	gs.handleClientConnection(conn)
+}
+
+func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
+	gwlog.Debug("WebSocket Connection: %s", wsConn.RemoteAddr())
+	//var conn netutil.Connection = NewWebSocketConn(wsConn)
+	wsConn.PayloadType = websocket.BinaryFrame
+	gs.handleClientConnection(wsConn)
+}
+
+func (gs *GateService) handleClientConnection(netconn net.Conn) {
 	if gs.terminating.Load() {
-		// server terminating, not accepting more connections
-		conn.Close()
+		// server terminating, not accepting more connectionsF
+		netconn.Close()
 		return
 	}
 
 	cfg := config.GetGate(gateid)
+	conn := netutil.NetConnection{netconn}
 	cp := newClientProxy(conn, cfg)
 
 	gs.clientProxiesLock.Lock()

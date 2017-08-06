@@ -22,6 +22,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"golang.org/x/net/websocket"
 )
 
 type ClientBot struct {
@@ -36,13 +37,15 @@ type ClientBot struct {
 	logined            bool
 	startedDoingThings bool
 	syncPosTime        time.Time
+	useWebSocket       bool
 }
 
-func newClientBot(id int, waiter *sync.WaitGroup) *ClientBot {
+func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
 	return &ClientBot{
-		id:       id,
-		waiter:   waiter,
-		entities: map[common.EntityID]*ClientEntity{},
+		id:           id,
+		waiter:       waiter,
+		entities:     map[common.EntityID]*ClientEntity{},
+		useWebSocket: useWebSocket,
 	}
 }
 
@@ -60,11 +63,11 @@ func (bot *ClientBot) run() {
 	gateid := gateIDs[rand.Intn(len(gateIDs))]
 	gwlog.Debug("%s is connecting to gate %d", bot, gateid)
 	cfg := config.GetGate(gateid)
-	cfg = cfg
+
 	var netconn net.Conn
 	var err error
 	for { // retry for ever
-		netconn, err = netutil.ConnectTCP(serverAddr, cfg.Port)
+		netconn, err = bot.connectServer(cfg)
 		if err != nil {
 			gwlog.Error("Connect failed: %s", err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
@@ -73,20 +76,33 @@ func (bot *ClientBot) run() {
 		// connected , ok
 		break
 	}
-	netconn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
-	netconn.(*net.TCPConn).SetReadBuffer(64 * 1024)
+
 	gwlog.Info("connected: %s", netconn.RemoteAddr())
 
 	var conn netutil.Connection = netutil.NetConnection{netconn}
 	conn = netutil.NewBufferedReadConnection(conn)
-	//if cfg.CompressConnection {
-	//	conn = netutil.NewCompressedConnection(conn)
-	//}
 
 	bot.conn = proto.NewGoWorldConnection(conn, cfg.CompressConnection)
 	defer bot.conn.Close()
 
 	bot.loop()
+}
+
+func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
+	if bot.useWebSocket {
+		origin := fmt.Sprintf("http://%s:%d/", serverAddr, cfg.HTTPPort)
+		wsaddr := fmt.Sprintf("ws://%s:%d/ws", serverAddr, cfg.HTTPPort)
+
+		wsConn, err := websocket.Dial(wsaddr, "", origin)
+		return wsConn, err
+	} else {
+		conn, err := netutil.ConnectTCP(serverAddr, cfg.Port)
+		if err != nil {
+			conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
+			conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
+		}
+		return conn, err
+	}
 }
 
 func (bot *ClientBot) loop() {

@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	quiet      bool
-	configFile string
-	serverAddr string
-	N          int
+	quiet        bool
+	configFile   string
+	serverAddr   string
+	useWebSocket bool
+	N            int
 )
 
 func parseArgs() {
@@ -25,6 +26,7 @@ func parseArgs() {
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.IntVar(&N, "N", 1000, "Number of clients")
 	flag.StringVar(&serverAddr, "server", "localhost", "replace server address")
+	flag.BoolVar(&useWebSocket, "ws", false, "use WebSocket to connect server")
 	flag.Parse()
 }
 
@@ -38,7 +40,7 @@ func main() {
 	var wait sync.WaitGroup
 	wait.Add(N)
 	for i := 0; i < N; i++ {
-		bot := newClientBot(i+1, &wait)
+		bot := newClientBot(i+1, useWebSocket, &wait)
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)

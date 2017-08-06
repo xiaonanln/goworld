@@ -38,10 +38,10 @@ const (
 
 // Debug Options
 const (
-	DEBUG_PACKETS      = false
+	DEBUG_PACKETS      = true
 	DEBUG_SPACES       = false
 	DEBUG_SAVE_LOAD    = false
-	DEBUG_CLIENTS      = false
+	DEBUG_CLIENTS      = true
 	DEBUG_MIGRATE      = false
 	DEBUG_PACKET_ALLOC = false
 	DEBUG_FILTER_PROP  = false
@@ -49,5 +49,5 @@ const (
 
 //  System level configurations
 const (
-	DEBUG_MODE = true
+	DEBUG_MODE = false
 )

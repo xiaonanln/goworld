@@ -41,7 +41,7 @@ func main() {
 	dispatcherConfig := config.GetDispatcher()
 	binutil.SetupGWLog(dispatcherConfig.LogLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
 	setupSignals()
-	binutil.SetupPprofServer(dispatcherConfig.PProfIp, dispatcherConfig.PProfPort)
+	binutil.SetupHTTPServer(dispatcherConfig.HTTPIp, dispatcherConfig.HTTPPort, nil)
 
 	dispatcher := newDispatcherService()
 	dispatcher.run()
