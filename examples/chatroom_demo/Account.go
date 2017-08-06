@@ -62,6 +62,12 @@ func (a *Account) Login_Client(username string, password string) {
 			return
 		}
 
+		if correctPassword == "" {
+			a.logining = false
+			a.CallClient("ShowError", "账号不存在")
+			return
+		}
+
 		if password != correctPassword {
 			a.logining = false
 			a.CallClient("ShowError", "密码错误")
