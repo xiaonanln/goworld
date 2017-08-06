@@ -5,8 +5,8 @@ import (
 
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
-	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/components/game"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -30,19 +30,19 @@ func main() {
 	goworld.RegisterSpace(&MySpace{}) // Register the space type
 
 	// Register each entity types
-	goworld.RegisterEntity("Account", &Account{})
-	goworld.RegisterEntity("OnlineService", &OnlineService{})
-	goworld.RegisterEntity("SpaceService", &SpaceService{})
-	goworld.RegisterEntity("MailService", &MailService{}).DefineAttrs(map[string][]string{
+	goworld.RegisterEntity("Account", &Account{}, false, false)
+	goworld.RegisterEntity("OnlineService", &OnlineService{}, false, false)
+	goworld.RegisterEntity("SpaceService", &SpaceService{}, false, false)
+	goworld.RegisterEntity("MailService", &MailService{}, true, false).DefineAttrs(map[string][]string{
 		"lastMailID": {"Persistent"},
 	})
 
 	// Register Monster type and define attributes
-	goworld.RegisterEntity("Monster", &Monster{}).DefineAttrs(map[string][]string{
+	goworld.RegisterEntity("Monster", &Monster{}, false, true).DefineAttrs(map[string][]string{
 		"name": {"AllClients"},
 	})
 	// Register Avatar type and define attributes
-	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
+	goworld.RegisterEntity("Avatar", &Avatar{}, true, true).DefineAttrs(map[string][]string{
 		"name":          {"AllClients", "Persistent"},
 		"level":         {"AllClients", "Persistent"},
 		"prof":          {"AllClients", "Persistent"},

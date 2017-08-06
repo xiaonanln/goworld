@@ -26,6 +26,8 @@ var (
 )
 
 type EntityTypeDesc struct {
+	isPersistent    bool
+	useAOI          bool
 	entityType      reflect.Type
 	rpcDescs        RpcDescMap
 	allClientAttrs  StringSet
@@ -61,6 +63,10 @@ func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 				isClient = true
 			} else if def == "persistent" {
 				isPersistent = true
+				// make sure non-persistent entity has no persistent attributes
+				if !desc.isPersistent {
+					gwlog.Fatal("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
+				}
 			}
 		}
 
@@ -162,7 +168,7 @@ func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
 	return "" // never goes here
 }
 
-func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
+func RegisterEntity(typeName string, entityPtr IEntity, isPersistent bool, useAOI bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -172,6 +178,8 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	// register the string of e
 	rpcDescs := RpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
+		isPersistent:    isPersistent,
+		useAOI:          useAOI,
 		entityType:      entityType,
 		rpcDescs:        rpcDescs,
 		clientAttrs:     StringSet{},

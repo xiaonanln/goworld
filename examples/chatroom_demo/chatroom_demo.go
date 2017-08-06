@@ -26,9 +26,9 @@ func main() {
 	goworld.RegisterSpace(&MySpace{}) // Register the space type
 
 	// Register each entity types
-	goworld.RegisterEntity("Account", &Account{})
+	goworld.RegisterEntity("Account", &Account{}, false, false)
 	// Register Avatar type and define attributes
-	goworld.RegisterEntity("Avatar", &Avatar{}).DefineAttrs(map[string][]string{
+	goworld.RegisterEntity("Avatar", &Avatar{}, true, true).DefineAttrs(map[string][]string{
 		"name":     {"Client", "Persistent"},
 		"chatroom": {"Client"},
 	})
