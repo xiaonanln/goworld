@@ -1005,7 +1005,12 @@ func (e *Entity) CallFitleredClients(key string, val string, method string, args
 	dispatcher_client.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
-// Move in Space
+// Returns if entity type is using AOI
+//
+// Entities like Account, Service entities should not be using AOI
+func (e *Entity) IsUseAOI() bool {
+	return e.typeDesc.useAOI
+}
 
 func (e *Entity) GetPosition() Position {
 	return e.aoi.pos
