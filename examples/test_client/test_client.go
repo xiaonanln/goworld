@@ -36,7 +36,7 @@ func main() {
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
-	gwlog.SetLevel(gwlog.INFO)
+	gwlog.SetLevel(gwlog.InfoLevel)
 	var wait sync.WaitGroup
 	wait.Add(N)
 	for i := 0; i < N; i++ {

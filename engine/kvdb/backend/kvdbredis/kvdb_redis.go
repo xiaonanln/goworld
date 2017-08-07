@@ -1,4 +1,4 @@
-package kvdb_redis
+package kvdbredis
 
 import (
 	"io"
@@ -27,6 +27,7 @@ func (ki keyTreeItem) Less(_other btree.Item) bool {
 	return ki.key < _other.(keyTreeItem).key
 }
 
+// Open Redis for KVDB backend
 func OpenRedisKVDB(host string, dbindex int) (KVDBEngine, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
@@ -88,9 +89,8 @@ func (db *redisKVDB) Get(key string) (val string, err error) {
 	}
 	if r == nil {
 		return "", nil
-	} else {
-		return string(r.([]byte)), err
 	}
+	return string(r.([]byte)), err
 }
 
 func (db *redisKVDB) Put(key string, val string) error {

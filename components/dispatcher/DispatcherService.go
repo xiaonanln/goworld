@@ -435,7 +435,7 @@ func (service *DispatcherService) HandleSyncPositionYawFromClient(dcp *Dispatche
 	payload := pkt.UnreadPayload()
 	service.entitySyncInfosToGameLock.Lock()
 
-	for i := 0; i < len(payload); i += (proto.SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH) {
+	for i := 0; i < len(payload); i += proto.SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH {
 		eid := common.EntityID(payload[i : i+common.ENTITYID_LENGTH]) // the first bytes of each entry is the EntityID
 
 		entityDispatchInfo := service.getEntityDispatcherInfoForRead(eid)

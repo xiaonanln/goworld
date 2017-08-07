@@ -6,7 +6,7 @@ import (
 
 	"time"
 
-	timer "github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/engine/common"
 
 	"unsafe"

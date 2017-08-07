@@ -108,7 +108,7 @@ func (aoiset AOISet) Contains(aoi *AOI) bool {
 
 func (aoiset AOISet) Join(other AOISet) AOISet {
 	join := AOISet{}
-	for aoi, _ := range aoiset {
+	for aoi := range aoiset {
 		if other.Contains(aoi) {
 			join.Add(aoi)
 		}

@@ -5,6 +5,7 @@ import (
 	"github.com/xiaonanln/typeconv"
 )
 
+// List attribute for attribute lists
 type ListAttr struct {
 	owner  *Entity
 	parent interface{}
@@ -14,6 +15,7 @@ type ListAttr struct {
 	items  []interface{}
 }
 
+// Size of list attribute
 func (a *ListAttr) Size() int {
 	return len(a.items)
 }
@@ -26,6 +28,7 @@ func (a *ListAttr) clearOwner() {
 	a.flag = 0
 }
 
+// Set item value
 func (a *ListAttr) Set(index int, val interface{}) {
 	a.items[index] = val
 	if sa, ok := val.(*MapAttr); ok {
@@ -93,47 +96,55 @@ func (a *ListAttr) _getPathFromOwner() []interface{} {
 	}
 }
 
+// Get item value
 func (a *ListAttr) Get(index int) interface{} {
 	val := a.items[index]
 	return val
 }
 
+// Get item value as int
 func (a *ListAttr) GetInt(index int) int {
 	val := a.Get(index)
 	return int(typeconv.Int(val))
 }
 
+// Get item value as int64
 func (a *ListAttr) GetInt64(index int) int64 {
 	val := a.Get(index)
 	return typeconv.Int(val)
 }
 
+// Get item value as uint64
 func (a *ListAttr) GetUint64(index int) uint64 {
 	val := a.Get(index)
 	return uint64(typeconv.Int(val))
 }
 
+// Get item value as string
 func (a *ListAttr) GetStr(index int) string {
 	val := a.Get(index)
 	return val.(string)
 }
 
+// Get item value as float64
 func (a *ListAttr) GetFloat(index int) float64 {
 	val := a.Get(index)
 	return val.(float64)
 }
 
+// Get item value as bool
 func (a *ListAttr) GetBool(index int) bool {
 	val := a.Get(index)
 	return val.(bool)
 }
 
+// Get item value as List Attribute
 func (a *ListAttr) GetListAttr(index int) *ListAttr {
 	val := a.Get(index)
 	return val.(*ListAttr)
 }
 
-// Delete a key in attrs
+// Pop the last item from the end
 func (a *ListAttr) Pop() interface{} {
 	size := len(a.items)
 	val := a.items[size-1]
@@ -149,11 +160,13 @@ func (a *ListAttr) Pop() interface{} {
 	return val
 }
 
+// Pop the last item as ListAttr
 func (a *ListAttr) PopListAttr() *ListAttr {
 	val := a.Pop()
 	return val.(*ListAttr)
 }
 
+// Append item to the end
 func (a *ListAttr) Append(val interface{}) {
 	a.items = append(a.items, val)
 	index := len(a.items) - 1
@@ -186,6 +199,7 @@ func (a *ListAttr) Append(val interface{}) {
 	}
 }
 
+// Convert ListAttr to slice
 func (a *ListAttr) ToList() []interface{} {
 	l := make([]interface{}, len(a.items))
 
@@ -201,6 +215,7 @@ func (a *ListAttr) ToList() []interface{} {
 	return l
 }
 
+// Assign slice to ListAttr
 func (a *ListAttr) AssignList(l []interface{}) {
 	for _, v := range l {
 		if iv, ok := v.(map[string]interface{}); ok {
@@ -217,21 +232,7 @@ func (a *ListAttr) AssignList(l []interface{}) {
 	}
 }
 
-//func (a *ListAttr) AssignList(l []interface{}) *ListAttr {
-//
-//	for idx, v := l {
-//		innerMap, ok := v.(map[string]interface{})
-//		if ok {
-//			innerListAttr := NewListAttr()
-//			innerListAttr.AssignMap(innerMap)
-//			a.Set(idx, innerListAttr)
-//		} else {
-//			a.Set(idx, v)
-//		}
-//	}
-//	return a
-//}
-
+// Create a new ListAttr
 func NewListAttr() *ListAttr {
 	return &ListAttr{
 		items: []interface{}{},

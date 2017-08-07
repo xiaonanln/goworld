@@ -135,7 +135,7 @@ func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 	space.entities.Add(entity)
 
 	space.aoiCalc.Enter(&entity.aoi, pos)
-	entity.syncInfoFlag |= (sifSyncOwnClient | sifSyncNeighborClients)
+	entity.syncInfoFlag |= sifSyncOwnClient | sifSyncNeighborClients
 
 	if !isRestore {
 		entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
@@ -248,7 +248,7 @@ func (space *Space) OnEntityLeaveSpace(entity *Entity) {
 
 func (space *Space) CountEntities(typeName string) int {
 	count := 0
-	for e, _ := range space.entities {
+	for e := range space.entities {
 		if e.TypeName == typeName {
 			count += 1
 		}

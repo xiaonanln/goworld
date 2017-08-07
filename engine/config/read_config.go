@@ -133,7 +133,7 @@ func GetGate(gateid uint16) *GateConfig {
 func GetGameIDs() []uint16 {
 	cfg := Get()
 	serverIDs := make([]int, 0, len(cfg.Games))
-	for id, _ := range cfg.Games {
+	for id := range cfg.Games {
 		serverIDs = append(serverIDs, id)
 	}
 	sort.Ints(serverIDs)
@@ -148,7 +148,7 @@ func GetGameIDs() []uint16 {
 func GetGateIDs() []uint16 {
 	cfg := Get()
 	gateIDs := make([]int, 0, len(cfg.Gates))
-	for id, _ := range cfg.Gates {
+	for id := range cfg.Gates {
 		gateIDs = append(gateIDs, id)
 	}
 	sort.Ints(gateIDs)

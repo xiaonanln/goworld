@@ -175,7 +175,7 @@ func (a *MapAttr) PopMapAttr(key string) *MapAttr {
 func (a *MapAttr) GetKeys() []string {
 	size := len(a.attrs)
 	keys := make([]string, 0, size)
-	for k, _ := range a.attrs {
+	for k := range a.attrs {
 		keys = append(keys, k)
 	}
 	return keys

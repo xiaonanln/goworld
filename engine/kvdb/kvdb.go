@@ -11,7 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
-	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_redis"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -58,7 +58,7 @@ func assureKVDBEngineReady() (err error) {
 		var dbindex int
 		dbindex, err = strconv.Atoi(kvdbCfg.DB)
 		if err == nil {
-			kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
+			kvdbEngine, err = kvdbredis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
 		}
 	} else {
 		gwlog.Fatal("KVDB type %s is not implemented", kvdbCfg.Type)

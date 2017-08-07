@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
-	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_redis"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
@@ -179,7 +179,7 @@ func openTestMongoKVDB(f _Fataler) KVDBEngine {
 }
 
 func openTestRedisKVDB(f _Fataler) KVDBEngine {
-	kvdb, err := kvdb_redis.OpenRedisKVDB("127.0.0.1:6379", 0)
+	kvdb, err := kvdbredis.OpenRedisKVDB("127.0.0.1:6379", 0)
 	if err != nil {
 		f.Fatal(err)
 	}
