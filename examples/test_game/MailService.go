@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// The max possible Mail ID
+	// END_MAIL_ID is the max possible Mail ID
 	END_MAIL_ID = 9999999999
 )
 
@@ -24,19 +24,19 @@ type MailService struct {
 	mailPacker    netutil.MsgPacker
 }
 
-// Initialize MailService
+// OnInit is called when initializing MailService
 func (s *MailService) OnInit() {
 	s.mailPacker = netutil.MessagePackMsgPacker{}
 }
 
-// MailService entity is created
+// OnCreated is called when MailService is created
 func (s *MailService) OnCreated() {
 	gwlog.Info("Registering MailService ...")
 	s.Attrs.SetDefault("lastMailID", 0)
 	s.DeclareService("MailService")
 }
 
-// Send mail request
+// SendMail handles send mail requests from avatars
 func (s *MailService) SendMail(senderID common.EntityID, senderName string, targetID common.EntityID, data MailData) {
 	gwlog.Debug("%s.SendMail: sender=%s,%s, target=%s, mail=%v", s, senderID, senderName, targetID, data)
 
@@ -67,7 +67,7 @@ func (s *MailService) SendMail(senderID common.EntityID, senderName string, targ
 	})
 }
 
-// GetMails request
+// GetMails handle get mails requests from avatars
 func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
 	endMailKey := s.getMailKey(END_MAIL_ID, avatarID)

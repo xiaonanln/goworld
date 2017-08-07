@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 
@@ -20,11 +19,6 @@ var (
 	configFile = ""
 	sigChan    = make(chan os.Signal, 1)
 )
-
-func debuglog(format string, a ...interface{}) {
-	s := fmt.Sprintf(format, a...)
-	gwlog.Debug("dispatcher: %s", s)
-}
 
 func parseArgs() {
 	flag.StringVar(&configFile, "configfile", "", "set config file path")

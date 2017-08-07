@@ -26,7 +26,7 @@ func (info *clientSyncInfo) IsEmpty() bool {
 	return info.EntityID == ""
 }
 
-// Game client connections in gate
+// ClientProxy is a game client connections managed by gate
 type ClientProxy struct {
 	*proto.GoWorldConnection
 	clientid       common.ClientID

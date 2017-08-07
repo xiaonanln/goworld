@@ -85,10 +85,10 @@ type EntitySyncInfoToClient struct {
 
 func init() {
 	if unsafe.Sizeof(EntitySyncInfo{}) != SYNC_INFO_SIZE_PER_ENTITY {
-		gwlog.Fatal("Wrong type definition for EntitySyncInfo: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfo{}), SYNC_INFO_SIZE_PER_ENTITY)
+		gwlog.Fatalf("Wrong type definition for EntitySyncInfo: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfo{}), SYNC_INFO_SIZE_PER_ENTITY)
 	}
 	if unsafe.Sizeof(EntitySyncInfoToClient{}) != SYNC_INFO_SIZE_PER_ENTITY+common.CLIENTID_LENGTH+common.ENTITYID_LENGTH {
-		gwlog.Fatal("Wrong type definition for EntitySyncInfoToClient: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfoToClient{}), SYNC_INFO_SIZE_PER_ENTITY+common.CLIENTID_LENGTH)
+		gwlog.Fatalf("Wrong type definition for EntitySyncInfoToClient: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfoToClient{}), SYNC_INFO_SIZE_PER_ENTITY+common.CLIENTID_LENGTH)
 	}
 }
 

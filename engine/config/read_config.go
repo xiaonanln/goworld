@@ -83,13 +83,11 @@ type GoWorldConfig struct {
 }
 
 type StorageConfig struct {
-	Type string
-	// Filesystem Storage Configs
-	Directory string // directory for filesystem storage
-	// MongoDB storage configs
-	Url  string
-	DB   string
-	Host string // Redis host
+	Type      string // Type of storage
+	Directory string // Directory of filesystem storage
+	Url       string // Url of MongoDB server
+	DB        string
+	Host      string // Redis host
 }
 
 type KVDBConfig struct {

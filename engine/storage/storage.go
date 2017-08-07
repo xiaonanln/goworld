@@ -116,7 +116,7 @@ func WaitTerminated() {
 func Initialize() {
 	err := assureStorageEngineReady()
 	if err != nil {
-		gwlog.Fatal("Storage engine is not ready: %s", err)
+		gwlog.Fatalf("Storage engine is not ready: %s", err)
 	}
 	go storageRoutine()
 }
@@ -188,7 +188,7 @@ func storageRoutine() {
 				}
 
 				if storageEngine == nil {
-					gwlog.Fatal("storage engine is nil")
+					gwlog.Fatalf("storage engine is nil")
 				}
 
 				err = storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)

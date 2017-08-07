@@ -87,7 +87,7 @@ func (monitor *Monitor) Dump() {
 		_t2 := copyOpInfos[j]
 		return _t1.name < _t2.name
 	})
-	fmt.Fprintf(os.Stderr, "=====================================================================================\n")
+	fmt.Fprint(os.Stderr, "=====================================================================================\n")
 	for _, _t := range copyOpInfos {
 		opname, opinfo := _t.name, _t.info
 		fmt.Fprintf(os.Stderr, "%-30sx%-10d AVG %-10s MAX %-10s\n", opname, opinfo.count, opinfo.totalDuration/time.Duration(opinfo.count), opinfo.maxDuration)

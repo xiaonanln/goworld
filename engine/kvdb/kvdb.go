@@ -61,7 +61,7 @@ func assureKVDBEngineReady() (err error) {
 			kvdbEngine, err = kvdbredis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
 		}
 	} else {
-		gwlog.Fatal("KVDB type %s is not implemented", kvdbCfg.Type)
+		gwlog.Fatalf("KVDB type %s is not implemented", kvdbCfg.Type)
 	}
 	return
 }

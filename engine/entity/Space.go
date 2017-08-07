@@ -218,7 +218,7 @@ func (space *Space) move(entity *Entity, newPos Position) {
 //
 //	for e := range space.entities {
 //		if e.aoi.markVal != 0 {
-//			gwlog.Fatal("%s: wrong AOI mark val = %d", e.aoi.markVal)
+//			gwlog.Fatalf("%s: wrong AOI mark val = %d", e.aoi.markVal)
 //		}
 //
 //		if e == entity {
@@ -227,9 +227,9 @@ func (space *Space) move(entity *Entity, newPos Position) {
 //
 //		isNeighbor := e.aoi.pos.X >= entity.aoi.pos.X-DEFAULT_AOI_DISTANCE && e.aoi.pos.X <= entity.aoi.pos.X+DEFAULT_AOI_DISTANCE && e.aoi.pos.Z >= entity.aoi.pos.Z-DEFAULT_AOI_DISTANCE && e.aoi.pos.Z <= entity.aoi.pos.Z+DEFAULT_AOI_DISTANCE
 //		if entity.aoi.neighbors.Contains(e) && !isNeighbor {
-//			gwlog.Fatal("space %s: %s: wrong neighbor: %s, pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
+//			gwlog.Fatalf("space %s: %s: wrong neighbor: %s, pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
 //		} else if !entity.aoi.neighbors.Contains(e) && isNeighbor {
-//			gwlog.Fatal("space %s: %s: wrong not neighbor: %s: pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
+//			gwlog.Fatalf("space %s: %s: wrong not neighbor: %s: pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
 //		}
 //	}
 //}

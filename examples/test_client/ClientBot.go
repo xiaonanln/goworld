@@ -25,7 +25,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// A client bot representing a game client
+// ClientBot is  a client bot representing a game client
 type ClientBot struct {
 	sync.Mutex
 
@@ -213,7 +213,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		y := entity.Coord(packet.ReadFloat32())
 		z := entity.Coord(packet.ReadFloat32())
 		yaw := entity.Yaw(packet.ReadFloat32())
-		//gwlog.Info("Create entity %s.%s: isPlayer=%v", typeName, entityID, isPlayer)
+		//gwlog.Info("Create e %s.%s: isPlayer=%v", typeName, entityID, isPlayer)
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
 
@@ -221,14 +221,14 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 			// this is a space
 			bot.createSpace(entityID, clientData)
 		} else {
-			// this is a entity
+			// this is a e
 			bot.createEntity(typeName, entityID, isPlayer, clientData, x, y, z, yaw)
 		}
 	} else if msgtype == proto.MT_DESTROY_ENTITY_ON_CLIENT {
 		typeName := packet.ReadVarStr()
 		entityID := packet.ReadEntityID()
 		if !quiet {
-			gwlog.Debug("Destroy entity %s.%s", typeName, entityID)
+			gwlog.Debug("Destroy e %s.%s", typeName, entityID)
 		}
 		if typeName == entity.SPACE_ENTITY_TYPE {
 			bot.destroySpace(entityID)
@@ -240,7 +240,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		method := packet.ReadVarStr()
 		args := packet.ReadArgs()
 		if !quiet {
-			gwlog.Debug("Call entity %s.%s(%v)", entityID, method, args)
+			gwlog.Debug("Call e %s.%s(%v)", entityID, method, args)
 		}
 		bot.callEntityMethod(entityID, method, args)
 	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
@@ -284,7 +284,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Position) {
 	//gwlog.Debug("updateEntityPosition %s => %s", entityID, position)
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found", entityID)
+		gwlog.Error("e %s not found", entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -294,7 +294,7 @@ func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position en
 func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) {
 	//gwlog.Debug("updateEntityYaw %s => %s", entityID, yaw)
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found", entityID)
+		gwlog.Error("e %s not found", entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -304,7 +304,7 @@ func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) 
 func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {
 	//gwlog.Info("SET ATTR %s.%v: set %s=%v", entityID, path, key, val)
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("e %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
@@ -314,7 +314,7 @@ func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interf
 func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface{}, key string) {
 	//gwlog.Info("DEL ATTR %s.%v: del %s", entityID, path, key)
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("e %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
@@ -323,7 +323,7 @@ func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface
 
 func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []interface{}, index int, val interface{}) {
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("e %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
@@ -332,7 +332,7 @@ func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []inter
 
 func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []interface{}, val interface{}) {
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("e %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
@@ -341,7 +341,7 @@ func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []inter
 
 func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interface{}) {
 	if bot.entities[entityID] == nil {
-		gwlog.Error("entity %s not found")
+		gwlog.Error("e %s not found")
 		return
 	}
 	entity := bot.entities[entityID]
@@ -427,7 +427,7 @@ func (bot *ClientBot) password() string {
 	return "123456"
 }
 
-// Call server method of target entity
+// CallServer calls server method of target e
 func (bot *ClientBot) CallServer(id common.EntityID, method string, args []interface{}) {
 	if !quiet {
 		gwlog.Debug("%s call server: %s.%s%v", bot, id, method, args)
@@ -435,7 +435,7 @@ func (bot *ClientBot) CallServer(id common.EntityID, method string, args []inter
 	bot.conn.SendCallEntityMethodFromClient(id, method, args)
 }
 
-// Called when player enters space
+// OnEnterSpace is called when player enters space
 func (bot *ClientBot) OnEnterSpace() {
 	gwlog.Debug("%s.OnEnterSpace, player=%s", bot, bot.player)
 	player := bot.player
@@ -447,7 +447,7 @@ func (bot *ClientBot) OnEnterSpace() {
 	}
 }
 
-// Called when player leaves space
+// OnLeaveSpace is called when player leaves space
 func (bot *ClientBot) OnLeaveSpace(oldSpace *ClientSpace) {
 	gwlog.Debug("%s.OnLeaveSpace, player=%s", bot, bot.player)
 }

@@ -63,7 +63,7 @@ func TraceError(format string, args ...interface{}) {
 	Error(format, args...)
 }
 
-func Fatal(format string, args ...interface{}) {
+func Fatalf(format string, args ...interface{}) {
 	debug.PrintStack()
 	sublog.Fatalf(format, args...)
 }

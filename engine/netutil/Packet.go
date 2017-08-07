@@ -60,7 +60,7 @@ var (
 func init() {
 
 	if MIN_PAYLOAD_CAP >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD {
-		gwlog.Fatal("MIN_PAYLOAD_CAP should be smaller than PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD")
+		gwlog.Fatalf("MIN_PAYLOAD_CAP should be smaller than PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD")
 	}
 
 	payloadCap := uint32(MIN_PAYLOAD_CAP) << CAP_GROW_SHIFT

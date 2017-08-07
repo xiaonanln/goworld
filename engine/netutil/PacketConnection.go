@@ -25,12 +25,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/opmon"
 )
 
-const ( // Three different level of packet size
-	PACKET_SIZE_SMALL = 1024
-	PACKET_SIZE_BIG   = 1024 * 64
-	PACKET_SIZE_HUGE  = 1024 * 1024 * 4
-)
-
 const (
 	MAX_PACKET_SIZE    = 25 * 1024 * 1024
 	SIZE_FIELD_SIZE    = 4
@@ -48,7 +42,7 @@ func init() {
 	for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
 		cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
 		if err != nil {
-			gwlog.Fatal("create flate compressor failed: %v", err)
+			gwlog.Fatalf("create flate compressor failed: %v", err)
 		}
 
 		compressWritersPool.Put(cw)
@@ -170,6 +164,7 @@ send_packets_loop:
 			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
 			if _cw != nil {
 				cw = _cw.(*flate.Writer)
+				//noinspection GoDeferInLoop
 				defer compressWritersPool.Put(cw)
 			} else {
 				gwlog.Warn("Fail to get compressor, packet is not compressed")

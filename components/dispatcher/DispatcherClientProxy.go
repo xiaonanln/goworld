@@ -55,7 +55,7 @@ func (dcp *DispatcherClientProxy) serve() {
 	// Serve the dispatcher client from server / gate
 	defer func() {
 		dcp.Close()
-		dcp.owner.HandleDispatcherClientDisconnect(dcp)
+		dcp.owner.handleDispatcherClientDisconnect(dcp)
 		err := recover()
 		if err != nil && !netutil.IsConnectionError(err) {
 			gwlog.TraceError("Client %s paniced with error: %v", dcp, err)
@@ -79,37 +79,37 @@ func (dcp *DispatcherClientProxy) serve() {
 			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
 		if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
-			dcp.owner.HandleSyncPositionYawFromClient(dcp, pkt)
+			dcp.owner.handleSyncPositionYawFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
-			dcp.owner.HandleSyncPositionYawOnClients(dcp, pkt)
+			dcp.owner.handleSyncPositionYawOnClients(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
-			dcp.owner.HandleCallEntityMethod(dcp, pkt)
+			dcp.owner.handleCallEntityMethod(dcp, pkt)
 		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
-			dcp.owner.HandleDoSomethingOnSpecifiedClient(dcp, pkt)
+			dcp.owner.handleDoSomethingOnSpecifiedClient(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-			dcp.owner.HandleCallEntityMethodFromClient(dcp, pkt)
+			dcp.owner.handleCallEntityMethodFromClient(dcp, pkt)
 		} else if msgtype == proto.MT_MIGRATE_REQUEST {
-			dcp.owner.HandleMigrateRequest(dcp, pkt)
+			dcp.owner.handleMigrateRequest(dcp, pkt)
 		} else if msgtype == proto.MT_REAL_MIGRATE {
-			dcp.owner.HandleRealMigrate(dcp, pkt)
+			dcp.owner.handleRealMigrate(dcp, pkt)
 		} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
-			dcp.owner.HandleCallFilteredClientProxies(dcp, pkt)
+			dcp.owner.handleCallFilteredClientProxies(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
-			dcp.owner.HandleNotifyClientConnected(dcp, pkt)
+			dcp.owner.handleNotifyClientConnected(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
-			dcp.owner.HandleNotifyClientDisconnected(dcp, pkt)
+			dcp.owner.handleNotifyClientDisconnected(dcp, pkt)
 		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
-			dcp.owner.HandleLoadEntityAnywhere(dcp, pkt)
+			dcp.owner.handleLoadEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
 			eid := pkt.ReadEntityID()
-			dcp.owner.HandleNotifyCreateEntity(dcp, pkt, eid)
+			dcp.owner.handleNotifyCreateEntity(dcp, pkt, eid)
 		} else if msgtype == proto.MT_NOTIFY_DESTROY_ENTITY {
 			eid := pkt.ReadEntityID()
-			dcp.owner.HandleNotifyDestroyEntity(dcp, pkt, eid)
+			dcp.owner.handleNotifyDestroyEntity(dcp, pkt, eid)
 		} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
-			dcp.owner.HandleCreateEntityAnywhere(dcp, pkt)
+			dcp.owner.handleCreateEntityAnywhere(dcp, pkt)
 		} else if msgtype == proto.MT_DECLARE_SERVICE {
-			dcp.owner.HandleDeclareService(dcp, pkt)
+			dcp.owner.handleDeclareService(dcp, pkt)
 		} else if msgtype == proto.MT_SET_GAME_ID {
 			// this is a game server
 			gameid := pkt.ReadUint16()
@@ -123,7 +123,7 @@ func (dcp *DispatcherClientProxy) serve() {
 			}
 			dcp.gameid = gameid
 			dcp.startAutoFlush()
-			dcp.owner.HandleSetGameID(dcp, pkt, gameid, isReconnect, isRestore)
+			dcp.owner.handleSetGameID(dcp, pkt, gameid, isReconnect, isRestore)
 		} else if msgtype == proto.MT_SET_GATE_ID {
 			// this is a gate
 			gateid := pkt.ReadUint16()
@@ -135,10 +135,10 @@ func (dcp *DispatcherClientProxy) serve() {
 			}
 			dcp.gateid = gateid
 			dcp.startAutoFlush()
-			dcp.owner.HandleSetGateID(dcp, pkt, gateid)
+			dcp.owner.handleSetGateID(dcp, pkt, gateid)
 		} else if msgtype == proto.MT_START_FREEZE_GAME {
 			// freeze the game
-			dcp.owner.HandleStartFreezeGame(dcp, pkt)
+			dcp.owner.handleStartFreezeGame(dcp, pkt)
 		} else {
 			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 			if consts.DEBUG_MODE {
