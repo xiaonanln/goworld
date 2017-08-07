@@ -25,6 +25,7 @@ var (
 	entityManager         = newEntityManager()
 )
 
+// EntityTypeDesc is the entity type description for registering entity types
 type EntityTypeDesc struct {
 	entityType      reflect.Type
 	rpcDescs        rpcDescMap
@@ -41,6 +42,9 @@ func init() {
 	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
 }
 
+// DefineAttrs defines properties of entity attributes
+//
+// Valid attribute properties includes Client, AllClient, Persistent
 func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 
 	for attr, defs := range attrDefs {
@@ -76,41 +80,41 @@ func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
 	}
 }
 
-type EntityManager struct {
+type _EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[ClientID]EntityID
 	registeredServices map[string]EntityIDSet
 }
 
-func newEntityManager() *EntityManager {
-	return &EntityManager{
+func newEntityManager() *_EntityManager {
+	return &_EntityManager{
 		entities:           EntityMap{},
 		ownerOfClient:      map[ClientID]EntityID{},
 		registeredServices: map[string]EntityIDSet{},
 	}
 }
 
-func (em *EntityManager) put(entity *Entity) {
+func (em *_EntityManager) put(entity *Entity) {
 	em.entities.Add(entity)
 }
 
-func (em *EntityManager) del(entityID EntityID) {
+func (em *_EntityManager) del(entityID EntityID) {
 	em.entities.Del(entityID)
 }
 
-func (em *EntityManager) get(id EntityID) *Entity {
+func (em *_EntityManager) get(id EntityID) *Entity {
 	return em.entities.Get(id)
 }
 
-func (em *EntityManager) onEntityLoseClient(clientid ClientID) {
+func (em *_EntityManager) onEntityLoseClient(clientid ClientID) {
 	delete(em.ownerOfClient, clientid)
 }
 
-func (em *EntityManager) onEntityGetClient(entityID EntityID, clientid ClientID) {
+func (em *_EntityManager) onEntityGetClient(entityID EntityID, clientid ClientID) {
 	em.ownerOfClient[clientid] = entityID
 }
 
-func (em *EntityManager) onClientDisconnected(clientid ClientID) {
+func (em *_EntityManager) onClientDisconnected(clientid ClientID) {
 	eid := em.ownerOfClient[clientid]
 	if !eid.IsNil() { // should always true
 		em.onEntityLoseClient(clientid)
@@ -119,7 +123,7 @@ func (em *EntityManager) onClientDisconnected(clientid ClientID) {
 	}
 }
 
-func (em *EntityManager) onGateDisconnected(gateid uint16) {
+func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 	for _, entity := range em.entities {
 		client := entity.client
 		if client != nil && client.gateid == gateid {
@@ -129,7 +133,7 @@ func (em *EntityManager) onGateDisconnected(gateid uint16) {
 	}
 }
 
-func (em *EntityManager) onDeclareService(serviceName string, eid EntityID) {
+func (em *_EntityManager) onDeclareService(serviceName string, eid EntityID) {
 	eids, ok := em.registeredServices[serviceName]
 	if !ok {
 		eids = EntityIDSet{}
@@ -138,14 +142,14 @@ func (em *EntityManager) onDeclareService(serviceName string, eid EntityID) {
 	eids.Add(eid)
 }
 
-func (em *EntityManager) onUndeclareService(serviceName string, eid EntityID) {
+func (em *_EntityManager) onUndeclareService(serviceName string, eid EntityID) {
 	eids, ok := em.registeredServices[serviceName]
 	if ok {
 		eids.Del(eid)
 	}
 }
 
-func (em *EntityManager) chooseServiceProvider(serviceName string) EntityID {
+func (em *_EntityManager) chooseServiceProvider(serviceName string) EntityID {
 	// choose one entity ID of service providers randomly
 	eids, ok := em.registeredServices[serviceName]
 	if !ok {
@@ -299,34 +303,46 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 	dispatcherclient.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName, data)
 }
 
+// CreateEntityLocally creates new entity in the local game
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
 	return createEntity(typeName, nil, Position{}, "", data, nil, client, ccCreate)
 }
 
+// CreateEntityAnywhere creates new entity in any game
 func CreateEntityAnywhere(typeName string) {
 	createEntityAnywhere(typeName, nil)
 }
 
+// LoadEntityLocally loads entity in the local game.
+//
+// LoadEntityLocally has no effect if entity already exists on any game
 func LoadEntityLocally(typeName string, entityID EntityID) {
 	loadEntityLocally(typeName, entityID, nil, Position{})
 }
 
+// LoadEntityAnywhere loads entity in the any game
+//
+// LoadEntityAnywhere has no effect if entity already exists on any game
 func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	loadEntityAnywhere(typeName, entityID)
 }
 
+// OnClientDisconnected is called by engine when client is disconnected
 func OnClientDisconnected(clientid ClientID) {
 	entityManager.onClientDisconnected(clientid) // pop the owner eid
 }
 
+// OnDeclareService is called by engine when service is declared
 func OnDeclareService(serviceName string, entityid EntityID) {
 	entityManager.onDeclareService(serviceName, entityid)
 }
 
+// OnUndeclareService is called by engine when service is undeclared
 func OnUndeclareService(serviceName string, entityid EntityID) {
 	entityManager.onUndeclareService(serviceName, entityid)
 }
 
+// GetServiceProviders returns all service providers
 func GetServiceProviders(serviceName string) EntityIDSet {
 	return entityManager.registeredServices[serviceName]
 }
@@ -350,6 +366,7 @@ func callRemote(id EntityID, method string, args []interface{}) {
 	dispatcherclient.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 
+// OnCall is called by engine when method call reaches in the game
 func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 	e := entityManager.get(id)
 	if e == nil {
@@ -361,6 +378,7 @@ func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
 	e.onCallFromRemote(method, args, clientID)
 }
 
+// OnSyncPositionYawFromClient is called by engine to sync entity infos from client
 func OnSyncPositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw) {
 	e := entityManager.get(eid)
 	if e == nil {
@@ -372,21 +390,25 @@ func OnSyncPositionYawFromClient(eid EntityID, x, y, z Coord, yaw Yaw) {
 	e.syncPositionYawFromClient(x, y, z, yaw)
 }
 
+// GetEntity returns the entity with specified ID
 func GetEntity(id EntityID) *Entity {
 	return entityManager.get(id)
 }
 
+// OnGameTerminating is called when game is terminating
 func OnGameTerminating() {
 	for _, e := range entityManager.entities {
 		e.Destroy()
 	}
 }
 
+// OnGateDisconnected is called when gate is down
 func OnGateDisconnected(gateid uint16) {
 	gwlog.Warn("Gate %d disconnected", gateid)
 	entityManager.onGateDisconnected(gateid)
 }
 
+// SaveAllEntities saves all entities
 func SaveAllEntities() {
 	for _, e := range entityManager.entities {
 		e.Save()
@@ -395,11 +417,13 @@ func SaveAllEntities() {
 
 // Called by engine when server is freezing
 
+// FreezeData is the data structure for storing entity freeze data
 type FreezeData struct {
 	Entities map[EntityID]*entityFreezeData
 	Services map[string][]EntityID
 }
 
+// Freeze freezes the entity system and returns all freeze data
 func Freeze(gameid uint16) (*FreezeData, error) {
 	freeze := FreezeData{}
 
@@ -431,6 +455,7 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 	return &freeze, nil
 }
 
+// RestoreFreezedEntities restore entity system from freeze data
 func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	defer func() {
 		_err := recover()
@@ -499,6 +524,9 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	return nil
 }
 
+// Entities gets all entities
+//
+// Never modify the return value !
 func Entities() EntityMap {
 	return entityManager.entities
 }

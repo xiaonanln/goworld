@@ -8,6 +8,7 @@ import (
 	"github.com/xiaonanln/typeconv"
 )
 
+// ClientSpace is the space on client
 type ClientSpace struct {
 	sync.Mutex
 
@@ -33,6 +34,7 @@ func (space *ClientSpace) String() string {
 	return fmt.Sprintf("ClientSpace<%d|%s>", space.Kind, space.ID)
 }
 
+// Destroy the client space
 func (space *ClientSpace) Destroy() {
 	if space.destroyed {
 		return

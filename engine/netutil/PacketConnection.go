@@ -33,7 +33,8 @@ const (
 )
 
 var (
-	NETWORK_ENDIAN      = binary.LittleEndian // NETWORK_ENDIAN is the network Endian of connections
+	// NETWORK_ENDIAN is the network Endian of connections
+	NETWORK_ENDIAN      = binary.LittleEndian
 	errRecvAgain        = _ErrRecvAgain{}
 	compressWritersPool = xnsyncutil.NewNewlessPool()
 )
@@ -105,7 +106,7 @@ func (pc *PacketConnection) NewPacket() *Packet {
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
-			PACKET_ENDIAN.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
+			packetEndian.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
 			packet.GetPayloadLen(),
 			packet.bytes[_PREPAYLOAD_SIZE+2:_PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
@@ -187,7 +188,7 @@ send_packets_loop:
 				return err
 			}
 
-			if len(packetData) >= SEND_BUFFER_SIZE {
+			if len(packetData) >= _SEND_BUFFER_SIZE {
 				// packet is too large, impossible to put to send buffer
 				err = WriteAll(pc.conn, packetData)
 				packet.Release()
@@ -238,8 +239,8 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		if pc.recvCompressed {
 			gwlog.Panicf("should be false")
 		}
-		if pc.recvTotalPayloadLen&COMPRESSED_BIT_MASK != 0 {
-			pc.recvTotalPayloadLen &= PAYLOAD_LEN_MASK
+		if pc.recvTotalPayloadLen&_COMPRESSED_BIT_MASK != 0 {
+			pc.recvTotalPayloadLen &= _PAYLOAD_LEN_MASK
 			pc.recvCompressed = true
 		}
 

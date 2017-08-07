@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
+	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
 )
 
 type ClientAttrs map[string]interface{}
@@ -94,7 +94,7 @@ func (e *ClientEntity) onAvatarCreated() {
 }
 
 func (e *ClientEntity) doSomethingLater() {
-	randomDelay := time.Duration(rand.Int63n(int64(AVERAGE_DO_SOMETHING_INTERVAL * 2)))
+	randomDelay := time.Duration(rand.Int63n(int64(_AVERAGE_DO_SOMETHING_INTERVAL * 2)))
 	e.AddCallback(randomDelay, func() {
 		e.doSomething()
 	})
@@ -235,7 +235,7 @@ func (e *ClientEntity) currentSpaceKind() int {
 
 func (e *ClientEntity) DoEnterRandomSpace() {
 	curSpaceKind := e.currentSpaceKind()
-	spaceKindMax := N / 400
+	spaceKindMax := numClients / 400
 	if spaceKindMax < 2 {
 		spaceKindMax = 2 // use at least 2 space
 	}

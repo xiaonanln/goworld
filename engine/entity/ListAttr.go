@@ -91,9 +91,8 @@ func (a *ListAttr) _getPathFromOwner() []interface{} {
 	if a.parent != nil {
 		path = append(path, a.pkey)
 		return getPathFromOwner(a.parent, path)
-	} else {
-		return path
 	}
+	return path
 }
 
 // Get gets item value

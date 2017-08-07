@@ -18,6 +18,7 @@ import (
 	. "github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
+// FileSystemEntityStorage is an implementation of Entity Storage using filesystem
 type FileSystemEntityStorage struct {
 	directory string
 }

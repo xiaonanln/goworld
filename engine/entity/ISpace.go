@@ -2,7 +2,7 @@ package entity
 
 // ISpace is the space delegate interface
 //
-// User custom space class can override these fucntions for their own game logic
+// User custom space class can override these functions for their own game logic
 type ISpace interface {
 	OnSpaceInit()    // Called when initializing space struct, override to initialize custom space fields
 	OnSpaceCreated() // Called when space is created

@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	FILTER_TREE_DEGREE = 2
+	_FILTER_TREE_DEGREE = 2
 )
 
 type _FilterTree struct {
@@ -15,7 +15,7 @@ type _FilterTree struct {
 
 func newFilterTree() *_FilterTree {
 	return &_FilterTree{
-		btree: btree.New(FILTER_TREE_DEGREE),
+		btree: btree.New(_FILTER_TREE_DEGREE),
 	}
 }
 

@@ -54,37 +54,45 @@ func ParseLevel(lvl string) (sublog.Level, error) {
 	return sublog.ParseLevel(lvl)
 }
 
+// SetLevel sets the log level
 func SetLevel(lv Level) {
 	sublog.SetLevel(sublog.Level(lv))
 }
 
+// TraceError prints the stack and error
 func TraceError(format string, args ...interface{}) {
 	outputWriter.Write(debug.Stack())
 	Error(format, args...)
 }
 
+// Fatalf prints formatted fatal message
 func Fatalf(format string, args ...interface{}) {
 	debug.PrintStack()
 	sublog.Fatalf(format, args...)
 }
 
+// Panic panics
 func Panic(v interface{}) {
 	panic(v)
 }
 
+// Panicf prints formatted panic message
 func Panicf(format string, args ...interface{}) {
 	panic(errors.Errorf(format, args...))
 }
 
+// SetOutput sets the output writer
 func SetOutput(out io.Writer) {
 	outputWriter = out
 	sublog.SetOutput(outputWriter)
 }
 
+// GetOutput returns the output writer
 func GetOutput() io.Writer {
 	return outputWriter
 }
 
+// StringToLevel converts string to Levels
 func StringToLevel(s string) Level {
 	if strings.ToLower(s) == "debug" {
 		return DebugLevel

@@ -72,7 +72,7 @@ func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
 	endMailKey := s.getMailKey(END_MAIL_ID, avatarID)
 
-	kvdb.GetRange(beginMailKey, endMailKey, func(items []kvdb_types.KVItem, err error) {
+	kvdb.GetRange(beginMailKey, endMailKey, func(items []kvdbtypes.KVItem, err error) {
 		s.PanicOnError(err)
 
 		var mails []interface{}

@@ -23,6 +23,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
+// GateService implements the gate service logic
 type GateService struct {
 	listenAddr        string
 	clientProxies     map[common.ClientID]*ClientProxy
@@ -62,6 +63,7 @@ func (gs *GateService) String() string {
 	return fmt.Sprintf("GateService<%s>", gs.listenAddr)
 }
 
+// ServeTCPConnection handle TCP connections from clients
 func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
@@ -122,6 +124,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 	}
 }
 
+// HandleDispatcherClientPacket handles packets received by dispatcher client
 func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())

@@ -446,7 +446,7 @@ func (gwc *GoWorldConnection) RemoteAddr() net.Addr {
 	return gwc.packetConn.RemoteAddr()
 }
 
-// LocalAddr returns the local addres
+// LocalAddr returns the local address
 func (gwc *GoWorldConnection) LocalAddr() net.Addr {
 	return gwc.packetConn.LocalAddr()
 }

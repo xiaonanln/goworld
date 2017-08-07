@@ -40,19 +40,19 @@ type _OpInfo struct {
 	maxDuration   time.Duration
 }
 
-type Monitor struct {
+type _Monitor struct {
 	sync.Mutex
 	opInfos map[string]*_OpInfo
 }
 
-func newMonitor() *Monitor {
-	m := &Monitor{
+func newMonitor() *_Monitor {
+	m := &_Monitor{
 		opInfos: map[string]*_OpInfo{},
 	}
 	return m
 }
 
-func (monitor *Monitor) record(opname string, duration time.Duration) {
+func (monitor *_Monitor) record(opname string, duration time.Duration) {
 	monitor.Lock()
 	info := monitor.opInfos[opname]
 	if info == nil {
@@ -67,7 +67,7 @@ func (monitor *Monitor) record(opname string, duration time.Duration) {
 	monitor.Unlock()
 }
 
-func (monitor *Monitor) Dump() {
+func (monitor *_Monitor) Dump() {
 	type _T struct {
 		name string
 		info *_OpInfo
@@ -94,11 +94,13 @@ func (monitor *Monitor) Dump() {
 	}
 }
 
+// Operation is the type of operation to be monitored
 type Operation struct {
 	name      string
 	startTime time.Time
 }
 
+// StartOperation creates a new operation
 func StartOperation(operationName string) *Operation {
 	op := operationAllocPool.Get().(*Operation)
 	op.name = operationName
@@ -106,6 +108,7 @@ func StartOperation(operationName string) *Operation {
 	return op
 }
 
+// Finish finishes the operation and records the duration of operation
 func (op *Operation) Finish(warnThreshold time.Duration) {
 	takeTime := time.Now().Sub(op.startTime)
 	monitor.record(op.name, takeTime)
