@@ -230,7 +230,7 @@ func (p *Packet) AppendByte(b byte) {
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 1
 }
 
-// ReadOneByte reads one byte from the begining
+// ReadOneByte reads one byte from the beginning
 func (p *Packet) ReadOneByte() (v byte) {
 	pos := p.readCursor + _PREPAYLOAD_SIZE
 	v = p.bytes[pos]

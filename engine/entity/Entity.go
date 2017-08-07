@@ -110,7 +110,7 @@ func (e *Entity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
 
-// Destroy destroyes the entity
+// Destroy destroys the entity
 func (e *Entity) Destroy() {
 	if e.destroyed {
 		return
