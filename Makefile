@@ -17,7 +17,7 @@ test_client:
 	cd examples/test_client && go build
 
 chatroom_demo:
-    cd examples/chatroom_demo && go build
+	cd examples/chatroom_demo && go build
 
 rundispatcher: dispatcher
 	components/dispatcher/dispatcher
