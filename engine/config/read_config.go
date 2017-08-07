@@ -38,6 +38,7 @@ var (
 	configLock     sync.Mutex
 )
 
+// GameConfig defines fields of game config
 type GameConfig struct {
 	BootEntity   string
 	SaveInterval time.Duration
@@ -49,6 +50,7 @@ type GameConfig struct {
 	GoMaxProcs   int
 }
 
+// GateConfig defines fields of gate config
 type GateConfig struct {
 	Ip                 string
 	Port               int
@@ -62,6 +64,7 @@ type GateConfig struct {
 	CompressConnection bool
 }
 
+// DispatcherConfig defines fields of dispatcher config
 type DispatcherConfig struct {
 	Ip        string
 	Port      int
@@ -72,6 +75,7 @@ type DispatcherConfig struct {
 	LogLevel  string
 }
 
+// GoWorldConfig defines the total GoWorld config file structure
 type GoWorldConfig struct {
 	Dispatcher DispatcherConfig
 	GameCommon GameConfig
@@ -82,6 +86,7 @@ type GoWorldConfig struct {
 	KVDB       KVDBConfig
 }
 
+// StorageConfig defines fields of storage config
 type StorageConfig struct {
 	Type      string // Type of storage
 	Directory string // Directory of filesystem storage
@@ -90,6 +95,7 @@ type StorageConfig struct {
 	Host      string // Redis host
 }
 
+// KVDBConfig defines fields of KVDB config
 type KVDBConfig struct {
 	Type       string
 	Url        string // MongoDB
@@ -99,10 +105,12 @@ type KVDBConfig struct {
 
 }
 
+// SetConfigFile sets the config file path (goworld.ini by default)
 func SetConfigFile(f string) {
 	configFilePath = f
 }
 
+// Get returns the total GoWorld config
 func Get() *GoWorldConfig {
 	configLock.Lock()
 	defer configLock.Unlock() // protect concurrent access from Games & Gate
@@ -112,6 +120,7 @@ func Get() *GoWorldConfig {
 	return goWorldConfig
 }
 
+// Reload forces goworld server to reload the whole config
 func Reload() *GoWorldConfig {
 	configLock.Lock()
 	defer configLock.Unlock()
@@ -120,14 +129,17 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
-func GetGame(serverid uint16) *GameConfig {
-	return Get().Games[int(serverid)]
+// GetGame gets the game config of specified game ID
+func GetGame(gameid uint16) *GameConfig {
+	return Get().Games[int(gameid)]
 }
 
+// GetGate gets the gate config of specified gate ID
 func GetGate(gateid uint16) *GateConfig {
 	return Get().Gates[int(gateid)]
 }
 
+// GetGameIDs returns all game IDs
 func GetGameIDs() []uint16 {
 	cfg := Get()
 	serverIDs := make([]int, 0, len(cfg.Games))
@@ -143,6 +155,7 @@ func GetGameIDs() []uint16 {
 	return res
 }
 
+// GetGateIDs returns all gate IDs
 func GetGateIDs() []uint16 {
 	cfg := Get()
 	gateIDs := make([]int, 0, len(cfg.Gates))
@@ -158,18 +171,22 @@ func GetGateIDs() []uint16 {
 	return res
 }
 
+// GetDispatcher returns the dispatcher config
 func GetDispatcher() *DispatcherConfig {
 	return &Get().Dispatcher
 }
 
+// GetStorage returns the storage config
 func GetStorage() *StorageConfig {
 	return &Get().Storage
 }
 
+// GetKVDB returns the KVDB config
 func GetKVDB() *KVDBConfig {
 	return &Get().KVDB
 }
 
+// DumpPretty format config to string in pretty format
 func DumpPretty(cfg interface{}) string {
 	s, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {

@@ -50,11 +50,12 @@ type listEntityIDsRequest struct {
 	Callback ListCallbackFunc
 }
 
-type SaveCallbackFunc func()
-type LoadCallbackFunc func(data interface{}, err error)
-type ExistsCallbackFunc func(exists bool, err error)
-type ListCallbackFunc func([]common.EntityID, error)
+type SaveCallbackFunc func()                            // SaveCallbackFunc is the callback type of storage Save
+type LoadCallbackFunc func(data interface{}, err error) // LoadCallbackFunc is the callback type of storage Load
+type ExistsCallbackFunc func(exists bool, err error)    // ExistsCallbackFunc is the callback type of storage Exists
+type ListCallbackFunc func([]common.EntityID, error)    // ListCallbackFunc is the callback type of storage List
 
+// Save saves entity data to storage
 func Save(typeName string, entityID common.EntityID, data interface{}, callback SaveCallbackFunc) {
 	operationQueue.Push(saveRequest{
 		TypeName: typeName,
@@ -65,6 +66,7 @@ func Save(typeName string, entityID common.EntityID, data interface{}, callback 
 	checkOperationQueueLen()
 }
 
+// Load loads entity data from storage
 func Load(typeName string, entityID common.EntityID, callback LoadCallbackFunc) {
 	operationQueue.Push(loadRequest{
 		TypeName: typeName,
@@ -74,6 +76,7 @@ func Load(typeName string, entityID common.EntityID, callback LoadCallbackFunc) 
 	checkOperationQueueLen()
 }
 
+// Exists checks if entity of specified ID exists in storage
 func Exists(typeName string, entityID common.EntityID, callback ExistsCallbackFunc) {
 	operationQueue.Push(existsRequest{
 		TypeName: typeName,
@@ -83,16 +86,15 @@ func Exists(typeName string, entityID common.EntityID, callback ExistsCallbackFu
 	checkOperationQueueLen()
 }
 
+// ListEntityIDs returns all entity IDs in storage
+//
+// Return values can be large for common entity types
 func ListEntityIDs(typeName string, callback ListCallbackFunc) {
 	operationQueue.Push(listEntityIDsRequest{
 		TypeName: typeName,
 		Callback: callback,
 	})
 	checkOperationQueueLen()
-}
-
-func GetQueueLen() int {
-	return operationQueue.Len()
 }
 
 var recentWarnedQueueLen = 0
@@ -105,14 +107,17 @@ func checkOperationQueueLen() {
 	}
 }
 
+// Close storage module
 func Close() {
 	operationQueue.Close()
 }
 
+// WaitTerminated waits for storage module to terminate
 func WaitTerminated() {
 	storageRoutineTerminated.Wait()
 }
 
+// Initialize is called by engine to initialize storage module
 func Initialize() {
 	err := assureStorageEngineReady()
 	if err != nil {

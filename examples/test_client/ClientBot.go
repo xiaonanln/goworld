@@ -25,6 +25,8 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+const _SPACE_ENTITY_TYPE = "__space__"
+
 // ClientBot is  a client bot representing a game client
 type ClientBot struct {
 	sync.Mutex
@@ -107,7 +109,7 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 }
 
 func (bot *ClientBot) loop() {
-	var msgtype proto.MsgType_t
+	var msgtype proto.MsgType
 	for {
 		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 100))
 		if err != nil {
@@ -146,7 +148,7 @@ func (bot *ClientBot) loop() {
 	}
 }
 
-func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	bot.Lock()
 	defer bot.Unlock()
 
@@ -217,7 +219,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		var clientData map[string]interface{}
 		packet.ReadData(&clientData)
 
-		if typeName == entity.SPACE_ENTITY_TYPE {
+		if typeName == _SPACE_ENTITY_TYPE {
 			// this is a space
 			bot.createSpace(entityID, clientData)
 		} else {
@@ -230,7 +232,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType_t, packet *netutil.Pack
 		if !quiet {
 			gwlog.Debug("Destroy e %s.%s", typeName, entityID)
 		}
-		if typeName == entity.SPACE_ENTITY_TYPE {
+		if typeName == _SPACE_ENTITY_TYPE {
 			bot.destroySpace(entityID)
 		} else {
 			bot.destroyEntity(typeName, entityID)

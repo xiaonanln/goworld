@@ -11,28 +11,29 @@ var (
 	spaceType    reflect.Type
 )
 
-type SpaceManager struct {
+type _SpaceManager struct {
 	spaces map[EntityID]*Space
 }
 
-func newSpaceManager() *SpaceManager {
-	return &SpaceManager{
+func newSpaceManager() *_SpaceManager {
+	return &_SpaceManager{
 		spaces: map[EntityID]*Space{},
 	}
 }
 
-func (spmgr *SpaceManager) putSpace(space *Space) {
+func (spmgr *_SpaceManager) putSpace(space *Space) {
 	spmgr.spaces[space.ID] = space
 }
 
-func (spmgr *SpaceManager) delSpace(id EntityID) {
+func (spmgr *_SpaceManager) delSpace(id EntityID) {
 	delete(spmgr.spaces, id)
 }
 
-func (spmgr *SpaceManager) getSpace(id EntityID) *Space {
+func (spmgr *_SpaceManager) getSpace(id EntityID) *Space {
 	return spmgr.spaces[id]
 }
 
+// RegisterSpace registers the custom space type
 func RegisterSpace(spacePtr ISpace) {
 	//if spaceType == nil {
 	//	gwlog.Panicf("RegisterSpace: Space already registered")
@@ -40,7 +41,7 @@ func RegisterSpace(spacePtr ISpace) {
 	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
 	spaceType = spaceVal.Type()
 
-	RegisterEntity(SPACE_ENTITY_TYPE, spacePtr.(IEntity)).DefineAttrs(map[string][]string{
-		SPACE_KIND_ATTR_KEY: {"AllClients"}, // set to AllClients so that entities in space can visit space kind
+	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr.(IEntity)).DefineAttrs(map[string][]string{
+		_SPACE_KIND_ATTR_KEY: {"AllClients"}, // set to AllClients so that entities in space can visit space kind
 	})
 }

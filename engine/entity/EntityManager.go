@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	. "github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -242,7 +242,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID EntityID
 	}
 
 	if cause == ccCreate || cause == ccRestore {
-		dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
+		dispatcherclient.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
 	}
 
 	if client != nil {
@@ -278,12 +278,12 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Pos
 		// callback runs in main routine
 		if err != nil {
 			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
-			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
+			dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 		}
 
 		if space != nil && space.IsDestroyed() {
 			// Space might be destroy during the Load process, so cancel the entity creation
-			dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
+			dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 			return
 		}
 
@@ -292,11 +292,11 @@ func loadEntityLocally(typeName string, entityID EntityID, space *Space, pos Pos
 }
 
 func loadEntityAnywhere(typeName string, entityID EntityID) {
-	dispatcher_client.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
+	dispatcherclient.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
 }
 
 func createEntityAnywhere(typeName string, data map[string]interface{}) {
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName, data)
+	dispatcherclient.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName, data)
 }
 
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) EntityID {
@@ -347,7 +347,7 @@ func callEntity(id EntityID, method string, args []interface{}) {
 }
 
 func callRemote(id EntityID, method string, args []interface{}) {
-	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
+	dispatcherclient.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 
 func OnCall(id EntityID, method string, args [][]byte, clientID ClientID) {
@@ -444,14 +444,14 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 		for eid, info := range freeze.Entities {
 			typeName := info.Type
 			var spaceKind int64
-			if typeName == SPACE_ENTITY_TYPE {
+			if typeName == _SPACE_ENTITY_TYPE {
 				attrs := info.Attrs
-				spaceKind = typeconv.Int(attrs[SPACE_KIND_ATTR_KEY])
+				spaceKind = typeconv.Int(attrs[_SPACE_KIND_ATTR_KEY])
 			}
 
 			if filter(typeName, spaceKind) {
 				var space *Space
-				if typeName != SPACE_ENTITY_TYPE {
+				if typeName != _SPACE_ENTITY_TYPE {
 					space = spaceManager.getSpace(info.SpaceID)
 				}
 
@@ -475,17 +475,17 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	}
 	// step 1: restore the nil space
 	restoreEntities(func(typeName string, spaceKind int64) bool {
-		return typeName == SPACE_ENTITY_TYPE && spaceKind == 0
+		return typeName == _SPACE_ENTITY_TYPE && spaceKind == 0
 	})
 
 	// step 2: restore all other spaces
 	restoreEntities(func(typeName string, spaceKind int64) bool {
-		return typeName == SPACE_ENTITY_TYPE && spaceKind != 0
+		return typeName == _SPACE_ENTITY_TYPE && spaceKind != 0
 	})
 
 	// step  3: restore all other spaces
 	restoreEntities(func(typeName string, spaceKind int64) bool {
-		return typeName != SPACE_ENTITY_TYPE
+		return typeName != _SPACE_ENTITY_TYPE
 	})
 
 	for serviceName, _eids := range freeze.Services {

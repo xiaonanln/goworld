@@ -1,4 +1,4 @@
-package dispatcher_client
+package dispatcherclient
 
 import (
 	"net"

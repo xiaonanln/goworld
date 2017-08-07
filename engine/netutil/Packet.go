@@ -168,7 +168,7 @@ func (p *Packet) AddRefCount(add int64) {
 }
 
 func (p *Packet) Payload() []byte {
-	return p.bytes[_PREPAYLOAD_SIZE: _PREPAYLOAD_SIZE+p.GetPayloadLen()]
+	return p.bytes[_PREPAYLOAD_SIZE : _PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }
 
 func (p *Packet) UnreadPayload() []byte {
@@ -231,7 +231,7 @@ func (p *Packet) AppendByte(b byte) {
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 1
 }
 
-func (p *Packet) ReadByte() (v byte) {
+func (p *Packet) ReadOneByte() (v byte) {
 	pos := p.readCursor + _PREPAYLOAD_SIZE
 	v = p.bytes[pos]
 	p.readCursor += 1
@@ -247,7 +247,7 @@ func (p *Packet) AppendBool(b bool) {
 }
 
 func (p *Packet) ReadBool() (v bool) {
-	return p.ReadByte() != 0
+	return p.ReadOneByte() != 0
 }
 
 func (p *Packet) AppendUint16(v uint16) {

@@ -10,16 +10,19 @@ import (
 )
 
 const (
-	SPACE_ENTITY_TYPE   = "__space__"
-	SPACE_KIND_ATTR_KEY = "_K"
+	_SPACE_ENTITY_TYPE   = "__space__"
+	_SPACE_KIND_ATTR_KEY = "_K"
 
-	DEFAULT_AOI_DISTANCE = 100
+	_DEFAULT_AOI_DISTANCE = 100
 )
 
 var (
 	nilSpace *Space
 )
 
+// Space is the entity type of spaces
+//
+// Spaces are also entities but with space management logics
 type Space struct {
 	Entity
 
@@ -36,11 +39,11 @@ func init() {
 func (space *Space) String() string {
 	if space.Kind != 0 {
 		return fmt.Sprintf("Space<%d|%s>", space.Kind, space.ID)
-	} else {
-		return "Space<nil>"
 	}
+	return "Space<nil>"
 }
 
+// OnInit initialize Space entity
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
@@ -48,10 +51,14 @@ func (space *Space) OnInit() {
 	gwutils.RunPanicless(space.I.OnSpaceInit)
 }
 
+// OnSpaceInit is called when Space is initializing
+//
+// Custom space type can override to provide custom logic
 func (space *Space) OnSpaceInit() {
 
 }
 
+// OnCreated is called when Space entity is created
 func (space *Space) OnCreated() {
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	space.onSpaceCreated()
@@ -65,12 +72,13 @@ func (space *Space) OnCreated() {
 	gwutils.RunPanicless(space.I.OnSpaceCreated)
 }
 
+// OnRestored is called when space entity is restored
 func (space *Space) OnRestored() {
 	space.onSpaceCreated()
 }
 
 func (space *Space) onSpaceCreated() {
-	space.Kind = space.GetInt(SPACE_KIND_ATTR_KEY)
+	space.Kind = space.GetInt(_SPACE_KIND_ATTR_KEY)
 	spaceManager.putSpace(space)
 
 	if space.Kind == 0 {
@@ -84,12 +92,16 @@ func (space *Space) onSpaceCreated() {
 	}
 }
 
+// OnSpaceCreated is called when space is created
+//
+// Custom space type can override to provide custom logic
 func (space *Space) OnSpaceCreated() {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("Space %s created", space)
 	}
 }
 
+// OnDestroy is called when Space entity is destroyed
 func (space *Space) OnDestroy() {
 	gwutils.RunPanicless(space.I.OnSpaceDestroy)
 	// destroy all entities
@@ -100,20 +112,28 @@ func (space *Space) OnDestroy() {
 	spaceManager.delSpace(space.ID)
 }
 
+// OnSpaceDestroy is called when space is destroying
+//
+// Custom space type can override to provide custom logic
 func (space *Space) OnSpaceDestroy() {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("Space %s created", space)
 	}
 }
 
+// IsNil checks if the space is the nil space
 func (space *Space) IsNil() bool {
 	return space.Kind == 0
 }
 
+// CreateEntity creates a new local entity in this space
 func (space *Space) CreateEntity(typeName string, pos Position) {
 	createEntity(typeName, space, pos, "", nil, nil, nil, ccCreate)
 }
 
+// LoadEntity loads a entity of specified entityID to the space
+//
+// If the entity already exists on server, this call has no effect
 func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Position) {
 	loadEntityLocally(typeName, entityID, space, pos)
 }
@@ -225,7 +245,7 @@ func (space *Space) move(entity *Entity, newPos Position) {
 //			continue
 //		}
 //
-//		isNeighbor := e.aoi.pos.X >= entity.aoi.pos.X-DEFAULT_AOI_DISTANCE && e.aoi.pos.X <= entity.aoi.pos.X+DEFAULT_AOI_DISTANCE && e.aoi.pos.Z >= entity.aoi.pos.Z-DEFAULT_AOI_DISTANCE && e.aoi.pos.Z <= entity.aoi.pos.Z+DEFAULT_AOI_DISTANCE
+//		isNeighbor := e.aoi.pos.X >= entity.aoi.pos.X-_DEFAULT_AOI_DISTANCE && e.aoi.pos.X <= entity.aoi.pos.X+_DEFAULT_AOI_DISTANCE && e.aoi.pos.Z >= entity.aoi.pos.Z-_DEFAULT_AOI_DISTANCE && e.aoi.pos.Z <= entity.aoi.pos.Z+_DEFAULT_AOI_DISTANCE
 //		if entity.aoi.neighbors.Contains(e) && !isNeighbor {
 //			gwlog.Fatalf("space %s: %s: wrong neighbor: %s, pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
 //		} else if !entity.aoi.neighbors.Contains(e) && isNeighbor {
@@ -234,18 +254,25 @@ func (space *Space) move(entity *Entity, newPos Position) {
 //	}
 //}
 
+// OnEntityEnterSpace is called when entity enters space
+//
+// Custom space type can override this function
 func (space *Space) OnEntityEnterSpace(entity *Entity) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s ENTER SPACE %s", entity, space)
 	}
 }
 
+// OnEntityLeaveSpace is called when entity leaves space
+//
+// Custom space type can override this function
 func (space *Space) OnEntityLeaveSpace(entity *Entity) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s LEAVE SPACE %s", entity, space)
 	}
 }
 
+// CountEntities returns the number of entities of specified type in space
 func (space *Space) CountEntities(typeName string) int {
 	count := 0
 	for e := range space.entities {
@@ -256,12 +283,12 @@ func (space *Space) CountEntities(typeName string) int {
 	return count
 }
 
+// GetEntityCount returns the total count of entities in space
 func (space *Space) GetEntityCount() int {
 	return len(space.entities)
 }
 
 // AOI Management
-
 func (space *Space) addToAOI(entity *Entity) {
 
 }

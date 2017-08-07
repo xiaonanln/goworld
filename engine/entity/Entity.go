@@ -11,7 +11,7 @@ import (
 
 	"unsafe"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -113,7 +113,7 @@ func (e *Entity) Destroy() {
 	}
 	gwlog.Debug("%s.Destroy ...", e)
 	e.destroyEntity(false)
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
 }
 
 func (e *Entity) destroyEntity(isMigrate bool) {
@@ -161,7 +161,7 @@ func (e *Entity) Save() {
 }
 
 func (e *Entity) IsSpaceEntity() bool {
-	return e.TypeName == SPACE_ENTITY_TYPE
+	return e.TypeName == _SPACE_ENTITY_TYPE
 }
 
 // Convert entity to space (only works for space entity)
@@ -495,7 +495,7 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 // Register for global service
 func (e *Entity) DeclareService(serviceName string) {
 	e.declaredServices.Add(serviceName)
-	dispatcher_client.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
+	dispatcherclient.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
 }
 
 // Default Handlers
@@ -635,7 +635,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	if oldClient != nil {
 		// send destroy entity to client
 		entityManager.onEntityLoseClient(oldClient.clientid)
-		dispatcher_client.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
+		dispatcherclient.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
 			oldClient.sendDestroyEntity(neighbor)
@@ -656,7 +656,7 @@ func (e *Entity) SetClient(client *GameClient) {
 
 		// set all filter properties to client
 		for key, val := range e.filterProps {
-			dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
+			dispatcherclient.GetDispatcherClientForSend().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 		}
 	}
 
@@ -898,7 +898,7 @@ func (e *Entity) requestMigrateTo(spaceID EntityID, pos Position) {
 	e.enteringSpaceRequest.EnterPos = pos
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
 
-	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
+	dispatcherclient.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
 }
 
 func (e *Entity) clearEnteringSpaceRequest() {
@@ -947,7 +947,7 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 	timerData := e.dumpTimers()
 	migrateData := e.I.GetMigrateData()
 
-	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
+	dispatcherclient.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
 		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
 }
 
@@ -995,14 +995,14 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	e.filterProps[key] = val
 	// send filter property to client
 	if e.client != nil {
-		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
+		dispatcherclient.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 	}
 }
 
 // Call the filtered clients with prop key = value
 // The message is broadcast to filtered clientproxies directly without going through entities
 func (e *Entity) CallFitleredClients(key string, val string, method string, args ...interface{}) {
-	dispatcher_client.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
+	dispatcherclient.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
 // Move in Space
@@ -1084,7 +1084,7 @@ func CollectEntitySyncInfos() {
 		//gwlog.Info("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
 
 		if packet.GetPayloadLen() > 4 {
-			dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+			dispatcherclient.GetDispatcherClientForSend().SendPacket(packet)
 		}
 
 		packet.Release()

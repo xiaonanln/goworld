@@ -129,14 +129,14 @@ func (sl *zAOIList) Mark(aoi *AOI) {
 	prev := aoi.zPrev
 	coord := aoi.pos.Z
 
-	minCoord := coord - DEFAULT_AOI_DISTANCE
+	minCoord := coord - _DEFAULT_AOI_DISTANCE
 	for prev != nil && prev.pos.Z >= minCoord {
 		prev.markVal += 1
 		prev = prev.zPrev
 	}
 
 	next := aoi.zNext
-	maxCoord := coord + DEFAULT_AOI_DISTANCE
+	maxCoord := coord + _DEFAULT_AOI_DISTANCE
 	for next != nil && next.pos.Z <= maxCoord {
 		next.markVal += 1
 		next = next.zNext
@@ -147,14 +147,14 @@ func (sl *zAOIList) ClearMark(aoi *AOI) {
 	prev := aoi.zPrev
 	coord := aoi.pos.Z
 
-	minCoord := coord - DEFAULT_AOI_DISTANCE
+	minCoord := coord - _DEFAULT_AOI_DISTANCE
 	for prev != nil && prev.pos.Z >= minCoord {
 		prev.markVal = 0
 		prev = prev.zPrev
 	}
 
 	next := aoi.zNext
-	maxCoord := coord + DEFAULT_AOI_DISTANCE
+	maxCoord := coord + _DEFAULT_AOI_DISTANCE
 	for next != nil && next.pos.Z <= maxCoord {
 		next.markVal = 0
 		next = next.zNext

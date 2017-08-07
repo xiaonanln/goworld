@@ -23,13 +23,13 @@ func (sb *SendBuffer) Write(b []byte) (n int, err error) {
 	return
 }
 
-//func (sb *SendBuffer) WriteTo(writer io.Writer) (n int, err error) {
+//func (sb *SendBuffer) WriteAllTo(writer io.Writer) (n int, err error) {
 //	n, err = writer.Write(sb.buffer[:sb.written])
 //	sb.sent += n
 //	return
 //}
 
-func (sb *SendBuffer) WriteTo(writer io.Writer) error {
+func (sb *SendBuffer) WriteAllTo(writer io.Writer) error {
 	if sb.written == 0 {
 		return nil
 	}

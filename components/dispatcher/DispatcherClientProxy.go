@@ -64,7 +64,7 @@ func (dcp *DispatcherClientProxy) serve() {
 
 	gwlog.Info("New dispatcher client: %s", dcp)
 	for {
-		var msgtype proto.MsgType_t
+		var msgtype proto.MsgType
 		pkt, err := dcp.Recv(&msgtype)
 
 		if err != nil {

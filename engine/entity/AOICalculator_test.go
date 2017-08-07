@@ -87,7 +87,7 @@ func TestXAOIList_Interested(t *testing.T) {
 			aoi := aois[rand.Intn(len(aois))]
 			interested := list.Interested(aoi)
 			for other := range interested {
-				if math.Abs(float64(aoi.pos.X-other.pos.X)) > DEFAULT_AOI_DISTANCE {
+				if math.Abs(float64(aoi.pos.X-other.pos.X)) > _DEFAULT_AOI_DISTANCE {
 					t.Errorf("should not interest")
 				}
 			}
@@ -96,7 +96,7 @@ func TestXAOIList_Interested(t *testing.T) {
 					continue
 				}
 
-				if math.Abs(float64(aoi.pos.X-other.pos.X)) <= DEFAULT_AOI_DISTANCE {
+				if math.Abs(float64(aoi.pos.X-other.pos.X)) <= _DEFAULT_AOI_DISTANCE {
 					t.Errorf("should not interest")
 				}
 			}

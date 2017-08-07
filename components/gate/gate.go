@@ -17,7 +17,7 @@ import (
 	"syscall"
 
 	"github.com/xiaonanln/goworld/components/binutil"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -64,7 +64,7 @@ func main() {
 
 	gateService = newGateService()
 	binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
-	dispatcher_client.Initialize(&dispatcherClientDelegate{}, true)
+	dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
 }
@@ -94,14 +94,14 @@ func setupSignals() {
 type dispatcherClientDelegate struct {
 }
 
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
+func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcherclient.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
 	dispatcherClient.SendSetGateID(gateid)
 }
 
 var lastWarnGateServiceQueueLen = 0
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	gateService.packetQueue.Push(packetQueueItem{
 		msgtype: msgtype,
 		packet:  packet,
@@ -124,6 +124,7 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
 	gateService.handleDispatcherClientBeforeFlush()
 }
 
+// GetGateID gets the gate ID
 func GetGateID() uint16 {
 	return gateid
 }

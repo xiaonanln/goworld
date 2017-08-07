@@ -3,7 +3,7 @@ package entity
 import (
 	"fmt"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -46,7 +46,7 @@ func (client *GameClient) sendCreateEntity(entity *Entity, isPlayer bool) {
 
 	pos := entity.aoi.pos
 	yaw := entity.yaw
-	dispatcher_client.GetDispatcherClientForSend().SendCreateEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID, isPlayer,
+	dispatcherclient.GetDispatcherClientForSend().SendCreateEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID, isPlayer,
 		clientData, float32(pos.X), float32(pos.Y), float32(pos.Z), float32(yaw))
 }
 
@@ -54,14 +54,14 @@ func (client *GameClient) sendDestroyEntity(entity *Entity) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID)
+	dispatcherclient.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID)
 }
 
 func (client *GameClient) call(entityID common.EntityID, method string, args ...interface{}) {
 	if client == nil {
 		return
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendCallEntityMethodOnClient(client.gateid, client.clientid, entityID, method, args)
+	dispatcherclient.GetDispatcherClientForSend().SendCallEntityMethodOnClient(client.gateid, client.clientid, entityID, method, args)
 }
 
 // sendNotifyMapAttrChange updates MapAttr change to client entity
@@ -72,7 +72,7 @@ func (client *GameClient) sendNotifyMapAttrChange(entityID common.EntityID, path
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.sendNotifyMapAttrChange: entityID=%s, path=%s, %s=%v", client, entityID, path, key, val)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyMapAttrChangeOnClient(client.gateid, client.clientid, entityID, path, key, val)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyMapAttrChangeOnClient(client.gateid, client.clientid, entityID, path, key, val)
 }
 
 // sendNotifyMapAttrDel updates MapAttr delete to client entity
@@ -83,7 +83,7 @@ func (client *GameClient) sendNotifyMapAttrDel(entityID common.EntityID, path []
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.sendNotifyMapAttrDel: entityID=%s, path=%s, %s", client, entityID, path, key)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyMapAttrDelOnClient(client.gateid, client.clientid, entityID, path, key)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyMapAttrDelOnClient(client.gateid, client.clientid, entityID, path, key)
 }
 
 // sendNotifyListAttrChange notifies client of ListAttr item changing
@@ -94,7 +94,7 @@ func (client *GameClient) sendNotifyListAttrChange(entityID common.EntityID, pat
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.sendNotifyListAttrChange: entityID=%s, path=%s, %d=%v", client, entityID, path, index, val)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrChangeOnClient(client.gateid, client.clientid, entityID, path, index, val)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyListAttrChangeOnClient(client.gateid, client.clientid, entityID, path, index, val)
 }
 
 // sendNotifyListAttrPop notify client of ListAttr popping
@@ -105,7 +105,7 @@ func (client *GameClient) sendNotifyListAttrPop(entityID common.EntityID, path [
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.sendNotifyListAttrPop: entityID=%s, path=%s", client, entityID, path)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrPopOnClient(client.gateid, client.clientid, entityID, path)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyListAttrPopOnClient(client.gateid, client.clientid, entityID, path)
 }
 
 // sendNotifyListAttrAppend notify entity of ListAttr appending
@@ -116,7 +116,7 @@ func (client *GameClient) sendNotifyListAttrAppend(entityID common.EntityID, pat
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.sendNotifyListAttrAppend: entityID=%s, path=%s, %v", client, entityID, val)
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyListAttrAppendOnClient(client.gateid, client.clientid, entityID, path, val)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyListAttrAppendOnClient(client.gateid, client.clientid, entityID, path, val)
 }
 
 // syncPositionYawOnClient synchronizes position and yaw to entity on client
@@ -125,7 +125,7 @@ func (client *GameClient) syncPositionYawOnClient(entityID common.EntityID, posi
 		return
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendSyncPositionOnClient(client.gateid, client.clientid, entityID,
+	dispatcherclient.GetDispatcherClientForSend().SendSyncPositionOnClient(client.gateid, client.clientid, entityID,
 		float32(position.X), float32(position.Y), float32(position.Z))
 }
 
@@ -135,5 +135,5 @@ func (client *GameClient) updateYawOnClient(entityID common.EntityID, yaw Yaw) {
 		return
 	}
 
-	dispatcher_client.GetDispatcherClientForSend().SendUpdateYawOnClient(client.gateid, client.clientid, entityID, float32(yaw))
+	dispatcherclient.GetDispatcherClientForSend().SendUpdateYawOnClient(client.gateid, client.clientid, entityID, float32(yaw))
 }

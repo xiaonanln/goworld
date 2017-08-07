@@ -415,13 +415,13 @@ func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
 }
 
 // Recv receives the next packet and retrive the message type
-func (gwc *GoWorldConnection) Recv(msgtype *MsgType_t) (*netutil.Packet, error) {
+func (gwc *GoWorldConnection) Recv(msgtype *MsgType) (*netutil.Packet, error) {
 	pkt, err := gwc.packetConn.RecvPacket()
 	if err != nil {
 		return nil, err
 	}
 
-	*msgtype = MsgType_t(pkt.ReadUint16())
+	*msgtype = MsgType(pkt.ReadUint16())
 	return pkt, nil
 }
 

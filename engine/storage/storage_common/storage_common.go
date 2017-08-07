@@ -1,7 +1,8 @@
-package storage_common
+package storagecommon
 
 import "github.com/xiaonanln/goworld/engine/common"
 
+// EntityStorage defines the interface of entity storage backends
 type EntityStorage interface {
 	List(typeName string) ([]common.EntityID, error)
 	Write(typeName string, entityID common.EntityID, data interface{}) error

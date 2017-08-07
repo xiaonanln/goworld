@@ -10,7 +10,7 @@ import (
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goTimer"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -32,7 +32,7 @@ const (
 )
 
 type packetQueueItem struct { // packet queue from dispatcher client
-	msgtype proto.MsgType_t
+	msgtype proto.MsgType
 	packet  *netutil.Packet
 }
 
@@ -168,7 +168,7 @@ func (gs *GameService) serveRoutine() {
 		post.Tick()
 		if isTick {
 			gameDispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
-			dispatcher_client.GetDispatcherClientForSend().Flush()
+			dispatcherclient.GetDispatcherClientForSend().Flush()
 		}
 	}
 }
@@ -385,5 +385,5 @@ func (gs *GameService) terminate() {
 }
 
 func (gs *GameService) freeze() {
-	dispatcher_client.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
+	dispatcherclient.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
 }

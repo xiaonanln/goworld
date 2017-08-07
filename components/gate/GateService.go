@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -30,7 +30,7 @@ type GateService struct {
 	packetQueue       *xnsyncutil.SyncQueue
 
 	filterTreesLock sync.Mutex
-	filterTrees     map[string]*FilterTree
+	filterTrees     map[string]*_FilterTree
 
 	pendingSyncPackets     []*netutil.Packet
 	pendingSyncPacketsLock sync.Mutex
@@ -44,7 +44,7 @@ func newGateService() *GateService {
 		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies:      map[common.ClientID]*ClientProxy{},
 		packetQueue:        xnsyncutil.NewSyncQueue(),
-		filterTrees:        map[string]*FilterTree{},
+		filterTrees:        map[string]*_FilterTree{},
 		pendingSyncPackets: []*netutil.Packet{},
 		terminated:         xnsyncutil.NewOneTimeCond(),
 	}
@@ -92,7 +92,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn) {
 	gs.clientProxies[cp.clientid] = cp
 	gs.clientProxiesLock.Unlock()
 
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyClientConnected(cp.clientid)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyClientConnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.ServeTCPConnection: client %s connected", gs, cp)
 	}
@@ -116,13 +116,13 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 	}
 	gs.filterTreesLock.Unlock()
 
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(cp.clientid)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyClientDisconnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.onClientProxyClose: client %s disconnected", gs, cp)
 	}
 }
 
-func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())
 	}
@@ -146,7 +146,7 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType_t, pac
 			}
 		} else {
 			// client already disconnected, but the game service seems not knowing it, so tell it
-			dispatcher_client.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
+			dispatcherclient.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
 		}
 	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
 		gs.handleSyncPositionYawOnClients(packet)
@@ -169,7 +169,7 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	gs.filterTreesLock.Lock()
 	ft, ok := gs.filterTrees[key]
 	if !ok {
-		ft = NewFilterTree()
+		ft = newFilterTree()
 		gs.filterTrees[key] = ft
 	}
 
@@ -294,12 +294,12 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 		packet.AppendBytes(syncPkt.UnreadPayload())
 		syncPkt.Release()
 	}
-	dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+	dispatcherclient.GetDispatcherClientForSend().SendPacket(packet)
 	packet.Release()
 }
 
 type packetQueueItem struct { // packet queue from dispatcher client
-	msgtype proto.MsgType_t
+	msgtype proto.MsgType
 	packet  *netutil.Packet
 }
 

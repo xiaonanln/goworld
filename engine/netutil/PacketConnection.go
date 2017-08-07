@@ -183,7 +183,7 @@ send_packets_loop:
 		packetData := packet.data()
 		if len(packetData) > sendBuffer.FreeSpace() {
 			// can not append data to send buffer, so clear send buffer first
-			if err = sendBuffer.WriteTo(pc.conn); err != nil {
+			if err = sendBuffer.WriteAllTo(pc.conn); err != nil {
 				return err
 			}
 
@@ -208,7 +208,7 @@ send_packets_loop:
 	}
 
 	// now we send all data in the send buffer
-	err = sendBuffer.WriteTo(pc.conn)
+	err = sendBuffer.WriteAllTo(pc.conn)
 	if err == nil {
 		err = pc.conn.Flush()
 	}
