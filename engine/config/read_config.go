@@ -24,16 +24,16 @@ import (
 )
 
 const (
-	DEFAULT_CONFIG_FILE   = "goworld.ini"
-	DEFAULT_LOCALHOST_IP  = "127.0.0.1"
-	DEFAULT_SAVE_ITNERVAL = time.Minute * 5
-	DEFAULT_HTTP_IP       = "127.0.0.1"
-	DEFAULT_LOG_LEVEL     = "debug"
-	DEFAULT_STORAGE_DB    = "goworld"
+	_DEFAULT_CONFIG_FILE   = "goworld.ini"
+	_DEFAULT_LOCALHOST_IP  = "127.0.0.1"
+	_DEFAULT_SAVE_ITNERVAL = time.Minute * 5
+	_DEFAULT_HTTP_IP       = "127.0.0.1"
+	_DEFAULT_LOG_LEVEL     = "debug"
+	_DEFAULT_STORAGE_DB    = "goworld"
 )
 
 var (
-	configFilePath = DEFAULT_CONFIG_FILE
+	configFilePath = _DEFAULT_CONFIG_FILE
 	goWorldConfig  *GoWorldConfig
 	configLock     sync.Mutex
 )
@@ -231,9 +231,9 @@ func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.BootEntity = "Boot"
 	scc.LogFile = "server.log"
 	scc.LogStderr = true
-	scc.LogLevel = DEFAULT_LOG_LEVEL
-	scc.SaveInterval = DEFAULT_SAVE_ITNERVAL
-	scc.HTTPIp = DEFAULT_HTTP_IP
+	scc.LogLevel = _DEFAULT_LOG_LEVEL
+	scc.SaveInterval = _DEFAULT_SAVE_ITNERVAL
+	scc.HTTPIp = _DEFAULT_HTTP_IP
 	scc.HTTPPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
 
@@ -256,7 +256,7 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 		if name == "boot_entity" {
 			sc.BootEntity = key.MustString(sc.BootEntity)
 		} else if name == "save_interval" {
-			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(DEFAULT_SAVE_ITNERVAL/time.Second)))
+			sc.SaveInterval = time.Second * time.Duration(key.MustInt(int(_DEFAULT_SAVE_ITNERVAL/time.Second)))
 		} else if name == "log_file" {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
@@ -278,8 +278,8 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 func readGateCommonConfig(section *ini.Section, scc *GateConfig) {
 	scc.LogFile = "gate.log"
 	scc.LogStderr = true
-	scc.LogLevel = DEFAULT_LOG_LEVEL
-	scc.HTTPIp = DEFAULT_HTTP_IP
+	scc.LogLevel = _DEFAULT_LOG_LEVEL
+	scc.HTTPIp = _DEFAULT_HTTP_IP
 	scc.HTTPPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
 
@@ -323,17 +323,17 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 }
 
 func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
-	config.Ip = DEFAULT_LOCALHOST_IP
+	config.Ip = _DEFAULT_LOCALHOST_IP
 	config.LogFile = ""
 	config.LogStderr = true
-	config.LogLevel = DEFAULT_LOG_LEVEL
-	config.HTTPIp = DEFAULT_HTTP_IP
+	config.LogLevel = _DEFAULT_LOG_LEVEL
+	config.HTTPIp = _DEFAULT_HTTP_IP
 	config.HTTPPort = 0
 
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
-			config.Ip = key.MustString(DEFAULT_LOCALHOST_IP)
+			config.Ip = key.MustString(_DEFAULT_LOCALHOST_IP)
 		} else if name == "port" {
 			config.Port = key.MustInt(0)
 		} else if name == "log_file" {
@@ -357,7 +357,7 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 	// setup default values
 	config.Type = "filesystem"
 	config.Directory = "_entity_storage"
-	config.DB = DEFAULT_STORAGE_DB
+	config.DB = _DEFAULT_STORAGE_DB
 	config.Url = ""
 
 	for _, key := range sec.Keys() {

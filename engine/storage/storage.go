@@ -128,7 +128,7 @@ func assureStorageEngineReady() (err error) {
 
 	cfg := config.GetStorage()
 	if cfg.Type == "filesystem" {
-		storageEngine, err = entity_storage_filesystem.OpenDirectory(cfg.Directory)
+		storageEngine, err = entitystoragefilesystem.OpenDirectory(cfg.Directory)
 	} else if cfg.Type == "mongodb" {
 		storageEngine, err = entity_storage_mongodb.OpenMongoDB(cfg.Url, cfg.DB)
 	} else if cfg.Type == "redis" {

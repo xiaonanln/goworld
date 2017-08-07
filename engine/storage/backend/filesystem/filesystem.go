@@ -1,4 +1,4 @@
-package entity_storage_filesystem
+package entitystoragefilesystem
 
 import (
 	"path/filepath"

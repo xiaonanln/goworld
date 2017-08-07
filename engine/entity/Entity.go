@@ -208,12 +208,12 @@ func SetSaveInterval(duration time.Duration) {
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
 	e.aoi.interest(other)
-	e.client.SendCreateEntity(other, false)
+	e.client.sendCreateEntity(other, false)
 }
 
 func (e *Entity) uninterest(other *Entity) {
 	e.aoi.uninterest(other)
-	e.client.SendDestroyEntity(other)
+	e.client.sendDestroyEntity(other)
 }
 
 func (e *Entity) Neighbors() EntitySet {
@@ -407,7 +407,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	}
 
 	// rpc call from server
-	if rpcDesc.Flags&RF_SERVER == 0 {
+	if rpcDesc.Flags&rfServer == 0 {
 		// can not call from server
 		gwlog.Panicf("%s.onCallFromLocal: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 	}
@@ -451,15 +451,15 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 	methodType := rpcDesc.MethodType
 	if clientid == "" {
 		// rpc call from server
-		if rpcDesc.Flags&RF_SERVER == 0 {
+		if rpcDesc.Flags&rfServer == 0 {
 			// can not call from server
 			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 		}
 	} else {
 		isFromOwnClient := clientid == e.getClientID()
-		if rpcDesc.Flags&RF_OWN_CLIENT == 0 && isFromOwnClient {
+		if rpcDesc.Flags&rfOwnClient == 0 && isFromOwnClient {
 			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
-		} else if rpcDesc.Flags&RF_OTHER_CLIENT == 0 && !isFromOwnClient {
+		} else if rpcDesc.Flags&rfOtherClient == 0 && !isFromOwnClient {
 			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from OtherClient: flags=%v, OwnClient=%s, OtherClient=%s", e, methodName, rpcDesc.Flags, e.getClientID(), clientid)
 		}
 	}
@@ -638,20 +638,20 @@ func (e *Entity) SetClient(client *GameClient) {
 		dispatcher_client.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
-			oldClient.SendDestroyEntity(neighbor)
+			oldClient.sendDestroyEntity(neighbor)
 		}
 
-		oldClient.SendDestroyEntity(e)
+		oldClient.sendDestroyEntity(e)
 	}
 
 	if client != nil {
 		// send create entity to new client
 		entityManager.onEntityGetClient(e.ID, client.clientid)
 
-		client.SendCreateEntity(e, true)
+		client.sendCreateEntity(e, true)
 
 		for neighbor := range e.Neighbors() {
-			client.SendCreateEntity(neighbor, false)
+			client.sendCreateEntity(neighbor, false)
 		}
 
 		// set all filter properties to client
@@ -745,13 +745,13 @@ func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interfa
 
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+			neighbor.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		}
 	} else if flag&afClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 	}
 }
 
@@ -766,13 +766,13 @@ func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrDel(e.ID, path, key)
+		e.client.sendNotifyMapAttrDel(e.ID, path, key)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyMapAttrDel(e.ID, path, key)
+			neighbor.client.sendNotifyMapAttrDel(e.ID, path, key)
 		}
 	} else if flag&afClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrDel(e.ID, path, key)
+		e.client.sendNotifyMapAttrDel(e.ID, path, key)
 	}
 }
 
@@ -781,13 +781,13 @@ func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interf
 
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+			neighbor.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		}
 	} else if flag&afClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 	}
 }
 
@@ -795,13 +795,13 @@ func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
 	flag := la.flag
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrPop(e.ID, path)
+		e.client.sendNotifyListAttrPop(e.ID, path)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyListAttrPop(e.ID, path)
+			neighbor.client.sendNotifyListAttrPop(e.ID, path)
 		}
 	} else if flag&afClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrPop(e.ID, path)
+		e.client.sendNotifyListAttrPop(e.ID, path)
 	}
 }
 
@@ -809,13 +809,13 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 	flag := la.flag
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrAppend(e.ID, path, val)
+		e.client.sendNotifyListAttrAppend(e.ID, path, val)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyListAttrAppend(e.ID, path, val)
+			neighbor.client.sendNotifyListAttrAppend(e.ID, path, val)
 		}
 	} else if flag&afClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrAppend(e.ID, path, val)
+		e.client.sendNotifyListAttrAppend(e.ID, path, val)
 	}
 }
 
@@ -1107,7 +1107,7 @@ func (e *Entity) GetYaw() Yaw {
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
 	e.ForAllClients(func(client *GameClient) {
-		client.UpdateYawOnClient(e.ID, e.yaw)
+		client.updateYawOnClient(e.ID, e.yaw)
 	})
 }
 

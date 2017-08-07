@@ -26,14 +26,14 @@ import (
 )
 
 const (
-	MAX_PACKET_SIZE    = 25 * 1024 * 1024
-	SIZE_FIELD_SIZE    = 4
-	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
-	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
+	_MAX_PACKET_SIZE    = 25 * 1024 * 1024 // _MAX_PACKET_SIZE is the max size limit of packets in packet connections
+	_SIZE_FIELD_SIZE    = 4                // _SIZE_FIELD_SIZE is the packet size field (uint32) size
+	_PREPAYLOAD_SIZE    = _SIZE_FIELD_SIZE
+	_MAX_PAYLOAD_LENGTH = _MAX_PACKET_SIZE - _PREPAYLOAD_SIZE
 )
 
 var (
-	NETWORK_ENDIAN      = binary.LittleEndian
+	NETWORK_ENDIAN      = binary.LittleEndian // NETWORK_ENDIAN is the network Endian of connections
 	errRecvAgain        = _ErrRecvAgain{}
 	compressWritersPool = xnsyncutil.NewNewlessPool()
 )
@@ -65,6 +65,7 @@ func (err _ErrRecvAgain) Timeout() bool {
 	return false
 }
 
+// PacketConnection is a connection that send and receive data packets
 type PacketConnection struct {
 	conn               Connection
 	compressed         bool
@@ -73,7 +74,7 @@ type PacketConnection struct {
 	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
 
 	// buffers and infos for receiving a packet
-	payloadLenBuf         [SIZE_FIELD_SIZE]byte
+	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
 	payloadLenBytesRecved int
 	recvCompressed        bool
 	recvTotalPayloadLen   uint32
@@ -83,6 +84,7 @@ type PacketConnection struct {
 	compressReader io.ReadCloser
 }
 
+// NewPacketConnection creates a packet connection based on network connection
 func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	pc := &PacketConnection{
 		conn:       conn,
@@ -94,16 +96,18 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	return pc
 }
 
+// NewPacket allocates a new packet (usually for sending)
 func (pc *PacketConnection) NewPacket() *Packet {
 	return allocPacket()
 }
 
+// SendPacket send packets to remote
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
-			PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
+			PACKET_ENDIAN.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
 			packet.GetPayloadLen(),
-			packet.bytes[PREPAYLOAD_SIZE+2:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+			packet.bytes[_PREPAYLOAD_SIZE+2:_PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
 	if atomic.LoadInt64(&packet.refcount) <= 0 {
 		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
@@ -116,6 +120,7 @@ func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	return nil
 }
 
+// Flush connection writes
 func (pc *PacketConnection) Flush() (err error) {
 	pc.pendingPacketsLock.Lock()
 	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
@@ -210,16 +215,18 @@ send_packets_loop:
 	return
 }
 
+// SetRecvDeadline sets the receive deadline
 func (pc *PacketConnection) SetRecvDeadline(deadline time.Time) error {
 	return pc.conn.SetReadDeadline(deadline)
 }
 
+// RecvPacket receives the next packet
 func (pc *PacketConnection) RecvPacket() (*Packet, error) {
-	if pc.payloadLenBytesRecved < SIZE_FIELD_SIZE {
+	if pc.payloadLenBytesRecved < _SIZE_FIELD_SIZE {
 		// receive more of payload len bytes
 		n, err := pc.conn.Read(pc.payloadLenBuf[pc.payloadLenBytesRecved:])
 		pc.payloadLenBytesRecved += n
-		if pc.payloadLenBytesRecved < SIZE_FIELD_SIZE {
+		if pc.payloadLenBytesRecved < _SIZE_FIELD_SIZE {
 			if err == nil {
 				err = errRecvAgain
 			}
@@ -236,7 +243,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 			pc.recvCompressed = true
 		}
 
-		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > MAX_PAYLOAD_LENGTH {
+		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > _MAX_PAYLOAD_LENGTH {
 			err := errors.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
 			pc.resetRecvStates()
 			pc.Close()
@@ -249,7 +256,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	}
 
 	// now all bytes of payload len is received, start receiving payload
-	n, err := pc.conn.Read(pc.recvingPacket.bytes[PREPAYLOAD_SIZE+pc.recvedPayloadLen : PREPAYLOAD_SIZE+pc.recvTotalPayloadLen])
+	n, err := pc.conn.Read(pc.recvingPacket.bytes[_PREPAYLOAD_SIZE+pc.recvedPayloadLen : _PREPAYLOAD_SIZE+pc.recvTotalPayloadLen])
 	pc.recvedPayloadLen += uint32(n)
 
 	if pc.recvedPayloadLen == pc.recvTotalPayloadLen {
@@ -275,14 +282,17 @@ func (pc *PacketConnection) resetRecvStates() {
 	pc.recvCompressed = false
 }
 
+// Close the connection
 func (pc *PacketConnection) Close() error {
 	return pc.conn.Close()
 }
 
+// RemoteAddr return the remote address
 func (pc *PacketConnection) RemoteAddr() net.Addr {
 	return pc.conn.RemoteAddr()
 }
 
+// LocalAddr returns the local address
 func (pc *PacketConnection) LocalAddr() net.Addr {
 	return pc.conn.LocalAddr()
 }

@@ -6,38 +6,38 @@ import (
 )
 
 const (
-	RF_SERVER       = 1 << iota
-	RF_OWN_CLIENT   = 1 << iota
-	RF_OTHER_CLIENT = 1 << iota
+	rfServer      = 1 << iota
+	rfOwnClient   = 1 << iota
+	rfOtherClient = 1 << iota
 )
 
-type RpcDesc struct {
+type rpcDesc struct {
 	Func       reflect.Value
 	Flags      uint
 	MethodType reflect.Type
 	NumArgs    int
 }
 
-type RpcDescMap map[string]*RpcDesc
+type rpcDescMap map[string]*rpcDesc
 
-func (rdm RpcDescMap) visit(method reflect.Method) {
+func (rdm rpcDescMap) visit(method reflect.Method) {
 	methodName := method.Name
 	var flag uint
 	var rpcName string
 	if strings.HasSuffix(methodName, "_Client") {
-		flag |= RF_SERVER + RF_OWN_CLIENT
+		flag |= rfServer + rfOwnClient
 		rpcName = methodName[:len(methodName)-7]
 	} else if strings.HasSuffix(methodName, "_AllClient") {
-		flag |= RF_SERVER + RF_OWN_CLIENT + RF_OTHER_CLIENT
+		flag |= rfServer + rfOwnClient + rfOtherClient
 		rpcName = methodName[:len(methodName)-10]
 	} else {
 		// server method
-		flag |= RF_SERVER
+		flag |= rfServer
 		rpcName = methodName
 	}
 
 	methodType := method.Type
-	rdm[rpcName] = &RpcDesc{
+	rdm[rpcName] = &rpcDesc{
 		Func:       method.Func,
 		Flags:      flag,
 		MethodType: methodType,

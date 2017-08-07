@@ -138,7 +138,7 @@ func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 	entity.syncInfoFlag |= sifSyncOwnClient | sifSyncNeighborClients
 
 	if !isRestore {
-		entity.client.SendCreateEntity(&space.Entity, false) // create Space entity before every other entities
+		entity.client.sendCreateEntity(&space.Entity, false) // create Space entity before every other entities
 
 		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
 		// gwlog.Info("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
@@ -179,7 +179,7 @@ func (space *Space) leave(entity *Entity) {
 		neighbor.uninterest(entity)
 	}
 	space.aoiCalc.Leave(&entity.aoi)
-	entity.client.SendDestroyEntity(&space.Entity)
+	entity.client.sendDestroyEntity(&space.Entity)
 	// remove from Space entities
 	space.entities.Del(entity)
 	entity.Space = nilSpace

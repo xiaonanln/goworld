@@ -27,7 +27,7 @@ var (
 
 type EntityTypeDesc struct {
 	entityType      reflect.Type
-	rpcDescs        RpcDescMap
+	rpcDescs        rpcDescMap
 	allClientAttrs  StringSet
 	clientAttrs     StringSet
 	persistentAttrs StringSet
@@ -170,7 +170,7 @@ func RegisterEntity(typeName string, entityPtr IEntity) *EntityTypeDesc {
 	entityType := entityVal.Type()
 
 	// register the string of e
-	rpcDescs := RpcDescMap{}
+	rpcDescs := rpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
 		entityType:      entityType,
 		rpcDescs:        rpcDescs,
