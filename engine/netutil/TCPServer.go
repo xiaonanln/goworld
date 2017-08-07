@@ -63,5 +63,5 @@ func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
 		gwlog.Info("Connection from: %s", conn.RemoteAddr())
 		go delegate.ServeTCPConnection(conn)
 	}
-	return nil
+
 }

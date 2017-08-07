@@ -25,6 +25,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// A client bot representing a game client
 type ClientBot struct {
 	sync.Mutex
 
@@ -95,14 +96,14 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 
 		wsConn, err := websocket.Dial(wsaddr, "", origin)
 		return wsConn, err
-	} else {
-		conn, err := netutil.ConnectTCP(serverAddr, cfg.Port)
-		if err != nil {
-			conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
-			conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
-		}
-		return conn, err
 	}
+
+	conn, err := netutil.ConnectTCP(serverAddr, cfg.Port)
+	if err != nil {
+		conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
+		conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
+	}
+	return conn, err
 }
 
 func (bot *ClientBot) loop() {
@@ -426,6 +427,7 @@ func (bot *ClientBot) password() string {
 	return "123456"
 }
 
+// Call server method of target entity
 func (bot *ClientBot) CallServer(id common.EntityID, method string, args []interface{}) {
 	if !quiet {
 		gwlog.Debug("%s call server: %s.%s%v", bot, id, method, args)
@@ -433,6 +435,7 @@ func (bot *ClientBot) CallServer(id common.EntityID, method string, args []inter
 	bot.conn.SendCallEntityMethodFromClient(id, method, args)
 }
 
+// Called when player enters space
 func (bot *ClientBot) OnEnterSpace() {
 	gwlog.Debug("%s.OnEnterSpace, player=%s", bot, bot.player)
 	player := bot.player
@@ -444,6 +447,7 @@ func (bot *ClientBot) OnEnterSpace() {
 	}
 }
 
+// Called when player leaves space
 func (bot *ClientBot) OnLeaveSpace(oldSpace *ClientSpace) {
 	gwlog.Debug("%s.OnLeaveSpace, player=%s", bot, bot.player)
 }

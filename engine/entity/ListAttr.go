@@ -31,7 +31,7 @@ func (a *ListAttr) Set(index int, val interface{}) {
 	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in index %s", index)
+			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
 		sa.parent = a
@@ -42,7 +42,7 @@ func (a *ListAttr) Set(index int, val interface{}) {
 		a.sendListAttrChangeToClients(index, sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in index %s", index)
+			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
 		sa.parent = a
@@ -161,7 +161,7 @@ func (a *ListAttr) Append(val interface{}) {
 	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in append", index)
+			gwlog.Panicf("MapAttr reused in append")
 		}
 
 		sa.parent = a
@@ -172,7 +172,7 @@ func (a *ListAttr) Append(val interface{}) {
 		a.sendListAttrAppendToClients(sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in append", index)
+			gwlog.Panicf("MapAttr reused in append")
 		}
 
 		sa.parent = a

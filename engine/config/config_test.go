@@ -26,10 +26,10 @@ func TestLoad(t *testing.T) {
 	}
 	for gateid, gateConfig := range config.Gates {
 		if gateConfig.Ip == "" {
-			t.Errorf("gate %s ip not found", gateid)
+			t.Errorf("gate %d ip not found", gateid)
 		}
 		if gateConfig.Port == 0 {
-			t.Errorf("gate %s port not found", gateid)
+			t.Errorf("gate %d port not found", gateid)
 		}
 	}
 

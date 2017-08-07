@@ -58,13 +58,13 @@ func TestRedisBackend_Find(t *testing.T) {
 func testBackend_Find(t *testing.T, kvdb KVDBEngine) {
 	beginKey := strconv.Itoa(1000 + rand.Intn(2000-1000))
 	if len(beginKey) != 4 {
-		t.Fatal("wrong begin key: %s", beginKey)
+		t.Fatalf("wrong begin key: %s", beginKey)
 	}
 
 	endKey := strconv.Itoa(5000 + rand.Intn(5000))
 
 	if len(endKey) != 4 {
-		t.Fatal("wrong end key: %s", endKey)
+		t.Fatalf("wrong end key: %s", endKey)
 	}
 	kvdb.Put(beginKey, beginKey)
 	kvdb.Put(endKey, endKey)
