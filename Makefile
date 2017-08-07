@@ -1,6 +1,8 @@
-.PHONY: dispatcher test_game test_client runall rundispatcher rungame runclient killdispatcher killgame killclient killall
+.PHONY: dispatcher test_game test_client gate
+.PHONY: runall rundispatcher rungame runclient killdispatcher killgame killclient killall
+.PHONY: chatroom_demo
 
-all: dispatcher test_game test_client gate
+all: dispatcher test_game test_client gate chatroom_demo
 
 dispatcher:
 	cd components/dispatcher && go build
@@ -13,6 +15,9 @@ test_game:
 
 test_client:
 	cd examples/test_client && go build
+
+chatroom_demo:
+    cd examples/chatroom_demo && go build
 
 rundispatcher: dispatcher
 	components/dispatcher/dispatcher

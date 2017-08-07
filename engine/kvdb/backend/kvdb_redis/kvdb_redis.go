@@ -70,6 +70,9 @@ func (db *redisKVDB) initialize(dbindex int) error {
 			break
 		}
 		r, err = redis.Values(db.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

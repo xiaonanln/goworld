@@ -55,7 +55,8 @@ func assureKVDBEngineReady() (err error) {
 	if kvdbCfg.Type == "mongodb" {
 		kvdbEngine, err = kvdb_mongo.OpenMongoKVDB(kvdbCfg.Url, kvdbCfg.DB, kvdbCfg.Collection)
 	} else if kvdbCfg.Type == "redis" {
-		dbindex, err := strconv.Atoi(kvdbCfg.DB)
+		var dbindex int
+		dbindex, err = strconv.Atoi(kvdbCfg.DB)
 		if err == nil {
 			kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
 		}

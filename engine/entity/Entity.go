@@ -1023,7 +1023,6 @@ func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 	}
 
 	space.move(e, pos)
-	pos = e.aoi.pos
 	e.yaw = yaw
 
 	// mark the entity as needing sync
