@@ -2,7 +2,7 @@ package goworld
 
 import (
 	"github.com/xiaonanln/goworld/components/game"
-	. "github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -33,14 +33,14 @@ func CreateSpaceAnywhere(kind int) {
 // CreateSpaceLocally creates a space with specified kind in the local game server
 //
 // returns the space EntityID
-func CreateSpaceLocally(kind int) EntityID {
+func CreateSpaceLocally(kind int) common.EntityID {
 	return entity.CreateSpaceLocally(kind)
 }
 
 // CreateEntityLocally creates a entity on the local server
 //
 // returns EntityID
-func CreateEntityLocally(typeName string) EntityID {
+func CreateEntityLocally(typeName string) common.EntityID {
 	return entity.CreateEntityLocally(typeName, nil, nil)
 }
 
@@ -50,7 +50,7 @@ func CreateEntityAnywhere(typeName string) {
 }
 
 // LoadEntityAnywhere loads the specified entity from entity storage
-func LoadEntityAnywhere(typeName string, entityID EntityID) {
+func LoadEntityAnywhere(typeName string, entityID common.EntityID) {
 	entity.LoadEntityAnywhere(typeName, entityID)
 }
 
@@ -69,12 +69,12 @@ func ListEntityIDs(typeName string, callback storage.ListCallbackFunc) {
 // Exists checks if entityID exists in entity storage
 //
 // returns result in callback
-func Exists(typeName string, entityID EntityID, callback storage.ExistsCallbackFunc) {
+func Exists(typeName string, entityID common.EntityID, callback storage.ExistsCallbackFunc) {
 	storage.Exists(typeName, entityID, callback)
 }
 
 // GetEntity gets the entity by EntityID
-func GetEntity(id EntityID) *entity.Entity {
+func GetEntity(id common.EntityID) *entity.Entity {
 	return entity.GetEntity(id)
 }
 
