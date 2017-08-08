@@ -2,6 +2,7 @@ package gwutils
 
 import "github.com/xiaonanln/goworld/engine/gwlog"
 
+// RunPanicless calls a function panic-freely
 func RunPanicless(f func()) {
 	defer func() {
 		err := recover()

@@ -25,20 +25,15 @@ import (
 	"github.com/xiaonanln/goworld/engine/opmon"
 )
 
-const ( // Three different level of packet size
-	PACKET_SIZE_SMALL = 1024
-	PACKET_SIZE_BIG   = 1024 * 64
-	PACKET_SIZE_HUGE  = 1024 * 1024 * 4
-)
-
 const (
-	MAX_PACKET_SIZE    = 25 * 1024 * 1024
-	SIZE_FIELD_SIZE    = 4
-	PREPAYLOAD_SIZE    = SIZE_FIELD_SIZE
-	MAX_PAYLOAD_LENGTH = MAX_PACKET_SIZE - PREPAYLOAD_SIZE
+	_MAX_PACKET_SIZE    = 25 * 1024 * 1024 // _MAX_PACKET_SIZE is the max size limit of packets in packet connections
+	_SIZE_FIELD_SIZE    = 4                // _SIZE_FIELD_SIZE is the packet size field (uint32) size
+	_PREPAYLOAD_SIZE    = _SIZE_FIELD_SIZE
+	_MAX_PAYLOAD_LENGTH = _MAX_PACKET_SIZE - _PREPAYLOAD_SIZE
 )
 
 var (
+	// NETWORK_ENDIAN is the network Endian of connections
 	NETWORK_ENDIAN      = binary.LittleEndian
 	errRecvAgain        = _ErrRecvAgain{}
 	compressWritersPool = xnsyncutil.NewNewlessPool()
@@ -48,7 +43,7 @@ func init() {
 	for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
 		cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
 		if err != nil {
-			gwlog.Fatal("create flate compressor failed: %v", err)
+			gwlog.Fatalf("create flate compressor failed: %v", err)
 		}
 
 		compressWritersPool.Put(cw)
@@ -71,6 +66,7 @@ func (err _ErrRecvAgain) Timeout() bool {
 	return false
 }
 
+// PacketConnection is a connection that send and receive data packets
 type PacketConnection struct {
 	conn               Connection
 	compressed         bool
@@ -79,7 +75,7 @@ type PacketConnection struct {
 	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
 
 	// buffers and infos for receiving a packet
-	payloadLenBuf         [SIZE_FIELD_SIZE]byte
+	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
 	payloadLenBytesRecved int
 	recvCompressed        bool
 	recvTotalPayloadLen   uint32
@@ -89,9 +85,10 @@ type PacketConnection struct {
 	compressReader io.ReadCloser
 }
 
+// NewPacketConnection creates a packet connection based on network connection
 func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	pc := &PacketConnection{
-		conn:       (conn),
+		conn:       conn,
 		sendBuffer: NewSendBuffer(),
 		compressed: compressed,
 	}
@@ -100,16 +97,18 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	return pc
 }
 
+// NewPacket allocates a new packet (usually for sending)
 func (pc *PacketConnection) NewPacket() *Packet {
 	return allocPacket()
 }
 
+// SendPacket send packets to remote
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
-			PACKET_ENDIAN.Uint16(packet.bytes[PREPAYLOAD_SIZE:PREPAYLOAD_SIZE+2]),
+			packetEndian.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
 			packet.GetPayloadLen(),
-			packet.bytes[PREPAYLOAD_SIZE+2:PREPAYLOAD_SIZE+packet.GetPayloadLen()])
+			packet.bytes[_PREPAYLOAD_SIZE+2:_PREPAYLOAD_SIZE+packet.GetPayloadLen()])
 	}
 	if atomic.LoadInt64(&packet.refcount) <= 0 {
 		gwlog.Panicf("sending packet with refcount=%d", packet.refcount)
@@ -122,6 +121,7 @@ func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	return nil
 }
 
+// Flush connection writes
 func (pc *PacketConnection) Flush() (err error) {
 	pc.pendingPacketsLock.Lock()
 	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
@@ -170,6 +170,7 @@ send_packets_loop:
 			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
 			if _cw != nil {
 				cw = _cw.(*flate.Writer)
+				//noinspection GoDeferInLoop
 				defer compressWritersPool.Put(cw)
 			} else {
 				gwlog.Warn("Fail to get compressor, packet is not compressed")
@@ -183,11 +184,11 @@ send_packets_loop:
 		packetData := packet.data()
 		if len(packetData) > sendBuffer.FreeSpace() {
 			// can not append data to send buffer, so clear send buffer first
-			if err = sendBuffer.WriteTo(pc.conn); err != nil {
+			if err = sendBuffer.WriteAllTo(pc.conn); err != nil {
 				return err
 			}
 
-			if len(packetData) >= SEND_BUFFER_SIZE {
+			if len(packetData) >= _SEND_BUFFER_SIZE {
 				// packet is too large, impossible to put to send buffer
 				err = WriteAll(pc.conn, packetData)
 				packet.Release()
@@ -208,23 +209,25 @@ send_packets_loop:
 	}
 
 	// now we send all data in the send buffer
-	err = sendBuffer.WriteTo(pc.conn)
+	err = sendBuffer.WriteAllTo(pc.conn)
 	if err == nil {
 		err = pc.conn.Flush()
 	}
 	return
 }
 
+// SetRecvDeadline sets the receive deadline
 func (pc *PacketConnection) SetRecvDeadline(deadline time.Time) error {
 	return pc.conn.SetReadDeadline(deadline)
 }
 
+// RecvPacket receives the next packet
 func (pc *PacketConnection) RecvPacket() (*Packet, error) {
-	if pc.payloadLenBytesRecved < SIZE_FIELD_SIZE {
+	if pc.payloadLenBytesRecved < _SIZE_FIELD_SIZE {
 		// receive more of payload len bytes
 		n, err := pc.conn.Read(pc.payloadLenBuf[pc.payloadLenBytesRecved:])
 		pc.payloadLenBytesRecved += n
-		if pc.payloadLenBytesRecved < SIZE_FIELD_SIZE {
+		if pc.payloadLenBytesRecved < _SIZE_FIELD_SIZE {
 			if err == nil {
 				err = errRecvAgain
 			}
@@ -236,12 +239,12 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		if pc.recvCompressed {
 			gwlog.Panicf("should be false")
 		}
-		if pc.recvTotalPayloadLen&COMPRESSED_BIT_MASK != 0 {
-			pc.recvTotalPayloadLen &= PAYLOAD_LEN_MASK
+		if pc.recvTotalPayloadLen&_COMPRESSED_BIT_MASK != 0 {
+			pc.recvTotalPayloadLen &= _PAYLOAD_LEN_MASK
 			pc.recvCompressed = true
 		}
 
-		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > MAX_PAYLOAD_LENGTH {
+		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > _MAX_PAYLOAD_LENGTH {
 			err := errors.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
 			pc.resetRecvStates()
 			pc.Close()
@@ -254,7 +257,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	}
 
 	// now all bytes of payload len is received, start receiving payload
-	n, err := pc.conn.Read(pc.recvingPacket.bytes[PREPAYLOAD_SIZE+pc.recvedPayloadLen : PREPAYLOAD_SIZE+pc.recvTotalPayloadLen])
+	n, err := pc.conn.Read(pc.recvingPacket.bytes[_PREPAYLOAD_SIZE+pc.recvedPayloadLen : _PREPAYLOAD_SIZE+pc.recvTotalPayloadLen])
 	pc.recvedPayloadLen += uint32(n)
 
 	if pc.recvedPayloadLen == pc.recvTotalPayloadLen {
@@ -280,14 +283,17 @@ func (pc *PacketConnection) resetRecvStates() {
 	pc.recvCompressed = false
 }
 
+// Close the connection
 func (pc *PacketConnection) Close() error {
 	return pc.conn.Close()
 }
 
+// RemoteAddr return the remote address
 func (pc *PacketConnection) RemoteAddr() net.Addr {
 	return pc.conn.RemoteAddr()
 }
 
+// LocalAddr returns the local address
 func (pc *PacketConnection) LocalAddr() net.Addr {
 	return pc.conn.LocalAddr()
 }

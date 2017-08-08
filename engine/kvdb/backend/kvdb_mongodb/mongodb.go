@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	DEFAULT_DB_NAME = "goworld"
-	VAL_KEY         = "_"
+	_DEFAULT_DB_NAME = "goworld"
+	_VAL_KEY         = "_"
 )
 
 type MongoKVDB struct {
@@ -20,6 +20,7 @@ type MongoKVDB struct {
 	c *mgo.Collection
 }
 
+// OpenMongoKVDB opens mongodb as KVDB engine
 func OpenMongoKVDB(url string, dbname string, collectionName string) (KVDBEngine, error) {
 	gwlog.Debug("Connecting MongoDB ...")
 	session, err := mgo.Dial(url)
@@ -30,7 +31,7 @@ func OpenMongoKVDB(url string, dbname string, collectionName string) (KVDBEngine
 	session.SetMode(mgo.Monotonic, true)
 	if dbname == "" {
 		// if db is not specified, use default
-		dbname = DEFAULT_DB_NAME
+		dbname = _DEFAULT_DB_NAME
 	}
 	db := session.DB(dbname)
 	c := db.C(collectionName)
@@ -42,7 +43,7 @@ func OpenMongoKVDB(url string, dbname string, collectionName string) (KVDBEngine
 
 func (kvdb *MongoKVDB) Put(key string, val string) error {
 	_, err := kvdb.c.UpsertId(key, map[string]string{
-		VAL_KEY: val,
+		_VAL_KEY: val,
 	})
 	return err
 }
@@ -57,7 +58,7 @@ func (kvdb *MongoKVDB) Get(key string) (val string, err error) {
 		}
 		return
 	}
-	val = doc[VAL_KEY]
+	val = doc[_VAL_KEY]
 	return
 }
 

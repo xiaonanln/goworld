@@ -6,12 +6,12 @@ import (
 
 	"time"
 
-	timer "github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goTimer"
 	. "github.com/xiaonanln/goworld/engine/common"
 
 	"unsafe"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -27,6 +27,7 @@ var (
 	saveInterval time.Duration
 )
 
+// Yaw is the type of entity yaw
 type Yaw float32
 
 type entityTimerInfo struct {
@@ -38,6 +39,8 @@ type entityTimerInfo struct {
 	rawTimer       *timer.Timer
 }
 
+// Entity is the basic execution unit in GoWorld server. Entities can be used to
+// represent players, NPCs, monsters. Entities can migrate among spaces.
 type Entity struct {
 	ID       EntityID
 	TypeName string
@@ -78,7 +81,7 @@ const (
 	sifSyncNeighborClients
 )
 
-// Functions declared by IEntity can be override in Entity subclasses
+// IEntity declares functions can be override in Entity subclasses
 type IEntity interface {
 	// Entity Lifetime
 	OnInit()    // Called when initializing entity struct, override to initialize entity custom fields
@@ -107,13 +110,14 @@ func (e *Entity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
 
+// Destroy destroys the entity
 func (e *Entity) Destroy() {
 	if e.destroyed {
 		return
 	}
 	gwlog.Debug("%s.Destroy ...", e)
 	e.destroyEntity(false)
-	dispatcher_client.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
+	dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
 }
 
 func (e *Entity) destroyEntity(isMigrate bool) {
@@ -142,10 +146,12 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.destroyed = true
 }
 
+// IsDestroyed returns if the entity is destroyed
 func (e *Entity) IsDestroyed() bool {
 	return e.destroyed
 }
 
+// Save the entity
 func (e *Entity) Save() {
 	if !e.I.IsPersistent() {
 		return
@@ -160,11 +166,12 @@ func (e *Entity) Save() {
 	storage.Save(e.TypeName, e.ID, data, nil)
 }
 
+// IsSpaceEntity returns if the entity is actually a space
 func (e *Entity) IsSpaceEntity() bool {
-	return e.TypeName == SPACE_ENTITY_TYPE
+	return e.TypeName == _SPACE_ENTITY_TYPE
 }
 
-// Convert entity to space (only works for space entity)
+// ToSpace converts entity to space (only works for space entity)
 func (e *Entity) ToSpace() *Space {
 	if !e.IsSpaceEntity() {
 		gwlog.Panicf("%s is not a space", e)
@@ -198,35 +205,44 @@ func (e *Entity) setupSaveTimer() {
 	e.addRawTimer(saveInterval, e.Save)
 }
 
+// SetSaveInterval sets the save interval for entity system
 func SetSaveInterval(duration time.Duration) {
 	saveInterval = duration
 	gwlog.Info("Save interval set to %s", saveInterval)
 }
 
-// Space Operations related to e
+// Space Operations related to AOI
 
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
 	e.aoi.interest(other)
-	e.client.SendCreateEntity(other, false)
+	e.client.sendCreateEntity(other, false)
 }
 
 func (e *Entity) uninterest(other *Entity) {
 	e.aoi.uninterest(other)
-	e.client.SendDestroyEntity(other)
+	e.client.sendDestroyEntity(other)
 }
 
+// Neighbors get all neighbors in an EntitySet
+//
+// Never modify the return value !
 func (e *Entity) Neighbors() EntitySet {
 	return e.aoi.neighbors
 }
 
 // Timer & Callback Management
-type EntityTimerID int
 
+type EntityTimerID int // EntityTimerID is the type of entity timer ID
+
+// IsValid returns if the EntityTimerID is still valid (not fired and not cancelled)
 func (tid EntityTimerID) IsValid() bool {
 	return tid > 0
 }
 
+// AddCallback adds a one-time callback for the entity
+//
+// The callback will be cancelled if entity is destroyed
 func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}) EntityTimerID {
 	tid := e.genTimerId()
 	now := time.Now()
@@ -244,6 +260,9 @@ func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}
 	return tid
 }
 
+// AddTimer adds a repeat timer for the entity
+//
+// The callback will be cancelled if entity is destroyed
 func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) EntityTimerID {
 	if d < time.Millisecond*10 { // minimal interval for repeat timer
 		d = time.Millisecond * 10
@@ -266,6 +285,7 @@ func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) E
 	return tid
 }
 
+// CancelTimer cancels the Callback / Timer
 func (e *Entity) CancelTimer(tid EntityTimerID) {
 	timerInfo := e.timers[tid]
 	if timerInfo == nil {
@@ -382,6 +402,7 @@ func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
 	callEntity(id, method, args)
 }
 
+// CallService calls a service provider
 func (e *Entity) CallService(serviceName string, method string, args ...interface{}) {
 	serviceEid := entityManager.chooseServiceProvider(serviceName)
 	callEntity(serviceEid, method, args)
@@ -407,7 +428,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	}
 
 	// rpc call from server
-	if rpcDesc.Flags&RF_SERVER == 0 {
+	if rpcDesc.Flags&rfServer == 0 {
 		// can not call from server
 		gwlog.Panicf("%s.onCallFromLocal: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 	}
@@ -451,15 +472,15 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 	methodType := rpcDesc.MethodType
 	if clientid == "" {
 		// rpc call from server
-		if rpcDesc.Flags&RF_SERVER == 0 {
+		if rpcDesc.Flags&rfServer == 0 {
 			// can not call from server
 			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from Server: flags=%v", e, methodName, rpcDesc.Flags)
 		}
 	} else {
 		isFromOwnClient := clientid == e.getClientID()
-		if rpcDesc.Flags&RF_OWN_CLIENT == 0 && isFromOwnClient {
+		if rpcDesc.Flags&rfOwnClient == 0 && isFromOwnClient {
 			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from OwnClient: flags=%v", e, methodName, rpcDesc.Flags)
-		} else if rpcDesc.Flags&RF_OTHER_CLIENT == 0 && !isFromOwnClient {
+		} else if rpcDesc.Flags&rfOtherClient == 0 && !isFromOwnClient {
 			gwlog.Panicf("%s.onCallFromRemote: Method %s can not be called from OtherClient: flags=%v, OwnClient=%s, OtherClient=%s", e, methodName, rpcDesc.Flags, e.getClientID(), clientid)
 		}
 	}
@@ -492,57 +513,73 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid Cli
 	rpcDesc.Func.Call(in)
 }
 
-// Register for global service
+// DeclareService declares global service for service entity
 func (e *Entity) DeclareService(serviceName string) {
 	e.declaredServices.Add(serviceName)
-	dispatcher_client.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
+	dispatcherclient.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
 }
 
-// Default Handlers
+// OnInit is called when entity is initializing
+//
+// Can override this function in custom entity type
 func (e *Entity) OnInit() {
 	//gwlog.Warn("%s.OnInit not implemented", e)
 }
 
+// OnCreated is called when entity is created
+//
+// Can override this function in custom entity type
 func (e *Entity) OnCreated() {
 	//gwlog.Debug("%s.OnCreated", e)
 }
 
+// OnRestored is called when entity is restored
+//
+// Can override this function in custom entity type
 func (e *Entity) OnRestored() {
 }
 
-// Space Utilities
+// OnEnterSpace is called when entity enters space
+//
+// Can override this function in custom entity type
 func (e *Entity) OnEnterSpace() {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.Space)
 	}
 }
 
+// OnLeaveSpace is called when entity leaves space
+//
+// Can override this function in custom entity type
 func (e *Entity) OnLeaveSpace(space *Space) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debug("%s.OnLeaveSpace <<< %s", e, space)
 	}
 }
 
+// OnDestroy is called when entity is destroying
+//
+// Can override this function in custom entity type
 func (e *Entity) OnDestroy() {
 }
 
 // Default handlers for persistence
 
-// Return if the entity is persistent
+// IsPersistent returns if the entity is persistent
 //
 // Default implementation check entity for persistent attributes
 func (e *Entity) IsPersistent() bool {
 	return e.typeDesc.isPersistent
 }
 
-// Get the persistent data
+// GetPersistentData gets the persistent data
 //
 // Returns persistent attributes by default
 func (e *Entity) GetPersistentData() map[string]interface{} {
 	return e.Attrs.ToMapWithFilter(e.typeDesc.persistentAttrs.Contains)
 }
 
-// Load persistent data
+// LoadPersistentData loads persistent data
 //
 // Load persistent data to attributes
 func (e *Entity) LoadPersistentData(data map[string]interface{}) {
@@ -557,10 +594,12 @@ func (e *Entity) getAllClientData() map[string]interface{} {
 	return e.Attrs.ToMapWithFilter(e.typeDesc.allClientAttrs.Contains)
 }
 
+// GetMigrateData gets the migration data
 func (e *Entity) GetMigrateData() map[string]interface{} {
 	return e.Attrs.ToMap() // all attrs are migrated, without filter
 }
 
+// LoadMigrateData loads migrate data
 func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
@@ -586,6 +625,7 @@ type entityFreezeData struct {
 	ESR       *enteringSpaceRequestData
 }
 
+// GetFreezeData gets freezed data
 func (e *Entity) GetFreezeData() *entityFreezeData {
 	data := &entityFreezeData{
 		Type:      e.TypeName,
@@ -611,7 +651,7 @@ func (e *Entity) GetFreezeData() *entityFreezeData {
 
 // Client related utilities
 
-// Get client
+// GetClient returns the client of entity
 func (e *Entity) GetClient() *GameClient {
 	return e.client
 }
@@ -624,6 +664,7 @@ func (e *Entity) getClientID() ClientID {
 	}
 }
 
+// SetClient sets the client of entity
 func (e *Entity) SetClient(client *GameClient) {
 	oldClient := e.client
 	if oldClient == client {
@@ -635,28 +676,28 @@ func (e *Entity) SetClient(client *GameClient) {
 	if oldClient != nil {
 		// send destroy entity to client
 		entityManager.onEntityLoseClient(oldClient.clientid)
-		dispatcher_client.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
+		dispatcherclient.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors() {
-			oldClient.SendDestroyEntity(neighbor)
+			oldClient.sendDestroyEntity(neighbor)
 		}
 
-		oldClient.SendDestroyEntity(e)
+		oldClient.sendDestroyEntity(e)
 	}
 
 	if client != nil {
 		// send create entity to new client
 		entityManager.onEntityGetClient(e.ID, client.clientid)
 
-		client.SendCreateEntity(e, true)
+		client.sendCreateEntity(e, true)
 
 		for neighbor := range e.Neighbors() {
-			client.SendCreateEntity(neighbor, false)
+			client.sendCreateEntity(neighbor, false)
 		}
 
 		// set all filter properties to client
 		for key, val := range e.filterProps {
-			dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
+			dispatcherclient.GetDispatcherClientForSend().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 		}
 	}
 
@@ -668,10 +709,12 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 }
 
+// CallClient calls the client entity
 func (e *Entity) CallClient(method string, args ...interface{}) {
 	e.client.call(e.ID, method, args...)
 }
 
+// GiveClientTo gives client to other entity
 func (e *Entity) GiveClientTo(other *Entity) {
 	if e.client == nil {
 		gwlog.Warn("%s.GiveClientTo(%s): client is nil", e, other)
@@ -687,6 +730,7 @@ func (e *Entity) GiveClientTo(other *Entity) {
 	other.SetClient(client)
 }
 
+// ForAllClients visits all clients (own client and clients of neighbors)
 func (e *Entity) ForAllClients(f func(client *GameClient)) {
 	if e.client != nil {
 		f(e.client)
@@ -708,20 +752,22 @@ func (e *Entity) notifyClientDisconnected() {
 	gwutils.RunPanicless(e.I.OnClientDisconnected)
 }
 
+// OnClientConnected is called when client is connected
+//
+// Can override this function in custom entity type
 func (e *Entity) OnClientConnected() {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors()))
 	}
 }
 
+// OnClientDisconnected is called when client is disconnected
+//
+// Can override this function in custom entity type
 func (e *Entity) OnClientDisconnected() {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.OnClientDisconnected: %s", e, e.client)
 	}
-}
-
-func (e *Entity) OnBecomePlayer() {
-	gwlog.Info("%s.OnBecomePlayer: client=%s", e, e.client)
 }
 
 func (e *Entity) getAttrFlag(attrName string) (flag attrFlag) {
@@ -745,13 +791,13 @@ func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interfa
 
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+			neighbor.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		}
 	} else if flag&afClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrChange(e.ID, path, key, val)
+		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 	}
 }
 
@@ -766,13 +812,13 @@ func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrDel(e.ID, path, key)
+		e.client.sendNotifyMapAttrDel(e.ID, path, key)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyMapAttrDel(e.ID, path, key)
+			neighbor.client.sendNotifyMapAttrDel(e.ID, path, key)
 		}
 	} else if flag&afClient != 0 {
 		path := ma.getPathFromOwner()
-		e.client.SendNotifyMapAttrDel(e.ID, path, key)
+		e.client.sendNotifyMapAttrDel(e.ID, path, key)
 	}
 }
 
@@ -781,13 +827,13 @@ func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interf
 
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+			neighbor.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		}
 	} else if flag&afClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrChange(e.ID, path, uint32(index), val)
+		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 	}
 }
 
@@ -795,13 +841,13 @@ func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
 	flag := la.flag
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrPop(e.ID, path)
+		e.client.sendNotifyListAttrPop(e.ID, path)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyListAttrPop(e.ID, path)
+			neighbor.client.sendNotifyListAttrPop(e.ID, path)
 		}
 	} else if flag&afClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrPop(e.ID, path)
+		e.client.sendNotifyListAttrPop(e.ID, path)
 	}
 }
 
@@ -809,42 +855,48 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 	flag := la.flag
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrAppend(e.ID, path, val)
+		e.client.sendNotifyListAttrAppend(e.ID, path, val)
 		for neighbor := range e.aoi.neighbors {
-			neighbor.client.SendNotifyListAttrAppend(e.ID, path, val)
+			neighbor.client.sendNotifyListAttrAppend(e.ID, path, val)
 		}
 	} else if flag&afClient != 0 {
 		path := la.getPathFromOwner()
-		e.client.SendNotifyListAttrAppend(e.ID, path, val)
+		e.client.sendNotifyListAttrAppend(e.ID, path, val)
 	}
 }
 
 // Define Attributes Properties
 
 // Fast access to attrs
+
+// GetInt gets an outtermost attribute as int
 func (e *Entity) GetInt(key string) int {
 	return e.Attrs.GetInt(key)
 }
 
+// GetStr gets an outtermost attribute as string
 func (e *Entity) GetStr(key string) string {
 	return e.Attrs.GetStr(key)
 }
 
+// GetFloat gets an outtermost attribute as float64
 func (e *Entity) GetFloat(key string) float64 {
 	return e.Attrs.GetFloat(key)
 }
 
+// GetMapAttr gets an outtermost attribute as MapAttr
 func (e *Entity) GetMapAttr(key string) *MapAttr {
 	return e.Attrs.GetMapAttr(key)
 }
 
+// GetListAttr gets an outtermost attribute as ListAttr
 func (e *Entity) GetListAttr(key string) *ListAttr {
 	return e.Attrs.GetListAttr(key)
 }
 
 // Enter Space
 
-// Enter target space
+// EnterSpace let the entity enters space
 func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
 	if e.isEnteringSpace() {
 		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
@@ -862,6 +914,7 @@ func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
 		e.requestMigrateTo(spaceID, pos)
 	}
 }
+
 func (e *Entity) enterLocalSpace(space *Space, pos Position) {
 	if space == e.Space {
 		// space not changed
@@ -898,7 +951,7 @@ func (e *Entity) requestMigrateTo(spaceID EntityID, pos Position) {
 	e.enteringSpaceRequest.EnterPos = pos
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
 
-	dispatcher_client.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
+	dispatcherclient.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
 }
 
 func (e *Entity) clearEnteringSpaceRequest() {
@@ -907,6 +960,7 @@ func (e *Entity) clearEnteringSpaceRequest() {
 	e.enteringSpaceRequest.RequestTime = 0
 }
 
+// OnMigrateRequestAck is called by engine when mgirate request Ack is received
 func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 	entity := entityManager.get(entityID)
 	if entity == nil {
@@ -947,10 +1001,11 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 	timerData := e.dumpTimers()
 	migrateData := e.I.GetMigrateData()
 
-	dispatcher_client.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
+	dispatcherclient.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
 		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
 }
 
+// OnRealMigrate is used by entity migration
 func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeName string,
 	migrateData map[string]interface{}, timerData []byte,
 	clientid ClientID, clientsrv uint16) {
@@ -969,19 +1024,25 @@ func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeNam
 	createEntity(typeName, space, pos, entityID, migrateData, timerData, client, ccMigrate)
 }
 
+// OnMigrateOut is called when entity is migrating out
+//
+// Can override this function in custom entity type
 func (e *Entity) OnMigrateOut() {
 	if consts.DEBUG_MIGRATE {
 		gwlog.Debug("%s.OnMigrateOut, space=%s, client=%s", e, e.Space, e.client)
 	}
 }
 
+// OnMigrateIn is called when entity is migrating in
+//
+// Can override this function in custom entity type
 func (e *Entity) OnMigrateIn() {
 	if consts.DEBUG_MIGRATE {
 		gwlog.Debug("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
 	}
 }
 
-//
+// SetFilterProp sets a filter property key-value
 func (e *Entity) SetFilterProp(key string, val string) {
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Debug("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
@@ -995,14 +1056,15 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	e.filterProps[key] = val
 	// send filter property to client
 	if e.client != nil {
-		dispatcher_client.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
+		dispatcherclient.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 	}
 }
 
-// Call the filtered clients with prop key = value
+// CallFitleredClients calls the filtered clients with prop key == value
+//
 // The message is broadcast to filtered clientproxies directly without going through entities
 func (e *Entity) CallFitleredClients(key string, val string, method string, args ...interface{}) {
-	dispatcher_client.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
+	dispatcherclient.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
 // Returns if entity type is using AOI
@@ -1012,10 +1074,12 @@ func (e *Entity) IsUseAOI() bool {
 	return e.typeDesc.useAOI
 }
 
+// GetPosition returns the entity position
 func (e *Entity) GetPosition() Position {
 	return e.aoi.pos
 }
 
+// SetPosition sets the entity position
 func (e *Entity) SetPosition(pos Position) {
 	e.setPositionYaw(pos, e.yaw, false)
 }
@@ -1028,7 +1092,6 @@ func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 	}
 
 	space.move(e, pos)
-	pos = e.aoi.pos
 	e.yaw = yaw
 
 	// mark the entity as needing sync
@@ -1039,6 +1102,7 @@ func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 	}
 }
 
+// CollectEntitySyncInfos is called by game service to collect and broadcast entity sync infos to all clients
 func CollectEntitySyncInfos() {
 	cfg := config.Get()
 	gateCount := len(cfg.Gates)
@@ -1090,7 +1154,7 @@ func CollectEntitySyncInfos() {
 		//gwlog.Info("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
 
 		if packet.GetPayloadLen() > 4 {
-			dispatcher_client.GetDispatcherClientForSend().SendPacket(packet)
+			dispatcherclient.GetDispatcherClientForSend().SendPacket(packet)
 		}
 
 		packet.Release()
@@ -1106,18 +1170,22 @@ func (e *Entity) getSyncInfo() proto.EntitySyncInfo {
 	}
 }
 
+// GetYaw gets entity yaw
 func (e *Entity) GetYaw() Yaw {
 	return e.yaw
 }
 
+// SetYaw sets entity yaw
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
 	e.ForAllClients(func(client *GameClient) {
-		client.UpdateYawOnClient(e.ID, e.yaw)
+		client.updateYawOnClient(e.ID, e.yaw)
 	})
 }
 
 // Some Other Useful Utilities
+
+// PanicOnError panics if err != nil
 func (e *Entity) PanicOnError(err error) {
 	if err != nil {
 		gwlog.Panic(err)

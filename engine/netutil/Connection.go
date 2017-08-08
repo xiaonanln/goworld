@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Connection interface for connections to servers
 type Connection interface {
 	io.ReadWriteCloser
 	Flush() error
@@ -16,6 +17,7 @@ type Connection interface {
 	SetReadDeadline(time.Time) error
 }
 
+// NetConnection converts net.Conn to Connection
 type NetConnection struct {
 	net.Conn
 }

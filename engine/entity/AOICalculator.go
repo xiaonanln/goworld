@@ -1,12 +1,18 @@
 package entity
 
+// AOICalculator defines interface for AOI Calculators
 type AOICalculator interface {
+	// Let Entity AOI enter at specified position
 	Enter(aoi *AOI, pos Position)
+	// Let Entity AOI leave
 	Leave(aoi *AOI)
+	// Let Entity AOI move
 	Move(aoi *AOI, newPos Position)
+	// Calculate EntityAOI Adjustment of neighbors
 	Adjust(aoi *AOI) (enter []*AOI, leave []*AOI)
 }
 
+// XZListAOICalculator is an implementation of AOICalculator using XZ lists
 type XZListAOICalculator struct {
 	xSweepList *xAOIList
 	zSweepList *zAOIList
@@ -19,6 +25,7 @@ func newXZListAOICalculator() *XZListAOICalculator {
 	}
 }
 
+// Enter is called when Entity enters Space
 func (cal *XZListAOICalculator) Enter(aoi *AOI, pos Position) {
 	aoi.pos = pos
 	cal.xSweepList.Insert(aoi)
@@ -32,11 +39,13 @@ func (cal *XZListAOICalculator) Enter(aoi *AOI, pos Position) {
 	//}
 }
 
+// Leave is called when Entity leaves Space
 func (cal *XZListAOICalculator) Leave(aoi *AOI) {
 	cal.xSweepList.Remove(aoi)
 	cal.zSweepList.Remove(aoi)
 }
 
+// Move is called when Entity moves in Space
 func (cal *XZListAOICalculator) Move(aoi *AOI, pos Position) {
 	oldPos := aoi.pos
 	aoi.pos = pos
@@ -48,6 +57,7 @@ func (cal *XZListAOICalculator) Move(aoi *AOI, pos Position) {
 	}
 }
 
+// Adjust is called by Entity to adjust neighbors
 func (cal *XZListAOICalculator) Adjust(aoi *AOI) (enter []*AOI, leave []*AOI) {
 	cal.xSweepList.Mark(aoi)
 	cal.zSweepList.Mark(aoi)

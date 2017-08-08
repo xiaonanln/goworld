@@ -12,6 +12,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// SetupHTTPServer starts the HTTP server for go tool pprof and websockets
 func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 	if port == 0 {
 		// pprof not enabled
@@ -35,6 +36,7 @@ func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 	}()
 }
 
+// SetupGWLog setup the GoWord log system
 func SetupGWLog(logLevel string, logFile string, logStderr bool) {
 	gwlog.Info("Set log level to %s", logLevel)
 	gwlog.SetLevel(gwlog.StringToLevel(logLevel))

@@ -18,7 +18,8 @@ var (
 	nextHandle       = Handle(1)
 )
 
-type Handle int // Return value of Register, can be used to cancel the register
+// Handle is the type of return value of Register, can be used to cancel the register
+type Handle int
 
 type entry struct {
 	minute, hour, day, month, dayofweek int

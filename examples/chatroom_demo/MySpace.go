@@ -1,8 +1,8 @@
 package main
 
-import . "github.com/xiaonanln/goworld/engine/entity"
+import "github.com/xiaonanln/goworld/engine/entity"
 
-// Space type
+// MySpace is the custom space type
 type MySpace struct {
-	Space // Space type should always inherit from entity.Space
+	entity.Space // Space type should always inherit from entity.Space
 }

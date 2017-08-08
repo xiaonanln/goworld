@@ -9,7 +9,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
-// Run the server
+// Run runs the server endless loop
 //
 // This is the main routine for the server and all entity logic,
 // and this function never quit
@@ -17,7 +17,7 @@ func Run(delegate game.IGameDelegate) {
 	game.Run(delegate)
 }
 
-// Register the entity type
+// RegisterEntity registers the entity type so that entities can be created or loaded
 //
 // returns the entity type description object which can be used to define more properties
 // of entity type
@@ -25,65 +25,60 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity, isPersistent, use
 	return entity.RegisterEntity(typeName, entityPtr, isPersistent, useAOI)
 }
 
-//// Register a service entity type
-//func RegisterService(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
-//	return entity.RegisterService(typeName, entityPtr)
-//}
-
-// Create a space with specified kind in any game server
+// CreateSpaceAnywhere creates a space with specified kind in any game server
 func CreateSpaceAnywhere(kind int) {
 	entity.CreateSpaceAnywhere(kind)
 }
 
-// Create a space with specified kind in the local game server
+// CreateSpaceLocally creates a space with specified kind in the local game server
 //
 // returns the space EntityID
 func CreateSpaceLocally(kind int) EntityID {
 	return entity.CreateSpaceLocally(kind)
 }
 
-// Create a entity on the local server
+// CreateEntityLocally creates a entity on the local server
 //
 // returns EntityID
 func CreateEntityLocally(typeName string) EntityID {
 	return entity.CreateEntityLocally(typeName, nil, nil)
 }
 
-// Create a entity on any server
+// CreateEntityAnywhere creates a entity on any server
 func CreateEntityAnywhere(typeName string) {
 	entity.CreateEntityAnywhere(typeName)
 }
 
-// Load the specified entity from entity storage
+// LoadEntityAnywhere loads the specified entity from entity storage
 func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	entity.LoadEntityAnywhere(typeName, entityID)
 }
 
-// Get the set of EntityIDs that provides the specified service
+// GetServiceProviders get the set of EntityIDs that provides the specified service
 func GetServiceProviders(serviceName string) entity.EntityIDSet {
 	return entity.GetServiceProviders(serviceName)
 }
 
-// Get all saved entity ids in storage, may take long time and block the main routine
+// ListEntityIDs gets all saved entity ids in storage, may take long time and block the main routine
 //
 // returns result in callback
 func ListEntityIDs(typeName string, callback storage.ListCallbackFunc) {
 	storage.ListEntityIDs(typeName, callback)
 }
 
-// Check if entityID exists in entity storage
+// Exists checks if entityID exists in entity storage
 //
 // returns result in callback
 func Exists(typeName string, entityID EntityID, callback storage.ExistsCallbackFunc) {
 	storage.Exists(typeName, entityID, callback)
 }
 
-// Get entity by EntityID
+// GetEntity gets the entity by EntityID
 func GetEntity(id EntityID) *entity.Entity {
 	return entity.GetEntity(id)
 }
 
-// Get the local server ID
+// GetGameID gets the local server ID
 //
 // server ID is a uint16 number starts from 1, which should be different for each servers
 // server ID is also in the game config section name of goworld.ini
@@ -91,39 +86,39 @@ func GetGameID() uint16 {
 	return game.GetGameID()
 }
 
-// Creates a new MapAttr
+// MapAttr creates a new MapAttr
 func MapAttr() *entity.MapAttr {
 	return entity.NewMapAttr()
 }
 
-// Create a new ListAttr
+// ListAttr creates a new ListAttr
 func ListAttr() *entity.ListAttr {
 	return entity.NewListAttr()
 }
 
-// Register the space entity type
+// RegisterSpace registers the space entity type.
 //
 // All spaces will be created as an instance of this type
 func RegisterSpace(spacePtr entity.ISpace) {
 	entity.RegisterSpace(spacePtr)
 }
 
-// Get all entities as an EntityMap (do not modify it!)
+// Entities gets all entities as an EntityMap (do not modify it!)
 func Entities() entity.EntityMap {
 	return entity.Entities()
 }
 
-// Post a callback to be executed
+// Post posts a callback to be executed
 func Post(callback post.PostCallback) {
 	post.Post(callback)
 }
 
-// Get from KVDB
+// GetKVDB gets value of key from KVDB
 func GetKVDB(key string, callback kvdb.KVDBGetCallback) {
 	kvdb.Get(key, callback)
 }
 
-// Put to KVDB
+// PutKVDB puts key-value to KVDB
 func PutKVDB(key string, val string, callback kvdb.KVDBPutCallback) {
 	kvdb.Put(key, val, callback)
 }

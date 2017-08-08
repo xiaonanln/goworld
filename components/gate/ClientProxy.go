@@ -7,7 +7,7 @@ import (
 
 	"time"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -26,6 +26,7 @@ func (info *clientSyncInfo) IsEmpty() bool {
 	return info.EntityID == ""
 }
 
+// ClientProxy is a game client connections managed by gate
 type ClientProxy struct {
 	*proto.GoWorldConnection
 	clientid       common.ClientID
@@ -68,7 +69,7 @@ func (cp *ClientProxy) serve() {
 	}()
 
 	for {
-		var msgtype proto.MsgType_t
+		var msgtype proto.MsgType
 		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
@@ -101,5 +102,5 @@ func (cp *ClientProxy) handleSyncPositionYawFromClient(pkt *netutil.Packet) {
 
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
 	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	dispatcher_client.GetDispatcherClientForSend().SendPacket(pkt)
+	dispatcherclient.GetDispatcherClientForSend().SendPacket(pkt)
 }

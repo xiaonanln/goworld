@@ -6,55 +6,51 @@ import (
 )
 
 const (
-	FILTER_TREE_DEGREE = 2
+	_FILTER_TREE_DEGREE = 2
 )
 
-type FilterTree struct {
+type _FilterTree struct {
 	btree *btree.BTree
 }
 
-func NewFilterTree() *FilterTree {
-	return &FilterTree{
-		btree: btree.New(FILTER_TREE_DEGREE),
+func newFilterTree() *_FilterTree {
+	return &_FilterTree{
+		btree: btree.New(_FILTER_TREE_DEGREE),
 	}
 }
 
-//func (ft *FilterTree) Insert(clientid string) {
-//
-//}
-
-type FilterTreeItem struct {
+type filterTreeItem struct {
 	clientid common.ClientID
 	val      string
 }
 
-func (it *FilterTreeItem) Less(_other btree.Item) bool {
-	other := _other.(*FilterTreeItem)
+func (it *filterTreeItem) Less(_other btree.Item) bool {
+	other := _other.(*filterTreeItem)
 	return it.val < other.val || (it.val == other.val && it.clientid < other.clientid)
 }
 
-func (ft *FilterTree) Insert(id common.ClientID, val string) {
-	ft.btree.ReplaceOrInsert(&FilterTreeItem{
+func (ft *_FilterTree) Insert(id common.ClientID, val string) {
+	ft.btree.ReplaceOrInsert(&filterTreeItem{
 		clientid: id,
 		val:      val,
 	})
 }
 
-func (ft *FilterTree) Remove(id common.ClientID, val string) {
-	//gwlog.Info("Removing %s %s has %v", id, val, ft.btree.Has(&FilterTreeItem{
+func (ft *_FilterTree) Remove(id common.ClientID, val string) {
+	//gwlog.Info("Removing %s %s has %v", id, val, ft.btree.Has(&filterTreeItem{
 	//	clientid: id,
 	//	val:      val,
 	//}))
 
-	ft.btree.Delete(&FilterTreeItem{
+	ft.btree.Delete(&filterTreeItem{
 		clientid: id,
 		val:      val,
 	})
 }
 
-func (ft *FilterTree) Visit(val string, f func(clientid common.ClientID)) {
-	ft.btree.AscendGreaterOrEqual(&FilterTreeItem{common.ClientID(""), val}, func(_item btree.Item) bool {
-		item := _item.(*FilterTreeItem)
+func (ft *_FilterTree) Visit(val string, f func(clientid common.ClientID)) {
+	ft.btree.AscendGreaterOrEqual(&filterTreeItem{common.ClientID(""), val}, func(_item btree.Item) bool {
+		item := _item.(*filterTreeItem)
 		if item.val > val {
 			return false
 		}

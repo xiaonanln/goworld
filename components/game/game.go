@@ -17,7 +17,7 @@ import (
 	"syscall"
 
 	"github.com/xiaonanln/goworld/components/binutil"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcher_client"
+	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -84,7 +84,7 @@ func Run(delegate IGameDelegate) {
 
 	gameService = newGameService(gameid, delegate)
 
-	dispatcher_client.Initialize(gameDispatcherClientDelegate, false)
+	dispatcherclient.Initialize(gameDispatcherClientDelegate, false)
 
 	setupSignals()
 
@@ -177,7 +177,7 @@ func waitEntityStorageFinish() {
 type dispatcherClientDelegate struct {
 }
 
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcher_client.DispatcherClient, isReconnect bool) {
+func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcherclient.DispatcherClient, isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
 	var isRestore bool
 	if !isReconnect {
@@ -199,7 +199,7 @@ func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherCl
 
 var lastWarnGateServiceQueueLen = 0
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet) {
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
 		msgtype: msgtype,
 		packet:  packet,

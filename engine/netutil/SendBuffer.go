@@ -3,11 +3,11 @@ package netutil
 import "io"
 
 const (
-	SEND_BUFFER_SIZE = 8192 * 2
+	_SEND_BUFFER_SIZE = 8192 * 2
 )
 
 type SendBuffer struct {
-	buffer [SEND_BUFFER_SIZE]byte
+	buffer [_SEND_BUFFER_SIZE]byte
 	//sent    int
 	written int
 }
@@ -23,13 +23,13 @@ func (sb *SendBuffer) Write(b []byte) (n int, err error) {
 	return
 }
 
-//func (sb *SendBuffer) WriteTo(writer io.Writer) (n int, err error) {
+//func (sb *SendBuffer) WriteAllTo(writer io.Writer) (n int, err error) {
 //	n, err = writer.Write(sb.buffer[:sb.written])
 //	sb.sent += n
 //	return
 //}
 
-func (sb *SendBuffer) WriteTo(writer io.Writer) error {
+func (sb *SendBuffer) WriteAllTo(writer io.Writer) error {
 	if sb.written == 0 {
 		return nil
 	}
@@ -40,7 +40,7 @@ func (sb *SendBuffer) WriteTo(writer io.Writer) error {
 }
 
 func (sb *SendBuffer) FreeSpace() int {
-	return SEND_BUFFER_SIZE - sb.written
+	return _SEND_BUFFER_SIZE - sb.written
 }
 
 func (sb *SendBuffer) reset() {

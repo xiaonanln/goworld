@@ -11,7 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
-	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_redis"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -23,8 +23,13 @@ var (
 	kvdbTerminated *xnsyncutil.OneTimeCond
 )
 
+// KVDBGetCallback is type of KVDB Get callback
 type KVDBGetCallback func(val string, err error)
+
+// KVDBPutCallback is type of KVDB Get callback
 type KVDBPutCallback func(err error)
+
+// KVDBGetRangeCallback is type of KVDB GetRange callback
 type KVDBGetRangeCallback func(items []KVItem, err error)
 
 // Initialize the KVDB
@@ -55,12 +60,13 @@ func assureKVDBEngineReady() (err error) {
 	if kvdbCfg.Type == "mongodb" {
 		kvdbEngine, err = kvdb_mongo.OpenMongoKVDB(kvdbCfg.Url, kvdbCfg.DB, kvdbCfg.Collection)
 	} else if kvdbCfg.Type == "redis" {
-		dbindex, err := strconv.Atoi(kvdbCfg.DB)
+		var dbindex int
+		dbindex, err = strconv.Atoi(kvdbCfg.DB)
 		if err == nil {
-			kvdbEngine, err = kvdb_redis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
+			kvdbEngine, err = kvdbredis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
 		}
 	} else {
-		gwlog.Fatal("KVDB type %s is not implemented", kvdbCfg.Type)
+		gwlog.Fatalf("KVDB type %s is not implemented", kvdbCfg.Type)
 	}
 	return
 }
@@ -82,6 +88,7 @@ type getRangeReq struct {
 	callback KVDBGetRangeCallback
 }
 
+// Get gets value of key from KVDB, returns in callback
 func Get(key string, callback KVDBGetCallback) {
 	kvdbOpQueue.Push(&getReq{
 		key, callback,
@@ -89,6 +96,7 @@ func Get(key string, callback KVDBGetCallback) {
 	checkOperationQueueLen()
 }
 
+// Put puts key-value item to KVDB, returns in callback
 func Put(key string, val string, callback KVDBPutCallback) {
 	kvdbOpQueue.Push(&putReq{
 		key, val, callback,
@@ -96,6 +104,7 @@ func Put(key string, val string, callback KVDBPutCallback) {
 	checkOperationQueueLen()
 }
 
+// GetRange retrives key-value items of specified key range, returns in callback
 func GetRange(beginKey string, endKey string, callback KVDBGetRangeCallback) {
 	kvdbOpQueue.Push(&getRangeReq{
 		beginKey, endKey, callback,
@@ -103,10 +112,13 @@ func GetRange(beginKey string, endKey string, callback KVDBGetRangeCallback) {
 	checkOperationQueueLen()
 }
 
+// NextLargerKey finds the next key that is larger than the specified key,
+// but smaller than any other keys that is larger than the specified key
 func NextLargerKey(key string) string {
 	return key + "\x00" // the next string that is larger than key, but smaller than any other keys > key
 }
 
+// Close the KVDB
 func Close() {
 	kvdbOpQueue.Close()
 }
@@ -153,6 +165,7 @@ func kvdbRoutine() {
 	kvdbTerminated.Signal()
 }
 
+// WaitTerminated waits for KVDB to terminate
 func WaitTerminated() {
 	kvdbTerminated.Wait()
 }

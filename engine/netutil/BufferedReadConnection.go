@@ -2,6 +2,7 @@ package netutil
 
 import "github.com/xiaonanln/goworld/engine/gwlog"
 
+// BufferedReadConnection provides buffered read to connections
 type BufferedReadConnection struct {
 	Connection
 	buffer   [8192 * 2]byte
@@ -9,6 +10,7 @@ type BufferedReadConnection struct {
 	writepos int
 }
 
+// NewBufferedReadConnection creates a new connection with buffered read based on underlying connection
 func NewBufferedReadConnection(conn Connection) *BufferedReadConnection {
 	return &BufferedReadConnection{
 		Connection: conn,
@@ -57,9 +59,8 @@ func (brc *BufferedReadConnection) Read(p []byte) (int, error) {
 
 	if totalN > 0 {
 		return totalN, nil
-	} else {
-		return 0, suberr
 	}
+	return 0, suberr
 }
 
 func (brc *BufferedReadConnection) isBufferEmpty() bool {

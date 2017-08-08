@@ -41,7 +41,7 @@ func (a *Avatar) OnCreated() {
 }
 
 func (a *Avatar) PerSecondTick(arg1 int, arg2 string) {
-	fmt.Fprintf(os.Stderr, "!")
+	fmt.Fprint(os.Stderr, "!")
 }
 
 func (a *Avatar) setDefaultAttrs() {
@@ -141,15 +141,17 @@ func (a *Avatar) OnSendMail(ok bool) {
 	a.CallClient("OnSendMail", ok)
 }
 
-// Avatar has received a mail, can query now
+// NotifyReceiveMail is called by MailService to notify Avatar of receiving any mail
 func (a *Avatar) NotifyReceiveMail() {
 	//a.CallService("MailService", "GetMails", a.ID)
 }
 
+// GetMails_Client is a RPC for clients to retrive mails
 func (a *Avatar) GetMails_Client() {
 	a.CallService("MailService", "GetMails", a.ID, a.GetInt("lastMailID"))
 }
 
+// OnGetMails is called by MailService to send mails to avatar
 func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 	//gwlog.Info("%s.OnGetMails: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
 	if lastMailID != a.GetInt("lastMailID") {
@@ -177,6 +179,7 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 	a.CallClient("OnGetMails", true)
 }
 
+// Say_Client is client RPC for chatting
 func (a *Avatar) Say_Client(channel string, content string) {
 	gwlog.Debug("Say @%s: %s", channel, content)
 	if channel == "world" {
@@ -189,14 +192,8 @@ func (a *Avatar) Say_Client(channel string, content string) {
 	}
 }
 
+// Move_Client is client RPC for moving
 func (a *Avatar) Move_Client(pos entity.Position) {
 	gwlog.Debug("Move from %s -> %s", a.GetPosition(), pos)
 	a.SetPosition(pos)
 }
-
-//func (a *Avatar) getMailSenderInfo() map[string]interface{} {
-//	return map[string]interface{}{
-//		"ID":   a.ID,
-//		"name": a.GetStr("name"),
-//	}
-//}

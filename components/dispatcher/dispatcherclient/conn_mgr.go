@@ -1,4 +1,4 @@
-package dispatcher_client
+package dispatcherclient
 
 import (
 	"time"
@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR = time.Second
+	_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR = time.Second
 )
 
 var (
@@ -47,7 +47,7 @@ func assureConnectedDispatcherClient() *DispatcherClient {
 		dispatcherClient, err = connectDispatchClient()
 		if err != nil {
 			gwlog.Error("Connect to dispatcher failed: %s", err.Error())
-			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
+			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
 		dispatcherClientDelegate.OnDispatcherClientConnect(dispatcherClient, isReconnect)
@@ -73,15 +73,17 @@ func connectDispatchClient() (*DispatcherClient, error) {
 	return newDispatcherClient(conn, dispatcherClientAutoFlush), nil
 }
 
+// IDispatcherClientDelegate defines functions that should be implemented by dispatcher clients
 type IDispatcherClientDelegate interface {
 	OnDispatcherClientConnect(dispatcherClient *DispatcherClient, isReconnect bool)
-	HandleDispatcherClientPacket(msgtype proto.MsgType_t, packet *netutil.Packet)
+	HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet)
 	HandleDispatcherClientDisconnect()
 	HandleDispatcherClientBeforeFlush()
 	//HandleDeclareService(entityID common.EntityID, serviceName string)
 	//HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }
 
+// Initialize the dispatcher client, only called by engine
 func Initialize(delegate IDispatcherClientDelegate, autoFlush bool) {
 	dispatcherClientDelegate = delegate
 	dispatcherClientAutoFlush = autoFlush
@@ -90,6 +92,7 @@ func Initialize(delegate IDispatcherClientDelegate, autoFlush bool) {
 	go netutil.ServeForever(serveDispatcherClient) // start the recv routine
 }
 
+// GetDispatcherClientForSend returns the current dispatcher client for sending messages
 func GetDispatcherClientForSend() *DispatcherClient {
 	dispatcherClient := getDispatcherClient()
 	return dispatcherClient
@@ -100,7 +103,7 @@ func serveDispatcherClient() {
 	gwlog.Debug("serveDispatcherClient: start serving dispatcher client ...")
 	for {
 		dispatcherClient := assureConnectedDispatcherClient()
-		var msgtype proto.MsgType_t
+		var msgtype proto.MsgType
 		pkt, err := dispatcherClient.Recv(&msgtype)
 
 		if err != nil {
@@ -111,7 +114,7 @@ func serveDispatcherClient() {
 			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dispatcherClient.Close()
 			dispatcherClientDelegate.HandleDispatcherClientDisconnect()
-			time.Sleep(LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
+			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
 

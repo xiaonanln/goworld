@@ -7,7 +7,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwutils"
 )
 
-// Type of functions to be posted
+// PostCallback is the type of functions to be posted
 type PostCallback func()
 
 var (
@@ -24,7 +24,7 @@ func Post(f PostCallback) {
 	lock.Unlock()
 }
 
-// Called by the main game routine to run all posted functions
+// Tick is called by the main game routine to run all posted functions
 func Tick() {
 	for { // loop until there is no callbacks posted anymore
 		lock.Lock() // lock to check number of callbacks

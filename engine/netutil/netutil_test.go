@@ -33,29 +33,6 @@ func (ts *testEchoTcpServer) ServeTCPConnection(conn net.Conn) {
 	}
 }
 
-func TestRawConnection(t *testing.T) {
-	PORT := 4001
-	go func() {
-		ServeTCP(fmt.Sprintf("localhost:%d", PORT), &testEchoTcpServer{})
-	}()
-
-	_conn, err := net.Dial("tcp", "localhost:4001")
-	if err != nil {
-		t.Errorf("connect error: %s", err)
-	}
-	conn := NewRawConnection(_conn)
-	var b byte
-	for b = 0; b < 255; b++ {
-		conn.Write([]byte{b})
-		buf := []byte{0}
-		err := conn.Recv(buf)
-		if err != nil || b != buf[0] {
-			t.Errorf("send byte but recv wrong")
-		}
-	}
-	conn.Close()
-}
-
 func TestPacketConnection(t *testing.T) {
 	PORT := 4003
 	go func() {
@@ -67,7 +44,7 @@ func TestPacketConnection(t *testing.T) {
 		t.Errorf("connect error: %s", err)
 	}
 
-	conn := NewPacketConnection(NetConnection{_conn})
+	conn := NewPacketConnection(NetConnection{_conn}, false)
 
 	for i := 0; i < 100; i++ {
 		var PAYLOAD_LEN uint32 = uint32(rand.Intn(4096 + 1))

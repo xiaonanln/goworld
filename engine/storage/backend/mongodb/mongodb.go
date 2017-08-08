@@ -1,8 +1,6 @@
 package entity_storage_mongodb
 
 import (
-	"fmt"
-
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -42,10 +40,6 @@ func OpenMongoDB(url string, dbname string) (EntityStorage, error) {
 	return &MongoDBEntityStorge{
 		db: db,
 	}, nil
-}
-
-func collectionName(name string) string {
-	return fmt.Sprintf("%s", name)
 }
 
 func (es *MongoDBEntityStorge) Write(typeName string, entityID common.EntityID, data interface{}) error {

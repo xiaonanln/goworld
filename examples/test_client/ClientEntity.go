@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
+	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
 )
 
 type ClientAttrs map[string]interface{}
@@ -94,7 +94,7 @@ func (e *ClientEntity) onAvatarCreated() {
 }
 
 func (e *ClientEntity) doSomethingLater() {
-	randomDelay := time.Duration(rand.Int63n(int64(AVERAGE_DO_SOMETHING_INTERVAL * 2)))
+	randomDelay := time.Duration(rand.Int63n(int64(_AVERAGE_DO_SOMETHING_INTERVAL * 2)))
 	e.AddCallback(randomDelay, func() {
 		e.doSomething()
 	})
@@ -235,7 +235,7 @@ func (e *ClientEntity) currentSpaceKind() int {
 
 func (e *ClientEntity) DoEnterRandomSpace() {
 	curSpaceKind := e.currentSpaceKind()
-	spaceKindMax := N / 400
+	spaceKindMax := numClients / 400
 	if spaceKindMax < 2 {
 		spaceKindMax = 2 // use at least 2 space
 	}
@@ -404,10 +404,10 @@ func (e *ClientEntity) onAttrChange(path []interface{}, key string) {
 	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
 }
 
-func (entity *ClientEntity) findAttrByPath(path []interface{}) (attr interface{}, parent interface{}, pkey interface{}) {
+func (e *ClientEntity) findAttrByPath(path []interface{}) (attr interface{}, parent interface{}, pkey interface{}) {
 	// note that path is reversed
 	parent, pkey = nil, nil
-	attr = map[string]interface{}(entity.Attrs) // root attr
+	attr = map[string]interface{}(e.Attrs) // root attr
 
 	plen := len(path)
 	for i := plen - 1; i >= 0; i-- {
@@ -431,48 +431,48 @@ func (attrs ClientAttrs) GetInt(key string) int {
 	return int(typeconv.Int(attrs[key]))
 }
 
-func (entity *ClientEntity) OnAttrChange_exp() {
+func (e *ClientEntity) OnAttrChange_exp() {
 	if !quiet {
-		gwlog.Debug("%s: attr exp change to %d", entity, entity.Attrs.GetInt("exp"))
+		gwlog.Debug("%s: attr exp change to %d", e, e.Attrs.GetInt("exp"))
 	}
 }
 
-func (entity *ClientEntity) OnAttrChange_testpop() {
+func (e *ClientEntity) OnAttrChange_testpop() {
 	var v int
-	if entity.Attrs.HasKey("testpop") {
-		v = entity.Attrs.GetInt("testpop")
+	if e.Attrs.HasKey("testpop") {
+		v = e.Attrs.GetInt("testpop")
 	} else {
 		v = -1
 	}
 	if !quiet {
-		gwlog.Debug("%s: attr testpop change to %d", entity, v)
+		gwlog.Debug("%s: attr testpop change to %d", e, v)
 	}
 }
 
-func (entity *ClientEntity) OnAttrChange_subattr() {
+func (e *ClientEntity) OnAttrChange_subattr() {
 	var v interface{}
-	if entity.Attrs.HasKey("subattr") {
-		v = entity.Attrs["subattr"]
+	if e.Attrs.HasKey("subattr") {
+		v = e.Attrs["subattr"]
 	} else {
 		v = nil
 	}
 	if !quiet {
-		gwlog.Debug("%s: attr subattr change to %v", entity, v)
+		gwlog.Debug("%s: attr subattr change to %v", e, v)
 	}
 }
 
-func (entity *ClientEntity) OnLogin(ok bool) {
-	gwlog.Debug("%s OnLogin %v", entity, ok)
+func (e *ClientEntity) OnLogin(ok bool) {
+	gwlog.Debug("%s OnLogin %v", e, ok)
 }
 
-func (entity *ClientEntity) OnSendMail(ok bool) {
-	gwlog.Debug("%s OnSendMail %v", entity, ok)
-	entity.notifyThingDone("DoSendMail")
+func (e *ClientEntity) OnSendMail(ok bool) {
+	gwlog.Debug("%s OnSendMail %v", e, ok)
+	e.notifyThingDone("DoSendMail")
 }
 
-func (entity *ClientEntity) Neighbors() []*ClientEntity {
+func (e *ClientEntity) Neighbors() []*ClientEntity {
 	var neighbors []*ClientEntity
-	for _, other := range entity.owner.entities {
+	for _, other := range e.owner.entities {
 		if other.TypeName == "Avatar" {
 			neighbors = append(neighbors, other)
 		}

@@ -5,6 +5,7 @@ import (
 	"github.com/xiaonanln/typeconv"
 )
 
+// MapAttr is a map attribute containing muiltiple attributes indexed by string keys
 type MapAttr struct {
 	owner  *Entity
 	parent interface{}
@@ -14,15 +15,18 @@ type MapAttr struct {
 	attrs  map[string]interface{}
 }
 
+// Size returns the size of MapAttr
 func (a *MapAttr) Size() int {
 	return len(a.attrs)
 }
 
+// HasKey returns if the key exists in MapAttr
 func (a *MapAttr) HasKey(key string) bool {
 	_, ok := a.attrs[key]
 	return ok
 }
 
+// Set sets the key-attribute pair in MapAttr
 func (a *MapAttr) Set(key string, val interface{}) {
 	a.attrs[key] = val
 	if sa, ok := val.(*MapAttr); ok {
@@ -61,6 +65,8 @@ func (a *MapAttr) Set(key string, val interface{}) {
 		a.sendAttrChangeToClients(key, val)
 	}
 }
+
+// SetDefault sets the key-attribute pair in MapAttr if key not exists
 func (a *MapAttr) SetDefault(key string, val interface{}) {
 	if _, ok := a.attrs[key]; !ok {
 		a.Set(key, val)
@@ -97,6 +103,7 @@ func (a *MapAttr) _getPathFromOwner() []interface{} {
 	}
 }
 
+// Get returns the attribute of specified key in MapAttr
 func (a *MapAttr) Get(key string) interface{} {
 	val, ok := a.attrs[key]
 	if !ok {
@@ -105,47 +112,55 @@ func (a *MapAttr) Get(key string) interface{} {
 	return val
 }
 
+// GetInt returns the attribute of specified key in MapAttr as int
 func (a *MapAttr) GetInt(key string) int {
 	val := a.Get(key)
 	return int(typeconv.Int(val))
 }
 
+// GetInt64 returns the attribute of specified key in MapAttr as int64
 func (a *MapAttr) GetInt64(key string) int64 {
 	val := a.Get(key)
 	return typeconv.Int(val)
 }
 
+// GetUint64 returns the attribute of specified key in MapAttr as uint64
 func (a *MapAttr) GetUint64(key string) uint64 {
 	val := a.Get(key)
 	return uint64(typeconv.Int(val))
 }
 
+// GetStr returns the attribute of specified key in MapAttr as string
 func (a *MapAttr) GetStr(key string) string {
 	val := a.Get(key)
 	return val.(string)
 }
 
+// GetFloat returns the attribute of specified key in MapAttr as float64
 func (a *MapAttr) GetFloat(key string) float64 {
 	val := a.Get(key)
 	return val.(float64)
 }
 
+// GetBool returns the attribute of specified key in MapAttr as bool
 func (a *MapAttr) GetBool(key string) bool {
 	val := a.Get(key)
 	return val.(bool)
 }
 
+// GetMapAttr returns the attribute of specified key in MapAttr as MapAttr
 func (a *MapAttr) GetMapAttr(key string) *MapAttr {
 	val := a.Get(key)
 	return val.(*MapAttr)
 }
 
+// GetListAttr returns the attribute of specified key in MapAttr as ListAttr
 func (a *MapAttr) GetListAttr(key string) *ListAttr {
 	val := a.Get(key)
 	return val.(*ListAttr)
 }
 
-// Delete a key in attrs
+// Pop deletes a key in MapAttr and returns the attribute
 func (a *MapAttr) Pop(key string) interface{} {
 	val, ok := a.attrs[key]
 	if !ok {
@@ -163,33 +178,37 @@ func (a *MapAttr) Pop(key string) interface{} {
 	return val
 }
 
+// Del deletes a key in MapAttr
 func (a *MapAttr) Del(key string) {
 	a.Pop(key)
 }
 
+// Pop deletes a key in MapAttr and returns the attribute as MapAttr
 func (a *MapAttr) PopMapAttr(key string) *MapAttr {
 	val := a.Pop(key)
 	return val.(*MapAttr)
 }
 
-func (a *MapAttr) GetKeys() []string {
-	size := len(a.attrs)
-	keys := make([]string, 0, size)
-	for k, _ := range a.attrs {
-		keys = append(keys, k)
-	}
-	return keys
-}
+//// GetKeys returns all keys of MapAttr as slice of strings
+//func (a *MapAttr) GetKeys() []string {
+//	size := len(a.attrs)
+//	keys := make([]string, 0, size)
+//	for k := range a.attrs {
+//		keys = append(keys, k)
+//	}
+//	return keys
+//}
+//
+//func (a *MapAttr) GetValues() []interface{} {
+//	size := len(a.attrs)
+//	vals := make([]interface{}, 0, size)
+//	for _, v := range a.attrs {
+//		vals = append(vals, v)
+//	}
+//	return vals
+//}
 
-func (a *MapAttr) GetValues() []interface{} {
-	size := len(a.attrs)
-	vals := make([]interface{}, 0, size)
-	for _, v := range a.attrs {
-		vals = append(vals, v)
-	}
-	return vals
-}
-
+// ToMap converts MapAttr to native map, recursively
 func (a *MapAttr) ToMap() map[string]interface{} {
 	doc := map[string]interface{}{}
 	for k, v := range a.attrs {
@@ -204,6 +223,7 @@ func (a *MapAttr) ToMap() map[string]interface{} {
 	return doc
 }
 
+// ToMapWithFilter converts filtered fields of MapAttr to to native map, recursively
 func (a *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interface{} {
 	doc := map[string]interface{}{}
 	for k, v := range a.attrs {
@@ -222,6 +242,7 @@ func (a *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interface
 	return doc
 }
 
+// AssignMap assigns native map to MapAttr recursively
 func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 	for k, v := range doc {
 		if iv, ok := v.(map[string]interface{}); ok {
@@ -238,6 +259,7 @@ func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 	}
 }
 
+// AssignMapWithFilter assigns filtered fields of native map to MapAttr recursively
 func (a *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(string) bool) {
 	for k, v := range doc {
 		if !filter(k) {
@@ -266,6 +288,7 @@ func (a *MapAttr) clearOwner() {
 	a.flag = 0
 }
 
+// NewMapAttr creates a new MapAttr
 func NewMapAttr() *MapAttr {
 	return &MapAttr{
 		attrs: make(map[string]interface{}),

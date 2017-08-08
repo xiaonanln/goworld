@@ -5,6 +5,7 @@ import (
 	"github.com/xiaonanln/typeconv"
 )
 
+// ListAttr is a attribute for a list of attributes
 type ListAttr struct {
 	owner  *Entity
 	parent interface{}
@@ -14,6 +15,7 @@ type ListAttr struct {
 	items  []interface{}
 }
 
+// Size returns size of ListAttr
 func (a *ListAttr) Size() int {
 	return len(a.items)
 }
@@ -26,12 +28,13 @@ func (a *ListAttr) clearOwner() {
 	a.flag = 0
 }
 
+// Set sets item value
 func (a *ListAttr) Set(index int, val interface{}) {
 	a.items[index] = val
 	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in index %s", index)
+			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
 		sa.parent = a
@@ -42,7 +45,7 @@ func (a *ListAttr) Set(index int, val interface{}) {
 		a.sendListAttrChangeToClients(index, sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in index %s", index)
+			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
 		sa.parent = a
@@ -88,52 +91,59 @@ func (a *ListAttr) _getPathFromOwner() []interface{} {
 	if a.parent != nil {
 		path = append(path, a.pkey)
 		return getPathFromOwner(a.parent, path)
-	} else {
-		return path
 	}
+	return path
 }
 
+// Get gets item value
 func (a *ListAttr) Get(index int) interface{} {
 	val := a.items[index]
 	return val
 }
 
+// GetInt gets item value as int
 func (a *ListAttr) GetInt(index int) int {
 	val := a.Get(index)
 	return int(typeconv.Int(val))
 }
 
+// GetInt64 gets item value as int64
 func (a *ListAttr) GetInt64(index int) int64 {
 	val := a.Get(index)
 	return typeconv.Int(val)
 }
 
+// GetUint64 gets item value as uint64
 func (a *ListAttr) GetUint64(index int) uint64 {
 	val := a.Get(index)
 	return uint64(typeconv.Int(val))
 }
 
+// GetStr gets item value as string
 func (a *ListAttr) GetStr(index int) string {
 	val := a.Get(index)
 	return val.(string)
 }
 
+// GetFloat gets item value as float64
 func (a *ListAttr) GetFloat(index int) float64 {
 	val := a.Get(index)
 	return val.(float64)
 }
 
+// GetBool gets item value as bool
 func (a *ListAttr) GetBool(index int) bool {
 	val := a.Get(index)
 	return val.(bool)
 }
 
+// GetListAttr gets item value as List Attribute
 func (a *ListAttr) GetListAttr(index int) *ListAttr {
 	val := a.Get(index)
 	return val.(*ListAttr)
 }
 
-// Delete a key in attrs
+// Pop removes the last item from the end
 func (a *ListAttr) Pop() interface{} {
 	size := len(a.items)
 	val := a.items[size-1]
@@ -149,11 +159,13 @@ func (a *ListAttr) Pop() interface{} {
 	return val
 }
 
+// PopListAttr removes the last item and returns as ListAttr
 func (a *ListAttr) PopListAttr() *ListAttr {
 	val := a.Pop()
 	return val.(*ListAttr)
 }
 
+// Append puts item to the end
 func (a *ListAttr) Append(val interface{}) {
 	a.items = append(a.items, val)
 	index := len(a.items) - 1
@@ -161,7 +173,7 @@ func (a *ListAttr) Append(val interface{}) {
 	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in append", index)
+			gwlog.Panicf("MapAttr reused in append")
 		}
 
 		sa.parent = a
@@ -172,7 +184,7 @@ func (a *ListAttr) Append(val interface{}) {
 		a.sendListAttrAppendToClients(sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in append", index)
+			gwlog.Panicf("MapAttr reused in append")
 		}
 
 		sa.parent = a
@@ -186,6 +198,7 @@ func (a *ListAttr) Append(val interface{}) {
 	}
 }
 
+// ToList converts ListAttr to slice, recursively
 func (a *ListAttr) ToList() []interface{} {
 	l := make([]interface{}, len(a.items))
 
@@ -201,6 +214,7 @@ func (a *ListAttr) ToList() []interface{} {
 	return l
 }
 
+// AssignList assigns slice to ListAttr, recursively
 func (a *ListAttr) AssignList(l []interface{}) {
 	for _, v := range l {
 		if iv, ok := v.(map[string]interface{}); ok {
@@ -217,21 +231,7 @@ func (a *ListAttr) AssignList(l []interface{}) {
 	}
 }
 
-//func (a *ListAttr) AssignList(l []interface{}) *ListAttr {
-//
-//	for idx, v := l {
-//		innerMap, ok := v.(map[string]interface{})
-//		if ok {
-//			innerListAttr := NewListAttr()
-//			innerListAttr.AssignMap(innerMap)
-//			a.Set(idx, innerListAttr)
-//		} else {
-//			a.Set(idx, v)
-//		}
-//	}
-//	return a
-//}
-
+// NewListAttr creates a new ListAttr
 func NewListAttr() *ListAttr {
 	return &ListAttr{
 		items: []interface{}{},

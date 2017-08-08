@@ -68,6 +68,9 @@ func (es *redisEntityStorage) List(typeName string) ([]common.EntityID, error) {
 			break
 		}
 		r, err = redis.Values(es.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return eids, nil
 }

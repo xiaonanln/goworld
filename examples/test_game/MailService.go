@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// END_MAIL_ID is the max possible Mail ID
 	END_MAIL_ID = 9999999999
 )
 
@@ -23,16 +24,19 @@ type MailService struct {
 	mailPacker    netutil.MsgPacker
 }
 
+// OnInit is called when initializing MailService
 func (s *MailService) OnInit() {
 	s.mailPacker = netutil.MessagePackMsgPacker{}
 }
 
+// OnCreated is called when MailService is created
 func (s *MailService) OnCreated() {
 	gwlog.Info("Registering MailService ...")
 	s.Attrs.SetDefault("lastMailID", 0)
 	s.DeclareService("MailService")
 }
 
+// SendMail handles send mail requests from avatars
 func (s *MailService) SendMail(senderID common.EntityID, senderName string, targetID common.EntityID, data MailData) {
 	gwlog.Debug("%s.SendMail: sender=%s,%s, target=%s, mail=%v", s, senderID, senderName, targetID, data)
 
@@ -63,12 +67,12 @@ func (s *MailService) SendMail(senderID common.EntityID, senderName string, targ
 	})
 }
 
-// GetMails request from Avatar
+// GetMails handle get mails requests from avatars
 func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 	beginMailKey := s.getMailKey(lastMailID+1, avatarID)
 	endMailKey := s.getMailKey(END_MAIL_ID, avatarID)
 
-	kvdb.GetRange(beginMailKey, endMailKey, func(items []kvdb_types.KVItem, err error) {
+	kvdb.GetRange(beginMailKey, endMailKey, func(items []kvdbtypes.KVItem, err error) {
 		s.PanicOnError(err)
 
 		var mails []interface{}

@@ -13,15 +13,17 @@ import (
 )
 
 const (
+	// UUID_LENGTH is length of a UUID
 	UUID_LENGTH = 16
 	encodeUUID  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_."
 )
 
 var (
-	UUIDEncoding = base64.NewEncoding(encodeUUID).WithPadding(base64.NoPadding)
+	// _UUIDEncoding is encoding for UUID
+	_UUIDEncoding = base64.NewEncoding(encodeUUID).WithPadding(base64.NoPadding)
 )
 
-// NewObjectId returns a new unique ObjectId.
+// GenUUID generates a new unique ObjectId.
 func GenUUID() string {
 	var b = make([]byte, 12)
 	// Timestamp, 4 bytes, big endian
@@ -40,12 +42,12 @@ func GenUUID() string {
 	b[10] = byte(i >> 8)
 	b[11] = byte(i)
 
-	return UUIDEncoding.EncodeToString(b)
+	return _UUIDEncoding.EncodeToString(b)
 }
 
 // objectIdCounter is atomically incremented when generating a new ObjectId
 // using NewObjectId() function. It's used as a counter part of an id.
-var objectIdCounter uint32 = 0
+var objectIdCounter uint32
 
 // machineId stores machine id generated once and used in subsequent calls
 // to NewObjectId function.

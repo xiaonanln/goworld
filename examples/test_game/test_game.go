@@ -57,7 +57,7 @@ func main() {
 	goworld.Run(&serverDelegate{})
 }
 
-// Called when the game server is ready
+// OnGameReady is called when the game server is ready
 func (server serverDelegate) OnGameReady() {
 	server.GameDelegate.OnGameReady()
 
