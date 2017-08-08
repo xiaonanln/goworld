@@ -123,9 +123,9 @@ func Get() *GoWorldConfig {
 // Reload forces goworld server to reload the whole config
 func Reload() *GoWorldConfig {
 	configLock.Lock()
-	defer configLock.Unlock()
-
 	goWorldConfig = nil
+	configLock.Unlock()
+
 	return Get()
 }
 
@@ -292,15 +292,16 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 	}
 }
 
-func readGateCommonConfig(section *ini.Section, scc *GateConfig) {
-	scc.LogFile = "gate.log"
-	scc.LogStderr = true
-	scc.LogLevel = _DEFAULT_LOG_LEVEL
-	scc.HTTPIp = _DEFAULT_HTTP_IP
-	scc.HTTPPort = 0 // pprof not enabled by default
-	scc.GoMaxProcs = 0
+func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
+	gcc.LogFile = "gate.log"
+	gcc.LogStderr = true
+	gcc.LogLevel = _DEFAULT_LOG_LEVEL
+	gcc.Ip = "0.0.0.0"
+	gcc.HTTPIp = _DEFAULT_HTTP_IP
+	gcc.HTTPPort = 0 // pprof not enabled by default
+	gcc.GoMaxProcs = 0
 
-	_readGateConfig(section, scc)
+	_readGateConfig(section, gcc)
 }
 
 func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig {

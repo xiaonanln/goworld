@@ -28,8 +28,10 @@ func (sl *StringList) Remove(elem string) {
 	for idx, _elem := range cpsl {
 		if _elem == elem {
 			// ignore this elem by doing nothing
-		} else if idx != widx {
-			cpsl[widx] = _elem
+		} else {
+			if idx != widx {
+				cpsl[widx] = _elem
+			}
 			widx += 1
 		}
 	}

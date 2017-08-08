@@ -9,6 +9,7 @@ import (
 
 	"os"
 
+	"github.com/bmizerany/assert"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -66,4 +67,26 @@ func TestGetStorage(t *testing.T) {
 	}
 	gwlog.Info("storage config:")
 	fmt.Fprintf(os.Stderr, "%s\n", DumpPretty(cfg))
+}
+
+func TestGetKVDB(t *testing.T) {
+	assert.T(t, GetKVDB() != nil, "kvdb config is nil")
+}
+
+func TestGetGameIDs(t *testing.T) {
+	GetGameIDs()
+}
+
+func TestGetGate(t *testing.T) {
+	GetGate(1)
+}
+
+func TestGetGateIDs(t *testing.T) {
+	gids := GetGateIDs()
+	assert.Equal(t, len(gids), 1, "gate num is wrong")
+	assert.Equal(t, gids[0], uint16(1), "gate id is not 1")
+}
+
+func TestSetConfigFile(t *testing.T) {
+	SetConfigFile("goworld.ini")
 }

@@ -1,12 +1,6 @@
 package crontab
 
-import (
-	"testing"
-
-	"time"
-
-	"github.com/xiaonanln/goTimer"
-)
+import "testing"
 
 var (
 	quit int64
@@ -25,7 +19,7 @@ func TestRegister(t *testing.T) {
 			quit = 1
 		}
 	})
-	timerLoop()
+	check()
 }
 
 func TestUnregister(t *testing.T) {
@@ -38,13 +32,13 @@ func TestUnregister(t *testing.T) {
 		t.Logf("crontab every minute 2")
 		h.Unregister()
 	})
-
-	timerLoop()
+	check()
 }
 
-func timerLoop() {
-	for quit == 0 {
-		timer.Tick()
-		time.Sleep(time.Millisecond)
-	}
-}
+//
+//func timerLoop() {
+//	for quit == 0 {
+//		timer.Tick()
+//		time.Sleep(time.Millisecond)
+//	}
+//}
