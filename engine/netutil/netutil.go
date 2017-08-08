@@ -13,9 +13,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-func init() {
-}
-
+// IsTemporaryNetError checks if the error is a temporary network error
 func IsTemporaryNetError(err error) bool {
 	if err == nil {
 		println("nil")
@@ -30,6 +28,7 @@ func IsTemporaryNetError(err error) bool {
 	return netErr.Temporary() || netErr.Timeout()
 }
 
+// IsConnectionError check if the error is a connection error (close)
 func IsConnectionError(_err interface{}) bool {
 	err, ok := _err.(error)
 	if !ok {
@@ -52,6 +51,7 @@ func IsConnectionError(_err interface{}) bool {
 	return true
 }
 
+// WriteAll write all bytes of data to the writer
 func WriteAll(conn io.Writer, data []byte) error {
 	left := len(data)
 	for left > 0 {
@@ -72,6 +72,7 @@ func WriteAll(conn io.Writer, data []byte) error {
 	return nil
 }
 
+// ReadAll reads from the reader until all bytes in data is filled
 func ReadAll(conn io.Reader, data []byte) error {
 	left := len(data)
 	for left > 0 {
@@ -92,38 +93,16 @@ func ReadAll(conn io.Reader, data []byte) error {
 	return nil
 }
 
-func ReadLine(conn net.Conn) (string, error) {
-	var _linebuff [1024]byte
-	linebuff := _linebuff[0:0]
-
-	buff := [1]byte{0} // buff of just 1 byte
-
-	for {
-		n, err := conn.Read(buff[0:1])
-		if err != nil {
-			if IsTemporaryNetError(err) {
-				continue
-			} else {
-				return "", err
-			}
-		}
-		if n == 1 {
-			c := buff[0]
-			if c == '\n' {
-				return string(linebuff), nil
-			} else {
-				linebuff = append(linebuff, c)
-			}
-		}
-	}
-}
-
+// ConnectTCP connects to host:port in TCP
 func ConnectTCP(host string, port int) (net.Conn, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	conn, err := net.Dial("tcp", addr)
 	return conn, err
 }
 
+// ServeForever runs the function with arguments forever
+//
+// ServeForever will restart the function call if function panics,
 func ServeForever(f interface{}, args ...interface{}) {
 	fval := reflect.ValueOf(f)
 	argscount := len(args)

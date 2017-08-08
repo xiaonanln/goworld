@@ -1,4 +1,4 @@
-package entity_storage_mongodb
+package entitystoragemongodb
 
 import (
 	"testing"

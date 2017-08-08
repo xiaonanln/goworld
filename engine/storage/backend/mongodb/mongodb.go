@@ -1,4 +1,4 @@
-package entity_storage_mongodb
+package entitystoragemongodb
 
 import (
 	"gopkg.in/mgo.v2"
@@ -8,12 +8,11 @@ import (
 
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-
-	. "github.com/xiaonanln/goworld/engine/storage/storage_common"
+	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
 const (
-	DEFAULT_DB_NAME = "goworld"
+	_DEFAULT_DB_NAME = "goworld"
 )
 
 var (
@@ -24,7 +23,8 @@ type mongoDBEntityStorge struct {
 	db *mgo.Database
 }
 
-func OpenMongoDB(url string, dbname string) (EntityStorage, error) {
+// OpenMongoDB opens mongodb as entity storage
+func OpenMongoDB(url string, dbname string) (storagecommon.EntityStorage, error) {
 	gwlog.Debug("Connecting MongoDB ...")
 	session, err := mgo.Dial(url)
 	if err != nil {
@@ -34,7 +34,7 @@ func OpenMongoDB(url string, dbname string) (EntityStorage, error) {
 	session.SetMode(mgo.Monotonic, true)
 	if dbname == "" {
 		// if db is not specified, use default
-		dbname = DEFAULT_DB_NAME
+		dbname = _DEFAULT_DB_NAME
 	}
 	db = session.DB(dbname)
 	return &mongoDBEntityStorge{

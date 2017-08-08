@@ -15,23 +15,27 @@ type Avatar struct {
 	entity.Entity
 }
 
+// OnCreated 在Avatar对象创建后被调用
 func (a *Avatar) OnCreated() {
 	a.Entity.OnCreated()
 	a.setDefaultAttrs()
 }
 
+// setDefaultAttrs 设置玩家的一些默认属性
 func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("name", "noname")
 	a.SetFilterProp("chatroom", "1")
 	a.Attrs.Set("chatroom", "1")
 }
 
+// GetSpaceID 获得玩家的场景ID并发给调用者
 func (a *Avatar) GetSpaceID(callerID EntityID) {
 	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
 }
 
 var spaceSep *regexp.Regexp = regexp.MustCompile("\\s")
 
+// SendChat_Client 是用来发送聊天信息的客户端RPC
 func (a *Avatar) SendChat_Client(text string) {
 	text = strings.TrimSpace(text)
 	if text[0] == '/' {
@@ -46,6 +50,8 @@ func (a *Avatar) SendChat_Client(text string) {
 		a.CallFitleredClients("chatroom", a.GetStr("chatroom"), "OnRecvChat", a.GetStr("name"), text)
 	}
 }
+
+// enterRoom 进入一个聊天室，本质上就是设置Filter属性
 func (a *Avatar) enterRoom(name string) {
 	gwlog.Debug("%s enter room %s", a, name)
 	a.SetFilterProp("chatroom", name)
