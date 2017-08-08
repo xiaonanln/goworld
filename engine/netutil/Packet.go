@@ -118,7 +118,7 @@ func allocPacket() *Packet {
 	return pkt
 }
 
-// NetPacket allocates a new packet
+// NewPacket allocates a new packet
 func NewPacket() *Packet {
 	return allocPacket()
 }
@@ -466,7 +466,7 @@ func (p *Packet) GetPayloadLen() uint32 {
 	return *(*uint32)(unsafe.Pointer(&p.bytes[0])) & _PAYLOAD_LEN_MASK
 }
 
-// SetPayloadLen sets the payload length
+// SetPayloadLen sets the payload l
 func (p *Packet) SetPayloadLen(plen uint32) {
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	*pplen = (*pplen & _COMPRESSED_BIT_MASK) | plen
