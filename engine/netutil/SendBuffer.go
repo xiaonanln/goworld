@@ -6,30 +6,24 @@ const (
 	_SEND_BUFFER_SIZE = 8192 * 2
 )
 
-type SendBuffer struct {
+type sendBuffer struct {
 	buffer [_SEND_BUFFER_SIZE]byte
 	//sent    int
 	written int
 }
 
 // Allocate a new send buffer
-func NewSendBuffer() *SendBuffer {
-	return &SendBuffer{}
+func NewSendBuffer() *sendBuffer {
+	return &sendBuffer{}
 }
 
-func (sb *SendBuffer) Write(b []byte) (n int, err error) {
+func (sb *sendBuffer) Write(b []byte) (n int, err error) {
 	n = copy(sb.buffer[sb.written:], b)
 	sb.written += n
 	return
 }
 
-//func (sb *SendBuffer) WriteAllTo(writer io.Writer) (n int, err error) {
-//	n, err = writer.Write(sb.buffer[:sb.written])
-//	sb.sent += n
-//	return
-//}
-
-func (sb *SendBuffer) WriteAllTo(writer io.Writer) error {
+func (sb *sendBuffer) WriteAllTo(writer io.Writer) error {
 	if sb.written == 0 {
 		return nil
 	}
@@ -39,11 +33,11 @@ func (sb *SendBuffer) WriteAllTo(writer io.Writer) error {
 	return err
 }
 
-func (sb *SendBuffer) FreeSpace() int {
+func (sb *sendBuffer) FreeSpace() int {
 	return _SEND_BUFFER_SIZE - sb.written
 }
 
-func (sb *SendBuffer) reset() {
+func (sb *sendBuffer) reset() {
 	//sb.sent = 0
 	sb.written = 0
 }

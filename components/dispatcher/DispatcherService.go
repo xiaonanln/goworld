@@ -25,7 +25,7 @@ type callQueueItem struct {
 	packet *netutil.Packet
 }
 
-type EntityDispatchInfo struct {
+type entityDispatchInfo struct {
 	sync.RWMutex
 
 	gameid             uint16
@@ -33,20 +33,20 @@ type EntityDispatchInfo struct {
 	pendingPacketQueue *xnsyncutil.SyncQueue
 }
 
-func newEntityDispatchInfo() *EntityDispatchInfo {
-	return &EntityDispatchInfo{
+func newEntityDispatchInfo() *entityDispatchInfo {
+	return &entityDispatchInfo{
 		pendingPacketQueue: xnsyncutil.NewSyncQueue(),
 	}
 }
 
-func (info *EntityDispatchInfo) blockRPC(d time.Duration) {
+func (info *entityDispatchInfo) blockRPC(d time.Duration) {
 	t := time.Now().Add(d)
 	if info.blockUntilTime.Before(t) {
 		info.blockUntilTime = t
 	}
 }
 
-func (info *EntityDispatchInfo) isBlockingRPC() bool {
+func (info *entityDispatchInfo) isBlockingRPC() bool {
 	if info.blockUntilTime.IsZero() {
 		// most common case
 		return false
@@ -56,6 +56,7 @@ func (info *EntityDispatchInfo) isBlockingRPC() bool {
 	return now.Before(info.blockUntilTime)
 }
 
+// DispatcherService implements the dispatcher service
 type DispatcherService struct {
 	config            *config.DispatcherConfig
 	gameClients       []*DispatcherClientProxy
@@ -63,7 +64,7 @@ type DispatcherService struct {
 	chooseClientIndex int64
 
 	entityDispatchInfosLock sync.RWMutex
-	entityDispatchInfos     map[common.EntityID]*EntityDispatchInfo
+	entityDispatchInfos     map[common.EntityID]*entityDispatchInfo
 
 	servicesLock       sync.Mutex
 	registeredServices map[string]entity.EntityIDSet
@@ -85,7 +86,7 @@ func newDispatcherService() *DispatcherService {
 		gateClients:       make([]*DispatcherClientProxy, gateCount),
 		chooseClientIndex: 0,
 
-		entityDispatchInfos: map[common.EntityID]*EntityDispatchInfo{},
+		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
 		registeredServices:  map[string]entity.EntityIDSet{},
 		targetGameOfClient:  map[common.ClientID]uint16{},
 
@@ -93,7 +94,7 @@ func newDispatcherService() *DispatcherService {
 	}
 }
 
-func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common.EntityID) (info *EntityDispatchInfo) {
+func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common.EntityID) (info *entityDispatchInfo) {
 	service.entityDispatchInfosLock.RLock()
 	info = service.entityDispatchInfos[entityID] // can be nil
 	if info != nil {
@@ -103,7 +104,7 @@ func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common
 	return
 }
 
-func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID common.EntityID) (info *EntityDispatchInfo) {
+func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID common.EntityID) (info *entityDispatchInfo) {
 	service.entityDispatchInfosLock.RLock()
 	info = service.entityDispatchInfos[entityID] // can be nil
 	if info != nil {
@@ -113,7 +114,7 @@ func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID commo
 	return
 }
 
-func (service *DispatcherService) newEntityDispatcherInfo(entityID common.EntityID) (info *EntityDispatchInfo) {
+func (service *DispatcherService) newEntityDispatcherInfo(entityID common.EntityID) (info *entityDispatchInfo) {
 	info = newEntityDispatchInfo()
 	service.entityDispatchInfosLock.Lock()
 	service.entityDispatchInfos[entityID] = info
@@ -127,7 +128,7 @@ func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID
 	service.entityDispatchInfosLock.Unlock()
 }
 
-func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID common.EntityID) (info *EntityDispatchInfo) {
+func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID common.EntityID) (info *entityDispatchInfo) {
 	service.entityDispatchInfosLock.RLock()
 	info = service.entityDispatchInfos[entityID]
 
@@ -141,7 +142,7 @@ func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID commo
 		service.entityDispatchInfosLock.Lock()
 		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
 		if info == nil {
-			info = &EntityDispatchInfo{
+			info = &entityDispatchInfo{
 				pendingPacketQueue: xnsyncutil.NewSyncQueue(),
 			}
 			service.entityDispatchInfos[entityID] = info
@@ -164,6 +165,7 @@ func (service *DispatcherService) run() {
 	netutil.ServeTCPForever(host, service)
 }
 
+// ServeTCPConnection handles dispatcher client connections to dispatcher
 func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetReadBuffer(consts.DISPATCHER_CLIENT_PROXY_READ_BUFFER_SIZE)
@@ -557,7 +559,7 @@ func (service *DispatcherService) handleRealMigrate(dcp *DispatcherClientProxy, 
 	service.sendPendingPackets(entityDispatchInfo)
 }
 
-func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *EntityDispatchInfo) {
+func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *entityDispatchInfo) {
 	targetGame := entityDispatchInfo.gameid
 	// send the cached calls to target game
 	item, ok := entityDispatchInfo.pendingPacketQueue.TryPop()

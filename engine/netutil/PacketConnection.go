@@ -72,7 +72,7 @@ type PacketConnection struct {
 	compressed         bool
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
-	sendBuffer         *SendBuffer // each PacketConnection uses 1 SendBuffer for sending packets
+	sendBuffer         *sendBuffer // each PacketConnection uses 1 sendBuffer for sending packets
 
 	// buffers and infos for receiving a packet
 	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
