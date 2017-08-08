@@ -12,13 +12,13 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
-	. "github.com/xiaonanln/goworld/engine/kvdb/types"
+	"github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/post"
 )
 
 var (
-	kvdbEngine     KVDBEngine
+	kvdbEngine     kvdbtypes.KVDBEngine
 	kvdbOpQueue    *xnsyncutil.SyncQueue
 	kvdbTerminated *xnsyncutil.OneTimeCond
 )
@@ -30,7 +30,7 @@ type KVDBGetCallback func(val string, err error)
 type KVDBPutCallback func(err error)
 
 // KVDBGetRangeCallback is type of KVDB GetRange callback
-type KVDBGetRangeCallback func(items []KVItem, err error)
+type KVDBGetRangeCallback func(items []kvdbtypes.KVItem, err error)
 
 // Initialize the KVDB
 //
@@ -200,7 +200,7 @@ func handlePutReq(putReq *putReq) {
 
 func handleGetRangeReq(getRangeReq *getRangeReq) {
 	it := kvdbEngine.Find(getRangeReq.beginKey, getRangeReq.endKey)
-	var items []KVItem
+	var items []kvdbtypes.KVItem
 	for {
 		item, err := it.Next()
 		if err == io.EOF {
