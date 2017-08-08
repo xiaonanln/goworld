@@ -85,19 +85,22 @@ func TestXAOIList_Interested(t *testing.T) {
 
 		for r := 0; r < 10; r++ {
 			aoi := aois[rand.Intn(len(aois))]
-			interested := list.Interested(aoi)
-			for other := range interested {
-				if math.Abs(float64(aoi.pos.X-other.pos.X)) > _DEFAULT_AOI_DISTANCE {
-					t.Errorf("should not interest")
-				}
-			}
+			list.Mark(aoi)
+
 			for _, other := range aois {
-				if other == aoi || interested.Contains(other) {
+				if other == aoi {
 					continue
 				}
 
-				if math.Abs(float64(aoi.pos.X-other.pos.X)) <= _DEFAULT_AOI_DISTANCE {
-					t.Errorf("should not interest")
+				if other.markVal == 1 {
+					if math.Abs(float64(aoi.pos.X-other.pos.X)) > _DEFAULT_AOI_DISTANCE {
+						t.Fail()
+					}
+					other.markVal = 0
+				} else {
+					if math.Abs(float64(aoi.pos.X-other.pos.X)) <= _DEFAULT_AOI_DISTANCE {
+						t.Fail()
+					}
 				}
 			}
 		}

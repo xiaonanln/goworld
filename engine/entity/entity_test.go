@@ -16,7 +16,7 @@ type TestEntity struct {
 //}
 
 func TestRegisterEntity(t *testing.T) {
-	RegisterEntity("TestEntity", &TestEntity{})
+	RegisterEntity("TestEntity", &TestEntity{}, false, false)
 }
 
 func TestGenEntityID(t *testing.T) {

@@ -1,86 +1,26 @@
 package main
 
 import (
-	"time"
-
-	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/components/game"
-	"github.com/xiaonanln/goworld/engine/common"
-	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-var (
-	SERVICE_NAMES = []string{}
-)
-
-func init() {
-
-}
-
+// serverDelegate 定义一些游戏服务器的回调函数
 type serverDelegate struct {
 	game.GameDelegate
 }
 
 func main() {
-	goworld.RegisterSpace(&MySpace{}) // Register the space type
+	goworld.RegisterSpace(&MySpace{}) // 注册自定义的Space类型
 
-	// Register each entity types
+	// 注册Account类型
 	goworld.RegisterEntity("Account", &Account{}, false, false)
-	// Register Avatar type and define attributes
+	// 注册Avatar类型，并定义属性
 	goworld.RegisterEntity("Avatar", &Avatar{}, true, true).DefineAttrs(map[string][]string{
 		"name":     {"Client", "Persistent"},
 		"chatroom": {"Client"},
 	})
 
-	// Run the game server
+	// 运行游戏服务器
 	goworld.Run(&serverDelegate{})
-}
-
-// OnGameReady is called when the game server is ready
-func (server serverDelegate) OnGameReady() {
-	server.GameDelegate.OnGameReady()
-
-	if goworld.GetGameID() == 1 { // Create services on just 1 server
-		for _, serviceName := range SERVICE_NAMES {
-			serviceName := serviceName
-			goworld.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
-				gwlog.Info("Found saved %s ids: %v", serviceName, eids)
-
-				if len(eids) == 0 {
-					goworld.CreateEntityAnywhere(serviceName)
-				} else {
-					// already exists
-					serviceID := eids[0]
-					goworld.LoadEntityAnywhere(serviceName, serviceID)
-				}
-			})
-		}
-	}
-
-	timer.AddCallback(time.Millisecond*1000, server.checkServerStarted)
-}
-
-func (server serverDelegate) checkServerStarted() {
-	ok := server.isAllServicesReady()
-	gwlog.Info("checkServerStarted: %v", ok)
-	if ok {
-		server.onAllServicesReady()
-	} else {
-		timer.AddCallback(time.Millisecond*1000, server.checkServerStarted)
-	}
-}
-
-func (server serverDelegate) isAllServicesReady() bool {
-	for _, serviceName := range SERVICE_NAMES {
-		if len(goworld.GetServiceProviders(serviceName)) == 0 {
-			gwlog.Info("%s is not ready ...", serviceName)
-			return false
-		}
-	}
-	return true
-}
-
-func (server serverDelegate) onAllServicesReady() {
-	gwlog.Info("All services are ready!")
 }

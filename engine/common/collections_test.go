@@ -1,4 +1,4 @@
-package gwds
+package common
 
 import (
 	"testing"
