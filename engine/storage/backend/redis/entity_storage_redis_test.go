@@ -1,4 +1,4 @@
-package entity_storage_redis
+package entitystorageredis
 
 import (
 	"testing"

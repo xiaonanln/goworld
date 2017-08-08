@@ -98,10 +98,12 @@ func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
 	a.GiveClientTo(avatar) // 将Account的客户端移交给Avatar
 }
 
+// OnClientDisconnected 在客户端掉线或者给了Avatar后触发
 func (a *Account) OnClientDisconnected() {
 	a.Destroy()
 }
 
+// OnMigrateIn 在账号迁移到目标服务器的时候调用
 func (a *Account) OnMigrateIn() {
 	loginAvatarID := common.EntityID(a.Attrs.GetStr("loginAvatarID"))
 	avatar := goworld.GetEntity(loginAvatarID)

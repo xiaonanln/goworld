@@ -139,7 +139,7 @@ func assureStorageEngineReady() (err error) {
 	} else if cfg.Type == "redis" {
 		var dbindex int
 		if dbindex, err = strconv.Atoi(cfg.DB); err == nil {
-			storageEngine, err = entity_storage_redis.OpenRedis(cfg.Host, dbindex)
+			storageEngine, err = entitystorageredis.OpenRedis(cfg.Host, dbindex)
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)

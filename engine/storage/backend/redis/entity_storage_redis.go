@@ -1,4 +1,4 @@
-package entity_storage_redis
+package entitystorageredis
 
 import (
 	"io"
@@ -18,6 +18,7 @@ type redisEntityStorage struct {
 	c redis.Conn
 }
 
+// OpenRedis opens redis as entity storage
 func OpenRedis(host string, dbindex int) (EntityStorage, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
