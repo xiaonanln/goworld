@@ -1,15 +1,15 @@
 package entity
 
 type zAOIList struct {
-	head *AOI
-	tail *AOI
+	head *aoi
+	tail *aoi
 }
 
 func newZAOIList() *zAOIList {
 	return &zAOIList{}
 }
 
-func (sl *zAOIList) Insert(aoi *AOI) {
+func (sl *zAOIList) Insert(aoi *aoi) {
 	insertCoord := aoi.pos.Z
 	if sl.head != nil {
 		p := sl.head
@@ -40,7 +40,7 @@ func (sl *zAOIList) Insert(aoi *AOI) {
 	}
 }
 
-func (sl *zAOIList) Remove(aoi *AOI) {
+func (sl *zAOIList) Remove(aoi *aoi) {
 	prev := aoi.zPrev
 	next := aoi.zNext
 	if prev != nil {
@@ -57,7 +57,7 @@ func (sl *zAOIList) Remove(aoi *AOI) {
 	}
 }
 
-func (sl *zAOIList) Move(aoi *AOI, oldCoord Coord) {
+func (sl *zAOIList) Move(aoi *aoi, oldCoord Coord) {
 	coord := aoi.pos.Z
 	if coord > oldCoord {
 		// moving to next ...
@@ -125,7 +125,7 @@ func (sl *zAOIList) Move(aoi *AOI, oldCoord Coord) {
 	}
 }
 
-func (sl *zAOIList) Mark(aoi *AOI) {
+func (sl *zAOIList) Mark(aoi *aoi) {
 	prev := aoi.zPrev
 	coord := aoi.pos.Z
 
@@ -143,7 +143,7 @@ func (sl *zAOIList) Mark(aoi *AOI) {
 	}
 }
 
-func (sl *zAOIList) ClearMark(aoi *AOI) {
+func (sl *zAOIList) ClearMark(aoi *aoi) {
 	prev := aoi.zPrev
 	coord := aoi.pos.Z
 

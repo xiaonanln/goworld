@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	MAX_AVATAR_COUNT_PER_SPACE = 100
+	_MAX_AVATAR_COUNT_PER_SPACE = 100
 )
 
 type enterSpaceReq struct {
@@ -27,7 +27,7 @@ func (ki *_SpaceKindInfo) choose() *_SpaceEntityInfo {
 	var best *_SpaceEntityInfo
 
 	for _, ei := range ki.spaceEntities {
-		if ei.AvatarNum >= MAX_AVATAR_COUNT_PER_SPACE { // space is full
+		if ei.AvatarNum >= _MAX_AVATAR_COUNT_PER_SPACE { // space is full
 			continue
 		}
 
@@ -49,6 +49,7 @@ type _SpaceEntityInfo struct {
 	AvatarNum     int
 }
 
+// SpaceService is the service entity for space management
 type SpaceService struct {
 	entity.Entity
 
@@ -72,16 +73,19 @@ func (s *SpaceService) getSpaceEntityInfo(kind int, spaceID common.EntityID) *_S
 	return kindinfo.spaceEntities[spaceID]
 }
 
+// OnInit initializes SpaceService
 func (s *SpaceService) OnInit() {
 	s.spaceKinds = map[int]*_SpaceKindInfo{}
 	s.pendingRequests = []enterSpaceReq{}
 }
 
+// OnCreated is called when entity is created
 func (s *SpaceService) OnCreated() {
 	gwlog.Info("Registering SpaceService ...")
 	s.DeclareService("SpaceService")
 }
 
+// EnterSpace is called by avatar to enter space by kind
 func (s *SpaceService) EnterSpace(avatarId common.EntityID, kind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
@@ -102,6 +106,7 @@ func (s *SpaceService) EnterSpace(avatarId common.EntityID, kind int) {
 	}
 }
 
+// NotifySpaceLoaded is called when space is loaded
 func (s *SpaceService) NotifySpaceLoaded(loadKind int, loadSpaceID common.EntityID) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
@@ -136,6 +141,7 @@ func (s *SpaceService) NotifySpaceLoaded(loadKind int, loadSpaceID common.Entity
 	}
 }
 
+// RequestDestroy is RPC request for Spaces to request for destroying self
 func (s *SpaceService) RequestDestroy(kind int, spaceID common.EntityID) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)

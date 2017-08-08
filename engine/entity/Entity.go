@@ -50,7 +50,7 @@ type Entity struct {
 	destroyed bool
 	typeDesc  *EntityTypeDesc
 	Space     *Space
-	aoi       AOI
+	aoi       aoi
 	yaw       Yaw
 
 	rawTimers   map[*timer.Timer]struct{}
@@ -211,7 +211,7 @@ func SetSaveInterval(duration time.Duration) {
 	gwlog.Info("Save interval set to %s", saveInterval)
 }
 
-// Space Operations related to AOI
+// Space Operations related to aoi
 
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
@@ -900,6 +900,7 @@ func (e *Entity) GetListAttr(key string) *ListAttr {
 func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
 	if e.isEnteringSpace() {
 		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
+		e.I.OnEnterSpace()
 		return
 	}
 
@@ -1067,9 +1068,9 @@ func (e *Entity) CallFitleredClients(key string, val string, method string, args
 	dispatcherclient.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
-// Returns if entity type is using AOI
+// Returns if entity type is using aoi
 //
-// Entities like Account, Service entities should not be using AOI
+// Entities like Account, Service entities should not be using aoi
 func (e *Entity) IsUseAOI() bool {
 	return e.typeDesc.useAOI
 }

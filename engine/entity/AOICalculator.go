@@ -1,15 +1,15 @@
 package entity
 
-// AOICalculator defines interface for AOI Calculators
+// AOICalculator defines interface for aoi Calculators
 type AOICalculator interface {
-	// Let Entity AOI enter at specified position
-	Enter(aoi *AOI, pos Position)
-	// Let Entity AOI leave
-	Leave(aoi *AOI)
-	// Let Entity AOI move
-	Move(aoi *AOI, newPos Position)
+	// Let Entity aoi enter at specified position
+	Enter(aoi *aoi, pos Position)
+	// Let Entity aoi leave
+	Leave(aoi *aoi)
+	// Let Entity aoi move
+	Move(aoi *aoi, newPos Position)
 	// Calculate EntityAOI Adjustment of neighbors
-	Adjust(aoi *AOI) (enter []*AOI, leave []*AOI)
+	Adjust(aoi *aoi) (enter []*aoi, leave []*aoi)
 }
 
 // XZListAOICalculator is an implementation of AOICalculator using XZ lists
@@ -26,7 +26,7 @@ func newXZListAOICalculator() *XZListAOICalculator {
 }
 
 // Enter is called when Entity enters Space
-func (cal *XZListAOICalculator) Enter(aoi *AOI, pos Position) {
+func (cal *XZListAOICalculator) Enter(aoi *aoi, pos Position) {
 	aoi.pos = pos
 	cal.xSweepList.Insert(aoi)
 	cal.zSweepList.Insert(aoi)
@@ -40,13 +40,13 @@ func (cal *XZListAOICalculator) Enter(aoi *AOI, pos Position) {
 }
 
 // Leave is called when Entity leaves Space
-func (cal *XZListAOICalculator) Leave(aoi *AOI) {
+func (cal *XZListAOICalculator) Leave(aoi *aoi) {
 	cal.xSweepList.Remove(aoi)
 	cal.zSweepList.Remove(aoi)
 }
 
 // Move is called when Entity moves in Space
-func (cal *XZListAOICalculator) Move(aoi *AOI, pos Position) {
+func (cal *XZListAOICalculator) Move(aoi *aoi, pos Position) {
 	oldPos := aoi.pos
 	aoi.pos = pos
 	if oldPos.X != pos.X {
@@ -58,7 +58,7 @@ func (cal *XZListAOICalculator) Move(aoi *AOI, pos Position) {
 }
 
 // Adjust is called by Entity to adjust neighbors
-func (cal *XZListAOICalculator) Adjust(aoi *AOI) (enter []*AOI, leave []*AOI) {
+func (cal *XZListAOICalculator) Adjust(aoi *aoi) (enter []*aoi, leave []*aoi) {
 	cal.xSweepList.Mark(aoi)
 	cal.zSweepList.Mark(aoi)
 	// aoi marked twice are neighbors
@@ -84,10 +84,10 @@ func (cal *XZListAOICalculator) Adjust(aoi *AOI) (enter []*AOI, leave []*AOI) {
 }
 
 type aoiListOperator interface {
-	GetCoord(aoi *AOI) Coord
-	//SetCoord(aoi *AOI) Coord
-	GetNext(aoi *AOI) *AOI
-	SetNext(aoi *AOI, next *AOI)
-	GetPrev(aoi *AOI) *AOI
-	SetPrev(aoi *AOI, prev *AOI)
+	GetCoord(aoi *aoi) Coord
+	//SetCoord(aoi *aoi) Coord
+	GetNext(aoi *aoi) *aoi
+	SetNext(aoi *aoi, next *aoi)
+	GetPrev(aoi *aoi) *aoi
+	SetPrev(aoi *aoi, prev *aoi)
 }

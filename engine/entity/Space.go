@@ -242,7 +242,7 @@ func (space *Space) move(entity *Entity, newPos Position) {
 //
 //	for e := range space.entities {
 //		if e.aoi.markVal != 0 {
-//			gwlog.Fatalf("%s: wrong AOI mark val = %d", e.aoi.markVal)
+//			gwlog.Fatalf("%s: wrong aoi mark val = %d", e.aoi.markVal)
 //		}
 //
 //		if e == entity {
@@ -292,7 +292,7 @@ func (space *Space) GetEntityCount() int {
 	return len(space.entities)
 }
 
-// AOI Management
+// aoi Management
 func (space *Space) addToAOI(entity *Entity) {
 
 }

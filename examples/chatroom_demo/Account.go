@@ -13,6 +13,7 @@ type Account struct {
 	logining      bool
 }
 
+// Register_Client 是处理玩家注册请求的RPC函数
 func (a *Account) Register_Client(username string, password string) {
 	gwlog.Debug("Register %s %s", username, password)
 	goworld.GetKVDB("password$"+username, func(val string, err error) {
@@ -37,6 +38,7 @@ func (a *Account) Register_Client(username string, password string) {
 	})
 }
 
+// Login_Client 是处理玩家登录请求的RPC函数
 func (a *Account) Login_Client(username string, password string) {
 	if a.logining {
 		// logining
@@ -78,6 +80,7 @@ func (a *Account) Login_Client(username string, password string) {
 	})
 }
 
+// OnGetAvatarSpaceID 是用于接收Avatar场景编号的回调函数
 func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.EntityID) {
 	// avatar may be in the same space with account, check again
 	avatar := goworld.GetEntity(avatarID)
@@ -92,7 +95,7 @@ func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.En
 
 func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
 	a.logining = false
-	a.GiveClientTo(avatar)
+	a.GiveClientTo(avatar) // 将Account的客户端移交给Avatar
 }
 
 func (a *Account) OnClientDisconnected() {

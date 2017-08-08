@@ -6,8 +6,10 @@ import (
 	"unsafe"
 )
 
+// Coord is the of coordinations entity position (x, y, z)
 type Coord float32
 
+// Position is type of entity position
 type Position struct {
 	X Coord
 	Y Coord
@@ -18,6 +20,7 @@ func (p Position) String() string {
 	return fmt.Sprintf("(%.1f, %.1f, %.1f)", p.X, p.Y, p.Z)
 }
 
+// DistanceTo calculates distance between two positions
 func (p Position) DistanceTo(o Position) Coord {
 	dx := p.X - o.X
 	dy := p.Y - o.Y
@@ -25,21 +28,21 @@ func (p Position) DistanceTo(o Position) Coord {
 	return Coord(math.Sqrt(float64(dx*dx + dy*dy + dz*dz)))
 }
 
-type AOI struct {
+type aoi struct {
 	pos       Position
 	neighbors EntitySet
-	xNext     *AOI
-	xPrev     *AOI
-	zNext     *AOI
-	zPrev     *AOI
+	xNext     *aoi
+	xPrev     *aoi
+	zNext     *aoi
+	zPrev     *aoi
 	markVal   int
 }
 
-func initAOI(aoi *AOI) {
+func initAOI(aoi *aoi) {
 	aoi.neighbors = EntitySet{}
 }
 
-// Get the owner entity of this AOI
+// Get the owner entity of this aoi
 // This is very tricky but also effective
 var aoiFieldOffset uintptr
 
@@ -47,67 +50,35 @@ func init() {
 	dummyEntity := (*Entity)(unsafe.Pointer(&aoiFieldOffset))
 	aoiFieldOffset = uintptr(unsafe.Pointer(&dummyEntity.aoi)) - uintptr(unsafe.Pointer(dummyEntity))
 }
-func (aoi *AOI) getEntity() *Entity {
+func (aoi *aoi) getEntity() *Entity {
 	return (*Entity)(unsafe.Pointer((uintptr)(unsafe.Pointer(aoi)) - aoiFieldOffset))
 }
 
-func (aoi *AOI) interest(other *Entity) {
+func (aoi *aoi) interest(other *Entity) {
 	aoi.neighbors.Add(other)
 }
 
-func (aoi *AOI) uninterest(other *Entity) {
+func (aoi *aoi) uninterest(other *Entity) {
 	aoi.neighbors.Del(other)
 }
 
-//func (sl *xAOIList) coord(aoi *AOI) Coord {
-//	if sl.xorz == 0 {
-//		return aoi.pos.X
-//	} else {
-//		return aoi.pos.Z
-//	}
-//}
+type aoiSet map[*aoi]struct{}
 
-//func (sl *xAOIList) head(aoi *AOI) *sweepListHead {
-//	if sl.xorz == 0 {
-//		return &aoi.sweepListHeadX
-//	} else {
-//		return &aoi.sweepListHeadZ
-//	}
-//}
-//
-//func (sl *xAOIList) next(aoi *AOI) *AOI {
-//	if sl.xorz == 0 {
-//		return aoi.sweepListHeadX.next
-//	} else {
-//		return aoi.sweepListHeadZ.next
-//	}
-//}
-//
-//func (sl *xAOIList) prev(aoi *AOI) *AOI {
-//	if sl.xorz == 0 {
-//		return aoi.sweepListHeadX.prev
-//	} else {
-//		return aoi.sweepListHeadZ.prev
-//	}
-//}
-
-type AOISet map[*AOI]struct{}
-
-func (aoiset AOISet) Add(aoi *AOI) {
+func (aoiset aoiSet) Add(aoi *aoi) {
 	aoiset[aoi] = struct{}{}
 }
 
-func (aoiset AOISet) Del(aoi *AOI) {
+func (aoiset aoiSet) Del(aoi *aoi) {
 	delete(aoiset, aoi)
 }
 
-func (aoiset AOISet) Contains(aoi *AOI) bool {
+func (aoiset aoiSet) Contains(aoi *aoi) bool {
 	_, ok := aoiset[aoi]
 	return ok
 }
 
-func (aoiset AOISet) Join(other AOISet) AOISet {
-	join := AOISet{}
+func (aoiset aoiSet) Join(other aoiSet) aoiSet {
+	join := aoiSet{}
 	for aoi := range aoiset {
 		if other.Contains(aoi) {
 			join.Add(aoi)

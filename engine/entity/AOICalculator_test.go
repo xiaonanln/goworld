@@ -27,7 +27,7 @@ func TestXAOIList_Remove(t *testing.T) {
 	for i := 0; i < 10000; i++ {
 		N1 := rand.Intn(100)
 		N2 := rand.Intn(100)
-		remove := []*AOI{}
+		remove := []*aoi{}
 		list := newXAOIList()
 		for j := 0; j < N1; j++ {
 			aoi := randAOI()
@@ -49,7 +49,7 @@ func TestXAOIList_Remove(t *testing.T) {
 
 func TestXAOIList_Move(t *testing.T) {
 	for i := 0; i < 1000; i++ {
-		aois := []*AOI{}
+		aois := []*aoi{}
 		list := newXAOIList()
 		N := 1 + rand.Intn(100)
 		for j := 0; j < N; j++ {
@@ -72,7 +72,7 @@ func TestXAOIList_Move(t *testing.T) {
 
 func TestXAOIList_Interested(t *testing.T) {
 	for i := 0; i < 1000; i++ {
-		aois := []*AOI{}
+		aois := []*aoi{}
 		list := newXAOIList()
 		N := 1 + rand.Intn(100)
 		for j := 0; j < N; j++ {
@@ -107,8 +107,8 @@ func TestXAOIList_Interested(t *testing.T) {
 	}
 }
 
-func randAOI() *AOI {
-	return &AOI{
+func randAOI() *aoi {
+	return &aoi{
 		pos: Position{
 			X: Coord(rand.Intn(100)),
 			Y: Coord(rand.Intn(100)),
@@ -135,7 +135,7 @@ func checkList(t *testing.T, list *xAOIList, N int) {
 	}
 
 	p := list.head
-	var last *AOI
+	var last *aoi
 
 	for i := 0; i < N; i++ {
 		if p == nil {

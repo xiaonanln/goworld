@@ -1,15 +1,15 @@
 package entity
 
 type xAOIList struct {
-	head *AOI
-	tail *AOI
+	head *aoi
+	tail *aoi
 }
 
 func newXAOIList() *xAOIList {
 	return &xAOIList{}
 }
 
-func (sl *xAOIList) Insert(aoi *AOI) {
+func (sl *xAOIList) Insert(aoi *aoi) {
 	insertCoord := aoi.pos.X
 	if sl.head != nil {
 		p := sl.head
@@ -40,7 +40,7 @@ func (sl *xAOIList) Insert(aoi *AOI) {
 	}
 }
 
-func (sl *xAOIList) Remove(aoi *AOI) {
+func (sl *xAOIList) Remove(aoi *aoi) {
 	prev := aoi.xPrev
 	next := aoi.xNext
 	if prev != nil {
@@ -57,7 +57,7 @@ func (sl *xAOIList) Remove(aoi *AOI) {
 	}
 }
 
-func (sl *xAOIList) Move(aoi *AOI, oldCoord Coord) {
+func (sl *xAOIList) Move(aoi *aoi, oldCoord Coord) {
 	coord := aoi.pos.X
 	if coord > oldCoord {
 		// moving to next ...
@@ -125,7 +125,7 @@ func (sl *xAOIList) Move(aoi *AOI, oldCoord Coord) {
 	}
 }
 
-func (sl *xAOIList) Mark(aoi *AOI) {
+func (sl *xAOIList) Mark(aoi *aoi) {
 	prev := aoi.xPrev
 	coord := aoi.pos.X
 
@@ -143,7 +143,7 @@ func (sl *xAOIList) Mark(aoi *AOI) {
 	}
 }
 
-func (sl *xAOIList) GetClearMarkedNeighbors(aoi *AOI) (enter []*AOI) {
+func (sl *xAOIList) GetClearMarkedNeighbors(aoi *aoi) (enter []*aoi) {
 	prev := aoi.xPrev
 	coord := aoi.pos.X
 	minCoord := coord - _DEFAULT_AOI_DISTANCE
