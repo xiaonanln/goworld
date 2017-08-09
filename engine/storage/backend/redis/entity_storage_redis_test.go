@@ -13,9 +13,9 @@ func TestRedisEntityStorage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	gwlog.Info("TestRedisEntityStorage: %v", es)
+	gwlog.Infof("TestRedisEntityStorage: %v", es)
 	entityID := common.GenEntityID()
-	gwlog.Info("TESTING ENTITYID: %s", entityID)
+	gwlog.Infof("TESTING ENTITYID: %s", entityID)
 	data, err := es.Read("Avatar", entityID)
 	if data != nil {
 		t.Errorf("should be nil")
@@ -55,7 +55,7 @@ func TestRedisEntityStorage(t *testing.T) {
 		t.Errorf("Avatar IDs is empty!")
 	}
 
-	gwlog.Info("Found avatars saved: %v", avatarIDs)
+	gwlog.Infof("Found avatars saved: %v", avatarIDs)
 	for _, avatarID := range avatarIDs {
 		data, err := es.Read("Avatar", avatarID)
 		if err != nil {

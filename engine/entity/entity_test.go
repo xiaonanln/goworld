@@ -21,7 +21,7 @@ func TestRegisterEntity(t *testing.T) {
 
 func TestGenEntityID(t *testing.T) {
 	eid := common.GenEntityID()
-	gwlog.Info("TestGenEntityID: %s", eid)
+	gwlog.Infof("TestGenEntityID: %s", eid)
 }
 
 func TestEntityManager(t *testing.T) {

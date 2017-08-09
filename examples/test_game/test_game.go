@@ -65,7 +65,7 @@ func (server serverDelegate) OnGameReady() {
 		for _, serviceName := range _SERVICE_NAMES {
 			serviceName := serviceName
 			goworld.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
-				gwlog.Info("Found saved %s ids: %v", serviceName, eids)
+				gwlog.Infof("Found saved %s ids: %v", serviceName, eids)
 
 				if len(eids) == 0 {
 					goworld.CreateEntityAnywhere(serviceName)
@@ -83,7 +83,7 @@ func (server serverDelegate) OnGameReady() {
 
 func (server serverDelegate) checkServerStarted() {
 	ok := server.isAllServicesReady()
-	gwlog.Info("checkServerStarted: %v", ok)
+	gwlog.Infof("checkServerStarted: %v", ok)
 	if ok {
 		server.onAllServicesReady()
 	} else {
@@ -94,7 +94,7 @@ func (server serverDelegate) checkServerStarted() {
 func (server serverDelegate) isAllServicesReady() bool {
 	for _, serviceName := range _SERVICE_NAMES {
 		if len(goworld.GetServiceProviders(serviceName)) == 0 {
-			gwlog.Info("%s is not ready ...", serviceName)
+			gwlog.Infof("%s is not ready ...", serviceName)
 			return false
 		}
 	}
@@ -102,5 +102,5 @@ func (server serverDelegate) isAllServicesReady() bool {
 }
 
 func (server serverDelegate) onAllServicesReady() {
-	gwlog.Info("All services are ready!")
+	gwlog.Infof("All services are ready!")
 }

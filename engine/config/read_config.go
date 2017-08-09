@@ -198,7 +198,7 @@ func readGoWorldConfig() *GoWorldConfig {
 		Games: map[int]*GameConfig{},
 		Gates: map[int]*GateConfig{},
 	}
-	gwlog.Info("Using config file: %s", configFilePath)
+	gwlog.Infof("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
 	serverCommonSec := iniFile.Section("server_common")
@@ -212,7 +212,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			continue
 		}
 
-		//gwlog.Info("Section %s", sec.Name())
+		//gwlog.Infof("Section %s", sec.Name())
 		secName = strings.ToLower(secName)
 		if secName == "dispatcher" {
 			// dispatcher config
@@ -235,7 +235,7 @@ func readGoWorldConfig() *GoWorldConfig {
 			// kvdb config
 			readKVDBConfig(sec, &config.KVDB)
 		} else {
-			gwlog.Error("unknown section: %s", secName)
+			gwlog.Errorf("unknown section: %s", secName)
 		}
 
 	}

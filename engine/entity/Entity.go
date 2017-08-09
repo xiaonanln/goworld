@@ -115,7 +115,7 @@ func (e *Entity) Destroy() {
 	if e.destroyed {
 		return
 	}
-	gwlog.Debug("%s.Destroy ...", e)
+	gwlog.Debugf("%s.Destroy ...", e)
 	e.destroyEntity(false)
 	dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
 }
@@ -158,7 +158,7 @@ func (e *Entity) Save() {
 	}
 
 	if consts.DEBUG_SAVE_LOAD {
-		gwlog.Debug("SAVING %s ...", e)
+		gwlog.Debugf("SAVING %s ...", e)
 	}
 
 	data := e.I.GetPersistentData()
@@ -208,7 +208,7 @@ func (e *Entity) setupSaveTimer() {
 // SetSaveInterval sets the save interval for entity system
 func SetSaveInterval(duration time.Duration) {
 	saveInterval = duration
-	gwlog.Info("Save interval set to %s", saveInterval)
+	gwlog.Infof("Save interval set to %s", saveInterval)
 }
 
 // Space Operations related to aoi
@@ -257,7 +257,7 @@ func (e *Entity) AddCallback(d time.Duration, method string, args ...interface{}
 	info.rawTimer = e.addRawCallback(d, func() {
 		e.triggerTimer(tid, false)
 	})
-	gwlog.Debug("%s.AddCallback %s: %d", e, method, tid)
+	gwlog.Debugf("%s.AddCallback %s: %d", e, method, tid)
 	return tid
 }
 
@@ -282,7 +282,7 @@ func (e *Entity) AddTimer(d time.Duration, method string, args ...interface{}) E
 	info.rawTimer = e.addRawTimer(d, func() {
 		e.triggerTimer(tid, true)
 	})
-	gwlog.Debug("%s.AddTimer %s: %d", e, method, tid)
+	gwlog.Debugf("%s.AddTimer %s: %d", e, method, tid)
 	return tid
 }
 
@@ -336,7 +336,7 @@ func (e *Entity) dumpTimers() []byte {
 	if err != nil {
 		gwlog.TraceError("%s dump timers failed: %s", e, err)
 	}
-	//gwlog.Info("%s dump %d timers: %v", e, len(timers), data)
+	//gwlog.Infof("%s dump %d timers: %v", e, len(timers), data)
 	return data
 }
 
@@ -348,7 +348,7 @@ func (e *Entity) restoreTimers(data []byte) error {
 	if err := timersPacker.UnpackMsg(data, &timers); err != nil {
 		return err
 	}
-	gwlog.Debug("%s: %d timers restored: %v", e, len(timers), timers)
+	gwlog.Debugf("%s: %d timers restored: %v", e, len(timers), timers)
 	now := time.Now()
 	for _, timer := range timers {
 		//if timer.rawTimer != nil {
@@ -410,7 +410,7 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 }
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
-	//gwlog.Info("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
+	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
 	e.setPositionYaw(Position{x, y, z}, yaw, true)
 }
 
@@ -466,7 +466,7 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 	rpcDesc := e.typeDesc.rpcDescs[methodName]
 	if rpcDesc == nil {
 		// rpc not found
-		gwlog.Error("%s.onCallFromRemote: Method %s is not a valid RPC, args=%v", e, methodName, args)
+		gwlog.Errorf("%s.onCallFromRemote: Method %s is not a valid RPC, args=%v", e, methodName, args)
 		return
 	}
 
@@ -487,7 +487,7 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 	}
 
 	if rpcDesc.NumArgs < len(args) {
-		gwlog.Error("%s.onCallFromRemote: Method %s receives %d arguments, but given %d", e, methodName, rpcDesc.NumArgs, len(args))
+		gwlog.Errorf("%s.onCallFromRemote: Method %s receives %d arguments, but given %d", e, methodName, rpcDesc.NumArgs, len(args))
 		return
 	}
 
@@ -524,14 +524,14 @@ func (e *Entity) DeclareService(serviceName string) {
 //
 // Can override this function in custom entity type
 func (e *Entity) OnInit() {
-	//gwlog.Warn("%s.OnInit not implemented", e)
+	//gwlog.Warnf("%s.OnInit not implemented", e)
 }
 
 // OnCreated is called when entity is created
 //
 // Can override this function in custom entity type
 func (e *Entity) OnCreated() {
-	//gwlog.Debug("%s.OnCreated", e)
+	//gwlog.Debugf("%s.OnCreated", e)
 }
 
 // OnRestored is called when entity is restored
@@ -545,7 +545,7 @@ func (e *Entity) OnRestored() {
 // Can override this function in custom entity type
 func (e *Entity) OnEnterSpace() {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.OnEnterSpace >>> %s", e, e.Space)
+		gwlog.Debugf("%s.OnEnterSpace >>> %s", e, e.Space)
 	}
 }
 
@@ -554,7 +554,7 @@ func (e *Entity) OnEnterSpace() {
 // Can override this function in custom entity type
 func (e *Entity) OnLeaveSpace(space *Space) {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.OnLeaveSpace <<< %s", e, space)
+		gwlog.Debugf("%s.OnLeaveSpace <<< %s", e, space)
 	}
 }
 
@@ -717,12 +717,12 @@ func (e *Entity) CallClient(method string, args ...interface{}) {
 // GiveClientTo gives client to other entity
 func (e *Entity) GiveClientTo(other *Entity) {
 	if e.client == nil {
-		gwlog.Warn("%s.GiveClientTo(%s): client is nil", e, other)
+		gwlog.Warnf("%s.GiveClientTo(%s): client is nil", e, other)
 		return
 	}
 
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.GiveClientTo(%s): client=%s", e, other, e.client)
+		gwlog.Debugf("%s.GiveClientTo(%s): client=%s", e, other, e.client)
 	}
 	client := e.client
 	e.SetClient(nil)
@@ -757,7 +757,7 @@ func (e *Entity) notifyClientDisconnected() {
 // Can override this function in custom entity type
 func (e *Entity) OnClientConnected() {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors()))
+		gwlog.Debugf("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors()))
 	}
 }
 
@@ -766,7 +766,7 @@ func (e *Entity) OnClientConnected() {
 // Can override this function in custom entity type
 func (e *Entity) OnClientDisconnected() {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.OnClientDisconnected: %s", e, e.client)
+		gwlog.Debugf("%s.OnClientDisconnected: %s", e, e.client)
 	}
 }
 
@@ -899,7 +899,7 @@ func (e *Entity) GetListAttr(key string) *ListAttr {
 // EnterSpace let the entity enters space
 func (e *Entity) EnterSpace(spaceID common.EntityID, pos Position) {
 	if e.isEnteringSpace() {
-		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
+		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
 		e.I.OnEnterSpace()
 		return
 	}
@@ -931,11 +931,11 @@ func (e *Entity) enterLocalSpace(space *Space, pos Position) {
 		e.clearEnteringSpaceRequest()
 
 		if space.IsDestroyed() {
-			gwlog.Warn("%s: space %s is destroyed, enter space cancelled", e, space.ID)
+			gwlog.Warnf("%s: space %s is destroyed, enter space cancelled", e, space.ID)
 			return
 		}
 
-		//gwlog.Info("%s.enterLocalSpace ==> %s", e, space)
+		//gwlog.Infof("%s.enterLocalSpace ==> %s", e, space)
 		e.Space.leave(e)
 		space.enter(e, pos, false)
 	})
@@ -966,13 +966,13 @@ func OnMigrateRequestAck(entityID common.EntityID, spaceID common.EntityID, spac
 	entity := entityManager.get(entityID)
 	if entity == nil {
 		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityID)
-		gwlog.Error("Migrate failed since entity is destroyed: spaceID=%s, entityID=%s", spaceID, entityID)
+		gwlog.Errorf("Migrate failed since entity is destroyed: spaceID=%s, entityID=%s", spaceID, entityID)
 		return
 	}
 
 	if spaceLoc == 0 {
 		// target space not found, migrate not started
-		gwlog.Error("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
+		gwlog.Errorf("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
 		entity.clearEnteringSpaceRequest()
 		return
 	}
@@ -1030,7 +1030,7 @@ func OnRealMigrate(entityID common.EntityID, spaceID common.EntityID, x, y, z fl
 // Can override this function in custom entity type
 func (e *Entity) OnMigrateOut() {
 	if consts.DEBUG_MIGRATE {
-		gwlog.Debug("%s.OnMigrateOut, space=%s, client=%s", e, e.Space, e.client)
+		gwlog.Debugf("%s.OnMigrateOut, space=%s, client=%s", e, e.Space, e.client)
 	}
 }
 
@@ -1039,14 +1039,14 @@ func (e *Entity) OnMigrateOut() {
 // Can override this function in custom entity type
 func (e *Entity) OnMigrateIn() {
 	if consts.DEBUG_MIGRATE {
-		gwlog.Debug("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
+		gwlog.Debugf("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
 	}
 }
 
 // SetFilterProp sets a filter property key-value
 func (e *Entity) SetFilterProp(key string, val string) {
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debug("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
+		gwlog.Debugf("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
 	}
 
 	curval, ok := e.filterProps[key]
@@ -1088,7 +1088,7 @@ func (e *Entity) SetPosition(pos Position) {
 func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
 	space := e.Space
 	if space == nil {
-		gwlog.Warn("%s.SetPosition(%s): space is nil", e, pos)
+		gwlog.Warnf("%s.SetPosition(%s): space is nil", e, pos)
 		return
 	}
 
@@ -1152,7 +1152,7 @@ func CollectEntitySyncInfos() {
 
 	// send to dispatcher, one gate by one gate
 	for _, packet := range entitySyncInfosToGate {
-		//gwlog.Info("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
+		//gwlog.Infof("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
 
 		if packet.GetPayloadLen() > 4 {
 			dispatcherclient.GetDispatcherClientForSend().SendPacket(packet)

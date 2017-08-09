@@ -39,7 +39,7 @@ func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *dispatc
 func (dcp *dispatcherClientProxy) startAutoFlush() {
 	go func() {
 		gwc := dcp.GoWorldConnection
-		defer gwlog.Debug("%s: auto flush routine quited", gwc)
+		defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 		for !gwc.IsClosed() {
 			time.Sleep(time.Millisecond * 10)
 			dcp.beforeFlush()
@@ -62,7 +62,7 @@ func (dcp *dispatcherClientProxy) serve() {
 		}
 	}()
 
-	gwlog.Info("New dispatcher client: %s", dcp)
+	gwlog.Infof("New dispatcher client: %s", dcp)
 	for {
 		var msgtype proto.MsgType
 		pkt, err := dcp.Recv(&msgtype)
@@ -76,7 +76,7 @@ func (dcp *dispatcherClientProxy) serve() {
 		}
 
 		if consts.DEBUG_PACKETS {
-			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
+			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
 		if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
 			dcp.owner.handleSyncPositionYawFromClient(dcp, pkt)

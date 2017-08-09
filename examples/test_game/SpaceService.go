@@ -81,14 +81,14 @@ func (s *SpaceService) OnInit() {
 
 // OnCreated is called when entity is created
 func (s *SpaceService) OnCreated() {
-	gwlog.Info("Registering SpaceService ...")
+	gwlog.Infof("Registering SpaceService ...")
 	s.DeclareService("SpaceService")
 }
 
 // EnterSpace is called by avatar to enter space by kind
 func (s *SpaceService) EnterSpace(avatarId common.EntityID, kind int) {
 	if consts.DEBUG_SPACES {
-		gwlog.Info("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
+		gwlog.Infof("%s.EnterSpace: avatar=%s, kind=%d", s, avatarId, kind)
 	}
 
 	spaceKindInfo := s.getSpaceKindInfo(kind)
@@ -109,7 +109,7 @@ func (s *SpaceService) EnterSpace(avatarId common.EntityID, kind int) {
 // NotifySpaceLoaded is called when space is loaded
 func (s *SpaceService) NotifySpaceLoaded(loadKind int, loadSpaceID common.EntityID) {
 	if consts.DEBUG_SPACES {
-		gwlog.Info("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
+		gwlog.Infof("%s: space is loaded: kind=%d, loadSpaceID=%s", s, loadKind, loadSpaceID)
 	}
 	spaceKindInfo := s.getSpaceKindInfo(loadKind)
 
@@ -144,7 +144,7 @@ func (s *SpaceService) NotifySpaceLoaded(loadKind int, loadSpaceID common.Entity
 // RequestDestroy is RPC request for Spaces to request for destroying self
 func (s *SpaceService) RequestDestroy(kind int, spaceID common.EntityID) {
 	if consts.DEBUG_SPACES {
-		gwlog.Info("Space %s kind %d is requesting destroy ...", spaceID, kind)
+		gwlog.Infof("Space %s kind %d is requesting destroy ...", spaceID, kind)
 	}
 	//spaceKindInfo := s.getSpaceKindInfo(kind)
 	spaceInfo := s.getSpaceEntityInfo(kind, spaceID)

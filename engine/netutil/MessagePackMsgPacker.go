@@ -41,7 +41,7 @@ func (mp MessagePackMsgPacker) convertToStringKeys(v interface{}) interface{} {
 	defer func() {
 		err := recover()
 		if err != nil {
-			gwlog.Error("MessagePackMsgPacker.convertToStringKeys failed while converting: %v", v)
+			gwlog.Errorf("MessagePackMsgPacker.convertToStringKeys failed while converting: %v", v)
 			panic(err)
 		}
 	}()

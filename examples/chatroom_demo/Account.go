@@ -15,7 +15,7 @@ type Account struct {
 
 // Register_Client 是处理玩家注册请求的RPC函数
 func (a *Account) Register_Client(username string, password string) {
-	gwlog.Debug("Register %s %s", username, password)
+	gwlog.Debugf("Register %s %s", username, password)
 	goworld.GetKVDB("password$"+username, func(val string, err error) {
 		if err != nil {
 			a.CallClient("ShowError", "服务器错误："+err.Error())
@@ -42,11 +42,11 @@ func (a *Account) Register_Client(username string, password string) {
 func (a *Account) Login_Client(username string, password string) {
 	if a.logining {
 		// logining
-		gwlog.Error("%s is already logining", a)
+		gwlog.Errorf("%s is already logining", a)
 		return
 	}
 
-	gwlog.Info("%s logining with username %s password %s ...", a, username, password)
+	gwlog.Infof("%s logining with username %s password %s ...", a, username, password)
 	a.logining = true
 	goworld.GetKVDB("password$"+username, func(correctPassword string, err error) {
 		if err != nil {
@@ -107,7 +107,7 @@ func (a *Account) OnClientDisconnected() {
 func (a *Account) OnMigrateIn() {
 	loginAvatarID := common.EntityID(a.Attrs.GetStr("loginAvatarID"))
 	avatar := goworld.GetEntity(loginAvatarID)
-	gwlog.Debug("%s migrating in, attrs=%v, loginAvatarID=%s, avatar=%v, client=%s", a, a.Attrs.ToMap(), loginAvatarID, avatar, a.GetClient())
+	gwlog.Debugf("%s migrating in, attrs=%v, loginAvatarID=%s, avatar=%v, client=%s", a, a.Attrs.ToMap(), loginAvatarID, avatar, a.GetClient())
 
 	if avatar != nil {
 		a.onAvatarEntityFound(avatar)

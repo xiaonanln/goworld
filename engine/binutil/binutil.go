@@ -16,15 +16,15 @@ import (
 func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 	if port == 0 {
 		// pprof not enabled
-		gwlog.Info("pprof server not enabled")
+		gwlog.Infof("pprof server not enabled")
 		return
 	}
 
 	httpHost := fmt.Sprintf("%s:%d", ip, port)
-	gwlog.Info("http server listening on %s", httpHost)
-	gwlog.Info("pprof http://%s/debug/pprof/ ... available commands: ", httpHost)
-	gwlog.Info("    go tool pprof http://%s/debug/pprof/heap", httpHost)
-	gwlog.Info("    go tool pprof http://%s/debug/pprof/profile", httpHost)
+	gwlog.Infof("http server listening on %s", httpHost)
+	gwlog.Infof("pprof http://%s/debug/pprof/ ... available commands: ", httpHost)
+	gwlog.Infof("    go tool pprof http://%s/debug/pprof/heap", httpHost)
+	gwlog.Infof("    go tool pprof http://%s/debug/pprof/profile", httpHost)
 
 	//http.Handle("/", http.FileServer(http.Dir(".")))
 	if wsHandler != nil {
@@ -38,7 +38,7 @@ func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 
 // SetupGWLog setup the GoWord log system
 func SetupGWLog(logLevel string, logFile string, logStderr bool) {
-	gwlog.Info("Set log level to %s", logLevel)
+	gwlog.Infof("Set log level to %s", logLevel)
 	gwlog.SetLevel(gwlog.StringToLevel(logLevel))
 
 	outputWriters := make([]io.Writer, 0, 2)

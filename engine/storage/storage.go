@@ -109,7 +109,7 @@ var recentWarnedQueueLen = 0
 func checkOperationQueueLen() {
 	qlen := operationQueue.Len()
 	if qlen > 100 && qlen%100 == 0 && recentWarnedQueueLen != qlen {
-		gwlog.Warn("Storage operation queue length = %d", qlen)
+		gwlog.Warnf("Storage operation queue length = %d", qlen)
 		recentWarnedQueueLen = qlen
 	}
 }
@@ -177,7 +177,7 @@ func storageRoutine() {
 	for {
 		err := assureStorageEngineReady()
 		if err != nil {
-			gwlog.Error("Storage engine is not ready: %s", err)
+			gwlog.Errorf("Storage engine is not ready: %s", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -193,11 +193,11 @@ func storageRoutine() {
 			monop = opmon.StartOperation("storage.save")
 			for {
 				if consts.DEBUG_SAVE_LOAD {
-					gwlog.Debug("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
+					gwlog.Debugf("storage: SAVING %s %s ...", saveReq.TypeName, saveReq.EntityID)
 				}
 				err := assureStorageEngineReady()
 				if err != nil {
-					gwlog.Error("Storage engine is not ready: %s", err)
+					gwlog.Errorf("Storage engine is not ready: %s", err)
 					time.Sleep(time.Second) // wait for 1 second to retry
 					continue
 				}
@@ -209,7 +209,7 @@ func storageRoutine() {
 				err = storageEngine.Write(saveReq.TypeName, saveReq.EntityID, saveReq.Data)
 				if err != nil {
 					// save failed ?
-					gwlog.Error("storage: save failed: %s", err)
+					gwlog.Errorf("storage: save failed: %s", err)
 
 					if err != nil && storageEngine.IsEOF(err) {
 						storageEngine.Close()
@@ -229,7 +229,7 @@ func storageRoutine() {
 			}
 		} else if loadReq, ok := op.(loadRequest); ok {
 			// handle load request
-			gwlog.Debug("storage: LOADING %s %s ...", loadReq.TypeName, loadReq.EntityID)
+			gwlog.Debugf("storage: LOADING %s %s ...", loadReq.TypeName, loadReq.EntityID)
 			monop = opmon.StartOperation("storage.load")
 			data, err := storageEngine.Read(loadReq.TypeName, loadReq.EntityID)
 			if err != nil {

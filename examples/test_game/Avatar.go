@@ -26,13 +26,13 @@ func (a *Avatar) OnCreated() {
 
 	a.setDefaultAttrs()
 
-	gwlog.Info("Avatar %s on created: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
+	gwlog.Infof("Avatar %s on created: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
 
 	a.SetFilterProp("spaceKind", strconv.Itoa(a.GetInt("spaceKind")))
 	a.SetFilterProp("level", strconv.Itoa(a.GetInt("level")))
 	a.SetFilterProp("prof", strconv.Itoa(a.GetInt("prof")))
 
-	//gwlog.Debug("Found OnlineService: %s", onlineServiceEid)
+	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 
 	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
@@ -72,18 +72,18 @@ func (a *Avatar) enterSpace(spaceKind int) {
 		return
 	}
 	if consts.DEBUG_SPACES {
-		gwlog.Info("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
+		gwlog.Infof("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
 	}
 	a.CallService("SpaceService", "EnterSpace", a.ID, spaceKind)
 }
 
 // OnClientConnected is called when client is connected
 func (a *Avatar) OnClientConnected() {
-	//gwlog.Info("%s.OnClientConnected: current space = %s", a, a.Space)
+	//gwlog.Infof("%s.OnClientConnected: current space = %s", a, a.Space)
 	//a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
 	//a.Attrs.Set("testpop", 1)
 	//v := a.Attrs.Pop("testpop")
-	//gwlog.Info("Avatar pop testpop => %v", v)
+	//gwlog.Infof("Avatar pop testpop => %v", v)
 	//
 	//a.Attrs.Set("subattr", goworld.MapAttr())
 	//subattr := a.Attrs.GetMapAttr("subattr")
@@ -99,7 +99,7 @@ func (a *Avatar) OnClientConnected() {
 
 // OnClientDisconnected is called when client is lost
 func (a *Avatar) OnClientDisconnected() {
-	gwlog.Info("%s client disconnected", a)
+	gwlog.Infof("%s client disconnected", a)
 	a.Destroy()
 }
 
@@ -126,7 +126,7 @@ func (a *Avatar) randomPosition() entity.Position {
 // OnEnterSpace is called when avatar enters a space
 func (a *Avatar) OnEnterSpace() {
 	if consts.DEBUG_SPACES {
-		gwlog.Info("%s ENTER SPACE %s", a, a.Space)
+		gwlog.Infof("%s ENTER SPACE %s", a, a.Space)
 	}
 }
 
@@ -162,9 +162,9 @@ func (a *Avatar) GetMails_Client() {
 
 // OnGetMails is called by MailService to send mails to avatar
 func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
-	//gwlog.Info("%s.OnGetMails: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
+	//gwlog.Infof("%s.OnGetMails: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
 	if lastMailID != a.GetInt("lastMailID") {
-		gwlog.Warn("%s.OnGetMails: lastMailID mismatch: local=%v, return=%v", a, a.GetInt("lastMailID"), lastMailID)
+		gwlog.Warnf("%s.OnGetMails: lastMailID mismatch: local=%v, return=%v", a, a.GetInt("lastMailID"), lastMailID)
 		a.CallClient("OnGetMails", false)
 		return
 	}
@@ -177,7 +177,7 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 			gwlog.Panicf("mail ID should be increasing")
 		}
 		if mailsAttr.HasKey(strconv.Itoa(mailId)) {
-			gwlog.Error("mail %d received multiple times", mailId)
+			gwlog.Errorf("mail %d received multiple times", mailId)
 			continue
 		}
 		mail := typeconv.String(item[1])
@@ -190,7 +190,7 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 
 // Say_Client is client RPC for chatting
 func (a *Avatar) Say_Client(channel string, content string) {
-	gwlog.Debug("Say @%s: %s", channel, content)
+	gwlog.Debugf("Say @%s: %s", channel, content)
 	if channel == "world" {
 		a.CallFitleredClients("online", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
 	} else if channel == "prof" {
@@ -203,6 +203,6 @@ func (a *Avatar) Say_Client(channel string, content string) {
 
 // Move_Client is client RPC for moving
 func (a *Avatar) Move_Client(pos entity.Position) {
-	gwlog.Debug("Move from %s -> %s", a.GetPosition(), pos)
+	gwlog.Debugf("Move from %s -> %s", a.GetPosition(), pos)
 	a.SetPosition(pos)
 }

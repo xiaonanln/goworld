@@ -22,7 +22,7 @@ type mongoKVDB struct {
 
 // OpenMongoKVDB opens mongodb as KVDB engine
 func OpenMongoKVDB(url string, dbname string, collectionName string) (kvdbtypes.KVDBEngine, error) {
-	gwlog.Debug("Connecting MongoDB ...")
+	gwlog.Debugf("Connecting MongoDB ...")
 	session, err := mgo.Dial(url)
 	if err != nil {
 		return nil, err

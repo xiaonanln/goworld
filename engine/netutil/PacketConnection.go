@@ -49,7 +49,7 @@ func init() {
 		compressWritersPool.Put(cw)
 	}
 
-	gwlog.Info("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
+	gwlog.Infof("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
 }
 
 type _ErrRecvAgain struct{}
@@ -105,7 +105,7 @@ func (pc *PacketConnection) NewPacket() *Packet {
 // SendPacket send packets to remote
 func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
+		gwlog.Debugf("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
 			packetEndian.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
 			packet.GetPayloadLen(),
 			packet.bytes[_PREPAYLOAD_SIZE+2:_PREPAYLOAD_SIZE+packet.GetPayloadLen()])
@@ -147,7 +147,7 @@ func (pc *PacketConnection) Flush() (err error) {
 				cw = _cw.(*flate.Writer)
 				defer compressWritersPool.Put(cw)
 			} else {
-				gwlog.Warn("Fail to get compressor, packet is not compressed")
+				gwlog.Warnf("Fail to get compressor, packet is not compressed")
 			}
 		}
 
@@ -173,7 +173,7 @@ send_packets_loop:
 				//noinspection GoDeferInLoop
 				defer compressWritersPool.Put(cw)
 			} else {
-				gwlog.Warn("Fail to get compressor, packet is not compressed")
+				gwlog.Warnf("Fail to get compressor, packet is not compressed")
 			}
 		}
 

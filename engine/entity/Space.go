@@ -67,7 +67,7 @@ func (space *Space) OnCreated() {
 	}
 
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.OnCreated", space)
+		gwlog.Debugf("%s.OnCreated", space)
 	}
 	gwutils.RunPanicless(space.I.OnSpaceCreated)
 }
@@ -87,7 +87,7 @@ func (space *Space) onSpaceCreated() {
 		}
 		nilSpace = space
 		nilSpace.Space = nilSpace
-		gwlog.Info("Created nil space: %s", nilSpace)
+		gwlog.Infof("Created nil space: %s", nilSpace)
 		return
 	}
 }
@@ -97,7 +97,7 @@ func (space *Space) onSpaceCreated() {
 // Custom space type can override to provide custom logic
 func (space *Space) OnSpaceCreated() {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("Space %s created", space)
+		gwlog.Debugf("Space %s created", space)
 	}
 }
 
@@ -117,7 +117,7 @@ func (space *Space) OnDestroy() {
 // Custom space type can override to provide custom logic
 func (space *Space) OnSpaceDestroy() {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("Space %s created", space)
+		gwlog.Debugf("Space %s created", space)
 	}
 }
 
@@ -140,7 +140,7 @@ func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Po
 
 func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))
+		gwlog.Debugf("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))
 	}
 
 	if entity.Space != nilSpace {
@@ -161,7 +161,7 @@ func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
 		entity.client.sendCreateEntity(&space.Entity, false) // create Space entity before every other entities
 
 		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
-		// gwlog.Info("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
+		// gwlog.Infof("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
 
 		for _, naoi := range enter {
 			neighbor := naoi.getEntity()
@@ -263,7 +263,7 @@ func (space *Space) move(entity *Entity, newPos Position) {
 // Custom space type can override this function
 func (space *Space) OnEntityEnterSpace(entity *Entity) {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s ENTER SPACE %s", entity, space)
+		gwlog.Debugf("%s ENTER SPACE %s", entity, space)
 	}
 }
 
@@ -272,7 +272,7 @@ func (space *Space) OnEntityEnterSpace(entity *Entity) {
 // Custom space type can override this function
 func (space *Space) OnEntityLeaveSpace(entity *Entity) {
 	if consts.DEBUG_SPACES {
-		gwlog.Debug("%s LEAVE SPACE %s", entity, space)
+		gwlog.Debugf("%s LEAVE SPACE %s", entity, space)
 	}
 }
 

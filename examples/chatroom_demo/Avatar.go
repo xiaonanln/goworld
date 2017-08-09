@@ -53,7 +53,7 @@ func (a *Avatar) SendChat_Client(text string) {
 
 // enterRoom 进入一个聊天室，本质上就是设置Filter属性
 func (a *Avatar) enterRoom(name string) {
-	gwlog.Debug("%s enter room %s", a, name)
+	gwlog.Debugf("%s enter room %s", a, name)
 	a.SetFilterProp("chatroom", name)
 	a.Attrs.Set("chatroom", name)
 }

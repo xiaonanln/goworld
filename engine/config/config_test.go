@@ -15,7 +15,7 @@ import (
 
 func TestLoad(t *testing.T) {
 	config := Get()
-	gwlog.Debug("goworld config: \n%s", config)
+	gwlog.Debugf("goworld config: \n%s", config)
 	if config == nil {
 		t.FailNow()
 	}
@@ -34,13 +34,13 @@ func TestLoad(t *testing.T) {
 		}
 	}
 
-	gwlog.Info("read goworld config: %v", config)
+	gwlog.Infof("read goworld config: %v", config)
 }
 
 func TestReload(t *testing.T) {
 	config := Get()
 	config = Reload()
-	gwlog.Debug("goworld config: \n%s", config)
+	gwlog.Debugf("goworld config: \n%s", config)
 }
 
 func TestGetDispatcher(t *testing.T) {
@@ -53,9 +53,9 @@ func TestGetGame(t *testing.T) {
 	for id := 1; id <= 10; id++ {
 		cfg := GetGame(uint16(id))
 		if cfg == nil {
-			gwlog.Info("Game %d not found", id)
+			gwlog.Infof("Game %d not found", id)
 		} else {
-			gwlog.Info("Game %d config: %v", id, cfg)
+			gwlog.Infof("Game %d config: %v", id, cfg)
 		}
 	}
 }
@@ -65,7 +65,7 @@ func TestGetStorage(t *testing.T) {
 	if cfg == nil {
 		t.Errorf("storage config not found")
 	}
-	gwlog.Info("storage config:")
+	gwlog.Infof("storage config:")
 	fmt.Fprintf(os.Stderr, "%s\n", DumpPretty(cfg))
 }
 

@@ -47,7 +47,7 @@ var (
 
 			if consts.DEBUG_PACKET_ALLOC {
 				atomic.AddInt64(&debugInfo.NewCount, 1)
-				gwlog.Info("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
+				gwlog.Infof("DEBUG PACKETS: ALLOC=%d, RELEASE=%d, NEW=%d",
 					atomic.LoadInt64(&debugInfo.AllocCount),
 					atomic.LoadInt64(&debugInfo.ReleaseCount),
 					atomic.LoadInt64(&debugInfo.NewCount))
@@ -415,7 +415,7 @@ func (p *Packet) AppendData(msg interface{}) {
 // ReadData reads one data of any type from the beginning of unread payload
 func (p *Packet) ReadData(msg interface{}) {
 	b := p.ReadVarBytes()
-	//gwlog.Info("ReadData: %s", string(b))
+	//gwlog.Infof("ReadData: %s", string(b))
 	err := MSG_PACKER.UnpackMsg(b, msg)
 	if err != nil {
 		gwlog.Panic(err)
@@ -508,8 +508,8 @@ func (p *Packet) compress(cw *flate.Writer) {
 	compressedPayload := w.Bytes()
 	compressedPayloadLen := len(compressedPayload)
 
-	//gwlog.Info("COMPRESS %v => %v", oldPayload, compressedPayload)
-	//gwlog.Info("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
+	//gwlog.Infof("COMPRESS %v => %v", oldPayload, compressedPayload)
+	//gwlog.Infof("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
 	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
 
 	if compressedPayloadLen >= oldPayloadLen-4 { // leave 4 bytes for AppendUint32 in the last
@@ -552,8 +552,8 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 	//	gwlog.Panic(errors.Wrap(err, "close uncompressor failed"))
 	//}
 
-	//gwlog.Info("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
-	//gwlog.Info("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
+	//gwlog.Infof("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
+	//gwlog.Infof("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
 	if oldPayloadCap != _MIN_PAYLOAD_CAP {
 		packetBufferPools[oldPayloadCap].Put(p.bytes)
 	}

@@ -25,7 +25,7 @@ type mongoDBEntityStorge struct {
 
 // OpenMongoDB opens mongodb as entity storage
 func OpenMongoDB(url string, dbname string) (storagecommon.EntityStorage, error) {
-	gwlog.Debug("Connecting MongoDB ...")
+	gwlog.Debugf("Connecting MongoDB ...")
 	session, err := mgo.Dial(url)
 	if err != nil {
 		return nil, err

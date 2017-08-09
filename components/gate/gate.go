@@ -16,7 +16,7 @@ import (
 
 	"syscall"
 
-	"github.com/xiaonanln/goworld/components/binutil"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -54,7 +54,7 @@ func main() {
 
 	gateConfig := config.GetGate(gateid)
 	if gateConfig.GoMaxProcs > 0 {
-		gwlog.Info("SET GOMAXPROCS = %d", gateConfig.GoMaxProcs)
+		gwlog.Infof("SET GOMAXPROCS = %d", gateConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gateConfig.GoMaxProcs)
 	}
 	if logLevel == "" {
@@ -70,7 +70,7 @@ func main() {
 }
 
 func setupSignals() {
-	gwlog.Info("Setup signals ...")
+	gwlog.Infof("Setup signals ...")
 	signal.Ignore(syscall.Signal(10), syscall.Signal(12))
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -79,13 +79,13 @@ func setupSignals() {
 			sig := <-signalChan
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// terminating gate ...
-				gwlog.Info("Terminating gate service ...")
+				gwlog.Infof("Terminating gate service ...")
 				gateService.terminate()
 				gateService.terminated.Wait()
-				gwlog.Info("Gate %d terminated gracefully.", gateid)
+				gwlog.Infof("Gate %d terminated gracefully.", gateid)
 				os.Exit(0)
 			} else {
-				gwlog.Error("unexpected signal: %s", sig)
+				gwlog.Errorf("unexpected signal: %s", sig)
 			}
 		}
 	}()
@@ -108,15 +108,15 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 	})
 	qlen := gateService.packetQueue.Len()
 	if qlen >= 1000 && qlen%1000 == 0 && lastWarnGateServiceQueueLen != qlen {
-		gwlog.Warn("Gate service queue length = %d", qlen)
+		gwlog.Warnf("Gate service queue length = %d", qlen)
 		lastWarnGateServiceQueueLen = qlen
 	}
 }
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
-	//gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
+	//gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
 	// if gate is disconnected from dispatcher, we just quit
-	gwlog.Info("Disconnected from dispatcher, gate has to quit.")
+	gwlog.Infof("Disconnected from dispatcher, gate has to quit.")
 	signalChan <- syscall.SIGTERM // let gate quit
 }
 

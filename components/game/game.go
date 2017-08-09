@@ -17,7 +17,7 @@ import (
 
 	"syscall"
 
-	"github.com/xiaonanln/goworld/components/binutil"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
@@ -65,12 +65,12 @@ func Run(delegate IGameDelegate) {
 
 	gameConfig := config.GetGame(gameid)
 	if gameConfig == nil {
-		gwlog.Error("game %d's config is not found", gameid)
+		gwlog.Errorf("game %d's config is not found", gameid)
 		os.Exit(1)
 	}
 
 	if gameConfig.GoMaxProcs > 0 {
-		gwlog.Info("SET GOMAXPROCS = %d", gameConfig.GoMaxProcs)
+		gwlog.Infof("SET GOMAXPROCS = %d", gameConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gameConfig.GoMaxProcs)
 	}
 	if logLevel == "" {
@@ -96,7 +96,7 @@ func Run(delegate IGameDelegate) {
 }
 
 func setupSignals() {
-	gwlog.Info("Setup signals ...")
+	gwlog.Infof("Setup signals ...")
 	signal.Ignore(syscall.Signal(12))
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.Signal(10))
 
@@ -105,26 +105,26 @@ func setupSignals() {
 			sig := <-signalChan
 			if sig == syscall.SIGTERM {
 				// terminating game ...
-				gwlog.Info("Terminating game service ...")
+				gwlog.Infof("Terminating game service ...")
 				gameService.terminate()
 				waitGameServiceStateSatisfied(func(rs int) bool {
 					return rs != rsTerminating
 				})
 				if gameService.runState.Load() != rsTerminated {
 					// game service is not terminated successfully, abort
-					gwlog.Error("Game service is not terminated successfully, back to running ...")
+					gwlog.Errorf("Game service is not terminated successfully, back to running ...")
 					continue
 				}
 
 				waitKVDBFinish()
 				waitEntityStorageFinish()
 
-				gwlog.Info("Game %d shutdown gracefully.", gameid)
+				gwlog.Infof("Game %d shutdown gracefully.", gameid)
 				os.Exit(0)
 			} else if sig == syscall.Signal(10) || sig == syscall.SIGINT {
 				// SIGUSR1 => dump game and close
 				// freezing game ...
-				gwlog.Info("Freezing game service ...")
+				gwlog.Infof("Freezing game service ...")
 
 				gameService.freeze()
 				waitGameServiceStateSatisfied(func(rs int) bool { // wait until not running
@@ -136,17 +136,17 @@ func setupSignals() {
 
 				if gameService.runState.Load() != rsFreezed {
 					// game service is not freezed successfully, abort
-					gwlog.Error("Game service is not freezed successfully, back to running ...")
+					gwlog.Errorf("Game service is not freezed successfully, back to running ...")
 					continue
 				}
 
 				waitKVDBFinish()
 				waitEntityStorageFinish()
 
-				gwlog.Info("Game %d freezed gracefully.", gameid)
+				gwlog.Infof("Game %d freezed gracefully.", gameid)
 				os.Exit(0)
 			} else {
-				gwlog.Error("unexpected signal: %s", sig)
+				gwlog.Errorf("unexpected signal: %s", sig)
 			}
 		}
 	}()
@@ -155,7 +155,7 @@ func setupSignals() {
 func waitGameServiceStateSatisfied(s func(rs int) bool) {
 	for {
 		state := gameService.runState.Load()
-		gwlog.Info("game service status: %d", state)
+		gwlog.Infof("game service status: %d", state)
 		if s(state) {
 			break
 		}
@@ -165,17 +165,17 @@ func waitGameServiceStateSatisfied(s func(rs int) bool) {
 
 func waitKVDBFinish() {
 	// wait until kvdb's queue is empty
-	gwlog.Info("Closing KVDB ...")
+	gwlog.Infof("Closing KVDB ...")
 	kvdb.Close()
 	kvdb.WaitTerminated()
 }
 
 func waitEntityStorageFinish() {
 	// wait until entity storage's queue is empty
-	gwlog.Info("Closing Entity Storage ...")
+	gwlog.Infof("Closing Entity Storage ...")
 	storage.Close()
 	storage.WaitTerminated()
-	gwlog.Info("*** DB OK ***")
+	gwlog.Infof("*** DB OK ***")
 }
 
 type dispatcherClientDelegate struct {
@@ -211,7 +211,7 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype p
 }
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
-	gwlog.Error("Disconnected from dispatcher, try reconnecting ...")
+	gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
 }
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {

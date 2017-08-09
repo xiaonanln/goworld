@@ -128,5 +128,5 @@ func runServe(f reflect.Value, args []reflect.Value) {
 	}()
 
 	rets := f.Call(args)
-	gwlog.Debug("ServeForever: func %v returns %v", f, rets)
+	gwlog.Debugf("ServeForever: func %v returns %v", f, rets)
 }

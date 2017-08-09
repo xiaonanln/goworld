@@ -53,7 +53,7 @@ func newGateService() *GateService {
 
 func (gs *GateService) run() {
 	cfg := config.GetGate(gateid)
-	gwlog.Info("Compress connection: %v", cfg.CompressConnection)
+	gwlog.Infof("Compress connection: %v", cfg.CompressConnection)
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 	netutil.ServeForever(gs.handlePacketRoutine)
@@ -73,7 +73,7 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 }
 
 func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
-	gwlog.Debug("WebSocket Connection: %s", wsConn.RemoteAddr())
+	gwlog.Debugf("WebSocket Connection: %s", wsConn.RemoteAddr())
 	//var conn netutil.Connection = NewWebSocketConn(wsConn)
 	wsConn.PayloadType = websocket.BinaryFrame
 	gs.handleClientConnection(wsConn)
@@ -96,7 +96,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn) {
 
 	dispatcherclient.GetDispatcherClientForSend().SendNotifyClientConnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.ServeTCPConnection: client %s connected", gs, cp)
+		gwlog.Debugf("%s.ServeTCPConnection: client %s connected", gs, cp)
 	}
 	cp.serve()
 }
@@ -111,7 +111,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 		ft := gs.filterTrees[key]
 		if ft != nil {
 			if consts.DEBUG_FILTER_PROP {
-				gwlog.Debug("DROP CLIENT %s FILTER PROP: %s = %s", cp, key, val)
+				gwlog.Debugf("DROP CLIENT %s FILTER PROP: %s = %s", cp, key, val)
 			}
 			ft.Remove(cp.clientid, val)
 		}
@@ -120,14 +120,14 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 
 	dispatcherclient.GetDispatcherClientForSend().SendNotifyClientDisconnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.onClientProxyClose: client %s disconnected", gs, cp)
+		gwlog.Debugf("%s.onClientProxyClose: client %s disconnected", gs, cp)
 	}
 }
 
 // HandleDispatcherClientPacket handles packets received by dispatcher client
 func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.HandleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())
+		gwlog.Debugf("%s.HandleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())
 	}
 
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
@@ -164,7 +164,7 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType, packe
 }
 
 func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packet *netutil.Packet) {
-	gwlog.Debug("%s.handleSetClientFilterProp: clientproxy=%s", gs, clientproxy)
+	gwlog.Debugf("%s.handleSetClientFilterProp: clientproxy=%s", gs, clientproxy)
 	key := packet.ReadVarStr()
 	val := packet.ReadVarStr()
 	clientid := clientproxy.clientid
@@ -179,7 +179,7 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	oldVal, ok := clientproxy.filterProps[key]
 	if ok {
 		if consts.DEBUG_FILTER_PROP {
-			gwlog.Debug("REMOVE CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
+			gwlog.Debugf("REMOVE CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
 		}
 		ft.Remove(clientid, oldVal)
 	}
@@ -188,12 +188,12 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debug("SET CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
+		gwlog.Debugf("SET CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
 	}
 }
 
 func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, packet *netutil.Packet) {
-	gwlog.Debug("%s.handleClearClientFilterProps: clientproxy=%s", gs, clientproxy)
+	gwlog.Debugf("%s.handleClearClientFilterProps: clientproxy=%s", gs, clientproxy)
 	clientid := clientproxy.clientid
 
 	gs.filterTreesLock.Lock()
@@ -208,7 +208,7 @@ func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, pa
 	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debug("CLEAR CLIENT %s FILTER PROPS", clientproxy)
+		gwlog.Debugf("CLEAR CLIENT %s FILTER PROPS", clientproxy)
 	}
 }
 
@@ -291,9 +291,9 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 		gwlog.Panicf("%s.handleDispatcherClientBeforeFlush: entity sync info size should be %d, but received %d", gs, proto.SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
 	}
 
-	//gwlog.Info("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))
+	//gwlog.Infof("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))
 	for _, syncPkt := range pendingSyncPackets[1:] { // merge other packets to the first packet
-		//gwlog.Info("sycn packet unread %d", len(syncPkt.UnreadPayload()))
+		//gwlog.Infof("sycn packet unread %d", len(syncPkt.UnreadPayload()))
 		packet.AppendBytes(syncPkt.UnreadPayload())
 		syncPkt.Release()
 	}

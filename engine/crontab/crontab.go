@@ -133,7 +133,7 @@ func (h Handle) Unregister() {
 
 func unregisterCancelledHandles() {
 	for _, h := range cancelledHandles {
-		gwlog.Debug("unregisterCancelledHandles: cancelling %d", h)
+		gwlog.Debugf("unregisterCancelledHandles: cancelling %d", h)
 		delete(entries, h)
 	}
 	cancelledHandles = nil
@@ -151,7 +151,7 @@ func Initialize() {
 	}
 
 	d -= time.Nanosecond * time.Duration(now.Nanosecond())
-	gwlog.Debug("current time is %s, will setup repeat time after %s", now, d)
+	gwlog.Debugf("current time is %s, will setup repeat time after %s", now, d)
 	timer.AddCallback(d, func() {
 		setupRepeatTimer()
 		check()
@@ -162,7 +162,7 @@ func check() {
 	unregisterCancelledHandles()
 
 	now := time.Now()
-	gwlog.Debug("Crontab: checking %d callbacks ...", len(entries))
+	gwlog.Debugf("Crontab: checking %d callbacks ...", len(entries))
 	dayofweek, month, day, hour, minute := now.Weekday(), now.Month(), now.Day(), now.Hour(), now.Minute()
 
 	for _, entry := range entries {
@@ -175,7 +175,7 @@ func check() {
 }
 
 func setupRepeatTimer() {
-	gwlog.Debug("Crontab: setup repeat timer at time %s", time.Now())
+	gwlog.Debugf("Crontab: setup repeat timer at time %s", time.Now())
 	timer.AddTimer(time.Minute, check)
 }
 

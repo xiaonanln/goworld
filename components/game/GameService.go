@@ -82,7 +82,7 @@ func (gs *_GameService) run(restore bool) {
 func (gs *_GameService) serveRoutine() {
 	cfg := config.GetGame(gameid)
 	gs.config = cfg
-	gwlog.Info("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
+	gwlog.Infof("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
 	ticker := time.Tick(consts.GAME_SERVICE_TICK_INTERVAL)
 	// here begins the main loop of Game
@@ -183,7 +183,7 @@ func (gs *_GameService) doTerminate() {
 
 	// destroy all entities
 	entity.OnGameTerminating()
-	gwlog.Info("All entities saved & destroyed, game service terminated.")
+	gwlog.Infof("All entities saved & destroyed, game service terminated.")
 	gs.runState.Store(rsTerminated)
 
 	for {
@@ -223,14 +223,14 @@ func (gs *_GameService) doFreeze() {
 
 	err := freeze()
 	if err != nil {
-		gwlog.Error("Game freeze failed: %s", err)
+		gwlog.Errorf("Game freeze failed: %s", err)
 		kvdb.Initialize() // restore kvdb module
 		gs.runState.Store(rsRunning)
 		return
 	}
 
 	gs.runState.Store(rsFreezed)
-	gwlog.Info("All entities saved & freezed, game service terminated.")
+	gwlog.Infof("All entities saved & freezed, game service terminated.")
 	for {
 		time.Sleep(time.Second)
 	}
@@ -259,14 +259,14 @@ func (gs *_GameService) String() string {
 
 func (gs *_GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.handleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
+		gwlog.Debugf("%s.handleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
 	}
 	entity.CreateEntityLocally(typeName, data, nil)
 }
 
 func (gs *_GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.handleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
+		gwlog.Debugf("%s.handleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
 	}
 	entity.LoadEntityLocally(typeName, entityID)
 }
@@ -274,7 +274,7 @@ func (gs *_GameService) HandleLoadEntityAnywhere(typeName string, entityID commo
 func (gs *_GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.handleDeclareService: %s declares %s", gs, entityID, serviceName)
+		gwlog.Debugf("%s.handleDeclareService: %s declares %s", gs, entityID, serviceName)
 	}
 	entity.OnDeclareService(serviceName, entityID)
 }
@@ -282,14 +282,14 @@ func (gs *_GameService) HandleDeclareService(entityID common.EntityID, serviceNa
 func (gs *_GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
+		gwlog.Debugf("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
 	}
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
 func (gs *_GameService) HandleNotifyAllGamesConnected() {
 	// all games are connected
-	gwlog.Info("All games connected.")
+	gwlog.Infof("All games connected.")
 	gs.gameDelegate.OnGameReady()
 }
 
@@ -298,12 +298,12 @@ func (gs *_GameService) HandleGateDisconnected(gateid uint16) {
 }
 
 func (gs *_GameService) HandleStartFreezeGameAck() {
-	gwlog.Info("Start freeze game ACK received, start freezing ...")
+	gwlog.Infof("Start freeze game ACK received, start freezing ...")
 	gs.runState.Store(rsFreezing)
 }
 
 func (gs *_GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
-	//gwlog.Info("handleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
+	//gwlog.Infof("handleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
 	payload := pkt.UnreadPayload()
 	payloadLen := len(payload)
 	for i := 0; i < payloadLen; i += proto.SYNC_INFO_SIZE_PER_ENTITY + common.ENTITYID_LENGTH {
@@ -318,7 +318,7 @@ func (gs *_GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 
 func (gs *_GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.handleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
+		gwlog.Debugf("%s.handleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	}
 	entity.OnCall(entityID, method, args, clientid)
 }
@@ -326,7 +326,7 @@ func (gs *_GameService) HandleCallEntityMethod(entityID common.EntityID, method 
 func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, gid uint16) {
 	client := entity.MakeGameClient(clientid, gid)
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.handleNotifyClientConnected: %s", gs, client)
+		gwlog.Debugf("%s.handleNotifyClientConnected: %s", gs, client)
 	}
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
@@ -335,7 +335,7 @@ func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, gi
 
 func (gs *_GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debug("%s.handleNotifyClientDisconnected: %s", gs, clientid)
+		gwlog.Debugf("%s.handleNotifyClientDisconnected: %s", gs, clientid)
 	}
 	// find the owner of the client, and notify lose client
 	entity.OnClientDisconnected(clientid)
@@ -347,7 +347,7 @@ func (gs *_GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 	spaceLoc := pkt.ReadUint16()
 
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("Entity %s is migrating to space %s at game %d", eid, spaceid, spaceLoc)
+		gwlog.Debugf("Entity %s is migrating to space %s at game %d", eid, spaceid, spaceLoc)
 	}
 
 	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)
@@ -374,7 +374,7 @@ func (gs *_GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	pkt.ReadData(&migrateData)
 	timerData := pkt.ReadVarBytes()
 	if consts.DEBUG_PACKETS {
-		gwlog.Debug("%s.handleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, timerData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, timerData, clientid, clientsrv)
+		gwlog.Debugf("%s.handleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, timerData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, timerData, clientid, clientsrv)
 	}
 
 	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)

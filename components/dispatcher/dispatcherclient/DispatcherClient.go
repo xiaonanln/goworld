@@ -23,7 +23,7 @@ func newDispatcherClient(conn net.Conn, autoFlush bool) *DispatcherClient {
 	}
 	if autoFlush {
 		go func() {
-			defer gwlog.Debug("%s: auto flush routine quited", gwc)
+			defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 			for !gwc.IsClosed() {
 				time.Sleep(time.Millisecond * 10)
 				dispatcherClientDelegate.HandleDispatcherClientBeforeFlush()

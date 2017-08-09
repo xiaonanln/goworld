@@ -13,5 +13,5 @@ type GameDelegate struct {
 
 // OnGameReady is called when game is ready
 func (gd *GameDelegate) OnGameReady() {
-	gwlog.Info("game %d is ready.", gameid)
+	gwlog.Infof("game %d is ready.", gameid)
 }

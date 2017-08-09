@@ -40,7 +40,7 @@ func (es *FileSystemEntityStorage) Write(typeName string, entityID common.Entity
 	}
 
 	if consts.DEBUG_SAVE_LOAD {
-		gwlog.Debug("Saving to file %s: %s", stringSaveFile, string(dataBytes))
+		gwlog.Debugf("Saving to file %s: %s", stringSaveFile, string(dataBytes))
 	}
 	return ioutil.WriteFile(stringSaveFile, dataBytes, 0644)
 }
@@ -86,7 +86,7 @@ func (es *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, err
 	for _, fpath := range files {
 		_, fn := filepath.Split(fpath)
 		if !strings.HasPrefix(fn, prefix) {
-			gwlog.Error("invalid file: %s", fpath)
+			gwlog.Errorf("invalid file: %s", fpath)
 		}
 		idbytes, err := base64.URLEncoding.DecodeString(fn[prefixLen:])
 		if err != nil {

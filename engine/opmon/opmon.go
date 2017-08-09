@@ -113,6 +113,6 @@ func (op *Operation) Finish(warnThreshold time.Duration) {
 	takeTime := time.Now().Sub(op.startTime)
 	monitor.record(op.name, takeTime)
 	if takeTime >= warnThreshold {
-		gwlog.Warn("opmon: operation %s takes %s > %s", op.name, takeTime, warnThreshold)
+		gwlog.Warnf("opmon: operation %s takes %s > %s", op.name, takeTime, warnThreshold)
 	}
 }

@@ -41,7 +41,7 @@ func Initialize() {
 		return
 	}
 
-	gwlog.Info("KVDB initializing, config:\n%s", config.DumpPretty(kvdbCfg))
+	gwlog.Infof("KVDB initializing, config:\n%s", config.DumpPretty(kvdbCfg))
 	kvdbOpQueue = xnsyncutil.NewSyncQueue()
 	kvdbTerminated = xnsyncutil.NewOneTimeCond()
 
@@ -131,7 +131,7 @@ var recentWarnedQueueLen = 0
 func checkOperationQueueLen() {
 	qlen := kvdbOpQueue.Len()
 	if qlen > 100 && qlen%100 == 0 && recentWarnedQueueLen != qlen {
-		gwlog.Warn("KVDB operation queue length = %d", qlen)
+		gwlog.Warnf("KVDB operation queue length = %d", qlen)
 		recentWarnedQueueLen = qlen
 	}
 }
@@ -140,7 +140,7 @@ func kvdbRoutine() {
 	for {
 		err := assureKVDBEngineReady()
 		if err != nil {
-			gwlog.Error("KVDB engine is not ready: %s", err)
+			gwlog.Errorf("KVDB engine is not ready: %s", err)
 			time.Sleep(time.Second)
 			continue
 		}

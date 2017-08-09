@@ -200,7 +200,7 @@ func RegisterEntity(typeName string, entityPtr IEntity, isPersistent bool, useAO
 		rpcDescs.visit(method)
 	}
 
-	gwlog.Debug(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
+	gwlog.Debugf(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 	return entityTypeDesc
 }
 
@@ -213,7 +213,7 @@ const (
 )
 
 func createEntity(typeName string, space *Space, pos Position, entityID common.EntityID, data map[string]interface{}, timerData []byte, client *GameClient, cause createCause) common.EntityID {
-	//gwlog.Debug("createEntity: %s in Space %s", typeName, space)
+	//gwlog.Debugf("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
@@ -268,7 +268,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID common.E
 		}
 	}
 
-	gwlog.Debug("Entity %s created, cause=%d, client=%s", entity, cause, client)
+	gwlog.Debugf("Entity %s created, cause=%d, client=%s", entity, cause, client)
 	if cause == ccCreate {
 		gwutils.RunPanicless(entity.I.OnCreated)
 	} else if cause == ccMigrate {
@@ -380,7 +380,7 @@ func OnCall(id common.EntityID, method string, args [][]byte, clientID common.Cl
 	e := entityManager.get(id)
 	if e == nil {
 		// entity not found, may destroyed before call
-		gwlog.Error("Entity %s is not found while calling %s%v", id, method, args)
+		gwlog.Errorf("Entity %s is not found while calling %s%v", id, method, args)
 		return
 	}
 
@@ -392,7 +392,7 @@ func OnSyncPositionYawFromClient(eid common.EntityID, x, y, z Coord, yaw Yaw) {
 	e := entityManager.get(eid)
 	if e == nil {
 		// entity not found, may destroyed before call
-		gwlog.Error("OnSyncPositionYawFromClient: entity %s is not found", eid)
+		gwlog.Errorf("OnSyncPositionYawFromClient: entity %s is not found", eid)
 		return
 	}
 
@@ -413,7 +413,7 @@ func OnGameTerminating() {
 
 // OnGateDisconnected is called when gate is down
 func OnGateDisconnected(gateid uint16) {
-	gwlog.Warn("Gate %d disconnected", gateid)
+	gwlog.Warnf("Gate %d disconnected", gateid)
 	entityManager.onGateDisconnected(gateid)
 }
 
@@ -494,7 +494,7 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
 				}
 				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, client, ccRestore)
-				gwlog.Info("Restored %s<%s> in space %s", typeName, eid, space)
+				gwlog.Infof("Restored %s<%s> in space %s", typeName, eid, space)
 
 				if info.ESR != nil { // entity was entering space before freeze, so restore entering space
 					post.Post(func() {

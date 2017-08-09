@@ -34,11 +34,11 @@ func (a Account) setAvatarID(username string, avatarID common.EntityID) {
 func (a *Account) Login_Client(username string, password string) {
 	if a.logining {
 		// logining
-		gwlog.Error("%s is already logining", a)
+		gwlog.Errorf("%s is already logining", a)
 		return
 	}
 
-	gwlog.Info("%s logining with username %s password %s ...", a, username, password)
+	gwlog.Infof("%s logining with username %s password %s ...", a, username, password)
 	if password != "123456" {
 		a.CallClient("OnLogin", false)
 		return
@@ -51,7 +51,7 @@ func (a *Account) Login_Client(username string, password string) {
 			gwlog.Panic(err)
 		}
 
-		gwlog.Debug("Username %s get avatar id = %s", username, avatarID)
+		gwlog.Debugf("Username %s get avatar id = %s", username, avatarID)
 		if avatarID.IsNil() {
 			// avatar not found, create new avatar
 			avatarID = goworld.CreateEntityLocally("Avatar")
@@ -92,7 +92,7 @@ func (a *Account) OnClientDisconnected() {
 func (a *Account) OnMigrateIn() {
 	loginAvatarID := common.EntityID(a.Attrs.GetStr("loginAvatarID"))
 	avatar := goworld.GetEntity(loginAvatarID)
-	gwlog.Debug("%s migrating in, attrs=%v, loginAvatarID=%s, avatar=%v, client=%s", a, a.Attrs.ToMap(), loginAvatarID, avatar, a.GetClient())
+	gwlog.Debugf("%s migrating in, attrs=%v, loginAvatarID=%s, avatar=%v, client=%s", a, a.Attrs.ToMap(), loginAvatarID, avatar, a.GetClient())
 
 	if avatar != nil {
 		a.onAvatarEntityFound(avatar)

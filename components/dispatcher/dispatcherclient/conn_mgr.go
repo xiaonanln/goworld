@@ -42,11 +42,11 @@ func setDispatcherClient(dc *DispatcherClient) { // atomic
 func assureConnectedDispatcherClient() *DispatcherClient {
 	var err error
 	dispatcherClient := getDispatcherClient()
-	//gwlog.Debug("assureConnectedDispatcherClient: _dispatcherClient", _dispatcherClient)
+	//gwlog.Debugf("assureConnectedDispatcherClient: _dispatcherClient", _dispatcherClient)
 	for dispatcherClient == nil || dispatcherClient.IsClosed() {
 		dispatcherClient, err = connectDispatchClient()
 		if err != nil {
-			gwlog.Error("Connect to dispatcher failed: %s", err.Error())
+			gwlog.Errorf("Connect to dispatcher failed: %s", err.Error())
 			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
@@ -55,7 +55,7 @@ func assureConnectedDispatcherClient() *DispatcherClient {
 		setDispatcherClient(dispatcherClient)
 		isReconnect = true
 
-		gwlog.Info("dispatcher_client: connected to dispatcher: %s", dispatcherClient)
+		gwlog.Infof("dispatcher_client: connected to dispatcher: %s", dispatcherClient)
 	}
 
 	return dispatcherClient
@@ -100,7 +100,7 @@ func GetDispatcherClientForSend() *DispatcherClient {
 
 // serve the dispatcher client, receive RESPs from dispatcher and process
 func serveDispatcherClient() {
-	gwlog.Debug("serveDispatcherClient: start serving dispatcher client ...")
+	gwlog.Debugf("serveDispatcherClient: start serving dispatcher client ...")
 	for {
 		dispatcherClient := assureConnectedDispatcherClient()
 		var msgtype proto.MsgType
@@ -119,7 +119,7 @@ func serveDispatcherClient() {
 		}
 
 		if consts.DEBUG_PACKETS {
-			gwlog.Debug("%s.RecvPacket: msgtype=%v, payload=%v", dispatcherClient, msgtype, pkt.Payload())
+			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dispatcherClient, msgtype, pkt.Payload())
 		}
 		dispatcherClientDelegate.HandleDispatcherClientPacket(msgtype, pkt)
 	}

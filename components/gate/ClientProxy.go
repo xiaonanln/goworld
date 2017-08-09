@@ -64,7 +64,7 @@ func (cp *ClientProxy) serve() {
 				os.Exit(2)
 			}
 		} else {
-			gwlog.Info("%s disconnected", cp)
+			gwlog.Infof("%s disconnected", cp)
 		}
 	}()
 

@@ -75,7 +75,7 @@ func (e *clientEntity) Destroy() {
 
 func (e *clientEntity) OnCreated() {
 	if !quiet {
-		gwlog.Debug("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
+		gwlog.Debugf("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
 	}
 	if !e.IsPlayer {
 		return
@@ -90,7 +90,7 @@ func (e *clientEntity) OnCreated() {
 }
 
 func (e *clientEntity) onAvatarCreated() {
-	gwlog.Info("Avatar created on pos %v yaw %v", e.pos, e.yaw)
+	gwlog.Infof("Avatar created on pos %v yaw %v", e.pos, e.yaw)
 }
 
 func (e *clientEntity) doSomethingLater() {
@@ -181,7 +181,7 @@ func (e *clientEntity) doSomething() {
 	e.currentThing = thing.Method
 	e.currentThingStartTime = time.Now()
 	e.currentTimeoutTimer = e.AddCallback(thing.Timeout, func() {
-		gwlog.Warn("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
+		gwlog.Warnf("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
 
 		e.currentThing = ""
 		e.currentThingStartTime = time.Time{}
@@ -190,14 +190,14 @@ func (e *clientEntity) doSomething() {
 		e.doSomethingLater()
 	})
 
-	gwlog.Debug("[%s] %s STARTS %s", e.currentThingStartTime, e, e.currentThing)
+	gwlog.Debugf("[%s] %s STARTS %s", e.currentThingStartTime, e, e.currentThing)
 	reflect.ValueOf(e).MethodByName(thing.Method).Call(nil)
 }
 
 func (e *clientEntity) notifyThingDone(thing string) {
 	if e.currentThing == thing {
 		now := time.Now()
-		//gwlog.Info("[%s] %s FINISHES %s, TAKES %s", now, e, thing, now.Sub(e.currentThingStartTime))
+		//gwlog.Infof("[%s] %s FINISHES %s, TAKES %s", now, e, thing, now.Sub(e.currentThingStartTime))
 		recordThingTime(thing, now.Sub(e.currentThingStartTime))
 
 		e.currentThing = ""
@@ -253,7 +253,7 @@ func (e *clientEntity) DoEnterRandomSpace() {
 
 func (e *clientEntity) DoSendMail() {
 	neighbors := e.Neighbors()
-	//gwlog.Info("Neighbors: %v", neighbors)
+	//gwlog.Infof("Neighbors: %v", neighbors)
 
 	receiver := e
 	if len(neighbors) > 0 {
@@ -294,7 +294,7 @@ func (e *clientEntity) DoSayInProfChannel() {
 
 func (e *clientEntity) OnSay(senderID common.EntityID, senderName string, channel string, content string) {
 	if channel == "world" && senderID == e.ID {
-		//gwlog.Info("%s %s @%s: %s", senderID, senderName, channel, content)
+		//gwlog.Infof("%s %s @%s: %s", senderID, senderName, channel, content)
 		e.notifyThingDone("DoSayInWorldChannel")
 	} else if channel == "prof" && senderID == e.ID {
 		e.notifyThingDone("DoSayInProfChannel")
@@ -307,7 +307,7 @@ func (e *clientEntity) DoTestListField() {
 
 func (e *clientEntity) OnTestListField(serverList []interface{}) {
 	clientList := e.Attrs["testListField"].([]interface{})
-	gwlog.Debug("OnTestListField: server=%v, client=%v", serverList, clientList)
+	gwlog.Debugf("OnTestListField: server=%v, client=%v", serverList, clientList)
 	if len(serverList) != len(clientList) {
 		gwlog.Panicf("Server list size is %d, but client list size is %d", len(serverList), len(clientList))
 	}
@@ -353,7 +353,7 @@ func (e *clientEntity) applyMapAttrDel(path []interface{}, key string) {
 }
 
 func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
-	gwlog.Debug("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
+	gwlog.Debugf("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 	attr[index] = val
@@ -361,7 +361,7 @@ func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val in
 }
 
 func (e *clientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
-	gwlog.Debug("applyListAttrAppend: path=%v, val=%v, attrs=%v", path, val, e.Attrs)
+	gwlog.Debugf("applyListAttrAppend: path=%v, val=%v, attrs=%v", path, val, e.Attrs)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 
@@ -374,7 +374,7 @@ func (e *clientEntity) applyListAttrAppend(path []interface{}, val interface{}) 
 	e.onAttrChange(path, "")
 }
 func (e *clientEntity) applyListAttrPop(path []interface{}) {
-	gwlog.Debug("applyListAttrPop: path=%v", path)
+	gwlog.Debugf("applyListAttrPop: path=%v", path)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 
@@ -398,7 +398,7 @@ func (e *clientEntity) onAttrChange(path []interface{}, key string) {
 	callbackFuncName := "OnAttrChange_" + rootkey
 	callbackMethod := reflect.ValueOf(e).MethodByName(callbackFuncName)
 	if !callbackMethod.IsValid() {
-		gwlog.Debug("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
+		gwlog.Debugf("Attribute change callback of %s is not defined (%s)", rootkey, callbackFuncName)
 		return
 	}
 	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
@@ -433,7 +433,7 @@ func (attrs clientAttrs) GetInt(key string) int {
 
 func (e *clientEntity) OnAttrChange_exp() {
 	if !quiet {
-		gwlog.Debug("%s: attr exp change to %d", e, e.Attrs.GetInt("exp"))
+		gwlog.Debugf("%s: attr exp change to %d", e, e.Attrs.GetInt("exp"))
 	}
 }
 
@@ -445,7 +445,7 @@ func (e *clientEntity) OnAttrChange_testpop() {
 		v = -1
 	}
 	if !quiet {
-		gwlog.Debug("%s: attr testpop change to %d", e, v)
+		gwlog.Debugf("%s: attr testpop change to %d", e, v)
 	}
 }
 
@@ -457,16 +457,16 @@ func (e *clientEntity) OnAttrChange_subattr() {
 		v = nil
 	}
 	if !quiet {
-		gwlog.Debug("%s: attr subattr change to %v", e, v)
+		gwlog.Debugf("%s: attr subattr change to %v", e, v)
 	}
 }
 
 func (e *clientEntity) OnLogin(ok bool) {
-	gwlog.Debug("%s OnLogin %v", e, ok)
+	gwlog.Debugf("%s OnLogin %v", e, ok)
 }
 
 func (e *clientEntity) OnSendMail(ok bool) {
-	gwlog.Debug("%s OnSendMail %v", e, ok)
+	gwlog.Debugf("%s OnSendMail %v", e, ok)
 	e.notifyThingDone("DoSendMail")
 }
 

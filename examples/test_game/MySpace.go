@@ -50,7 +50,7 @@ func (space *MySpace) OnEntityLeaveSpace(entity *entity.Entity) {
 
 func (space *MySpace) onAvatarLeaveSpace(entity *entity.Entity) {
 	if consts.DEBUG_SPACES {
-		gwlog.Info("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
+		gwlog.Infof("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
 	}
 	if space.CountEntities("Avatar") == 0 {
 		// no avatar left, start destroying space

@@ -10,7 +10,7 @@ import (
 
 	"os/signal"
 
-	"github.com/xiaonanln/goworld/components/binutil"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -50,10 +50,10 @@ func setupSignals() {
 
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// interrupting, quit dispatcher
-				gwlog.Info("Dispatcher quited.")
+				gwlog.Infof("Dispatcher quited.")
 				os.Exit(0)
 			} else {
-				gwlog.Info("unexcepted signal: %s", sig)
+				gwlog.Infof("unexcepted signal: %s", sig)
 			}
 		}
 	}()

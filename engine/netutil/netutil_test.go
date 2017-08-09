@@ -26,7 +26,7 @@ func (ts *testEchoTcpServer) ServeTCPConnection(conn net.Conn) {
 			if IsTemporaryNetError(err) {
 				continue
 			} else {
-				gwlog.Error("read error: %s", err.Error())
+				gwlog.Errorf("read error: %s", err.Error())
 				break
 			}
 		}
@@ -50,7 +50,7 @@ func TestPacketConnection(t *testing.T) {
 
 		for i := 0; i < 10; i++ {
 			var PAYLOAD_LEN uint32 = uint32(rand.Intn(4096 + 1))
-			gwlog.Info("Testing with payload %v", PAYLOAD_LEN)
+			gwlog.Infof("Testing with payload %v", PAYLOAD_LEN)
 
 			packet := conn.NewPacket()
 			for j := uint32(0); j < PAYLOAD_LEN; j++ {

@@ -37,7 +37,7 @@ func (ft *_FilterTree) Insert(id common.ClientID, val string) {
 }
 
 func (ft *_FilterTree) Remove(id common.ClientID, val string) {
-	//gwlog.Info("Removing %s %s has %v", id, val, ft.btree.Has(&filterTreeItem{
+	//gwlog.Infof("Removing %s %s has %v", id, val, ft.btree.Has(&filterTreeItem{
 	//	clientid: id,
 	//	val:      val,
 	//}))
