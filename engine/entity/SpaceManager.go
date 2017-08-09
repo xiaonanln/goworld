@@ -3,7 +3,7 @@ package entity
 import (
 	"reflect"
 
-	. "github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/common"
 )
 
 var (
@@ -12,12 +12,12 @@ var (
 )
 
 type SpaceManager struct {
-	spaces map[EntityID]*Space
+	spaces map[common.EntityID]*Space
 }
 
 func newSpaceManager() *SpaceManager {
 	return &SpaceManager{
-		spaces: map[EntityID]*Space{},
+		spaces: map[common.EntityID]*Space{},
 	}
 }
 
@@ -25,11 +25,11 @@ func (spmgr *SpaceManager) putSpace(space *Space) {
 	spmgr.spaces[space.ID] = space
 }
 
-func (spmgr *SpaceManager) delSpace(id EntityID) {
+func (spmgr *SpaceManager) delSpace(id common.EntityID) {
 	delete(spmgr.spaces, id)
 }
 
-func (spmgr *SpaceManager) getSpace(id EntityID) *Space {
+func (spmgr *SpaceManager) getSpace(id common.EntityID) *Space {
 	return spmgr.spaces[id]
 }
 

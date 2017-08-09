@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	SPACE_DESTROY_CHECK_INTERVAL = time.Minute * 5
+	_SPACE_DESTROY_CHECK_INTERVAL = time.Minute * 5
 )
 
 // MySpace is the custom space type
@@ -19,6 +19,7 @@ type MySpace struct {
 	destroyCheckTimer EntityTimerID
 }
 
+// OnSpaceCreated is called when the space is created
 func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
 	space.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
@@ -29,6 +30,7 @@ func (space *MySpace) OnSpaceCreated() {
 	}
 }
 
+// OnEntityEnterSpace is called when entity enters space
 func (space *MySpace) OnEntityEnterSpace(entity *Entity) {
 	if entity.TypeName == "Avatar" {
 		space.onAvatarEnterSpace(entity)
@@ -39,6 +41,7 @@ func (space *MySpace) onAvatarEnterSpace(entity *Entity) {
 	space.clearDestroyCheckTimer()
 }
 
+// OnEntityLeaveSpace is called when entity leaves space
 func (space *MySpace) OnEntityLeaveSpace(entity *Entity) {
 	if entity.TypeName == "Avatar" {
 		space.onAvatarLeaveSpace(entity)
@@ -60,9 +63,10 @@ func (space *MySpace) setDestroyCheckTimer() {
 		return
 	}
 
-	space.destroyCheckTimer = space.AddTimer(SPACE_DESTROY_CHECK_INTERVAL, "CheckForDestroy")
+	space.destroyCheckTimer = space.AddTimer(_SPACE_DESTROY_CHECK_INTERVAL, "CheckForDestroy")
 }
 
+// CheckForDestroy checks if the space should be destroyed
 func (space *MySpace) CheckForDestroy() {
 	avatarCount := space.CountEntities("Avatar")
 	if avatarCount != 0 {
@@ -81,6 +85,7 @@ func (space *MySpace) clearDestroyCheckTimer() {
 	space.destroyCheckTimer = 0
 }
 
+// ConfirmRequestDestroy is called by SpaceService to confirm that the space
 func (space *MySpace) ConfirmRequestDestroy(ok bool) {
 	if ok {
 		if space.CountEntities("Avatar") != 0 {
