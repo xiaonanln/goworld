@@ -15,28 +15,28 @@ import (
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
-type DispatcherClientProxy struct {
+type dispatcherClientProxy struct {
 	*proto.GoWorldConnection
 	owner  *DispatcherService
 	gameid uint16
 	gateid uint16
 }
 
-func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *DispatcherClientProxy {
+func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *dispatcherClientProxy {
 	conn := netutil.NetConnection{_conn}
 	//if consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY > 0 {
 	//	conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
 	//}
 	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn), false)
 
-	dcp := &DispatcherClientProxy{
+	dcp := &dispatcherClientProxy{
 		GoWorldConnection: gwc,
 		owner:             owner,
 	}
 	return dcp
 }
 
-func (dcp *DispatcherClientProxy) startAutoFlush() {
+func (dcp *dispatcherClientProxy) startAutoFlush() {
 	go func() {
 		gwc := dcp.GoWorldConnection
 		defer gwlog.Debug("%s: auto flush routine quited", gwc)
@@ -51,7 +51,7 @@ func (dcp *DispatcherClientProxy) startAutoFlush() {
 	}()
 }
 
-func (dcp *DispatcherClientProxy) serve() {
+func (dcp *dispatcherClientProxy) serve() {
 	// Serve the dispatcher client from server / gate
 	defer func() {
 		dcp.Close()
@@ -150,17 +150,17 @@ func (dcp *DispatcherClientProxy) serve() {
 	}
 }
 
-func (dcp *DispatcherClientProxy) String() string {
+func (dcp *dispatcherClientProxy) String() string {
 	if dcp.gameid > 0 {
-		return fmt.Sprintf("DispatcherClientProxy<game%d|%s>", dcp.gameid, dcp.RemoteAddr())
+		return fmt.Sprintf("dispatcherClientProxy<game%d|%s>", dcp.gameid, dcp.RemoteAddr())
 	} else if dcp.gateid > 0 {
-		return fmt.Sprintf("DispatcherClientProxy<gate%d|%s>", dcp.gateid, dcp.RemoteAddr())
+		return fmt.Sprintf("dispatcherClientProxy<gate%d|%s>", dcp.gateid, dcp.RemoteAddr())
 	} else {
-		return fmt.Sprintf("DispatcherClientProxy<%s>", dcp.RemoteAddr())
+		return fmt.Sprintf("dispatcherClientProxy<%s>", dcp.RemoteAddr())
 	}
 }
 
-func (dcp *DispatcherClientProxy) beforeFlush() {
+func (dcp *dispatcherClientProxy) beforeFlush() {
 	// Collect all entity sync infos to this game before flush
 	if dcp.gameid > 0 {
 		entitySyncInfos := dcp.owner.popEntitySyncInfosToGame(dcp.gameid)

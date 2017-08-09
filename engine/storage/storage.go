@@ -17,11 +17,11 @@ import (
 	"github.com/xiaonanln/goworld/engine/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/engine/storage/backend/mongodb"
 	"github.com/xiaonanln/goworld/engine/storage/backend/redis"
-	. "github.com/xiaonanln/goworld/engine/storage/storage_common"
+	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
 var (
-	storageEngine            EntityStorage
+	storageEngine            storagecommon.EntityStorage
 	operationQueue           = xnsyncutil.NewSyncQueue()
 	storageRoutineTerminated = xnsyncutil.NewOneTimeCond()
 )
@@ -50,10 +50,17 @@ type listEntityIDsRequest struct {
 	Callback ListCallbackFunc
 }
 
-type SaveCallbackFunc func()                            // SaveCallbackFunc is the callback type of storage Save
-type LoadCallbackFunc func(data interface{}, err error) // LoadCallbackFunc is the callback type of storage Load
-type ExistsCallbackFunc func(exists bool, err error)    // ExistsCallbackFunc is the callback type of storage Exists
-type ListCallbackFunc func([]common.EntityID, error)    // ListCallbackFunc is the callback type of storage List
+// SaveCallbackFunc is the callback type of storage Save
+type SaveCallbackFunc func()
+
+// LoadCallbackFunc is the callback type of storage Load
+type LoadCallbackFunc func(data interface{}, err error)
+
+// ExistsCallbackFunc is the callback type of storage Exists
+type ExistsCallbackFunc func(exists bool, err error)
+
+// ListCallbackFunc is the callback type of storage List
+type ListCallbackFunc func([]common.EntityID, error)
 
 // Save saves entity data to storage
 func Save(typeName string, entityID common.EntityID, data interface{}, callback SaveCallbackFunc) {
