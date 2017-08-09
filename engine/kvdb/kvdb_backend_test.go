@@ -13,15 +13,15 @@ import (
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
-func TestMongoBackend_Set(t *testing.T) {
-	testKVDBBackend_Set(t, openTestMongoKVDB(t))
+func TestMongoBackendSet(t *testing.T) {
+	testKVDBBackendSet(t, openTestMongoKVDB(t))
 }
 
-func TestRedisBackend_Set(t *testing.T) {
-	testKVDBBackend_Set(t, openTestRedisKVDB(t))
+func TestRedisBackendSet(t *testing.T) {
+	testKVDBBackendSet(t, openTestRedisKVDB(t))
 }
 
-func testKVDBBackend_Set(t *testing.T, kvdb KVDBEngine) {
+func testKVDBBackendSet(t *testing.T, kvdb KVDBEngine) {
 	val, err := kvdb.Get("__key_not_exists__")
 	if err != nil || val != "" {
 		t.Fatal(err)
@@ -47,15 +47,15 @@ func testKVDBBackend_Set(t *testing.T, kvdb KVDBEngine) {
 
 }
 
-func TestMongoBackend_Find(t *testing.T) {
-	testBackend_Find(t, openTestMongoKVDB(t))
+func TestMongoBackendFind(t *testing.T) {
+	testBackendFind(t, openTestMongoKVDB(t))
 }
 
-func TestRedisBackend_Find(t *testing.T) {
-	testBackend_Find(t, openTestRedisKVDB(t))
+func TestRedisBackendFind(t *testing.T) {
+	testBackendFind(t, openTestRedisKVDB(t))
 }
 
-func testBackend_Find(t *testing.T, kvdb KVDBEngine) {
+func testBackendFind(t *testing.T, kvdb KVDBEngine) {
 	beginKey := strconv.Itoa(1000 + rand.Intn(2000-1000))
 	if len(beginKey) != 4 {
 		t.Fatalf("wrong begin key: %s", beginKey)
@@ -72,7 +72,7 @@ func testBackend_Find(t *testing.T, kvdb KVDBEngine) {
 	it := kvdb.Find(beginKey, endKey)
 	oldKey := ""
 	beginKeyFound, endKeyFound := false, false
-	//println("testBackend_Find", beginKey, endKey)
+	//println("testBackendFind", beginKey, endKey)
 	for {
 		item, err := it.Next()
 		if err == io.EOF {
@@ -106,15 +106,15 @@ func testBackend_Find(t *testing.T, kvdb KVDBEngine) {
 	}
 }
 
-func BenchmarkMongoBackend_GetSet(b *testing.B) {
-	benchmarkBackend_GetSet(b, openTestMongoKVDB(b))
+func BenchmarkMongoBackendGetSet(b *testing.B) {
+	benchmarkBackendGetSet(b, openTestMongoKVDB(b))
 }
 
-func BenchmarkRedisBackend_GetSet(b *testing.B) {
-	benchmarkBackend_GetSet(b, openTestRedisKVDB(b))
+func BenchmarkRedisBackendGetSet(b *testing.B) {
+	benchmarkBackendGetSet(b, openTestRedisKVDB(b))
 }
 
-func benchmarkBackend_GetSet(b *testing.B, kvdb KVDBEngine) {
+func benchmarkBackendGetSet(b *testing.B, kvdb KVDBEngine) {
 	key := "testkey"
 
 	for i := 0; i < b.N; i++ {
@@ -131,15 +131,15 @@ func benchmarkBackend_GetSet(b *testing.B, kvdb KVDBEngine) {
 	}
 }
 
-func BenchmarkMongoBackend_Find(b *testing.B) {
-	benchmarkBackend_Find(b, openTestMongoKVDB(b))
+func BenchmarkMongoBackendFind(b *testing.B) {
+	benchmarkBackendFind(b, openTestMongoKVDB(b))
 }
 
 func BenchmarkRedisBackend_Find(b *testing.B) {
-	benchmarkBackend_Find(b, openTestRedisKVDB(b))
+	benchmarkBackendFind(b, openTestRedisKVDB(b))
 }
 
-func benchmarkBackend_Find(b *testing.B, kvdb KVDBEngine) {
+func benchmarkBackendFind(b *testing.B, kvdb KVDBEngine) {
 	var keys []string
 	for i := 1; i <= 10; i++ {
 		keys = append(keys, fmt.Sprintf("%03d", i))

@@ -12,8 +12,8 @@ type sendBuffer struct {
 	written int
 }
 
-// Allocate a new send buffer
-func NewSendBuffer() *sendBuffer {
+// newSendBuffer allocates a new send buffer
+func newSendBuffer() *sendBuffer {
 	return &sendBuffer{}
 }
 

@@ -89,7 +89,7 @@ type PacketConnection struct {
 func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 	pc := &PacketConnection{
 		conn:       conn,
-		sendBuffer: NewSendBuffer(),
+		sendBuffer: newSendBuffer(),
 		compressed: compressed,
 	}
 
