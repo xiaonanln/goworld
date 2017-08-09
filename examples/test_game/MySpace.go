@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/consts"
-	. "github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -14,9 +14,9 @@ const (
 
 // MySpace is the custom space type
 type MySpace struct {
-	Space // Space type should always inherit from entity.Space
+	entity.Space // Space type should always inherit from entity.Space
 
-	destroyCheckTimer EntityTimerID
+	destroyCheckTimer entity.EntityTimerID
 }
 
 // OnSpaceCreated is called when the space is created
@@ -26,29 +26,29 @@ func (space *MySpace) OnSpaceCreated() {
 
 	M := 10
 	for i := 0; i < M; i++ {
-		space.CreateEntity("Monster", Position{})
+		space.CreateEntity("Monster", entity.Position{})
 	}
 }
 
 // OnEntityEnterSpace is called when entity enters space
-func (space *MySpace) OnEntityEnterSpace(entity *Entity) {
+func (space *MySpace) OnEntityEnterSpace(entity *entity.Entity) {
 	if entity.TypeName == "Avatar" {
 		space.onAvatarEnterSpace(entity)
 	}
 }
 
-func (space *MySpace) onAvatarEnterSpace(entity *Entity) {
+func (space *MySpace) onAvatarEnterSpace(entity *entity.Entity) {
 	space.clearDestroyCheckTimer()
 }
 
 // OnEntityLeaveSpace is called when entity leaves space
-func (space *MySpace) OnEntityLeaveSpace(entity *Entity) {
+func (space *MySpace) OnEntityLeaveSpace(entity *entity.Entity) {
 	if entity.TypeName == "Avatar" {
 		space.onAvatarLeaveSpace(entity)
 	}
 }
 
-func (space *MySpace) onAvatarLeaveSpace(entity *Entity) {
+func (space *MySpace) onAvatarLeaveSpace(entity *entity.Entity) {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("Avatar %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Avatar"))
 	}

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goTimer"
-	. "github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -30,7 +30,7 @@ func (attrs clientAttrs) HasKey(key string) bool {
 type clientEntity struct {
 	owner    *ClientBot
 	TypeName string
-	ID       EntityID
+	ID       common.EntityID
 
 	Attrs     clientAttrs
 	IsPlayer  bool
@@ -45,7 +45,7 @@ type clientEntity struct {
 	currentTimeoutTimer   *timer.Timer
 }
 
-func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{},
+func newClientEntity(owner *ClientBot, typeName string, entityid common.EntityID, isPlayer bool, clientData map[string]interface{},
 	x, y, z entity.Coord, yaw entity.Yaw) *clientEntity {
 	e := &clientEntity{
 		owner:    owner,
@@ -292,7 +292,7 @@ func (e *clientEntity) DoSayInProfChannel() {
 	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
 }
 
-func (e *clientEntity) OnSay(senderID EntityID, senderName string, channel string, content string) {
+func (e *clientEntity) OnSay(senderID common.EntityID, senderName string, channel string, content string) {
 	if channel == "world" && senderID == e.ID {
 		//gwlog.Info("%s %s @%s: %s", senderID, senderName, channel, content)
 		e.notifyThingDone("DoSayInWorldChannel")

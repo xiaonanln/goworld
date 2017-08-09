@@ -171,7 +171,7 @@ type _Fataler interface {
 }
 
 func openTestMongoKVDB(f _Fataler) KVDBEngine {
-	kvdb, err := kvdb_mongo.OpenMongoKVDB("mongodb://127.0.0.1:27017/goworld", "goworld", "__kv__")
+	kvdb, err := kvdbmongo.OpenMongoKVDB("mongodb://127.0.0.1:27017/goworld", "goworld", "__kv__")
 	if err != nil {
 		f.Fatal(err)
 	}

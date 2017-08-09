@@ -1,4 +1,4 @@
-package kvdb_mongo
+package kvdbmongo
 
 import (
 	"gopkg.in/mgo.v2"
@@ -74,14 +74,13 @@ func (it *mongoKVIterator) Next() (kvdbtypes.KVItem, error) {
 			Key: doc["_id"],
 			Val: doc["_"],
 		}, nil
-	} else {
-		err := it.it.Close()
-		if err != nil {
-			return kvdbtypes.KVItem{}, err
-		} else {
-			return kvdbtypes.KVItem{}, io.EOF
-		}
 	}
+
+	err := it.it.Close()
+	if err != nil {
+		return kvdbtypes.KVItem{}, err
+	}
+	return kvdbtypes.KVItem{}, io.EOF
 }
 
 func (kvdb *mongoKVDB) Find(beginKey string, endKey string) kvdbtypes.Iterator {

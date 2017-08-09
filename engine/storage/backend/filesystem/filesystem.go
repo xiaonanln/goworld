@@ -53,9 +53,8 @@ func (es *FileSystemEntityStorage) Read(typeName string, entityID common.EntityI
 		if os.IsNotExist(err) {
 			// file not exist
 			return nil, nil
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 
 	var data interface{}

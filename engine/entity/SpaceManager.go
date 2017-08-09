@@ -11,32 +11,30 @@ var (
 	spaceType    reflect.Type
 )
 
-type SpaceManager struct {
+type _SpaceManager struct {
 	spaces map[common.EntityID]*Space
 }
 
-func newSpaceManager() *SpaceManager {
-	return &SpaceManager{
+func newSpaceManager() *_SpaceManager {
+	return &_SpaceManager{
 		spaces: map[common.EntityID]*Space{},
 	}
 }
 
-func (spmgr *SpaceManager) putSpace(space *Space) {
+func (spmgr *_SpaceManager) putSpace(space *Space) {
 	spmgr.spaces[space.ID] = space
 }
 
-func (spmgr *SpaceManager) delSpace(id common.EntityID) {
+func (spmgr *_SpaceManager) delSpace(id common.EntityID) {
 	delete(spmgr.spaces, id)
 }
 
-func (spmgr *SpaceManager) getSpace(id common.EntityID) *Space {
+func (spmgr *_SpaceManager) getSpace(id common.EntityID) *Space {
 	return spmgr.spaces[id]
 }
 
+// RegisterSpace registers the user custom space type
 func RegisterSpace(spacePtr ISpace) {
-	//if spaceType == nil {
-	//	gwlog.Panicf("RegisterSpace: Space already registered")
-	//}
 	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
 	spaceType = spaceVal.Type()
 
