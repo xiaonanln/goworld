@@ -36,7 +36,7 @@ type packetQueueItem struct { // packet queue from dispatcher client
 	packet  *netutil.Packet
 }
 
-type GameService struct {
+type _GameService struct {
 	config       *config.GameConfig
 	id           uint16
 	gameDelegate IGameDelegate
@@ -49,8 +49,8 @@ type GameService struct {
 	//collectEntitySycnInfosReply   chan interface{}
 }
 
-func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
-	return &GameService{
+func newGameService(gameid uint16, delegate IGameDelegate) *_GameService {
+	return &_GameService{
 		id:           gameid,
 		gameDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
@@ -63,7 +63,7 @@ func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
 	}
 }
 
-func (gs *GameService) run(restore bool) {
+func (gs *_GameService) run(restore bool) {
 	gs.runState.Store(rsRunning)
 
 	if !restore {
@@ -79,7 +79,7 @@ func (gs *GameService) run(restore bool) {
 	netutil.ServeForever(gs.serveRoutine)
 }
 
-func (gs *GameService) serveRoutine() {
+func (gs *_GameService) serveRoutine() {
 	cfg := config.GetGame(gameid)
 	gs.config = cfg
 	gwlog.Info("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
@@ -173,11 +173,11 @@ func (gs *GameService) serveRoutine() {
 	}
 }
 
-func (gs *GameService) waitPostsComplete() {
+func (gs *_GameService) waitPostsComplete() {
 	post.Tick() // just tick is Ok, tick will consume all posts
 }
 
-func (gs *GameService) doTerminate() {
+func (gs *_GameService) doTerminate() {
 	// wait for all posts to complete
 	gs.waitPostsComplete()
 
@@ -193,7 +193,7 @@ func (gs *GameService) doTerminate() {
 
 var freezePacker = netutil.JSONMsgPacker{}
 
-func (gs *GameService) doFreeze() {
+func (gs *_GameService) doFreeze() {
 	// wait for all posts to complete
 
 	kvdb.Close()
@@ -240,7 +240,7 @@ func freezeFilename(gameid uint16) string {
 	return fmt.Sprintf("game%d_freezed.dat", gameid)
 }
 
-func (gs *GameService) doRestore() error {
+func (gs *_GameService) doRestore() error {
 	freezeFilename := freezeFilename(gameid)
 	data, err := ioutil.ReadFile(freezeFilename)
 	if err != nil {
@@ -253,25 +253,25 @@ func (gs *GameService) doRestore() error {
 	return entity.RestoreFreezedEntities(&freezeEntity)
 }
 
-func (gs *GameService) String() string {
-	return fmt.Sprintf("GameService<%d>", gs.id)
+func (gs *_GameService) String() string {
+	return fmt.Sprintf("_GameService<%d>", gs.id)
 }
 
-func (gs *GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
+func (gs *_GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.handleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
 	}
 	entity.CreateEntityLocally(typeName, data, nil)
 }
 
-func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
+func (gs *_GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.handleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
 	}
 	entity.LoadEntityLocally(typeName, entityID)
 }
 
-func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
+func (gs *_GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.handleDeclareService: %s declares %s", gs, entityID, serviceName)
@@ -279,7 +279,7 @@ func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceNam
 	entity.OnDeclareService(serviceName, entityID)
 }
 
-func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
+func (gs *_GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
@@ -287,22 +287,22 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
-func (gs *GameService) HandleNotifyAllGamesConnected() {
+func (gs *_GameService) HandleNotifyAllGamesConnected() {
 	// all games are connected
 	gwlog.Info("All games connected.")
 	gs.gameDelegate.OnGameReady()
 }
 
-func (gs *GameService) HandleGateDisconnected(gateid uint16) {
+func (gs *_GameService) HandleGateDisconnected(gateid uint16) {
 	entity.OnGateDisconnected(gateid)
 }
 
-func (gs *GameService) HandleStartFreezeGameAck() {
+func (gs *_GameService) HandleStartFreezeGameAck() {
 	gwlog.Info("Start freeze game ACK received, start freezing ...")
 	gs.runState.Store(rsFreezing)
 }
 
-func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
+func (gs *_GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	//gwlog.Info("handleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
 	payload := pkt.UnreadPayload()
 	payloadLen := len(payload)
@@ -316,14 +316,14 @@ func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	}
 }
 
-func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
+func (gs *_GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.handleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	}
 	entity.OnCall(entityID, method, args, clientid)
 }
 
-func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gid uint16) {
+func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, gid uint16) {
 	client := entity.MakeGameClient(clientid, gid)
 	if consts.DEBUG_PACKETS {
 		gwlog.Debug("%s.handleNotifyClientConnected: %s", gs, client)
@@ -333,7 +333,7 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gid
 	entity.CreateEntityLocally(gs.config.BootEntity, nil, client)
 }
 
-func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
+func (gs *_GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debug("%s.handleNotifyClientDisconnected: %s", gs, clientid)
 	}
@@ -341,7 +341,7 @@ func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) 
 	entity.OnClientDisconnected(clientid)
 }
 
-func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
+func (gs *_GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
 	spaceid := pkt.ReadEntityID()
 	spaceLoc := pkt.ReadUint16()
@@ -353,7 +353,7 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)
 }
 
-func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
+func (gs *_GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
 	_ = pkt.ReadUint16() // targetGame is not userful
 
@@ -380,10 +380,10 @@ func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
 }
 
-func (gs *GameService) terminate() {
+func (gs *_GameService) terminate() {
 	gs.runState.Store(rsTerminating)
 }
 
-func (gs *GameService) freeze() {
+func (gs *_GameService) freeze() {
 	dispatcherclient.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
 }

@@ -34,7 +34,7 @@ var (
 	configFile                   string
 	logLevel                     string
 	restore                      bool
-	gameService                  *GameService
+	gameService                  *_GameService
 	signalChan                   = make(chan os.Signal, 1)
 	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
 )

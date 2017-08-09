@@ -15,7 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	. "github.com/xiaonanln/goworld/engine/storage/storage_common"
+	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
 // FileSystemEntityStorage is an implementation of Entity Storage using filesystem
@@ -31,6 +31,7 @@ func (es *FileSystemEntityStorage) getFilePath(typeName string, entityID common.
 	return filepath.Join(es.directory, getFileName(typeName, entityID))
 }
 
+// Write writes entity data to entity storage
 func (es *FileSystemEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
 	stringSaveFile := es.getFilePath(typeName, entityID)
 	dataBytes, err := json.MarshalIndent(data, "", "\t")
@@ -44,6 +45,7 @@ func (es *FileSystemEntityStorage) Write(typeName string, entityID common.Entity
 	return ioutil.WriteFile(stringSaveFile, dataBytes, 0644)
 }
 
+// Read reads entity data from entity storage
 func (es *FileSystemEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
 	stringSaveFile := es.getFilePath(typeName, entityID)
 	dataBytes, err := ioutil.ReadFile(stringSaveFile)
@@ -64,6 +66,7 @@ func (es *FileSystemEntityStorage) Read(typeName string, entityID common.EntityI
 	return data, nil
 }
 
+// Exists checks if entity is in entity storage
 func (es *FileSystemEntityStorage) Exists(typeName string, entityID common.EntityID) (exists bool, err error) {
 	stringSaveFile := es.getFilePath(typeName, entityID)
 	_, err = os.Stat(stringSaveFile)
@@ -71,6 +74,7 @@ func (es *FileSystemEntityStorage) Exists(typeName string, entityID common.Entit
 	return
 }
 
+// List retrives all entity IDs in entity storage of specified type
 func (es *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, error) {
 	prefix := typeName + "$"
 	pat := filepath.Join(es.directory, prefix+"*")
@@ -96,15 +100,18 @@ func (es *FileSystemEntityStorage) List(typeName string) ([]common.EntityID, err
 	return res, nil
 }
 
+// Close the entity storage
 func (es *FileSystemEntityStorage) Close() {
 	// need to do nothing
 }
 
+// IsEOF check if the error is an EOF error
 func (es *FileSystemEntityStorage) IsEOF(err error) bool {
 	return false
 }
 
-func OpenDirectory(directory string) (EntityStorage, error) {
+// OpenDirectory opens the directory as filesystem entity storage
+func OpenDirectory(directory string) (storagecommon.EntityStorage, error) {
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		return nil, err
 	}
