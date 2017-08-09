@@ -6,8 +6,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/google/btree"
 	"github.com/pkg/errors"
-	//"github.com/xiaonanln/goworld/gwlog"
-	. "github.com/xiaonanln/goworld/engine/kvdb/types"
+	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
 const (
@@ -28,7 +27,7 @@ func (ki keyTreeItem) Less(_other btree.Item) bool {
 }
 
 // Open Redis for KVDB backend
-func OpenRedisKVDB(host string, dbindex int) (KVDBEngine, error) {
+func OpenRedisKVDB(host string, dbindex int) (kvdbtypes.KVDBEngine, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
@@ -106,22 +105,22 @@ type redisKVDBIterator struct {
 	leftKeys []string
 }
 
-func (it *redisKVDBIterator) Next() (KVItem, error) {
+func (it *redisKVDBIterator) Next() (kvdbtypes.KVItem, error) {
 	if len(it.leftKeys) == 0 {
-		return KVItem{}, io.EOF
+		return kvdbtypes.KVItem{}, io.EOF
 	}
 
 	key := it.leftKeys[0]
 	it.leftKeys = it.leftKeys[1:]
 	val, err := it.db.Get(key)
 	if err != nil {
-		return KVItem{}, err
+		return kvdbtypes.KVItem{}, err
 	}
 
-	return KVItem{key, val}, nil
+	return kvdbtypes.KVItem{key, val}, nil
 }
 
-func (db *redisKVDB) Find(beginKey string, endKey string) Iterator {
+func (db *redisKVDB) Find(beginKey string, endKey string) kvdbtypes.Iterator {
 	keys := []string{} // retrive all keys in the range, ordered
 	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it btree.Item) bool {
 		keys = append(keys, it.(keyTreeItem).key)
