@@ -1,10 +1,13 @@
 package entity
 
-import "bytes"
-import . "github.com/xiaonanln/goworld/engine/common"
+import (
+	"bytes"
+
+	"github.com/xiaonanln/goworld/engine/common"
+)
 
 // EntityMap is the data structure for maintaining entity IDs to entities
-type EntityMap map[EntityID]*Entity
+type EntityMap map[common.EntityID]*Entity
 
 // Add adds a new entity to EntityMap
 func (em EntityMap) Add(entity *Entity) {
@@ -12,12 +15,12 @@ func (em EntityMap) Add(entity *Entity) {
 }
 
 // Del deletes an entity from EntityMap
-func (em EntityMap) Del(id EntityID) {
+func (em EntityMap) Del(id common.EntityID) {
 	delete(em, id)
 }
 
 // Get returns the Entity of specified entity ID in EntityMap
-func (em EntityMap) Get(id EntityID) *Entity {
+func (em EntityMap) Get(id common.EntityID) *Entity {
 	return em[id]
 }
 
@@ -57,27 +60,27 @@ func (es EntitySet) String() string {
 }
 
 // EntityIDSet is the data structure for a set of entity IDs
-type EntityIDSet map[EntityID]struct{}
+type EntityIDSet map[common.EntityID]struct{}
 
 // Add adds an entity ID to EntityIDSet
-func (es EntityIDSet) Add(id EntityID) {
+func (es EntityIDSet) Add(id common.EntityID) {
 	es[id] = struct{}{}
 }
 
 // Del removes an entity ID from EntityIDSet
-func (es EntityIDSet) Del(id EntityID) {
+func (es EntityIDSet) Del(id common.EntityID) {
 	delete(es, id)
 }
 
 // Contains checks if entity ID is in EntityIDSet
-func (es EntityIDSet) Contains(id EntityID) bool {
+func (es EntityIDSet) Contains(id common.EntityID) bool {
 	_, ok := es[id]
 	return ok
 }
 
 // ToList convert EntityIDSet to a slice of entity IDs
-func (es EntityIDSet) ToList() []EntityID {
-	list := make([]EntityID, 0, len(es))
+func (es EntityIDSet) ToList() []common.EntityID {
+	list := make([]common.EntityID, 0, len(es))
 	for eid := range es {
 		list = append(list, eid)
 	}

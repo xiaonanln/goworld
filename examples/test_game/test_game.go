@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	SERVICE_NAMES = []string{
+	_SERVICE_NAMES = []string{
 		"OnlineService",
 		"SpaceService",
 		"MailService",
@@ -62,7 +62,7 @@ func (server serverDelegate) OnGameReady() {
 	server.GameDelegate.OnGameReady()
 
 	if goworld.GetGameID() == 1 { // Create services on just 1 server
-		for _, serviceName := range SERVICE_NAMES {
+		for _, serviceName := range _SERVICE_NAMES {
 			serviceName := serviceName
 			goworld.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
 				gwlog.Info("Found saved %s ids: %v", serviceName, eids)
@@ -92,7 +92,7 @@ func (server serverDelegate) checkServerStarted() {
 }
 
 func (server serverDelegate) isAllServicesReady() bool {
-	for _, serviceName := range SERVICE_NAMES {
+	for _, serviceName := range _SERVICE_NAMES {
 		if len(goworld.GetServiceProviders(serviceName)) == 0 {
 			gwlog.Info("%s is not ready ...", serviceName)
 			return false

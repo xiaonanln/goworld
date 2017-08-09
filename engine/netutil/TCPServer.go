@@ -11,21 +11,23 @@ import (
 )
 
 const (
-	RESTART_TCP_SERVER_INTERVAL = 3 * time.Second
+	_RESTART_TCP_SERVER_INTERVAL = 3 * time.Second
 )
 
+// TCPServerDelegate is the implementations that a TCP server should provide
 type TCPServerDelegate interface {
 	ServeTCPConnection(net.Conn)
 }
 
+// ServeTCPForever serves on specified address as TCP server, for ever ...
 func ServeTCPForever(listenAddr string, delegate TCPServerDelegate) {
 	for {
 		err := serveTCPForeverOnce(listenAddr, delegate)
-		gwlog.Error("server@%s failed with error: %v, will restart after %s", listenAddr, err, RESTART_TCP_SERVER_INTERVAL)
+		gwlog.Error("server@%s failed with error: %v, will restart after %s", listenAddr, err, _RESTART_TCP_SERVER_INTERVAL)
 		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
-		time.Sleep(RESTART_TCP_SERVER_INTERVAL)
+		time.Sleep(_RESTART_TCP_SERVER_INTERVAL)
 	}
 }
 
@@ -40,6 +42,7 @@ func serveTCPForeverOnce(listenAddr string, delegate TCPServerDelegate) error {
 
 }
 
+// ServeTCP serves on specified address as TCP server
 func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
 	ln, err := net.Listen("tcp", listenAddr)
 	gwlog.Info("Listening on TCP: %s ...", listenAddr)
@@ -63,5 +66,4 @@ func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
 		gwlog.Info("Connection from: %s", conn.RemoteAddr())
 		go delegate.ServeTCPConnection(conn)
 	}
-
 }
