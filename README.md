@@ -11,6 +11,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 >  中文资料：
 > [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
 > [目录结构说明](https://github.com/xiaonanln/goworld/wiki/GoWorld%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84) 
+> [使用GoWorld轻松实现分布式聊天服务器](https://github.com/xiaonanln/goworld/wiki/%E4%BD%BF%E7%94%A8GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E8%81%8A%E5%A4%A9%E6%9C%8D%E5%8A%A1%E5%99%A8)
 > **欢迎加入Go服务端开发交流群：[662182346](http://shang.qq.com/wpa/qunwpa?idkey=f2a99bd9bd9e6df3528174180aad753d05b372a8828e1b8e5c1ec5df42b301db)**
 ---------------------------------------  
 ## Features
