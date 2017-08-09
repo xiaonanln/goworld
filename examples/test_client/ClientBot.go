@@ -34,8 +34,8 @@ type ClientBot struct {
 	id                 int
 	waiter             *sync.WaitGroup
 	conn               *proto.GoWorldConnection
-	entities           map[common.EntityID]*ClientEntity
-	player             *ClientEntity
+	entities           map[common.EntityID]*clientEntity
+	player             *clientEntity
 	currentSpace       *ClientSpace
 	logined            bool
 	startedDoingThings bool
@@ -47,7 +47,7 @@ func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot 
 	return &ClientBot{
 		id:           id,
 		waiter:       waiter,
-		entities:     map[common.EntityID]*ClientEntity{},
+		entities:     map[common.EntityID]*clientEntity{},
 		useWebSocket: useWebSocket,
 	}
 }

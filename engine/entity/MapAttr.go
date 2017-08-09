@@ -94,13 +94,13 @@ func (a *MapAttr) getPathFromOwner() []interface{} {
 }
 
 func (a *MapAttr) _getPathFromOwner() []interface{} {
-	path := make([]interface{}, 0, 4)
-	if a.parent != nil {
-		path = append(path, a.pkey)
-		return getPathFromOwner(a.parent, path)
-	} else {
-		return path
+	if a.parent == nil {
+		return nil
 	}
+
+	path := make([]interface{}, 0, 4)
+	path = append(path, a.pkey)
+	return getPathFromOwner(a.parent, path)
 }
 
 // Get returns the attribute of specified key in MapAttr
@@ -183,7 +183,7 @@ func (a *MapAttr) Del(key string) {
 	a.Pop(key)
 }
 
-// Pop deletes a key in MapAttr and returns the attribute as MapAttr
+// PopMapAttr deletes a key in MapAttr and returns the attribute as MapAttr
 func (a *MapAttr) PopMapAttr(key string) *MapAttr {
 	val := a.Pop(key)
 	return val.(*MapAttr)

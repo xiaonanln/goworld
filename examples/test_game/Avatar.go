@@ -20,9 +20,7 @@ type Avatar struct {
 	entity.Entity // Entity type should always inherit entity.Entity
 }
 
-func (a *Avatar) OnInit() {
-}
-
+// OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
 	a.Entity.OnCreated()
 
@@ -40,6 +38,7 @@ func (a *Avatar) OnCreated() {
 	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
 }
 
+// PerSecondTick is ticked per second, if timer is setup
 func (a *Avatar) PerSecondTick(arg1 int, arg2 string) {
 	fmt.Fprint(os.Stderr, "!")
 }
@@ -55,6 +54,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefault("testListField", goworld.ListAttr())
 }
 
+// TestListField_Client is a test RPC for client
 func (a *Avatar) TestListField_Client() {
 	testListField := a.GetListAttr("testListField")
 	if testListField.Size() > 0 && rand.Float32() < 0.3333333333 {
@@ -77,6 +77,7 @@ func (a *Avatar) enterSpace(spaceKind int) {
 	a.CallService("SpaceService", "EnterSpace", a.ID, spaceKind)
 }
 
+// OnClientConnected is called when client is connected
 func (a *Avatar) OnClientConnected() {
 	//gwlog.Info("%s.OnClientConnected: current space = %s", a, a.Space)
 	//a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
@@ -96,15 +97,18 @@ func (a *Avatar) OnClientConnected() {
 	a.enterSpace(a.GetInt("spaceKind"))
 }
 
+// OnClientDisconnected is called when client is lost
 func (a *Avatar) OnClientDisconnected() {
 	gwlog.Info("%s client disconnected", a)
 	a.Destroy()
 }
 
+// EnterSpace_Client is enter space RPC for client
 func (a *Avatar) EnterSpace_Client(kind int) {
 	a.enterSpace(kind)
 }
 
+// DoEnterSpace is called by SpaceService to notify avatar entering specified space
 func (a *Avatar) DoEnterSpace(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
 	a.EnterSpace(spaceID, a.randomPosition())
@@ -119,24 +123,29 @@ func (a *Avatar) randomPosition() entity.Position {
 	}
 }
 
+// OnEnterSpace is called when avatar enters a space
 func (a *Avatar) OnEnterSpace() {
 	if consts.DEBUG_SPACES {
 		gwlog.Info("%s ENTER SPACE %s", a, a.Space)
 	}
 }
 
+// GetSpaceID is a server RPC to query avatar space ID
 func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
 }
 
+// OnDestroy is called when avatar is destroying
 func (a *Avatar) OnDestroy() {
 	a.CallService("OnlineService", "CheckOut", a.ID)
 }
 
+// SendMail_Client is a client RPC to send mail to others
 func (a *Avatar) SendMail_Client(targetID common.EntityID, mail MailData) {
 	a.CallService("MailService", "SendMail", a.ID, a.GetStr("name"), targetID, mail)
 }
 
+// OnSendMail is called by MailService to notify sending mail succeed
 func (a *Avatar) OnSendMail(ok bool) {
 	a.CallClient("OnSendMail", ok)
 }

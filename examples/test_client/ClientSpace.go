@@ -16,7 +16,7 @@ type ClientSpace struct {
 	ID    common.EntityID
 	Kind  int
 
-	Attrs     ClientAttrs
+	Attrs     clientAttrs
 	destroyed bool
 }
 

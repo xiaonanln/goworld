@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goTimer"
-	. "github.com/xiaonanln/goworld/engine/common"
 
 	"unsafe"
 
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -42,7 +42,7 @@ type entityTimerInfo struct {
 // Entity is the basic execution unit in GoWorld server. Entities can be used to
 // represent players, NPCs, monsters. Entities can migrate among spaces.
 type Entity struct {
-	ID       EntityID
+	ID       common.EntityID
 	TypeName string
 	I        IEntity
 	IV       reflect.Value
@@ -58,13 +58,13 @@ type Entity struct {
 	lastTimerId EntityTimerID
 
 	client           *GameClient
-	declaredServices StringSet
+	declaredServices common.StringSet
 	becamePlayer     bool
 
 	Attrs *MapAttr
 
 	enteringSpaceRequest struct {
-		SpaceID     EntityID
+		SpaceID     common.EntityID
 		EnterPos    Position
 		RequestTime int64
 	}
@@ -180,7 +180,7 @@ func (e *Entity) ToSpace() *Space {
 	return (*Space)(unsafe.Pointer(e))
 }
 
-func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect.Value) {
+func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance reflect.Value) {
 	e.ID = entityID
 	e.IV = entityInstance
 	e.I = entityInstance.Interface().(IEntity)
@@ -190,7 +190,7 @@ func (e *Entity) init(typeName string, entityID EntityID, entityInstance reflect
 
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
-	e.declaredServices = StringSet{}
+	e.declaredServices = common.StringSet{}
 	e.filterProps = map[string]string{}
 
 	attrs := NewMapAttr()
@@ -233,7 +233,8 @@ func (e *Entity) Neighbors() EntitySet {
 
 // Timer & Callback Management
 
-type EntityTimerID int // EntityTimerID is the type of entity timer ID
+// EntityTimerID is the type of entity timer ID
+type EntityTimerID int
 
 // IsValid returns if the EntityTimerID is still valid (not fired and not cancelled)
 func (tid EntityTimerID) IsValid() bool {
@@ -398,7 +399,7 @@ func (e *Entity) Post(cb func()) {
 }
 
 // Call other entities
-func (e *Entity) Call(id EntityID, method string, args ...interface{}) {
+func (e *Entity) Call(id common.EntityID, method string, args ...interface{}) {
 	callEntity(id, method, args)
 }
 
@@ -454,7 +455,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 	rpcDesc.Func.Call(in)
 }
 
-func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid ClientID) {
+func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid common.ClientID) {
 	defer func() {
 		err := recover() // recover from any error during RPC call
 		if err != nil {
@@ -605,12 +606,12 @@ func (e *Entity) LoadMigrateData(data map[string]interface{}) {
 }
 
 type clientData struct {
-	ClientID ClientID
+	ClientID common.ClientID
 	GateID   uint16
 }
 
 type enteringSpaceRequestData struct {
-	SpaceID  EntityID
+	SpaceID  common.EntityID
 	EnterPos Position
 }
 
@@ -620,7 +621,7 @@ type entityFreezeData struct {
 	Pos       Position
 	Attrs     map[string]interface{}
 	Yaw       Yaw
-	SpaceID   EntityID
+	SpaceID   common.EntityID
 	Client    *clientData
 	ESR       *enteringSpaceRequestData
 }
@@ -656,12 +657,11 @@ func (e *Entity) GetClient() *GameClient {
 	return e.client
 }
 
-func (e *Entity) getClientID() ClientID {
+func (e *Entity) getClientID() common.ClientID {
 	if e.client != nil {
 		return e.client.clientid
-	} else {
-		return ""
 	}
+	return ""
 }
 
 // SetClient sets the client of entity
@@ -897,7 +897,7 @@ func (e *Entity) GetListAttr(key string) *ListAttr {
 // Enter Space
 
 // EnterSpace let the entity enters space
-func (e *Entity) EnterSpace(spaceID EntityID, pos Position) {
+func (e *Entity) EnterSpace(spaceID common.EntityID, pos Position) {
 	if e.isEnteringSpace() {
 		gwlog.Error("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
 		e.I.OnEnterSpace()
@@ -947,7 +947,7 @@ func (e *Entity) isEnteringSpace() bool {
 }
 
 // Migrate to the server of space
-func (e *Entity) requestMigrateTo(spaceID EntityID, pos Position) {
+func (e *Entity) requestMigrateTo(spaceID common.EntityID, pos Position) {
 	e.enteringSpaceRequest.SpaceID = spaceID
 	e.enteringSpaceRequest.EnterPos = pos
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
@@ -962,7 +962,7 @@ func (e *Entity) clearEnteringSpaceRequest() {
 }
 
 // OnMigrateRequestAck is called by engine when mgirate request Ack is received
-func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
+func OnMigrateRequestAck(entityID common.EntityID, spaceID common.EntityID, spaceLoc uint16) {
 	entity := entityManager.get(entityID)
 	if entity == nil {
 		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityID)
@@ -990,8 +990,8 @@ func OnMigrateRequestAck(entityID EntityID, spaceID EntityID, spaceLoc uint16) {
 	entity.realMigrateTo(spaceID, entity.enteringSpaceRequest.EnterPos, spaceLoc)
 }
 
-func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) {
-	var clientid ClientID
+func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Position, spaceLoc uint16) {
+	var clientid common.ClientID
 	var clientsrv uint16
 	if e.client != nil {
 		clientid = e.client.clientid
@@ -1007,9 +1007,9 @@ func (e *Entity) realMigrateTo(spaceID EntityID, pos Position, spaceLoc uint16) 
 }
 
 // OnRealMigrate is used by entity migration
-func OnRealMigrate(entityID EntityID, spaceID EntityID, x, y, z float32, typeName string,
+func OnRealMigrate(entityID common.EntityID, spaceID common.EntityID, x, y, z float32, typeName string,
 	migrateData map[string]interface{}, timerData []byte,
-	clientid ClientID, clientsrv uint16) {
+	clientid common.ClientID, clientsrv uint16) {
 
 	if entityManager.get(entityID) != nil {
 		gwlog.Panicf("entity %s already exists", entityID)
@@ -1068,7 +1068,7 @@ func (e *Entity) CallFitleredClients(key string, val string, method string, args
 	dispatcherclient.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
 }
 
-// Returns if entity type is using aoi
+// IsUseAOI returns if entity type is using aoi
 //
 // Entities like Account, Service entities should not be using aoi
 func (e *Entity) IsUseAOI() bool {

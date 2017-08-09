@@ -10,6 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
+// DispatcherClient is a client connection to the dispatcher
 type DispatcherClient struct {
 	*proto.GoWorldConnection
 }
@@ -37,6 +38,7 @@ func newDispatcherClient(conn net.Conn, autoFlush bool) *DispatcherClient {
 	return dc
 }
 
+// Close the dispatcher client
 func (dc *DispatcherClient) Close() error {
 	return dc.GoWorldConnection.Close()
 }

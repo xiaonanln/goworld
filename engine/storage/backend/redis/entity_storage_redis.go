@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/netutil"
-	. "github.com/xiaonanln/goworld/engine/storage/storage_common"
+	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
 var (
@@ -19,7 +19,7 @@ type redisEntityStorage struct {
 }
 
 // OpenRedis opens redis as entity storage
-func OpenRedis(host string, dbindex int) (EntityStorage, error) {
+func OpenRedis(host string, dbindex int) (storagecommon.EntityStorage, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")

@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -15,21 +15,23 @@ type avatarInfo struct {
 type OnlineService struct {
 	entity.Entity
 
-	avatars  map[EntityID]*avatarInfo
+	avatars  map[common.EntityID]*avatarInfo
 	maxlevel int
 }
 
+// OnInit initialize OnlineService fields
 func (s *OnlineService) OnInit() {
-	s.avatars = map[EntityID]*avatarInfo{}
+	s.avatars = map[common.EntityID]*avatarInfo{}
 }
 
+// OnCreated is called when OnlineService is created
 func (s *OnlineService) OnCreated() {
 	gwlog.Info("Registering OnlineService ...")
 	s.DeclareService("OnlineService")
 }
 
 // CheckIn is called when Avatars login
-func (s *OnlineService) CheckIn(avatarID EntityID, name string, level int) {
+func (s *OnlineService) CheckIn(avatarID common.EntityID, name string, level int) {
 	s.avatars[avatarID] = &avatarInfo{
 		name:  name,
 		level: level,
@@ -41,7 +43,7 @@ func (s *OnlineService) CheckIn(avatarID EntityID, name string, level int) {
 }
 
 // CheckOut is called when Avatars logout
-func (s *OnlineService) CheckOut(avatarID EntityID) {
+func (s *OnlineService) CheckOut(avatarID common.EntityID) {
 	delete(s.avatars, avatarID)
 	gwlog.Info("%s CHECK OUT: %s, total online %d", s, avatarID, len(s.avatars))
 }

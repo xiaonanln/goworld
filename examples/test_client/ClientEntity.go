@@ -20,19 +20,19 @@ const (
 	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
 )
 
-type ClientAttrs map[string]interface{}
+type clientAttrs map[string]interface{}
 
-func (attrs ClientAttrs) HasKey(key string) bool {
+func (attrs clientAttrs) HasKey(key string) bool {
 	_, ok := attrs[key]
 	return ok
 }
 
-type ClientEntity struct {
+type clientEntity struct {
 	owner    *ClientBot
 	TypeName string
 	ID       EntityID
 
-	Attrs     ClientAttrs
+	Attrs     clientAttrs
 	IsPlayer  bool
 	destroyed bool
 	timers    map[*timer.Timer]bool
@@ -46,8 +46,8 @@ type ClientEntity struct {
 }
 
 func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPlayer bool, clientData map[string]interface{},
-	x, y, z entity.Coord, yaw entity.Yaw) *ClientEntity {
-	e := &ClientEntity{
+	x, y, z entity.Coord, yaw entity.Yaw) *clientEntity {
+	e := &clientEntity{
 		owner:    owner,
 		TypeName: typeName,
 		ID:       entityid,
@@ -62,18 +62,18 @@ func newClientEntity(owner *ClientBot, typeName string, entityid EntityID, isPla
 	return e
 }
 
-func (e *ClientEntity) String() string {
+func (e *clientEntity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
 
-func (e *ClientEntity) Destroy() {
+func (e *clientEntity) Destroy() {
 	if e.destroyed {
 		return
 	}
 	e.destroyed = true
 }
 
-func (e *ClientEntity) OnCreated() {
+func (e *clientEntity) OnCreated() {
 	if !quiet {
 		gwlog.Debug("%s.OnCreated, IsPlayer=%v", e, e.IsPlayer)
 	}
@@ -89,18 +89,18 @@ func (e *ClientEntity) OnCreated() {
 
 }
 
-func (e *ClientEntity) onAvatarCreated() {
+func (e *clientEntity) onAvatarCreated() {
 	gwlog.Info("Avatar created on pos %v yaw %v", e.pos, e.yaw)
 }
 
-func (e *ClientEntity) doSomethingLater() {
+func (e *clientEntity) doSomethingLater() {
 	randomDelay := time.Duration(rand.Int63n(int64(_AVERAGE_DO_SOMETHING_INTERVAL * 2)))
 	e.AddCallback(randomDelay, func() {
 		e.doSomething()
 	})
 }
 
-func (e *ClientEntity) AddCallback(d time.Duration, callback timer.CallbackFunc) *timer.Timer {
+func (e *clientEntity) AddCallback(d time.Duration, callback timer.CallbackFunc) *timer.Timer {
 	var t *timer.Timer
 	t = timer.AddCallback(d, func() {
 		e.owner.Lock()
@@ -122,7 +122,7 @@ func (e *ClientEntity) AddCallback(d time.Duration, callback timer.CallbackFunc)
 	return t
 }
 
-func (e *ClientEntity) AddTimer(d time.Duration, callback timer.CallbackFunc) *timer.Timer {
+func (e *clientEntity) AddTimer(d time.Duration, callback timer.CallbackFunc) *timer.Timer {
 	var t *timer.Timer
 	t = timer.AddTimer(d, func() {
 		e.owner.Lock()
@@ -145,7 +145,7 @@ func (e *ClientEntity) AddTimer(d time.Duration, callback timer.CallbackFunc) *t
 	return t
 }
 
-func (e *ClientEntity) CancelTimer(t *timer.Timer) {
+func (e *clientEntity) CancelTimer(t *timer.Timer) {
 	t.Cancel()
 	delete(e.timers, t)
 }
@@ -157,7 +157,7 @@ type _Something struct {
 }
 
 var (
-	DO_THINGS = []*_Something{
+	_DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 10, time.Minute},
 		{"DoSendMail", 5, time.Minute},
 		{"DoGetMails", 10, time.Minute},
@@ -167,13 +167,13 @@ var (
 	}
 )
 
-func (e *ClientEntity) doSomething() {
+func (e *clientEntity) doSomething() {
 	if e.currentThing != "" {
 		gwlog.Panicf("%s can not do something while doing %s", e, e.currentThing)
 	}
 	var thing *_Something
 	if e.currentSpaceKind() == 0 {
-		thing = DO_THINGS[0]
+		thing = _DO_THINGS[0]
 	} else {
 		thing = e.chooseThingByWeight()
 	}
@@ -194,7 +194,7 @@ func (e *ClientEntity) doSomething() {
 	reflect.ValueOf(e).MethodByName(thing.Method).Call(nil)
 }
 
-func (e *ClientEntity) notifyThingDone(thing string) {
+func (e *clientEntity) notifyThingDone(thing string) {
 	if e.currentThing == thing {
 		now := time.Now()
 		//gwlog.Info("[%s] %s FINISHES %s, TAKES %s", now, e, thing, now.Sub(e.currentThingStartTime))
@@ -209,13 +209,13 @@ func (e *ClientEntity) notifyThingDone(thing string) {
 	}
 }
 
-func (e *ClientEntity) chooseThingByWeight() *_Something {
+func (e *clientEntity) chooseThingByWeight() *_Something {
 	totalWeight := 0
-	for _, t := range DO_THINGS {
+	for _, t := range _DO_THINGS {
 		totalWeight += t.Weight
 	}
 	randWeight := rand.Intn(totalWeight)
-	for _, t := range DO_THINGS {
+	for _, t := range _DO_THINGS {
 		if randWeight < t.Weight {
 			return t
 		}
@@ -225,7 +225,7 @@ func (e *ClientEntity) chooseThingByWeight() *_Something {
 	return nil
 }
 
-func (e *ClientEntity) currentSpaceKind() int {
+func (e *clientEntity) currentSpaceKind() int {
 	curSpaceKind := 0
 	if e.owner.currentSpace != nil {
 		curSpaceKind = e.owner.currentSpace.Kind
@@ -233,7 +233,7 @@ func (e *ClientEntity) currentSpaceKind() int {
 	return curSpaceKind
 }
 
-func (e *ClientEntity) DoEnterRandomSpace() {
+func (e *clientEntity) DoEnterRandomSpace() {
 	curSpaceKind := e.currentSpaceKind()
 	spaceKindMax := numClients / 400
 	if spaceKindMax < 2 {
@@ -251,7 +251,7 @@ func (e *ClientEntity) DoEnterRandomSpace() {
 	e.CallServer("EnterSpace", spaceKind)
 }
 
-func (e *ClientEntity) DoSendMail() {
+func (e *clientEntity) DoSendMail() {
 	neighbors := e.Neighbors()
 	//gwlog.Info("Neighbors: %v", neighbors)
 
@@ -274,25 +274,25 @@ func (e *ClientEntity) DoSendMail() {
 	e.CallServer("SendMail", receiver.ID, mail)
 }
 
-func (e *ClientEntity) DoGetMails() {
+func (e *clientEntity) DoGetMails() {
 	e.CallServer("GetMails")
 }
 
-func (e *ClientEntity) OnGetMails(ok bool) {
+func (e *clientEntity) OnGetMails(ok bool) {
 	e.notifyThingDone("DoGetMails")
 }
 
-func (e *ClientEntity) DoSayInWorldChannel() {
+func (e *clientEntity) DoSayInWorldChannel() {
 	channel := "world"
 	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
 }
 
-func (e *ClientEntity) DoSayInProfChannel() {
+func (e *clientEntity) DoSayInProfChannel() {
 	channel := "prof"
 	e.CallServer("Say", channel, fmt.Sprintf("this is a message in %s channel", channel))
 }
 
-func (e *ClientEntity) OnSay(senderID EntityID, senderName string, channel string, content string) {
+func (e *clientEntity) OnSay(senderID EntityID, senderName string, channel string, content string) {
 	if channel == "world" && senderID == e.ID {
 		//gwlog.Info("%s %s @%s: %s", senderID, senderName, channel, content)
 		e.notifyThingDone("DoSayInWorldChannel")
@@ -301,11 +301,11 @@ func (e *ClientEntity) OnSay(senderID EntityID, senderName string, channel strin
 	}
 }
 
-func (e *ClientEntity) DoTestListField() {
+func (e *clientEntity) DoTestListField() {
 	e.CallServer("TestListField")
 }
 
-func (e *ClientEntity) OnTestListField(serverList []interface{}) {
+func (e *clientEntity) OnTestListField(serverList []interface{}) {
 	clientList := e.Attrs["testListField"].([]interface{})
 	gwlog.Debug("OnTestListField: server=%v, client=%v", serverList, clientList)
 	if len(serverList) != len(clientList) {
@@ -323,7 +323,7 @@ func (e *ClientEntity) OnTestListField(serverList []interface{}) {
 	e.notifyThingDone("DoTestListField")
 }
 
-func (e *ClientEntity) onAccountCreated() {
+func (e *clientEntity) onAccountCreated() {
 	post.Post(func() {
 		username := e.owner.username()
 		password := e.owner.password()
@@ -331,11 +331,11 @@ func (e *ClientEntity) onAccountCreated() {
 	})
 }
 
-func (e *ClientEntity) CallServer(method string, args ...interface{}) {
+func (e *clientEntity) CallServer(method string, args ...interface{}) {
 	e.owner.CallServer(e.ID, method, args)
 }
 
-func (e *ClientEntity) applyMapAttrChange(path []interface{}, key string, val interface{}) {
+func (e *clientEntity) applyMapAttrChange(path []interface{}, key string, val interface{}) {
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.(map[string]interface{})
 	//if _, ok := val.(map[interface{}]interface{}); ok {
@@ -345,14 +345,14 @@ func (e *ClientEntity) applyMapAttrChange(path []interface{}, key string, val in
 	e.onAttrChange(path, key)
 }
 
-func (e *ClientEntity) applyMapAttrDel(path []interface{}, key string) {
+func (e *clientEntity) applyMapAttrDel(path []interface{}, key string) {
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.(map[string]interface{})
 	delete(attr, key)
 	e.onAttrChange(path, key)
 }
 
-func (e *ClientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
+func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
 	gwlog.Debug("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
@@ -360,7 +360,7 @@ func (e *ClientEntity) applyListAttrChange(path []interface{}, index int, val in
 	e.onAttrChange(path, "")
 }
 
-func (e *ClientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
+func (e *clientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
 	gwlog.Debug("applyListAttrAppend: path=%v, val=%v, attrs=%v", path, val, e.Attrs)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
@@ -373,7 +373,7 @@ func (e *ClientEntity) applyListAttrAppend(path []interface{}, val interface{}) 
 
 	e.onAttrChange(path, "")
 }
-func (e *ClientEntity) applyListAttrPop(path []interface{}) {
+func (e *clientEntity) applyListAttrPop(path []interface{}) {
 	gwlog.Debug("applyListAttrPop: path=%v", path)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
@@ -387,7 +387,7 @@ func (e *ClientEntity) applyListAttrPop(path []interface{}) {
 	e.onAttrChange(path, "")
 }
 
-func (e *ClientEntity) onAttrChange(path []interface{}, key string) {
+func (e *clientEntity) onAttrChange(path []interface{}, key string) {
 	var rootkey string
 	if len(path) > 0 {
 		rootkey = path[len(path)-1].(string)
@@ -404,7 +404,7 @@ func (e *ClientEntity) onAttrChange(path []interface{}, key string) {
 	callbackMethod.Call([]reflect.Value{}) // call the attr change callback func
 }
 
-func (e *ClientEntity) findAttrByPath(path []interface{}) (attr interface{}, parent interface{}, pkey interface{}) {
+func (e *clientEntity) findAttrByPath(path []interface{}) (attr interface{}, parent interface{}, pkey interface{}) {
 	// note that path is reversed
 	parent, pkey = nil, nil
 	attr = map[string]interface{}(e.Attrs) // root attr
@@ -427,17 +427,17 @@ func (e *ClientEntity) findAttrByPath(path []interface{}) (attr interface{}, par
 	return
 }
 
-func (attrs ClientAttrs) GetInt(key string) int {
+func (attrs clientAttrs) GetInt(key string) int {
 	return int(typeconv.Int(attrs[key]))
 }
 
-func (e *ClientEntity) OnAttrChange_exp() {
+func (e *clientEntity) OnAttrChange_exp() {
 	if !quiet {
 		gwlog.Debug("%s: attr exp change to %d", e, e.Attrs.GetInt("exp"))
 	}
 }
 
-func (e *ClientEntity) OnAttrChange_testpop() {
+func (e *clientEntity) OnAttrChange_testpop() {
 	var v int
 	if e.Attrs.HasKey("testpop") {
 		v = e.Attrs.GetInt("testpop")
@@ -449,7 +449,7 @@ func (e *ClientEntity) OnAttrChange_testpop() {
 	}
 }
 
-func (e *ClientEntity) OnAttrChange_subattr() {
+func (e *clientEntity) OnAttrChange_subattr() {
 	var v interface{}
 	if e.Attrs.HasKey("subattr") {
 		v = e.Attrs["subattr"]
@@ -461,17 +461,17 @@ func (e *ClientEntity) OnAttrChange_subattr() {
 	}
 }
 
-func (e *ClientEntity) OnLogin(ok bool) {
+func (e *clientEntity) OnLogin(ok bool) {
 	gwlog.Debug("%s OnLogin %v", e, ok)
 }
 
-func (e *ClientEntity) OnSendMail(ok bool) {
+func (e *clientEntity) OnSendMail(ok bool) {
 	gwlog.Debug("%s OnSendMail %v", e, ok)
 	e.notifyThingDone("DoSendMail")
 }
 
-func (e *ClientEntity) Neighbors() []*ClientEntity {
-	var neighbors []*ClientEntity
+func (e *clientEntity) Neighbors() []*clientEntity {
+	var neighbors []*clientEntity
 	for _, other := range e.owner.entities {
 		if other.TypeName == "Avatar" {
 			neighbors = append(neighbors, other)

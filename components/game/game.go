@@ -8,6 +8,7 @@ import (
 
 	"os"
 
+	// for go tool pprof
 	_ "net/http/pprof"
 
 	"runtime"
@@ -52,6 +53,9 @@ func parseArgs() {
 	gameid = uint16(gameidArg)
 }
 
+// Run runs the game server
+//
+// This is the main game server loop
 func Run(delegate IGameDelegate) {
 	rand.Seed(time.Now().UnixNano())
 
@@ -215,6 +219,7 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
 	entity.CollectEntitySyncInfos()
 }
 
+// GetGameID returns the current Game Server ID
 func GetGameID() uint16 {
 	return gameid
 }
