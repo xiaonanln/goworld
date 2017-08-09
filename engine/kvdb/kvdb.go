@@ -60,11 +60,14 @@ func assureKVDBEngineReady() (err error) {
 	if kvdbCfg.Type == "mongodb" {
 		kvdbEngine, err = kvdbmongo.OpenMongoKVDB(kvdbCfg.Url, kvdbCfg.DB, kvdbCfg.Collection)
 	} else if kvdbCfg.Type == "redis" {
-		var dbindex int
-		dbindex, err = strconv.Atoi(kvdbCfg.DB)
-		if err == nil {
-			kvdbEngine, err = kvdbredis.OpenRedisKVDB(kvdbCfg.Host, dbindex)
+		var dbindex int = -1
+		if kvdbCfg.DB != "" {
+			dbindex, err = strconv.Atoi(kvdbCfg.DB)
+			if err != nil {
+				return err
+			}
 		}
+		kvdbEngine, err = kvdbredis.OpenRedisKVDB(kvdbCfg.Url, dbindex)
 	} else {
 		gwlog.Fatalf("KVDB type %s is not implemented", kvdbCfg.Type)
 	}

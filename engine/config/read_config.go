@@ -92,7 +92,6 @@ type StorageConfig struct {
 	Directory string // Directory of filesystem storage
 	Url       string // Url of MongoDB server
 	DB        string
-	Host      string // Redis host
 }
 
 // KVDBConfig defines fields of KVDB config
@@ -101,7 +100,6 @@ type KVDBConfig struct {
 	Url        string // MongoDB
 	DB         string // MongoDB
 	Collection string // MongoDB
-	Host       string // Redis
 
 }
 
@@ -388,8 +386,6 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 			config.Url = key.MustString(config.Url)
 		} else if name == "db" {
 			config.DB = key.MustString(config.DB)
-		} else if name == "host" {
-			config.Host = key.MustString(config.Host)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -415,8 +411,6 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 			config.DB = key.MustString(config.DB)
 		} else if name == "collection" {
 			config.Collection = key.MustString(config.Collection)
-		} else if name == "host" {
-			config.Host = key.MustString(config.Host)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -441,7 +435,7 @@ func validateKVDBConfig(config *KVDBConfig) {
 			gwlog.Panicf("invalid %s KVDB config above", config.Type)
 		}
 	} else if config.Type == "redis" {
-		if config.Host == "" {
+		if config.Url == "" {
 			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
 			gwlog.Panicf("invalid %s KVDB config above", config.Type)
 		}
@@ -480,7 +474,7 @@ func validateStorageConfig(config *StorageConfig) {
 			gwlog.Panicf("db is not set in %s storage config", config.Type)
 		}
 	} else if config.Type == "redis" {
-		if config.Host == "" {
+		if config.Url == "" {
 			gwlog.Panicf("redis host is not set")
 		}
 		if _, err := strconv.Atoi(config.DB); err != nil {

@@ -144,10 +144,13 @@ func assureStorageEngineReady() (err error) {
 	} else if cfg.Type == "mongodb" {
 		storageEngine, err = entitystoragemongodb.OpenMongoDB(cfg.Url, cfg.DB)
 	} else if cfg.Type == "redis" {
-		var dbindex int
-		if dbindex, err = strconv.Atoi(cfg.DB); err == nil {
-			storageEngine, err = entitystorageredis.OpenRedis(cfg.Host, dbindex)
+		var dbindex int = -1
+		if cfg.DB != "" {
+			if dbindex, err = strconv.Atoi(cfg.DB); err != nil {
+				return err
+			}
 		}
+		storageEngine, err = entitystorageredis.OpenRedis(cfg.Url, dbindex)
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
 		if consts.DEBUG_MODE {

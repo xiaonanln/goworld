@@ -19,14 +19,16 @@ type redisEntityStorage struct {
 }
 
 // OpenRedis opens redis as entity storage
-func OpenRedis(host string, dbindex int) (storagecommon.EntityStorage, error) {
-	c, err := redis.Dial("tcp", host)
+func OpenRedis(url string, dbindex int) (storagecommon.EntityStorage, error) {
+	c, err := redis.DialURL(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
 	}
 
-	if _, err := c.Do("SELECT", dbindex); err != nil {
-		return nil, errors.Wrap(err, "redis select db failed")
+	if dbindex >= 0 {
+		if _, err := c.Do("SELECT", dbindex); err != nil {
+			return nil, errors.Wrap(err, "redis select db failed")
+		}
 	}
 
 	es := &redisEntityStorage{

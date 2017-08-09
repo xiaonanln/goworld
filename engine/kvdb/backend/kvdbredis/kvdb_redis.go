@@ -27,8 +27,8 @@ func (ki keyTreeItem) Less(_other btree.Item) bool {
 }
 
 // OpenRedisKVDB opens Redis for KVDB backend
-func OpenRedisKVDB(host string, dbindex int) (kvdbtypes.KVDBEngine, error) {
-	c, err := redis.Dial("tcp", host)
+func OpenRedisKVDB(url string, dbindex int) (kvdbtypes.KVDBEngine, error) {
+	c, err := redis.DialURL(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
 	}
@@ -37,6 +37,7 @@ func OpenRedisKVDB(host string, dbindex int) (kvdbtypes.KVDBEngine, error) {
 		c:       c,
 		keyTree: btree.New(2),
 	}
+
 	if err := db.initialize(dbindex); err != nil {
 		panic(errors.Wrap(err, "redis kvdb initialize failed"))
 	}
@@ -45,8 +46,10 @@ func OpenRedisKVDB(host string, dbindex int) (kvdbtypes.KVDBEngine, error) {
 }
 
 func (db *redisKVDB) initialize(dbindex int) error {
-	if _, err := db.c.Do("SELECT", dbindex); err != nil {
-		return err
+	if dbindex >= 0 {
+		if _, err := db.c.Do("SELECT", dbindex); err != nil {
+			return err
+		}
 	}
 
 	keyMatch := keyPrefix + "*"
