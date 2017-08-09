@@ -172,7 +172,7 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 	return "" // never goes here
 }
 
-// RegisterEntity registeres custom entity type and define entity behaviors
+// RegisterEntity registers custom entity type and define entity behaviors
 func RegisterEntity(typeName string, entityPtr IEntity, isPersistent bool, useAOI bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
