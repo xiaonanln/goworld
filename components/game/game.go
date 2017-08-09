@@ -17,8 +17,10 @@ import (
 
 	"syscall"
 
-	"github.com/xiaonanln/goworld/engine/binutil"
+	"fmt"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -76,7 +78,7 @@ func Run(delegate IGameDelegate) {
 	if logLevel == "" {
 		logLevel = gameConfig.LogLevel
 	}
-	binutil.SetupGWLog(logLevel, gameConfig.LogFile, gameConfig.LogStderr)
+	binutil.SetupGWLog(fmt.Sprintf("game%d", gameid), logLevel, gameConfig.LogFile, gameConfig.LogStderr)
 
 	storage.Initialize()
 	kvdb.Initialize()

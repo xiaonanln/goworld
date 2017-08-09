@@ -37,7 +37,8 @@ func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 }
 
 // SetupGWLog setup the GoWord log system
-func SetupGWLog(logLevel string, logFile string, logStderr bool) {
+func SetupGWLog(component string, logLevel string, logFile string, logStderr bool) {
+	gwlog.SetComponent(component)
 	gwlog.Infof("Set log level to %s", logLevel)
 	gwlog.SetLevel(gwlog.StringToLevel(logLevel))
 

@@ -33,7 +33,7 @@ func main() {
 	}
 
 	dispatcherConfig := config.GetDispatcher()
-	binutil.SetupGWLog(dispatcherConfig.LogLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
+	binutil.SetupGWLog("dispatcher", dispatcherConfig.LogLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
 	setupSignals()
 	binutil.SetupHTTPServer(dispatcherConfig.HTTPIp, dispatcherConfig.HTTPPort, nil)
 

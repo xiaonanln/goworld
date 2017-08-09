@@ -16,8 +16,10 @@ import (
 
 	"syscall"
 
-	"github.com/xiaonanln/goworld/engine/binutil"
+	"fmt"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -60,7 +62,7 @@ func main() {
 	if logLevel == "" {
 		logLevel = gateConfig.LogLevel
 	}
-	binutil.SetupGWLog(logLevel, gateConfig.LogFile, gateConfig.LogStderr)
+	binutil.SetupGWLog(fmt.Sprintf("gate%d", gateid), logLevel, gateConfig.LogFile, gateConfig.LogStderr)
 
 	gateService = newGateService()
 	binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
