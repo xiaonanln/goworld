@@ -26,7 +26,7 @@ func (ki keyTreeItem) Less(_other btree.Item) bool {
 	return ki.key < _other.(keyTreeItem).key
 }
 
-// Open Redis for KVDB backend
+// OpenRedisKVDB opens Redis for KVDB backend
 func OpenRedisKVDB(host string, dbindex int) (kvdbtypes.KVDBEngine, error) {
 	c, err := redis.Dial("tcp", host)
 	if err != nil {
