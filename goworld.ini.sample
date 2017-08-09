@@ -24,7 +24,7 @@ http_ip=0.0.0.0
 http_port=13001
 log_level=debug
 
-[server_common]
+[game_common]
 boot_entity=Account
 save_interval=600
 log_file=game.log
@@ -33,10 +33,10 @@ http_ip=0.0.0.0
 log_level=debug
 ; gomaxprocs=0
 
-[server1]
+[game1]
 http_port=14001
 
-;[server2]
+;[game2]
 ;http_port=14002
 
 [gate_common]

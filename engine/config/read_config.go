@@ -140,14 +140,14 @@ func GetGate(gateid uint16) *GateConfig {
 // GetGameIDs returns all game IDs
 func GetGameIDs() []uint16 {
 	cfg := Get()
-	serverIDs := make([]int, 0, len(cfg.Games))
+	gameIDs := make([]int, 0, len(cfg.Games))
 	for id := range cfg.Games {
-		serverIDs = append(serverIDs, id)
+		gameIDs = append(gameIDs, id)
 	}
-	sort.Ints(serverIDs)
+	sort.Ints(gameIDs)
 
-	res := make([]uint16, len(serverIDs))
-	for i, id := range serverIDs {
+	res := make([]uint16, len(gameIDs))
+	for i, id := range gameIDs {
 		res[i] = uint16(id)
 	}
 	return res
@@ -201,8 +201,8 @@ func readGoWorldConfig() *GoWorldConfig {
 	gwlog.Infof("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
 	checkConfigError(err, "")
-	serverCommonSec := iniFile.Section("server_common")
-	readGameCommonConfig(serverCommonSec, &config.GameCommon)
+	gameCommonSec := iniFile.Section("game_common")
+	readGameCommonConfig(gameCommonSec, &config.GameCommon)
 	gateCommonSec := iniFile.Section("gate_common")
 	readGateCommonConfig(gateCommonSec, &config.GateCommon)
 
@@ -217,12 +217,12 @@ func readGoWorldConfig() *GoWorldConfig {
 		if secName == "dispatcher" {
 			// dispatcher config
 			readDispatcherConfig(sec, &config.Dispatcher)
-		} else if secName == "server_common" || secName == "gate_common" {
+		} else if secName == "game_common" || secName == "gate_common" {
 			// ignore common section here
-		} else if len(secName) > 6 && secName[:6] == "server" {
-			// server config
-			id, err := strconv.Atoi(secName[6:])
-			checkConfigError(err, fmt.Sprintf("invalid server name: %s", secName))
+		} else if len(secName) > 4 && secName[:4] == "game" {
+			// game config
+			id, err := strconv.Atoi(secName[4:])
+			checkConfigError(err, fmt.Sprintf("invalid game name: %s", secName))
 			config.Games[id] = readGameConfig(sec, &config.GameCommon)
 		} else if len(secName) > 4 && secName[:4] == "gate" {
 			id, err := strconv.Atoi(secName[4:])
@@ -244,7 +244,7 @@ func readGoWorldConfig() *GoWorldConfig {
 
 func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.BootEntity = "Boot"
-	scc.LogFile = "server.log"
+	scc.LogFile = "game.log"
 	scc.LogStderr = true
 	scc.LogLevel = _DEFAULT_LOG_LEVEL
 	scc.SaveInterval = _DEFAULT_SAVE_ITNERVAL
@@ -255,12 +255,12 @@ func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	_readGameConfig(section, scc)
 }
 
-func readGameConfig(sec *ini.Section, serverCommonConfig *GameConfig) *GameConfig {
-	var sc GameConfig = *serverCommonConfig // copy from server_common
+func readGameConfig(sec *ini.Section, gameCommonConfig *GameConfig) *GameConfig {
+	var sc GameConfig = *gameCommonConfig // copy from game_common
 	_readGameConfig(sec, &sc)
 	// validate game config
 	if sc.BootEntity == "" {
-		panic("boot_entity is not set in server config")
+		panic("boot_entity is not set in game config")
 	}
 	return &sc
 }
@@ -303,7 +303,7 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 }
 
 func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig {
-	var sc GateConfig = *gateCommonConfig // copy from server_common
+	var sc GateConfig = *gateCommonConfig // copy from game_common
 	_readGateConfig(sec, &sc)
 	// validate game config
 	return &sc
