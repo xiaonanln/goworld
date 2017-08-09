@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	. "github.com/xiaonanln/goworld/engine/kvdb/types"
+	"github.com/xiaonanln/goworld/engine/kvdb/types"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -15,13 +15,13 @@ const (
 	_VAL_KEY         = "_"
 )
 
-type MongoKVDB struct {
+type mongoKVDB struct {
 	s *mgo.Session
 	c *mgo.Collection
 }
 
 // OpenMongoKVDB opens mongodb as KVDB engine
-func OpenMongoKVDB(url string, dbname string, collectionName string) (KVDBEngine, error) {
+func OpenMongoKVDB(url string, dbname string, collectionName string) (kvdbtypes.KVDBEngine, error) {
 	gwlog.Debug("Connecting MongoDB ...")
 	session, err := mgo.Dial(url)
 	if err != nil {
@@ -35,20 +35,20 @@ func OpenMongoKVDB(url string, dbname string, collectionName string) (KVDBEngine
 	}
 	db := session.DB(dbname)
 	c := db.C(collectionName)
-	return &MongoKVDB{
+	return &mongoKVDB{
 		s: session,
 		c: c,
 	}, nil
 }
 
-func (kvdb *MongoKVDB) Put(key string, val string) error {
+func (kvdb *mongoKVDB) Put(key string, val string) error {
 	_, err := kvdb.c.UpsertId(key, map[string]string{
 		_VAL_KEY: val,
 	})
 	return err
 }
 
-func (kvdb *MongoKVDB) Get(key string) (val string, err error) {
+func (kvdb *mongoKVDB) Get(key string) (val string, err error) {
 	q := kvdb.c.FindId(key)
 	var doc map[string]string
 	err = q.One(&doc)
@@ -62,40 +62,40 @@ func (kvdb *MongoKVDB) Get(key string) (val string, err error) {
 	return
 }
 
-type MongoKVIterator struct {
+type mongoKVIterator struct {
 	it *mgo.Iter
 }
 
-func (it *MongoKVIterator) Next() (KVItem, error) {
+func (it *mongoKVIterator) Next() (kvdbtypes.KVItem, error) {
 	var doc map[string]string
 	ok := it.it.Next(&doc)
 	if ok {
-		return KVItem{
+		return kvdbtypes.KVItem{
 			Key: doc["_id"],
 			Val: doc["_"],
 		}, nil
 	} else {
 		err := it.it.Close()
 		if err != nil {
-			return KVItem{}, err
+			return kvdbtypes.KVItem{}, err
 		} else {
-			return KVItem{}, io.EOF
+			return kvdbtypes.KVItem{}, io.EOF
 		}
 	}
 }
 
-func (kvdb *MongoKVDB) Find(beginKey string, endKey string) Iterator {
+func (kvdb *mongoKVDB) Find(beginKey string, endKey string) kvdbtypes.Iterator {
 	q := kvdb.c.Find(bson.M{"_id": bson.M{"$gte": beginKey, "$lt": endKey}})
 	it := q.Iter()
-	return &MongoKVIterator{
+	return &mongoKVIterator{
 		it: it,
 	}
 }
 
-func (kvdb *MongoKVDB) Close() {
+func (kvdb *mongoKVDB) Close() {
 	kvdb.s.Close()
 }
 
-func (kvdb *MongoKVDB) IsEOF(err error) bool {
+func (kvdb *mongoKVDB) IsEOF(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

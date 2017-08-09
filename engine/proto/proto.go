@@ -6,12 +6,12 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-// Type of message types
+// MsgType is the type of message types
 type MsgType uint16
 
 const (
-	MT_INVALID = iota // MT_INVALID message type
-	// Server Messages
+	// MT_INVALID is the invalid message type
+	MT_INVALID                        = iota
 	MT_SET_GAME_ID                    // MT_SET_GAME_ID is a message type for game
 	MT_SET_GATE_ID                    // MT_SET_GATE_ID is a message type for gate
 	MT_NOTIFY_CREATE_ENTITY           // MT_NOTIFY_CREATE_ENTITY is a message type for creating entities
@@ -36,7 +36,7 @@ const (
 	MT_REAL_MIGRATE    // MT_REAL_MIGRATE is a message type for entity migrations
 )
 
-const ( // Message types that should be handled by GateService
+const ( // MT_GATE_SERVICE_MSG_TYPE_START is the first message types that should be handled by GateService
 	MT_GATE_SERVICE_MSG_TYPE_START          = 1000 + iota // MT_GATE_SERVICE_MSG_TYPE_START message type
 	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START               // MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START is the first message type that should be redirected to client proxy
 
@@ -57,13 +57,15 @@ const ( // Message types that should be handled by GateService
 	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP = 1500 // MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP message type
 )
 const (
-	MT_CALL_FILTERED_CLIENTS        = 1501 + iota // MT_CALL_FILTERED_CLIENTS message type
-	MT_SYNC_POSITION_YAW_ON_CLIENTS               // MT_SYNC_POSITION_YAW_ON_CLIENTS message type
-	MT_GATE_SERVICE_MSG_TYPE_STOP   = 2000        // MT_GATE_SERVICE_MSG_TYPE_STOP message type
+	// MT_CALL_FILTERED_CLIENTS message type
+	MT_CALL_FILTERED_CLIENTS        = 1501 + iota
+	MT_SYNC_POSITION_YAW_ON_CLIENTS        // MT_SYNC_POSITION_YAW_ON_CLIENTS message type
+	MT_GATE_SERVICE_MSG_TYPE_STOP   = 2000 // MT_GATE_SERVICE_MSG_TYPE_STOP message type
 )
 
 const (
-	SYNC_INFO_SIZE_PER_ENTITY = 16 // SYNC_INFO_SIZE_PER_ENTITY is the size of sync info per entity
+	// SYNC_INFO_SIZE_PER_ENTITY is the size of sync info per entity
+	SYNC_INFO_SIZE_PER_ENTITY = 16
 )
 
 // EntitySyncInfo defines fields of entity sync info

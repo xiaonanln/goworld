@@ -3,11 +3,10 @@ package proto
 import (
 	"net"
 
-	. "github.com/xiaonanln/goworld/engine/common"
-
 	"time"
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 )
@@ -48,7 +47,7 @@ func (gwc *GoWorldConnection) SendSetGateID(id uint16) error {
 }
 
 // SendNotifyCreateEntity sends MT_NOTIFY_CREATE_ENTITY message
-func (gwc *GoWorldConnection) SendNotifyCreateEntity(id EntityID) error {
+func (gwc *GoWorldConnection) SendNotifyCreateEntity(id common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CREATE_ENTITY)
 	packet.AppendEntityID(id)
@@ -58,7 +57,7 @@ func (gwc *GoWorldConnection) SendNotifyCreateEntity(id EntityID) error {
 }
 
 // SendNotifyDestroyEntity sends MT_NOTIFY_DESTROY_ENTITY message
-func (gwc *GoWorldConnection) SendNotifyDestroyEntity(id EntityID) error {
+func (gwc *GoWorldConnection) SendNotifyDestroyEntity(id common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_DESTROY_ENTITY)
 	packet.AppendEntityID(id)
@@ -68,7 +67,7 @@ func (gwc *GoWorldConnection) SendNotifyDestroyEntity(id EntityID) error {
 }
 
 // SendNotifyClientConnected sends MT_NOTIFY_CLIENT_CONNECTED message
-func (gwc *GoWorldConnection) SendNotifyClientConnected(id ClientID) error {
+func (gwc *GoWorldConnection) SendNotifyClientConnected(id common.ClientID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CLIENT_CONNECTED)
 	packet.AppendClientID(id)
@@ -78,7 +77,7 @@ func (gwc *GoWorldConnection) SendNotifyClientConnected(id ClientID) error {
 }
 
 // SendNotifyClientDisconnected sends MT_NOTIFY_CLIENT_DISCONNECTED message
-func (gwc *GoWorldConnection) SendNotifyClientDisconnected(id ClientID) error {
+func (gwc *GoWorldConnection) SendNotifyClientDisconnected(id common.ClientID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_CLIENT_DISCONNECTED)
 	packet.AppendClientID(id)
@@ -99,7 +98,7 @@ func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string, data map
 }
 
 // SendLoadEntityAnywhere sends MT_LOAD_ENTITY_ANYWHERE message
-func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID EntityID) error {
+func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_LOAD_ENTITY_ANYWHERE)
 	packet.AppendEntityID(entityID)
@@ -110,7 +109,7 @@ func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID E
 }
 
 // SendDeclareService sends MT_DECLARE_SERVICE message
-func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string) error {
+func (gwc *GoWorldConnection) SendDeclareService(id common.EntityID, serviceName string) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_DECLARE_SERVICE)
 	packet.AppendEntityID(id)
@@ -121,7 +120,7 @@ func (gwc *GoWorldConnection) SendDeclareService(id EntityID, serviceName string
 }
 
 // SendCallEntityMethod sends MT_CALL_ENTITY_METHOD message
-func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, args []interface{}) error {
+func (gwc *GoWorldConnection) SendCallEntityMethod(id common.EntityID, method string, args []interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD)
 	packet.AppendEntityID(id)
@@ -133,7 +132,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id EntityID, method string, a
 }
 
 // SendCallEntityMethodFromClient sends MT_CALL_ENTITY_METHOD_FROM_CLIENT message
-func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method string, args []interface{}) error {
+func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id common.EntityID, method string, args []interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD_FROM_CLIENT)
 	packet.AppendEntityID(id)
@@ -145,7 +144,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethodFromClient(id EntityID, method
 }
 
 // SendCreateEntityOnClient sends MT_CREATE_ENTITY_ON_CLIENT message
-func (gwc *GoWorldConnection) SendCreateEntityOnClient(gid uint16, clientid ClientID, typeName string, entityid EntityID,
+func (gwc *GoWorldConnection) SendCreateEntityOnClient(gid uint16, clientid common.ClientID, typeName string, entityid common.EntityID,
 	isPlayer bool, clientData map[string]interface{}, x, y, z float32, yaw float32) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CREATE_ENTITY_ON_CLIENT)
@@ -165,7 +164,7 @@ func (gwc *GoWorldConnection) SendCreateEntityOnClient(gid uint16, clientid Clie
 }
 
 // SendSyncPositionYawFromClient sends MT_SYNC_POSITION_YAW_FROM_CLIENT message
-func (gwc *GoWorldConnection) SendSyncPositionYawFromClient(entityID EntityID, x, y, z float32, yaw float32) error {
+func (gwc *GoWorldConnection) SendSyncPositionYawFromClient(entityID common.EntityID, x, y, z float32, yaw float32) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SYNC_POSITION_YAW_FROM_CLIENT)
 	packet.AppendEntityID(entityID)
@@ -179,7 +178,7 @@ func (gwc *GoWorldConnection) SendSyncPositionYawFromClient(entityID EntityID, x
 }
 
 // SendSyncPositionOnClient sends MT_UPDATE_POSITION_ON_CLIENT message
-func (gwc *GoWorldConnection) SendSyncPositionOnClient(gid uint16, clientid ClientID, entityID EntityID, x, y, z float32) error {
+func (gwc *GoWorldConnection) SendSyncPositionOnClient(gid uint16, clientid common.ClientID, entityID common.EntityID, x, y, z float32) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_UPDATE_POSITION_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -194,7 +193,7 @@ func (gwc *GoWorldConnection) SendSyncPositionOnClient(gid uint16, clientid Clie
 }
 
 // SendUpdateYawOnClient sends MT_UPDATE_YAW_ON_CLIENT message
-func (gwc *GoWorldConnection) SendUpdateYawOnClient(gid uint16, clientid ClientID, entityID EntityID, yaw float32) error {
+func (gwc *GoWorldConnection) SendUpdateYawOnClient(gid uint16, clientid common.ClientID, entityID common.EntityID, yaw float32) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_UPDATE_YAW_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -207,7 +206,7 @@ func (gwc *GoWorldConnection) SendUpdateYawOnClient(gid uint16, clientid ClientI
 }
 
 // SendDestroyEntityOnClient sends MT_DESTROY_ENTITY_ON_CLIENT message
-func (gwc *GoWorldConnection) SendDestroyEntityOnClient(gid uint16, clientid ClientID, typeName string, entityid EntityID) error {
+func (gwc *GoWorldConnection) SendDestroyEntityOnClient(gid uint16, clientid common.ClientID, typeName string, entityid common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_DESTROY_ENTITY_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -220,7 +219,7 @@ func (gwc *GoWorldConnection) SendDestroyEntityOnClient(gid uint16, clientid Cli
 }
 
 // SendNotifyMapAttrChangeOnClient sends MT_NOTIFY_MAP_ATTR_CHANGE_ON_CLIENT message
-func (gwc *GoWorldConnection) SendNotifyMapAttrChangeOnClient(gid uint16, clientid ClientID, entityid EntityID, path []interface{}, key string, val interface{}) error {
+func (gwc *GoWorldConnection) SendNotifyMapAttrChangeOnClient(gid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}, key string, val interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_MAP_ATTR_CHANGE_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -235,7 +234,7 @@ func (gwc *GoWorldConnection) SendNotifyMapAttrChangeOnClient(gid uint16, client
 }
 
 // SendNotifyMapAttrDelOnClient sends MT_NOTIFY_MAP_ATTR_DEL_ON_CLIENT message
-func (gwc *GoWorldConnection) SendNotifyMapAttrDelOnClient(gid uint16, clientid ClientID, entityid EntityID, path []interface{}, key string) error {
+func (gwc *GoWorldConnection) SendNotifyMapAttrDelOnClient(gid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}, key string) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_MAP_ATTR_DEL_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -249,7 +248,7 @@ func (gwc *GoWorldConnection) SendNotifyMapAttrDelOnClient(gid uint16, clientid 
 }
 
 // SendNotifyListAttrChangeOnClient sends MT_NOTIFY_LIST_ATTR_CHANGE_ON_CLIENT message
-func (gwc *GoWorldConnection) SendNotifyListAttrChangeOnClient(gid uint16, clientid ClientID, entityid EntityID, path []interface{}, index uint32, val interface{}) error {
+func (gwc *GoWorldConnection) SendNotifyListAttrChangeOnClient(gid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}, index uint32, val interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_LIST_ATTR_CHANGE_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -264,7 +263,7 @@ func (gwc *GoWorldConnection) SendNotifyListAttrChangeOnClient(gid uint16, clien
 }
 
 // SendNotifyListAttrPopOnClient sends MT_NOTIFY_LIST_ATTR_POP_ON_CLIENT message
-func (gwc *GoWorldConnection) SendNotifyListAttrPopOnClient(gid uint16, clientid ClientID, entityid EntityID, path []interface{}) error {
+func (gwc *GoWorldConnection) SendNotifyListAttrPopOnClient(gid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_LIST_ATTR_POP_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -277,7 +276,7 @@ func (gwc *GoWorldConnection) SendNotifyListAttrPopOnClient(gid uint16, clientid
 }
 
 // SendNotifyListAttrAppendOnClient sends MT_NOTIFY_LIST_ATTR_APPEND_ON_CLIENT message
-func (gwc *GoWorldConnection) SendNotifyListAttrAppendOnClient(gid uint16, clientid ClientID, entityid EntityID, path []interface{}, val interface{}) error {
+func (gwc *GoWorldConnection) SendNotifyListAttrAppendOnClient(gid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}, val interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_NOTIFY_LIST_ATTR_APPEND_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -291,7 +290,7 @@ func (gwc *GoWorldConnection) SendNotifyListAttrAppendOnClient(gid uint16, clien
 }
 
 // SendCallEntityMethodOnClient sends MT_CALL_ENTITY_METHOD_ON_CLIENT message
-func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(gid uint16, clientid ClientID, entityID EntityID, method string, args []interface{}) (err error) {
+func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(gid uint16, clientid common.ClientID, entityID common.EntityID, method string, args []interface{}) (err error) {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CALL_ENTITY_METHOD_ON_CLIENT)
 	packet.AppendUint16(gid)
@@ -305,7 +304,7 @@ func (gwc *GoWorldConnection) SendCallEntityMethodOnClient(gid uint16, clientid 
 }
 
 // SendSetClientFilterProp sends MT_SET_CLIENTPROXY_FILTER_PROP message
-func (gwc *GoWorldConnection) SendSetClientFilterProp(gid uint16, clientid ClientID, key, val string) (err error) {
+func (gwc *GoWorldConnection) SendSetClientFilterProp(gid uint16, clientid common.ClientID, key, val string) (err error) {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_CLIENTPROXY_FILTER_PROP)
 	packet.AppendUint16(gid)
@@ -318,7 +317,7 @@ func (gwc *GoWorldConnection) SendSetClientFilterProp(gid uint16, clientid Clien
 }
 
 // SendClearClientFilterProp sends MT_CLEAR_CLIENTPROXY_FILTER_PROPS message
-func (gwc *GoWorldConnection) SendClearClientFilterProp(gid uint16, clientid ClientID) (err error) {
+func (gwc *GoWorldConnection) SendClearClientFilterProp(gid uint16, clientid common.ClientID) (err error) {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CLEAR_CLIENTPROXY_FILTER_PROPS)
 	packet.AppendUint16(gid)
@@ -342,7 +341,7 @@ func (gwc *GoWorldConnection) SendCallFilterClientProxies(key string, val string
 }
 
 // SendMigrateRequest sends MT_MIGRATE_REQUEST message
-func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID EntityID) error {
+func (gwc *GoWorldConnection) SendMigrateRequest(spaceID common.EntityID, entityID common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_MIGRATE_REQUEST)
 	packet.AppendEntityID(entityID)
@@ -353,8 +352,8 @@ func (gwc *GoWorldConnection) SendMigrateRequest(spaceID EntityID, entityID Enti
 }
 
 // SendRealMigrate sends MT_REAL_MIGRATE message
-func (gwc *GoWorldConnection) SendRealMigrate(eid EntityID, targetGame uint16, targetSpace EntityID, x, y, z float32,
-	typeName string, migrateData map[string]interface{}, timerData []byte, clientid ClientID, clientsrv uint16) error {
+func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,
+	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)

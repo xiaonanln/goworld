@@ -5,7 +5,7 @@ import (
 
 	"regexp"
 
-	. "github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -29,7 +29,7 @@ func (a *Avatar) setDefaultAttrs() {
 }
 
 // GetSpaceID 获得玩家的场景ID并发给调用者
-func (a *Avatar) GetSpaceID(callerID EntityID) {
+func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
 }
 
