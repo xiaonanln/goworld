@@ -3,7 +3,7 @@ type=mongodb
 url=mongodb://localhost:27017/
 db=goworld
 ;type=redis
-;host=127.0.0.1:6379
+;url=redis://127.0.0.1:6379/0/
 ;db=0
 
 [kvdb]
@@ -12,7 +12,7 @@ url=mongodb://127.0.0.1:27017/goworld
 db=goworld
 collection=__kv__
 ;type=redis
-;host=127.0.0.1:6379
+;url=redis://127.0.0.1:6379/1/
 ;db=1
 
 [dispatcher]
