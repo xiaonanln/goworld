@@ -22,6 +22,7 @@ type NetConnection struct {
 	net.Conn
 }
 
+// Flush flushes network connection
 func (c NetConnection) Flush() error {
 	return nil
 }
