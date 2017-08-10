@@ -37,58 +37,52 @@ back to work but with the latest executive image. This feature enables updating 
  transparently without significant interference of online players. 
 
 ## Get GoWorld
-**Download goworld:**
 ```bash
-get github.com/xiaonanln/goworld
+$ go get github.com/xiaonanln/goworld
 ```
 
-**Install dependencies**
-```bash
-go get -u github.com/xiaonanln/go-xnsyncutil/xnsyncutil
-go get -u github.com/xiaonanln/goTimer
-go get -u github.com/xiaonanln/typeconv
-go get -u golang.org/x/net/context
-go get -u github.com/Sirupsen/logrus
-go get -u github.com/garyburd/redigo/redis
-go get -u github.com/google/btree
-go get -u github.com/pkg/errors
-go get -u golang.org/x/net/websocket
-go get -u gopkg.in/eapache/queue.v1
-go get -u gopkg.in/ini.v1
-go get -u gopkg.in/mgo.v2
-go get -u gopkg.in/vmihailenco/msgpack.v2
-go get -u gopkg.in/natefinch/lumberjack.v2
+### Install dependencies
 
+**Windows**: `install-deps-win.bat`
+
+**Linux**: `make install-deps`
+
+## Manage GoWorld using goworld.py
+
+goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module. 
+```bash
+$ pip install psutil
 ```
 
-## Run Example Server & Client
-1. Get MongoDB or Redis Running
-2. Copy goworld.ini.sample to goworld.ini, and configure accordingly
-    ```bash
-    cp goworld.ini.sample goworld.ini
-    ```
-3. Build and run dispatcher:
-    ```bash
-    make dispatcher
-    components/dispatcher/dispatcher
-    ```
+**Build GoWorld Engine (dispatcher & gate):**
 
-4. Build and run gate:
-    ```bash
-    make gate
-    components/gate/gate -gid 1
-    ```
+```bash
+$ python goworld.py build dispatcher gate
+```
 
-5. Build and run test_game:
-    ```bash
-    make test_game
-    examples/test_game/test_game -gid 1
-    ```
+**Build Test Game Server:**
+```bash
+$ python goworld.py build examples/test_game
+```
 
-6. Build and run test_client:
-    ```bash
-    make test_client
-    examples/test_client/test_client -N 500
-    ```
+**Start Server: (dispatcher -> test_game -> gate)**
+```bash
+$ python goworld.py start examples/test_game
+``` 
 
+**Stop Server (gate -> test_game -> dispatcher):**
+```bash
+$ python goworld.py stop
+```
 
+**Freeze Test Game Servers:**
+```bash
+$ python goworld.py freeze
+```
+
+**Restore Test Game Servers:**
+```bash
+$ python goworld.py restore examples/test_game
+```
+
+Will restore `test_game` using the current executive. 

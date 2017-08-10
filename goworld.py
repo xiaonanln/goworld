@@ -237,15 +237,15 @@ def startServer():
 	dispatcherProc = psutil.Popen(nohupArgs+[getDispatcherExe()])
 	print >>sys.stderr, dispatcherProc.status()
 
-	for gateid in gateids:
-		print >>sys.stderr, "Start gate%d ..." % gateid,
-		gateProc = psutil.Popen(nohupArgs+[getGateExe(), "-gid=%d" % gateid, "-log", loglevel])
-		print >>sys.stderr, gateProc.status()
-
 	for gameid in gameids:
 		print >> sys.stderr, "Start game%d ..." % gameid,
 		gameProc = psutil.Popen(nohupArgs+[getGameExe(), "-gid=%d" % gameid, "-log", loglevel])
 		print >> sys.stderr, gameProc.status()
+
+	for gateid in gateids:
+		print >>sys.stderr, "Start gate%d ..." % gateid,
+		gateProc = psutil.Popen(nohupArgs+[getGateExe(), "-gid=%d" % gateid, "-log", loglevel])
+		print >>sys.stderr, gateProc.status()
 
 	_showStatus(1, len(gateids), len(gameids))
 
