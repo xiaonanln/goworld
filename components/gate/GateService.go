@@ -223,6 +223,7 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 		data := payload[i+common.CLIENTID_LENGTH : i+common.CLIENTID_LENGTH+common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY]
 		dispatch[clientid] = append(dispatch[clientid], data...)
 	}
+	fmt.Fprintf(os.Stderr, "(%d,%d)", payloadLen, len(dispatch))
 
 	// multiple entity sync infos are received from game->dispatcher, gate need to dispatcher these infos to different clients
 	gs.clientProxiesLock.RLock()
