@@ -49,10 +49,17 @@ def main():
 			showUsage()
 			exit(1)
 
-		detectGamePath(gameName)
+		global gamePath
+		gamePath = detectGamePath(gameName)
 		startServer()
 	elif cmd == 'stop':
 		stopServer()
+	elif cmd == 'build':
+		buildTargets = args[1:]
+		if not buildTargets: buildTargets = ['engine']
+
+		for buildTarget in buildTargets:
+			build(buildTarget)
 	else:
 		print >>sys.stderr, "invalid command: %s" % cmd
 		showUsage()
@@ -61,7 +68,7 @@ def main():
 def verifyExecutionEnv():
 	global goworldPath
 	goworldPath = os.getcwd()
-	print >>sys.stderr, 'Detect goworld path:', goworldPath
+	print >>sys.stderr, '> Detect goworld path:', goworldPath
 	dir = os.path.basename(goworldPath)
 	if dir != 'goworld':
 		print >>sys.stderr, "must run in goworld directory!"
@@ -75,15 +82,31 @@ def verifyExecutionEnv():
 		print >> sys.stderr, "%s is not found, use goworld.py build first" % getGateExe()
 		exit(2)
 
-def detectGamePath(gameName):
-	global gamePath
-	gamePath = os.path.join("examples", gameName, gameName)
-	if os.name == 'nt':
-		gamePath += ".exe"
+def detectGamePath(gameId, needExe=True):
+	dir, gameName = os.path.split(gameId)
+	if dir == '':
+		dirs = [f for f in os.listdir(".") if os.path.isdir(f) and f not in ('components', 'engine')]
+	else:
+		dirs = [dir]
 
-	if not os.path.exists(gamePath):
-		print >>sys.stderr, "%s is not found, use goworld.py build first" % gamePath
-		exit(2)
+	for dir in dirs:
+		gameDir = os.path.join(dir, gameName)
+		if not os.path.isdir(gameDir):
+			continue
+
+		gamePath = os.path.join(gameDir, gameName)
+		if os.name == 'nt':
+			gamePath += ".exe"
+
+		if not os.path.exists(gamePath):
+			print >>sys.stderr, "! %s is not found, use goworld.py build first" % gamePath
+			exit(2)
+
+		return gamePath
+
+	# game not found
+	print >>sys.stderr, "! game %s is not found, wrong name?" % gameId
+	exit(2)
 
 def showUsage():
 	print >>sys.stderr, """Usage:
@@ -92,6 +115,33 @@ def showUsage():
 	goworld.py start <game-name> - start game server
 	goworld.py stop - stop game server
 	"""
+
+def build(target):
+	if target == 'dispatcher':
+		buildDispatcher()
+	elif target == 'gate':
+		buildGate()
+	elif target == 'engine':
+		buildEngine()
+	else:
+		buildGame(target)
+
+def buildEngine():
+	buildDispatcher()
+	buildGate()
+
+def buildDispatcher():
+	print >>sys.stderr, '> building dispatcher ...',
+	os.system('cd "%s" && go build' % os.path.join("components", "dispatcher"))
+	print >>sys.stderr, 'OK'
+
+def buildGate():
+	print >>sys.stderr, '> building gate ...',
+	os.system('cd "%s" && go build' % os.path.join("components", "gate"))
+	print >>sys.stderr, 'OK'
+
+def buildGame(gameId):
+	gameExe = detectGamePath(gameId)
 
 def visitProcs():
 	dispatcherProcs = []
