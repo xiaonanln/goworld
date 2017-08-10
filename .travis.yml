@@ -14,6 +14,7 @@ install:
 
 script:
   - python goworld.py build dispatcher gate test_game chatroom_demo
+  - make test
   - python goworld.py start test_game
   - sleep 1
   - python goworld.py freeze
@@ -21,5 +22,4 @@ script:
   - python goworld.py restore test_game
   - sleep 1
   - python goworld.py stop
-  - make test
 
