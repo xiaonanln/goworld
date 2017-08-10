@@ -13,3 +13,6 @@ install:
 script:
   - make
   - make covertest
+
+after_success:
+  - coveralls
