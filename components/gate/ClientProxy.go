@@ -64,9 +64,10 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
+	var lastFlushTime time.Time
 	for {
 		var msgtype proto.MsgType
-		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
+		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 100)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
@@ -87,7 +88,11 @@ func (cp *ClientProxy) serve() {
 			panic(err)
 		}
 
-		cp.Flush()
+		now := time.Now()
+		if now.Sub(lastFlushTime) > time.Millisecond*100 {
+			lastFlushTime = now
+			cp.Flush()
+		}
 	}
 }
 
