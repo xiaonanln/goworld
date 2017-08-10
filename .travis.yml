@@ -5,3 +5,7 @@ go:
 
 install:
   - make deps
+
+script:
+  - make
+  - make test
