@@ -21,11 +21,14 @@ gateids = []
 gameids = []
 gameName = ''
 gamePath = ''
+loglevel = "info"
 
 def main():
-	opts, args = getopt.getopt(sys.argv[1:], "", [])
+	opts, args = getopt.getopt(sys.argv[1:], "", ["log="])
+	global loglevel
 	for opt, val in opts:
-		pass
+		if opt == "--log":
+			loglevel = val
 
 	if len(args) == 0:
 		showUsage()
@@ -192,12 +195,12 @@ def startServer():
 
 	for gateid in gateids:
 		print >>sys.stderr, "Start gate%d ..." % gateid,
-		gateProc = psutil.Popen([getGateExe(), "-gid=%d" % gateid])
+		gateProc = psutil.Popen([getGateExe(), "-gid=%d" % gateid, "-log", loglevel])
 		print >>sys.stderr, gateProc.status()
 
 	for gameid in gameids:
 		print >> sys.stderr, "Start game%d ..." % gameid,
-		gameProc = psutil.Popen([getGameExe(), "-gid=%d" % gameid])
+		gameProc = psutil.Popen([getGameExe(), "-gid=%d" % gameid, "-log", loglevel])
 		print >> sys.stderr, gameProc.status()
 
 	_showStatus(1, len(gateids), len(gameids))
