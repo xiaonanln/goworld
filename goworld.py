@@ -6,7 +6,6 @@ import sys
 import signal
 import psutil
 import getopt
-import subprocess
 import ConfigParser
 import time
 
@@ -32,7 +31,8 @@ def main():
 		showUsage()
 		exit(1)
 
-	verifyExecutionEnv()
+	cmd = args[0].lower()
+	verifyExecutionEnv(cmd)
 
 	config = ConfigParser.SafeConfigParser()
 	config.read("goworld.ini")
@@ -51,6 +51,10 @@ def main():
 
 		global gamePath
 		gamePath = detectGamePath(gameName)
+		if not os.path.exists(gamePath):
+			print >>sys.stderr, "! %s is not found, goworld.py build %s first" % (gamePath, gameName)
+			exit(2)
+
 		startServer()
 	elif cmd == 'stop':
 		stopServer()
@@ -65,7 +69,7 @@ def main():
 		showUsage()
 		exit(1)
 
-def verifyExecutionEnv():
+def verifyExecutionEnv(cmd):
 	global goworldPath
 	goworldPath = os.getcwd()
 	print >>sys.stderr, '> Detect goworld path:', goworldPath
@@ -74,13 +78,14 @@ def verifyExecutionEnv():
 		print >>sys.stderr, "must run in goworld directory!"
 		exit(2)
 
-	if not os.path.exists(getDispatcherExe()):
-		print >>sys.stderr, "%s is not found, use goworld.py build first" % getDispatcherExe()
-		exit(2)
+	if cmd != 'build':
+		if not os.path.exists(getDispatcherExe()):
+			print >>sys.stderr, "%s is not found, goworld.py build engine first" % getDispatcherExe()
+			exit(2)
 
-	if not os.path.exists(getGateExe()):
-		print >> sys.stderr, "%s is not found, use goworld.py build first" % getGateExe()
-		exit(2)
+		if not os.path.exists(getGateExe()):
+			print >> sys.stderr, "%s is not found, goworld.py build engine first" % getGateExe()
+			exit(2)
 
 def detectGamePath(gameId, needExe=True):
 	dir, gameName = os.path.split(gameId)
@@ -98,9 +103,9 @@ def detectGamePath(gameId, needExe=True):
 		if os.name == 'nt':
 			gamePath += ".exe"
 
-		if not os.path.exists(gamePath):
-			print >>sys.stderr, "! %s is not found, use goworld.py build first" % gamePath
-			exit(2)
+		# if not os.path.exists(gamePath):
+		# 	print >>sys.stderr, "! %s is not found, use goworld.py build first" % gamePath
+		# 	exit(2)
 
 		return gamePath
 
@@ -141,7 +146,11 @@ def buildGate():
 	print >>sys.stderr, 'OK'
 
 def buildGame(gameId):
-	gameExe = detectGamePath(gameId)
+	gamePath = detectGamePath(gameId)
+	gameDir = os.path.dirname(gamePath)
+	print >>sys.stderr, '> building %s ...' % gameDir,
+	os.system('cd "%s" && go build' % gameDir)
+	print >>sys.stderr, 'OK'
 
 def visitProcs():
 	dispatcherProcs = []
@@ -196,8 +205,8 @@ def startServer():
 def stopServer():
 	dispatcherProcs, gateProcs, gameProcs = visitProcs()
 	if not dispatcherProcs and not gateProcs and not gameProcs:
-		print >>sys.stderr, "goworld is not running ..."
 		_showStatus(1, len(gateids), len(gameids))
+		print >>sys.stderr, "! goworld is not running"
 		exit(2)
 
 	# Close gates first to shutdown clients
