@@ -29,12 +29,14 @@ func TestGWLog(t *testing.T) {
 	Warnf("this is a warning %d", 3)
 
 	func() {
-		defer recover()
+		defer func() {
+			_ = recover()
+		}()
 		Panicf("this is a panic %d", 4)
 	}()
 
 	func() {
 		defer recover()
-		Fatalf("this is a fatal %d", 5)
+		// Fatalf("this is a fatal %d", 5)
 	}()
 }

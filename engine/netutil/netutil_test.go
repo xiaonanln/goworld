@@ -3,6 +3,7 @@ package netutil
 import (
 	"net"
 	"testing"
+	"time"
 
 	"math/rand"
 
@@ -34,10 +35,11 @@ func (ts *testEchoTcpServer) ServeTCPConnection(conn net.Conn) {
 }
 
 func TestPacketConnection(t *testing.T) {
-	PORT := 4003
+	PORT := 14572
 	go func() {
 		ServeTCP(fmt.Sprintf("localhost:%d", PORT), &testEchoTcpServer{})
 	}()
+	time.Sleep(time.Millisecond * 200)
 
 	for compressed := 0; compressed <= 1; compressed += 1 {
 

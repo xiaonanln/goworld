@@ -179,7 +179,7 @@ func openTestMongoKVDB(f _Fataler) KVDBEngine {
 }
 
 func openTestRedisKVDB(f _Fataler) KVDBEngine {
-	kvdb, err := kvdbredis.OpenRedisKVDB("127.0.0.1:6379", 0)
+	kvdb, err := kvdbredis.OpenRedisKVDB("redis://127.0.0.1:6379", 0)
 	if err != nil {
 		f.Fatal(err)
 	}

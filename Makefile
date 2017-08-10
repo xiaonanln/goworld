@@ -1,5 +1,5 @@
 .PHONY: dispatcher test_game test_client gate chatroom_demo
-.PHONY: runtestserver killtestserver
+.PHONY: runtestserver killtestserver test covertest
 
 all: dispatcher test_game test_client gate chatroom_demo
 
@@ -32,3 +32,8 @@ killtestserver:
 	- sleep 5
 	- killall dispatcher
 
+test:
+	go test ./...
+
+covertest:
+	go test ./... -cover
