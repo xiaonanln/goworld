@@ -1,5 +1,5 @@
 .PHONY: dispatcher test_game test_client gate chatroom_demo
-.PHONY: runtestserver killtestserver test covertest deps
+.PHONY: runtestserver killtestserver test covertest install-deps
 
 all: dispatcher test_game test_client gate chatroom_demo
 
@@ -38,7 +38,7 @@ test:
 covertest:
 	go test -covermode=count ./...
 
-deps:
+install-deps:
 	- pip install psutil
 	- go get golang.org/x/net/context
 	- go get golang.org/x/net/websocket
