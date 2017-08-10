@@ -14,7 +14,5 @@ install:
 
 script:
   - make
-  - make covertest
+  - make test
 
-after_success:
-  $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken WSO8E3UTO3mHFGZHCiXmC4xBrf6QPcZJW
