@@ -13,6 +13,10 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
+func init() {
+	SetConfigFile("../../goworld.ini.sample")
+}
+
 func TestLoad(t *testing.T) {
 	config := Get()
 	gwlog.Debugf("goworld config: \n%s", config)

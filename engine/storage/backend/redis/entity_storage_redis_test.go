@@ -9,7 +9,7 @@ import (
 )
 
 func TestRedisEntityStorage(t *testing.T) {
-	es, err := OpenRedis("localhost:6379", 0)
+	es, err := OpenRedis("redis://localhost:6379", 0)
 	if err != nil {
 		t.Error(err)
 	}
