@@ -33,10 +33,10 @@ killtestserver:
 	- killall dispatcher
 
 test:
-	go test ./...
+	go test -v ./...
 
 covertest:
-	go test ./... -cover
+	go test -v -covermode=count -coverprofile=coverage.out ./...
 
 deps:
 	- pip install psutil

@@ -9,10 +9,12 @@ services:
 
 install:
   - make deps
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
 
 script:
   - make
   - make covertest
 
 after_success:
-  - coveralls
+  $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken WSO8E3UTO3mHFGZHCiXmC4xBrf6QPcZJW
