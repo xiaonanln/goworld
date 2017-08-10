@@ -48,7 +48,7 @@ def main():
 	cmd = args[0].lower()
 	if cmd == 'status':
 		showStatus()
-	elif cmd == "start":
+	elif cmd in ("start", "restore"):
 		global gameName
 		try:
 			gameName = args[1]
@@ -61,8 +61,12 @@ def main():
 		if not os.path.exists(gamePath):
 			print >>sys.stderr, "! %s is not found, goworld.py build %s first" % (gamePath, gameName)
 			exit(2)
+		
+		if cmd == "start":
+			startServer()
+		elif cmd == "restore":
+			restoreGames()
 
-		startServer()
 	elif cmd == 'stop':
 		stopServer()
 	elif cmd == 'build':
@@ -71,6 +75,8 @@ def main():
 
 		for buildTarget in buildTargets:
 			build(buildTarget)
+	elif cmd == 'freeze':
+		freezeGames()
 	else:
 		print >>sys.stderr, "invalid command: %s" % cmd
 		showUsage()
@@ -159,6 +165,21 @@ def buildGame(gameId):
 	os.system('cd "%s" && go build' % gameDir)
 	print >>sys.stderr, 'OK'
 
+def freezeGames():
+	_, _, gameProcs = visitProcs()
+	if not gameProcs:
+		print >>sys.stderr, "! game process is not found"
+		exit(2)
+	
+	for proc in gameProcs:
+		proc.send_signal(signal.SIGINT)
+
+	print >>sys.stderr, "Waiting for game processes to terminate ...",
+	waitProcsToTerminate(isGameProcess)
+	print >>sys.stderr, 'OK'
+
+	_showStatus(1, len(gateids), 0)
+
 def visitProcs():
 	dispatcherProcs = []
 	gateProcs = []
@@ -185,6 +206,23 @@ def _showStatus(expectDispatcherCount, expectGateCount, expectGameCount):
 	print >>sys.stderr, "%-16s expect %d found %d %s" % ("gate", expectGateCount, len(gateProcs), "GOOD" if expectGateCount == len(gateProcs) else "BAD!")
 	print >>sys.stderr, "%-16s expect %d found %d %s" % ("game", expectGameCount, len(gameProcs), "GOOD" if expectGameCount == len(gameProcs) else "BAD!")
 
+def restoreGames():
+	dispatcherProcs, _, gameProcs = visitProcs()
+	if len(dispatcherProcs) != 1 or gameProcs:
+		print >>sys.stderr, "! wrong process status"
+		_showStatus(1, len(gateids), 0)
+		exit(2)
+
+	global nohup
+	nohupArgs = ['nohup'] if nohup else []
+	
+	for gameid in gameids:
+		print >> sys.stderr, "Restore game%d ..." % gameid,
+		gameProc = psutil.Popen(nohupArgs+[getGameExe(), "-gid=%d" % gameid, "-log", loglevel, '-restore'])
+		print >> sys.stderr, gameProc.status()
+	
+	_showStatus(1, len(gateids), len(gameids))
+
 def startServer():
 	dispatcherProcs, gateProcs, gameProcs = visitProcs()
 	if dispatcherProcs or gateProcs or gameProcs:
@@ -193,9 +231,9 @@ def startServer():
 		exit(2)
 
 	# now the system is clear, start server processes ...
-	print >>sys.stderr, "Start dispatcher ...",
 	global nohup
 	nohupArgs = ['nohup'] if nohup else []
+	print >>sys.stderr, "Start dispatcher ...",
 	dispatcherProc = psutil.Popen(nohupArgs+[getDispatcherExe()])
 	print >>sys.stderr, dispatcherProc.status()
 
