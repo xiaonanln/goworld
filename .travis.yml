@@ -13,6 +13,13 @@ install:
   - go get github.com/mattn/goveralls
 
 script:
-  - make
+  - python goworld.py build dispatcher gate test_game chatroom_demo
+  - python goworld.py start test_game
+  - sleep 1
+  - python goworld.py freeze
+  - sleep 1
+  - python goworld.py restore test_game
+  - sleep 1
+  - python goworld.py stop
   - make test
 

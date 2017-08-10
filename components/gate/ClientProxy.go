@@ -36,10 +36,6 @@ type ClientProxy struct {
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
 	conn = netutil.NewBufferedReadConnection(conn)
-	//if cfg.CompressConnection {
-	// compressing connection, use CompressedConnection
-	//conn = netutil.NewCompressedConnection(conn)
-	//}
 
 	gwc := proto.NewGoWorldConnection(conn, cfg.CompressConnection)
 	return &ClientProxy{
@@ -70,7 +66,7 @@ func (cp *ClientProxy) serve() {
 
 	for {
 		var msgtype proto.MsgType
-		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50))
+		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {

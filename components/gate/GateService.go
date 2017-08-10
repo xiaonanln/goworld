@@ -68,6 +68,7 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
+	tcpConn.SetNoDelay(consts.CLIENT_PROXY_SET_TCP_NO_DELAY)
 
 	gs.handleClientConnection(conn)
 }
