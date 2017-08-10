@@ -8,4 +8,4 @@ install:
 
 script:
   - make
-  - make test
+  - make covertest
