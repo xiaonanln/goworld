@@ -43,7 +43,7 @@ func (dcp *dispatcherClientProxy) startAutoFlush() {
 		for !gwc.IsClosed() {
 			time.Sleep(time.Millisecond * 10)
 			dcp.beforeFlush()
-			err := gwc.Flush("dispatcherClientProxy")
+			err := gwc.Flush("DispatcherClientProxy")
 			if err != nil {
 				break
 			}

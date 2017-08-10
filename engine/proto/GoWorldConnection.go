@@ -405,7 +405,7 @@ func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
 		defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 		for !gwc.IsClosed() {
 			time.Sleep(interval)
-			err := gwc.Flush("auto")
+			err := gwc.Flush("AutoFlush")
 			if err != nil {
 				break
 			}
