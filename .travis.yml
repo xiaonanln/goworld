@@ -3,6 +3,10 @@ language: go
 go:
   - 1.8.x
 
+services:
+  - mongodb
+  - redis-server
+
 install:
   - make deps
 
