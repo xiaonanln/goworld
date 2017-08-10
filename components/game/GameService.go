@@ -168,7 +168,7 @@ func (gs *_GameService) serveRoutine() {
 		post.Tick()
 		if isTick {
 			gameDispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
-			dispatcherclient.GetDispatcherClientForSend().Flush()
+			dispatcherclient.GetDispatcherClientForSend().Flush("gameService")
 		}
 	}
 }

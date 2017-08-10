@@ -395,8 +395,8 @@ func (gwc *GoWorldConnection) SendPacket(packet *netutil.Packet) error {
 }
 
 // Flush connection writes
-func (gwc *GoWorldConnection) Flush() error {
-	return gwc.packetConn.Flush()
+func (gwc *GoWorldConnection) Flush(reason string) error {
+	return gwc.packetConn.Flush(reason)
 }
 
 // SetAutoFlush starts a goroutine to flush connection writes at some specified interval
@@ -405,7 +405,7 @@ func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
 		defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 		for !gwc.IsClosed() {
 			time.Sleep(interval)
-			err := gwc.Flush()
+			err := gwc.Flush("auto")
 			if err != nil {
 				break
 			}

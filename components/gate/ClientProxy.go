@@ -89,9 +89,9 @@ func (cp *ClientProxy) serve() {
 		}
 
 		now := time.Now()
-		if now.Sub(lastFlushTime) > time.Millisecond*100 {
+		if now.Sub(lastFlushTime) >= time.Millisecond*100 {
 			lastFlushTime = now
-			cp.Flush()
+			cp.Flush("ClientProxy")
 		}
 	}
 }

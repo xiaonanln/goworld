@@ -122,7 +122,7 @@ func (pc *PacketConnection) SendPacket(packet *Packet) error {
 }
 
 // Flush connection writes
-func (pc *PacketConnection) Flush() (err error) {
+func (pc *PacketConnection) Flush(reason string) (err error) {
 	pc.pendingPacketsLock.Lock()
 	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
 		pc.pendingPacketsLock.Unlock()
@@ -133,7 +133,7 @@ func (pc *PacketConnection) Flush() (err error) {
 	pc.pendingPacketsLock.Unlock()
 
 	// flush should only be called in one goroutine
-	op := opmon.StartOperation("FlushPackets")
+	op := opmon.StartOperation("FlushPackets-" + reason)
 	defer op.Finish(time.Millisecond * 100)
 
 	var cw *flate.Writer

@@ -28,7 +28,7 @@ func newDispatcherClient(conn net.Conn, autoFlush bool) *DispatcherClient {
 				time.Sleep(time.Millisecond * 10)
 				dispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
 
-				err := gwc.Flush()
+				err := gwc.Flush("dispatcherClientAuto")
 				if err != nil {
 					break
 				}
