@@ -22,13 +22,17 @@ gameids = []
 gameName = ''
 gamePath = ''
 loglevel = "info"
+nohup = False
 
 def main():
-	opts, args = getopt.getopt(sys.argv[1:], "", ["log="])
+	opts, args = getopt.getopt(sys.argv[1:], "", ["log=", "nohup"])
 	global loglevel
 	for opt, val in opts:
 		if opt == "--log":
 			loglevel = val
+		elif opt == "--nohup":
+			nohup = True
+			print >>sys.stderr, "> Using nohup"
 
 	if len(args) == 0:
 		showUsage()
@@ -190,17 +194,19 @@ def startServer():
 
 	# now the system is clear, start server processes ...
 	print >>sys.stderr, "Start dispatcher ...",
-	dispatcherProc = psutil.Popen([getDispatcherExe()])
+	global nohup
+	nohupArgs = ['nohup'] if nohup else []
+	dispatcherProc = psutil.Popen(nohupArgs+[getDispatcherExe()])
 	print >>sys.stderr, dispatcherProc.status()
 
 	for gateid in gateids:
 		print >>sys.stderr, "Start gate%d ..." % gateid,
-		gateProc = psutil.Popen([getGateExe(), "-gid=%d" % gateid, "-log", loglevel])
+		gateProc = psutil.Popen(nohupArgs+[getGateExe(), "-gid=%d" % gateid, "-log", loglevel])
 		print >>sys.stderr, gateProc.status()
 
 	for gameid in gameids:
 		print >> sys.stderr, "Start game%d ..." % gameid,
-		gameProc = psutil.Popen([getGameExe(), "-gid=%d" % gameid, "-log", loglevel])
+		gameProc = psutil.Popen(nohupArgs+[getGameExe(), "-gid=%d" % gameid, "-log", loglevel])
 		print >> sys.stderr, gameProc.status()
 
 	_showStatus(1, len(gateids), len(gameids))
