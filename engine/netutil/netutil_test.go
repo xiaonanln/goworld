@@ -62,7 +62,7 @@ func TestPacketConnection(t *testing.T) {
 				t.Errorf("payload should be %d, but is %d", PAYLOAD_LEN, packet.GetPayloadLen())
 			}
 			conn.SendPacket(packet)
-			conn.Flush()
+			conn.Flush("Test")
 			recvPacket, err := conn.RecvPacket()
 			if err != nil {
 				t.Error(err)
