@@ -16,6 +16,7 @@ import (
 var (
 	outputWriter io.Writer
 
+	// DebugLevel level
 	DebugLevel Level = Level(sublog.DebugLevel)
 	// InfoLevel level
 	InfoLevel Level = Level(sublog.InfoLevel)
@@ -55,7 +56,8 @@ func init() {
 	Errorf = sublog.Errorf
 }
 
-func SetComponent(comp string) {
+// SetSource sets the component name (dispatcher/gate/game) of gwlog module
+func SetSource(comp string) {
 	logEntry := sublog.WithField("source", comp)
 
 	Debugf = logEntry.Debugf
