@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"os"
-
-	"time"
 
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
@@ -49,6 +48,14 @@ func (cp *ClientProxy) String() string {
 	return fmt.Sprintf("ClientProxy<%s@%s>", cp.clientid, cp.RemoteAddr())
 }
 
+//func (cp *ClientProxy) SendPacket(packet *netutil.Packet) error {
+//	err := cp.GoWorldConnection.SendPacket(packet)
+//	if err != nil {
+//		return err
+//	}
+//	return cp.Flush("ClientProxy")
+//}
+
 func (cp *ClientProxy) serve() {
 	defer func() {
 		cp.Close()
@@ -64,9 +71,11 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
+	cp.GoWorldConnection.SetAutoFlush(time.Millisecond * 50)
+
 	for {
 		var msgtype proto.MsgType
-		cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
+		//cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
@@ -87,7 +96,8 @@ func (cp *ClientProxy) serve() {
 			panic(err)
 		}
 
-		cp.Flush("ClientProxy")
+		//cp.Flush("ClientProxy")
+
 	}
 }
 
