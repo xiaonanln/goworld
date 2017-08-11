@@ -446,7 +446,9 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 
 		// put this sync info to the pending queue of target game
 		// concat to the end of queue
-		service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
+		if len(service.entitySyncInfosToGame[gameid-1]) < consts.MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME { // when game is freezed, prohibit caching too much data per game
+			service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
+		}
 	}
 
 	service.entitySyncInfosToGameLock.Unlock()

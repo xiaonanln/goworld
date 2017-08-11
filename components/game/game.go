@@ -181,6 +181,7 @@ func waitEntityStorageFinish() {
 }
 
 type dispatcherClientDelegate struct {
+	lastCollectEntitySyncInfosTime time.Time
 }
 
 func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcherclient.DispatcherClient, isReconnect bool) {
@@ -218,7 +219,11 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
 	// collect all sync infos from entities and group them by target gates
-	entity.CollectEntitySyncInfos()
+	now := time.Now()
+	if now.Sub(delegate.lastCollectEntitySyncInfosTime) >= time.Millisecond*100 {
+		delegate.lastCollectEntitySyncInfosTime = now
+		entity.CollectEntitySyncInfos()
+	}
 }
 
 // GetGameID returns the current Game Server ID

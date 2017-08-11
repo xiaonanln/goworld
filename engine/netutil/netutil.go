@@ -54,8 +54,14 @@ func IsConnectionError(_err interface{}) bool {
 // WriteAll write all bytes of data to the writer
 func WriteAll(conn io.Writer, data []byte) error {
 	left := len(data)
+//	olen := left
+//	wc := 0
+//	defer func(){
+//		fmt.Fprintf(os.Stderr, "(WA%d/%d)", olen, wc)
+//	}()
 	for left > 0 {
 		n, err := conn.Write(data)
+		//wc += 1
 		if n == left && err == nil { // handle most common case first
 			return nil
 		}

@@ -143,7 +143,7 @@ func (bot *ClientBot) loop() {
 			}
 		}
 
-		bot.conn.Flush()
+		bot.conn.Flush("ClientBot")
 		post.Tick()
 	}
 }

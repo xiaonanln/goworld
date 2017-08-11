@@ -68,6 +68,7 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
+	tcpConn.SetNoDelay(consts.CLIENT_PROXY_SET_TCP_NO_DELAY)
 
 	gs.handleClientConnection(conn)
 }
@@ -222,6 +223,7 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 		data := payload[i+common.CLIENTID_LENGTH : i+common.CLIENTID_LENGTH+common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY]
 		dispatch[clientid] = append(dispatch[clientid], data...)
 	}
+	//fmt.Fprintf(os.Stderr, "(%d,%d)", payloadLen, len(dispatch))
 
 	// multiple entity sync infos are received from game->dispatcher, gate need to dispatcher these infos to different clients
 	gs.clientProxiesLock.RLock()
