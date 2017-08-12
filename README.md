@@ -50,7 +50,9 @@ $ go get github.com/xiaonanln/goworld
 
 ## Manage GoWorld using goworld.py
 
-goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module. 
+goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module.
+We can use goworld.py to build, start, stop and reload game servers. 
+
 ```bash
 $ pip install psutil
 ```
@@ -61,23 +63,28 @@ $ pip install psutil
 $ python goworld.py build dispatcher gate
 ```
 
-**Build Test Game Server:**
+**Build Example Chatroom Server:**
 ```bash
-$ python goworld.py build examples/test_game
+$ python goworld.py build examples/chatroom_demo
 ```
 
-**Start Server: (dispatcher -> test_game -> gate)**
+**Start Example Chatroom Server: (dispatcher -> game -> gate)**
 ```bash
-$ python goworld.py start examples/test_game
+$ python goworld.py start examples/chatroom_demo
 ``` 
 
-**Stop Server (gate -> test_game -> dispatcher):**
+**Stop Game Server (gate -> game -> dispatcher):**
 ```bash
 $ python goworld.py stop
 ```
 
-**Reload Test Game Servers:**
+**Reload Game Servers:**
 ```bash
 $ python goworld.py reload
 ```
 Reload will reboot game processes with the current executive while presearving all game server states. 
+
+## Run Example Chatroom Client ##
+
+The client for chatroom demo is hosted at [github.com/xiaonanln/goworld-chatroom-demo-client](https://github.com/xiaonanln/goworld-chatroom-demo-client).
+The project was created and built in [Cocos Creater 1.5](http://www.cocos2d-x.org/). A running server & client demo can also be found at [http://goworldgs.com/chatclient/](http://goworldgs.com/chatclient/).
