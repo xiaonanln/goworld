@@ -108,7 +108,7 @@ def parseArguments(args):
 
 			print >>sys.stderr, '> Detected game: %s for reload' % gameId
 			cmds.append(('freeze', ()))
-			cmds.append(('sleep', (1, )))
+			# cmds.append(('sleep', (1, )))
 			cmds.append(('restore', (gameId, )))
 		else:
 			cmds.append( (cmd, args) )

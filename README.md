@@ -76,14 +76,8 @@ $ python goworld.py start examples/test_game
 $ python goworld.py stop
 ```
 
-**Freeze Test Game Servers:**
+**Reload Test Game Servers:**
 ```bash
-$ python goworld.py freeze
+$ python goworld.py reload
 ```
-
-**Restore Test Game Servers:**
-```bash
-$ python goworld.py restore examples/test_game
-```
-
-Will restore `test_game` using the current executive. 
+Reload will reboot game processes with the current executive while presearving all game server states. 
