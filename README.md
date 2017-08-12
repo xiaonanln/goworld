@@ -57,7 +57,7 @@ We can use goworld.py to build, start, stop and reload game servers.
 $ pip install psutil
 ```
 
-**Build GoWorld Engine (dispatcher & gate):**
+**Build Dispatcher & Gate:**
 
 ```bash
 $ python goworld.py build dispatcher gate
