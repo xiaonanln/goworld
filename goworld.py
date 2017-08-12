@@ -45,42 +45,66 @@ def main():
 	config.read("goworld.ini")
 	analyzeConfig(config)
 
-	cmd = args[0].lower()
-	if cmd == 'status':
-		showStatus()
-	elif cmd in ("start", "restore"):
-		global gameName
-		try:
-			gameName = args[1]
-		except:
+	for cmd, args in parseArguments(args):
+		if cmd == 'status':
+			showStatus()
+		elif cmd in ("start", "restore"):
+			global gameName
+			try:
+				gameName = args[0]
+			except:
+				showUsage()
+				exit(1)
+
+			global gamePath
+			gamePath = detectGamePath(gameName)
+			if not os.path.exists(gamePath):
+				print >>sys.stderr, "! %s is not found, goworld.py build %s first" % (gamePath, gameName)
+				exit(2)
+			
+			if cmd == "start":
+				startServer()
+			elif cmd == "restore":
+				restoreGames()
+
+		elif cmd == 'stop':
+			stopServer()
+		elif cmd == 'build':
+			buildTargets = args
+			if not buildTargets: buildTargets = ['engine']
+
+			for buildTarget in buildTargets:
+				build(buildTarget)
+		elif cmd == 'freeze':
+			freezeGames()
+		else:
+			print >>sys.stderr, "invalid command: %s" % cmd
 			showUsage()
 			exit(1)
 
-		global gamePath
-		gamePath = detectGamePath(gameName)
-		if not os.path.exists(gamePath):
-			print >>sys.stderr, "! %s is not found, goworld.py build %s first" % (gamePath, gameName)
-			exit(2)
-		
-		if cmd == "start":
-			startServer()
-		elif cmd == "restore":
-			restoreGames()
+def parseArguments(args):
+	cmds = []
+	i = 0
+	while i < len(args):
+		cmd = args[i]
+		if cmd in ('start', 'restore'):
+			args = (args[i+1],) if i+1<len(args) else ()
+			i += 1
+		elif cmd in ('build'):
+			args = args[i+1:]
+			i = len(args)
+		else:
+			args = ()
 
-	elif cmd == 'stop':
-		stopServer()
-	elif cmd == 'build':
-		buildTargets = args[1:]
-		if not buildTargets: buildTargets = ['engine']
+		if cmd == 'reload': # reload == freeze + restore
+			cmds.append('freeze', ())
+			cmds.append('restore', args)
+		else:
+			cmds.append( (cmd, args) )
 
-		for buildTarget in buildTargets:
-			build(buildTarget)
-	elif cmd == 'freeze':
-		freezeGames()
-	else:
-		print >>sys.stderr, "invalid command: %s" % cmd
-		showUsage()
-		exit(1)
+	return cmds 
+
+
 
 def verifyExecutionEnv(cmd):
 	global goworldPath
