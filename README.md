@@ -6,7 +6,8 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
   * [Architecture](#architecture)
   * [Introduction](#introduction)
   * [Get GoWorld](#get-goworld)
-  * [Run Example Server & Client](#run-example-server--client)
+  * [Manage GoWorld using goworld.py](#manage-goworld-using-goworldpy)
+  * [Run Example Chatroom Client](#run-example-chatroom-client)
 ---------------------------------------
 >  中文资料：
 > [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
