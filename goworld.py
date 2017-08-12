@@ -77,6 +77,9 @@ def main():
 				build(buildTarget)
 		elif cmd == 'freeze':
 			freezeGames()
+		elif cmd == 'sleep':
+			sleepTime = float(args[0])
+			time.sleep(sleepTime)
 		else:
 			print >>sys.stderr, "invalid command: %s" % cmd
 			showUsage()
@@ -97,19 +100,49 @@ def parseArguments(args):
 			args = ()
 
 		if cmd == 'reload': # reload == freeze + restore
-			cmds.append('freeze', ())
-			cmds.append('restore', args)
+			gameId = detectCurrentGameId()
+			if not gameId:
+				_showStatus(1, len(gateids), len(gameids))
+				print >>sys.stderr, '! can not detect current game, not running ?'
+				exit(2)
+
+			print >>sys.stderr, '> Detected game: %s for reload' % gameId
+			cmds.append(('freeze', ()))
+			cmds.append(('sleep', (1, )))
+			cmds.append(('restore', (gameId, )))
 		else:
 			cmds.append( (cmd, args) )
 
 	return cmds 
 
 
+def detectCurrentGameId():
+	_, _, gameProcs = visitProcs()
+	if not gameProcs:
+		return ''
+	
+	gameExe = None
+	for proc in gameProcs:
+		if gameExe is None: gameExe = proc.exe()
+		elif gameExe != proc.exe():
+			print >>sys.stderr, '! found multiple game processes with different exe: %s & %s' % gameExe, proc.exe()
+			return ''
+	
+	if gameExe == '':
+		print >>sys.stderr, '! get process exe failed'
+		return ''
+	
+	gameExe = os.path.relpath(gameExe, goworldPath)
+	print >>sys.stderr, '> Found game exe: %s' % gameExe
+	if os.name == 'nt' and gameExe.endswith('.exe'): # strip .exe if necessary
+		gameExe = gameExe[:-4]
+	
+	return os.path.dirname(gameExe)
 
 def verifyExecutionEnv(cmd):
 	global goworldPath
 	goworldPath = os.getcwd()
-	print >>sys.stderr, '> Detect goworld path:', goworldPath
+	print >>sys.stderr, '> Detected goworld path:', goworldPath
 	dir = os.path.basename(goworldPath)
 	if dir != 'goworld':
 		print >>sys.stderr, "must run in goworld directory!"

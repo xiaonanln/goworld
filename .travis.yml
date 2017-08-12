@@ -18,9 +18,7 @@ script:
   - make test
   - python goworld.py start test_game
   - sleep 1
-  - python goworld.py freeze
-  - sleep 1
-  - python goworld.py restore test_game
+  - python goworld.py reload
   - sleep 1
   - python goworld.py stop
 
