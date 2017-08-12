@@ -22,6 +22,7 @@ gameids = []
 gameName = ''
 gamePath = ''
 loglevel = "info"
+currentGameId = ''
 nohup = False
 
 def main():
@@ -44,14 +45,15 @@ def main():
 	config = ConfigParser.SafeConfigParser()
 	config.read("goworld.ini")
 	analyzeConfig(config)
+	detectCurrentGameId()
 
-	for cmd, args in parseArguments(args):
+	for cmd, cmdArgs in parseArguments(args):
 		if cmd == 'status':
 			showStatus()
 		elif cmd in ("start", "restore"):
 			global gameName
 			try:
-				gameName = args[0]
+				gameName = cmdArgs[0]
 			except:
 				showUsage()
 				exit(1)
@@ -70,7 +72,7 @@ def main():
 		elif cmd == 'stop':
 			stopServer()
 		elif cmd == 'build':
-			buildTargets = args
+			buildTargets = cmdArgs
 			if not buildTargets: buildTargets = ['engine']
 
 			for buildTarget in buildTargets:
@@ -78,12 +80,14 @@ def main():
 		elif cmd == 'freeze':
 			freezeGames()
 		elif cmd == 'sleep':
-			sleepTime = float(args[0])
+			sleepTime = float(cmdArgs[0])
 			time.sleep(sleepTime)
 		else:
 			print >>sys.stderr, "invalid command: %s" % cmd
 			showUsage()
 			exit(1)
+	
+	print >>sys.stderr, '> %s %s OK' % (sys.argv[0], ' '.join(args))
 
 def parseArguments(args):
 	cmds = []
@@ -100,16 +104,15 @@ def parseArguments(args):
 			args = ()
 
 		if cmd == 'reload': # reload == freeze + restore
-			gameId = detectCurrentGameId()
-			if not gameId:
+			if not currentGameId:
 				_showStatus(1, len(gateids), len(gameids))
 				print >>sys.stderr, '! can not detect current game, not running ?'
 				exit(2)
 
-			print >>sys.stderr, '> Detected game: %s for reload' % gameId
+			print >>sys.stderr, '> Detected game: %s for reload' % currentGameId
 			cmds.append(('freeze', ()))
 			# cmds.append(('sleep', (1, )))
-			cmds.append(('restore', (gameId, )))
+			cmds.append(('restore', (currentGameId, )))
 		else:
 			cmds.append( (cmd, args) )
 
@@ -117,27 +120,32 @@ def parseArguments(args):
 
 
 def detectCurrentGameId():
+	global currentGameId
+
+	if currentGameId != '':
+		return
+
 	_, _, gameProcs = visitProcs()
 	if not gameProcs:
-		return ''
+		return 
 	
 	gameExe = None
 	for proc in gameProcs:
 		if gameExe is None: gameExe = proc.exe()
 		elif gameExe != proc.exe():
 			print >>sys.stderr, '! found multiple game processes with different exe: %s & %s' % gameExe, proc.exe()
-			return ''
+			return 
 	
 	if gameExe == '':
 		print >>sys.stderr, '! get process exe failed'
-		return ''
+		return 
 	
 	gameExe = os.path.relpath(gameExe, goworldPath)
 	print >>sys.stderr, '> Found game exe: %s' % gameExe
 	if os.name == 'nt' and gameExe.endswith('.exe'): # strip .exe if necessary
 		gameExe = gameExe[:-4]
 	
-	return os.path.dirname(gameExe)
+	currentGameId = os.path.dirname(gameExe)
 
 def verifyExecutionEnv(cmd):
 	global goworldPath
@@ -259,9 +267,10 @@ def showStatus():
 
 def _showStatus(expectDispatcherCount, expectGateCount, expectGameCount):
 	dispatcherProcs, gateProcs, gameProcs = visitProcs()
-	print >>sys.stderr, "%-16s expect %d found %d %s" % ("dispatcher", expectDispatcherCount, len(dispatcherProcs), "GOOD" if len(dispatcherProcs) == expectDispatcherCount else "BAD!")
-	print >>sys.stderr, "%-16s expect %d found %d %s" % ("gate", expectGateCount, len(gateProcs), "GOOD" if expectGateCount == len(gateProcs) else "BAD!")
-	print >>sys.stderr, "%-16s expect %d found %d %s" % ("game", expectGameCount, len(gameProcs), "GOOD" if expectGameCount == len(gameProcs) else "BAD!")
+	gameName = "game (unknown)" if not currentGameId else "game (%s)" % currentGameId
+	print >>sys.stderr, "%-32s expect %d found %d %s" % ("dispatcher", expectDispatcherCount, len(dispatcherProcs), "GOOD" if len(dispatcherProcs) == expectDispatcherCount else "BAD!")
+	print >>sys.stderr, "%-32s expect %d found %d %s" % ("gate", expectGateCount, len(gateProcs), "GOOD" if expectGateCount == len(gateProcs) else "BAD!")
+	print >>sys.stderr, "%-32s expect %d found %d %s" % (gameName, expectGameCount, len(gameProcs), "GOOD" if expectGameCount == len(gameProcs) else "BAD!")
 
 def restoreGames():
 	dispatcherProcs, _, gameProcs = visitProcs()
