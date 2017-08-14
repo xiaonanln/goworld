@@ -3,7 +3,7 @@ package gwlog
 import "testing"
 
 func TestGWLog(t *testing.T) {
-	SetComponent("gwlog_test")
+	SetSource("gwlog_test")
 
 	if lv, err := ParseLevel("debug"); err != nil || lv != DebugLevel {
 		t.Fail()

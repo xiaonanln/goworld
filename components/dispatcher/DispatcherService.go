@@ -175,12 +175,23 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 	client.serve()
 }
 
-func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pkt *netutil.Packet, gameid uint16, isReconnect bool, isRestore bool) {
-	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleSetGameID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)
-	}
+func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+
+	gameid := pkt.ReadUint16()
+	isReconnect := pkt.ReadBool()
+	isRestore := pkt.ReadBool()
+
 	if gameid <= 0 {
 		gwlog.Panicf("invalid gameid: %d", gameid)
+	}
+	if dcp.gameid > 0 || dcp.gateid > 0 {
+		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
+	}
+	dcp.gameid = gameid
+	dcp.startAutoFlush()
+
+	if consts.DEBUG_PACKETS {
+		gwlog.Debugf("%s.handleSetGameID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)
 	}
 
 	olddcp := service.gameClients[gameid-1] // should be nil, unless reconnect
@@ -213,7 +224,17 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	return
 }
 
-func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pkt *netutil.Packet, gateid uint16) {
+func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+	gateid := pkt.ReadUint16()
+	if gateid <= 0 {
+		gwlog.Panicf("invalid gateid: %d", gateid)
+	}
+	if dcp.gameid > 0 || dcp.gateid > 0 {
+		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
+	}
+	dcp.gateid = gateid
+	dcp.startAutoFlush()
+
 	service.gateClients[gateid-1] = dcp
 }
 

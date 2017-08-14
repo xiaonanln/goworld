@@ -6,11 +6,13 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
   * [Architecture](#architecture)
   * [Introduction](#introduction)
   * [Get GoWorld](#get-goworld)
-  * [Run Example Server & Client](#run-example-server--client)
+  * [Manage GoWorld using goworld.py](#manage-goworld-using-goworldpy)
+  * [Run Example Chatroom Client](#run-example-chatroom-client)
 ---------------------------------------
 >  中文资料：
 > [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
-> [目录结构说明](https://github.com/xiaonanln/goworld/wiki/GoWorld%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84) 
+> [目录结构说明](https://github.com/xiaonanln/goworld/wiki/GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84) 
+> [使用GoWorld轻松实现分布式聊天服务器](https://github.com/xiaonanln/goworld/wiki/%E4%BD%BF%E7%94%A8GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E8%81%8A%E5%A4%A9%E6%9C%8D%E5%8A%A1%E5%99%A8)
 > **欢迎加入Go服务端开发交流群：[662182346](http://shang.qq.com/wpa/qunwpa?idkey=f2a99bd9bd9e6df3528174180aad753d05b372a8828e1b8e5c1ec5df42b301db)**
 ---------------------------------------  
 ## Features
@@ -49,40 +51,41 @@ $ go get github.com/xiaonanln/goworld
 
 ## Manage GoWorld using goworld.py
 
-goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module. 
+goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module.
+We can use goworld.py to build, start, stop and reload game servers. 
+
 ```bash
 $ pip install psutil
 ```
 
-**Build GoWorld Engine (dispatcher & gate):**
+**Build Dispatcher & Gate:**
 
 ```bash
 $ python goworld.py build dispatcher gate
 ```
 
-**Build Test Game Server:**
+**Build Example Chatroom Server:**
 ```bash
-$ python goworld.py build examples/test_game
+$ python goworld.py build examples/chatroom_demo
 ```
 
-**Start Server: (dispatcher -> test_game -> gate)**
+**Start Example Chatroom Server: (dispatcher -> game -> gate)**
 ```bash
-$ python goworld.py start examples/test_game
+$ python goworld.py start examples/chatroom_demo
 ``` 
 
-**Stop Server (gate -> test_game -> dispatcher):**
+**Stop Game Server (gate -> game -> dispatcher):**
 ```bash
 $ python goworld.py stop
 ```
 
-**Freeze Test Game Servers:**
+**Reload Game Servers:**
 ```bash
-$ python goworld.py freeze
+$ python goworld.py reload
 ```
+Reload will reboot game processes with the current executive while presearving all game server states. 
 
-**Restore Test Game Servers:**
-```bash
-$ python goworld.py restore examples/test_game
-```
+## Run Example Chatroom Client ##
 
-Will restore `test_game` using the current executive. 
+The client for chatroom demo is hosted at [github.com/xiaonanln/goworld-chatroom-demo-client](https://github.com/xiaonanln/goworld-chatroom-demo-client).
+The project was created and built in [Cocos Creater 1.5](http://www.cocos2d-x.org/). A running server & client demo can also be found at [http://goworldgs.com/chatclient/](http://goworldgs.com/chatclient/).
