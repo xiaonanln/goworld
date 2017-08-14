@@ -70,6 +70,8 @@ func (dcp *dispatcherClientProxy) serve() {
 		if err != nil {
 			if netutil.IsTemporaryNetError(err) {
 				continue
+			} else if netutil.IsConnectionError(err) {
+				break
 			}
 
 			gwlog.Panic(err)

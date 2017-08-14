@@ -287,6 +287,11 @@ func (service *DispatcherService) chooseGameDispatcherClient() *dispatcherClient
 
 func (service *DispatcherService) handleDispatcherClientDisconnect(dcp *dispatcherClientProxy) {
 	// nothing to do when client disconnected
+	defer func() {
+		if err := recover(); err != nil {
+			gwlog.Infof("handleDispatcherClientDisconnect paniced: %v", err)
+		}
+	}()
 	gwlog.Warnf("%s disconnected", dcp)
 	if dcp.gateid > 0 {
 		// gate disconnected, notify all clients disconnected
@@ -596,14 +601,22 @@ func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *entityD
 }
 
 func (service *DispatcherService) broadcastToGameClients(pkt *netutil.Packet) {
-	for _, dcp := range service.gameClients {
-		dcp.SendPacket(pkt)
+	for idx, dcp := range service.gameClients {
+		if dcp != nil {
+			dcp.SendPacket(pkt)
+		} else {
+			gwlog.Errorf("Game %d is not connected to dispatcher when broadcasting", idx+1)
+		}
 	}
 }
 
 func (service *DispatcherService) broadcastToGateClients(pkt *netutil.Packet) {
-	for _, dcp := range service.gateClients {
-		dcp.SendPacket(pkt)
+	for idx, dcp := range service.gateClients {
+		if dcp != nil {
+			dcp.SendPacket(pkt)
+		} else {
+			gwlog.Errorf("Gate %d is not connected to dispatcher when broadcasting", idx+1)
+		}
 	}
 }
 
