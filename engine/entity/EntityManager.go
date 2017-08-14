@@ -392,7 +392,7 @@ func OnSyncPositionYawFromClient(eid common.EntityID, x, y, z Coord, yaw Yaw) {
 	e := entityManager.get(eid)
 	if e == nil {
 		// entity not found, may destroyed before call
-		gwlog.Errorf("OnSyncPositionYawFromClient: entity %s is not found", eid)
+		//gwlog.Errorf("OnSyncPositionYawFromClient: entity %s is not found", eid)
 		return
 	}
 
