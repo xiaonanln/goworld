@@ -200,8 +200,6 @@ func (gs *_GameService) doFreeze() {
 	kvdb.WaitTerminated()
 	gs.waitPostsComplete()
 
-	// save all entities
-	entity.SaveAllEntities()
 	// destroy all entities
 	freeze := func() error {
 		freezeEntity, err := entity.Freeze(gameid)
