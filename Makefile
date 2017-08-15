@@ -50,8 +50,7 @@ install-deps:
 	- go get github.com/google/btree
 	- go get github.com/pkg/errors
 	- go get github.com/bmizerany/assert
-	- go get gopkg.in/eapache/queue.v1
-	- go get gopkg.in/ini.v1
+	- go get github.com/go-ini/ini
 	- go get gopkg.in/mgo.v2
-	- go get gopkg.in/vmihailenco/msgpack.v2
-	- go get gopkg.in/natefinch/lumberjack.v2
+	- go get github.com/vmihailenco/msgpack
+	- go get github.com/natefinch/lumberjack

@@ -3,8 +3,8 @@ package netutil
 import (
 	"bytes"
 
+	"github.com/vmihailenco/msgpack"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // MessagePackMsgPacker packs and unpacks message in MessagePack format

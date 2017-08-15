@@ -7,9 +7,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/natefinch/lumberjack"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"golang.org/x/net/websocket"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // SetupHTTPServer starts the HTTP server for go tool pprof and websockets

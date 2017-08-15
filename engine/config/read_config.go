@@ -17,10 +17,10 @@ import (
 
 	"os"
 
+	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"gopkg.in/ini.v1"
 )
 
 const (
