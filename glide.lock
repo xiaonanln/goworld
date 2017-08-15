@@ -1,0 +1,70 @@
+hash: c36aca8f250c997c2a7b67dcc9fa8afb53757165ac5a8d593a53fde56ee8b067
+updated: 2017-08-15T16:16:37.7276236+08:00
+imports:
+- name: github.com/garyburd/redigo
+  version: 433969511232c397de61b1442f9fd49ec06ae9ba
+  subpackages:
+  - internal
+  - redis
+- name: github.com/go-ini/ini
+  version: 20b96f641a5ea98f2f8619ff4f3e061cff4833bd
+- name: github.com/golang/protobuf
+  version: 1909bc2f63dc92bb931deace8b8312c4db72d12f
+  subpackages:
+  - proto
+- name: github.com/google/btree
+  version: 316fb6d3f031ae8f4d457c6c5186b9e3ded70435
+- name: github.com/natefinch/lumberjack
+  version: a96e63847dc3c67d17befa69c303767e2f84e54f
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/Sirupsen/logrus
+  version: a3f95b5c423586578a4e099b11a46c2479628cac
+- name: github.com/vmihailenco/msgpack
+  version: de4b4857c10538d591bee30e8114176008f8b9d0
+  subpackages:
+  - codes
+- name: github.com/xiaonanln/go-xnsyncutil
+  version: 636b8be5ea62696fe6c0714beda09d5e3bb7b020
+  subpackages:
+  - xnsyncutil
+- name: github.com/xiaonanln/goTimer
+  version: 2ebf09cd62e91c7cab7358a259ec2d8c34a2f711
+- name: github.com/xiaonanln/typeconv
+  version: 85972af42a8931e7b81576af3677bd6e0e2dcd39
+- name: golang.org/x/net
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  subpackages:
+  - context
+  - websocket
+- name: golang.org/x/sys
+  version: 2d3e384235de683634e9080b58f757466840aa48
+  subpackages:
+  - unix
+- name: google.golang.org/appengine
+  version: d9a072cfa7b9736e44311ef77b3e09d804bfa599
+  subpackages:
+  - datastore
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+- name: gopkg.in/eapache/queue.v1
+  version: ded5959c0d4e360646dc9e9908cff48666781367
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
+testImports:
+- name: github.com/bmizerany/assert
+  version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
+- name: github.com/kr/pretty
+  version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
+- name: github.com/kr/text
+  version: 7cafcd837844e784b526369c9bce262804aebc60
