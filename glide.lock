@@ -1,5 +1,5 @@
-hash: 72b44ec679ca8c7b06c0006d1f79bbb294d06b7434d1f887e74bcdeafcc367ba
-updated: 2017-08-15T12:58:13.202604791Z
+hash: cd15c64c66eb9e126d0b7a43c05da204cf5b76e9c5923846bad6dc35e717d1d3
+updated: 2017-08-16T01:39:51.0730093+08:00
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba

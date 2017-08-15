@@ -22,7 +22,7 @@ import:
 - package: github.com/go-ini/ini
   version: v1.28.2
 - package: github.com/vmihailenco/msgpack
-  version: ^v2.0.0
+  version: v2.9.1
 - package: github.com/natefinch/lumberjack
   version: v2.1
 - package: gopkg.in/mgo.v2
