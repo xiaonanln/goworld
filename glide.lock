@@ -1,5 +1,5 @@
-hash: c36aca8f250c997c2a7b67dcc9fa8afb53757165ac5a8d593a53fde56ee8b067
-updated: 2017-08-15T16:16:37.7276236+08:00
+hash: 72b44ec679ca8c7b06c0006d1f79bbb294d06b7434d1f887e74bcdeafcc367ba
+updated: 2017-08-15T12:58:13.202604791Z
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -21,9 +21,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: a3f95b5c423586578a4e099b11a46c2479628cac
 - name: github.com/vmihailenco/msgpack
-  version: de4b4857c10538d591bee30e8114176008f8b9d0
-  subpackages:
-  - codes
+  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
 - name: github.com/xiaonanln/go-xnsyncutil
   version: 636b8be5ea62696fe6c0714beda09d5e3bb7b020
   subpackages:
@@ -61,6 +59,10 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
+- name: gopkg.in/vmihailenco/msgpack.v2
+  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
+  subpackages:
+  - codes
 testImports:
 - name: github.com/bmizerany/assert
   version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
