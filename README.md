@@ -45,9 +45,14 @@ $ go get github.com/xiaonanln/goworld
 
 ### Install dependencies
 
-**Windows**: `install-deps-win.bat`
+**Windows**:
+1. get `glide.exe` from [https://github.com/Masterminds/glide/releases](https://github.com/Masterminds/glide/releases) and put it to `$GOPATH/bin`
+2. run `install-deps-win.bat`
 
 **Linux**: `make install-deps`
+
+GoWorld uses [Glide](http://glide.sh/) to manage packages. 
+![Glide](http://glide.sh/assets/logo-small.png)
 
 ## Manage GoWorld using goworld.py
 
