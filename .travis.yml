@@ -7,8 +7,18 @@ services:
   - mongodb
   - redis-server
 
+before_install:
+  - GLIDE_OS_ARCH=`go env GOHOSTOS`-`go env GOHOSTARCH`
+  - GLIDE_TAG=$(curl -s https://glide.sh/version)
+  - GLIDE_LATEST_RELEASE_URL="https://github.com/Masterminds/glide/releases/download/${GLIDE_TAG}/glide-${GLIDE_TAG}-${GLIDE_OS_ARCH}.tar.gz"
+  - wget ${GLIDE_LATEST_RELEASE_URL} -O /tmp/glide.tar.gz
+  - mkdir /tmp/glide
+  - tar --directory=/tmp/glide -xvf /tmp/glide.tar.gz
+  - export PATH=$PATH:/tmp/glide/${GLIDE_OS_ARCH}
+
 install:
-  - make install-deps
+  - pip install psutil
+  - glide install
 
 script:
   - cp goworld.ini.sample goworld.ini
