@@ -57,7 +57,7 @@ const (
 	// For Storage
 	// For Operation Monitor
 	// OPMON_DUMP_INTERVAL is the interval to print opmon infos to output
-	OPMON_DUMP_INTERVAL = time.Second * 10
+	OPMON_DUMP_INTERVAL = 0
 )
 
 // Debug Options

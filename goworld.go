@@ -122,3 +122,8 @@ func GetKVDB(key string, callback kvdb.KVDBGetCallback) {
 func PutKVDB(key string, val string, callback kvdb.KVDBPutCallback) {
 	kvdb.Put(key, val, callback)
 }
+
+// GetOrPut gets value of key from KVDB, if val not exists or is "", put key-value to KVDB.
+func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
+	kvdb.GetOrPut(key, val, callback)
+}

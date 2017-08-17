@@ -215,19 +215,22 @@ def buildEngine():
 
 def buildDispatcher():
 	print >>sys.stderr, '> building dispatcher ...',
-	os.system('cd "%s" && go build' % os.path.join("components", "dispatcher"))
+	if os.system('cd "%s" && go build' % os.path.join("components", "dispatcher")) != 0:
+		exit(2)
 	print >>sys.stderr, 'OK'
 
 def buildGate():
 	print >>sys.stderr, '> building gate ...',
-	os.system('cd "%s" && go build' % os.path.join("components", "gate"))
+	if os.system('cd "%s" && go build' % os.path.join("components", "gate")) != 0:
+		exit(2)
 	print >>sys.stderr, 'OK'
 
 def buildGame(gameId):
 	gamePath = detectGamePath(gameId)
 	gameDir = os.path.dirname(gamePath)
 	print >>sys.stderr, '> building %s ...' % gameDir,
-	os.system('cd "%s" && go build' % gameDir)
+	if os.system('cd "%s" && go build' % gameDir) != 0:
+		exit(2)
 	print >>sys.stderr, 'OK'
 
 def freezeGames():

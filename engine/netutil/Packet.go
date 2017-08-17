@@ -372,6 +372,9 @@ func (p *Packet) ReadBytes(size uint32) []byte {
 
 // AppendEntityID appends one Entity ID to the end of payload
 func (p *Packet) AppendEntityID(id common.EntityID) {
+	if len(id) != common.ENTITYID_LENGTH {
+		gwlog.Panicf("AppendEntityID: invalid entity id: %s", id)
+	}
 	p.AppendBytes([]byte(id))
 }
 
@@ -382,6 +385,9 @@ func (p *Packet) ReadEntityID() common.EntityID {
 
 // AppendClientID appends one Client ID to the end of payload
 func (p *Packet) AppendClientID(id common.ClientID) {
+	if len(id) != common.CLIENTID_LENGTH {
+		gwlog.Panicf("AppendEntityID: invalid client id: %s", id)
+	}
 	p.AppendBytes([]byte(id))
 }
 

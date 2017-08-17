@@ -221,16 +221,16 @@ func handlePutReq(putReq *putReq) {
 }
 
 func handleGetOrPutReq(getOrPutReq *getOrPutReq) {
-	val, err := kvdbEngine.Get(getOrPutReq.key)
+	oldVal, err := kvdbEngine.Get(getOrPutReq.key)
 	if err == nil {
-		if val != "" {
+		if oldVal == "" {
 			err = kvdbEngine.Put(getOrPutReq.key, getOrPutReq.val)
 		}
 	}
 
 	if getOrPutReq.callback != nil {
 		post.Post(func() {
-			getOrPutReq.callback(val, err)
+			getOrPutReq.callback(oldVal, err)
 		})
 	}
 
