@@ -13,6 +13,12 @@ func init() {
 }
 
 func TestBasic(t *testing.T) {
+	Put("__key_not_exists__", "", func(err error) {
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
 	Get("__key_not_exists__", func(val string, err error) {
 		if err != nil {
 			t.Error(err)
@@ -44,6 +50,46 @@ func TestBasic(t *testing.T) {
 			t.Error(err)
 			return
 		}
+	})
+
+	GetOrPut("a", "222", func(oldVal string, err error) {
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if oldVal == "" {
+			t.Errorf("wrong old val: " + oldVal)
+			return
+		}
+		Get("a", func(val string, err error) {
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if val != "111" {
+				t.Fail()
+			}
+		})
+	})
+
+	GetOrPut("__key_not_exists__", "val", func(oldVal string, err error) {
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if oldVal != "" {
+			t.Errorf("wrong old val: " + oldVal)
+			return
+		}
+		Get("__key_not_exists__", func(val string, err error) {
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if val != "val" {
+				t.Fail()
+			}
+		})
 	})
 }
 

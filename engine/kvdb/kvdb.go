@@ -32,6 +32,9 @@ type KVDBPutCallback func(err error)
 // KVDBGetRangeCallback is type of KVDB GetRange callback
 type KVDBGetRangeCallback func(items []kvdbtypes.KVItem, err error)
 
+// KVDBGetOrPutCallback is type of KVDB GetOrPut callback
+type KVDBGetOrPutCallback func(oldVal string, err error)
+
 // Initialize the KVDB
 //
 // Called by game server engine
@@ -85,6 +88,12 @@ type putReq struct {
 	callback KVDBPutCallback
 }
 
+type getOrPutReq struct {
+	key      string
+	val      string
+	callback KVDBGetOrPutCallback
+}
+
 type getRangeReq struct {
 	beginKey string
 	endKey   string
@@ -105,6 +114,13 @@ func Put(key string, val string, callback KVDBPutCallback) {
 		key, val, callback,
 	})
 	checkOperationQueueLen()
+}
+
+// GetOrPut gets value of key from KVDB, if val not exists or is "", put key-value to KVDB.
+func GetOrPut(key string, val string, callback KVDBGetOrPutCallback) {
+	kvdbOpQueue.Push(&getOrPutReq{
+		key, val, callback,
+	})
 }
 
 // GetRange retrives key-value items of specified key range, returns in callback
@@ -153,14 +169,17 @@ func kvdbRoutine() {
 
 		var op *opmon.Operation
 		if getReq, ok := req.(*getReq); ok {
-			op = opmon.StartOperation("kvdb.get")
+			op = opmon.StartOperation("kvdb.Get")
 			handleGetReq(getReq)
 		} else if putReq, ok := req.(*putReq); ok {
-			op = opmon.StartOperation("kvdb.put")
+			op = opmon.StartOperation("kvdb.Put")
 			handlePutReq(putReq)
 		} else if getRangeReq, ok := req.(*getRangeReq); ok {
-			op = opmon.StartOperation("kvdb.getRange")
+			op = opmon.StartOperation("kvdb.GetRange")
 			handleGetRangeReq(getRangeReq)
+		} else if getOrPutReq, ok := req.(*getOrPutReq); ok {
+			op = opmon.StartOperation("kvdb.GetOrPut")
+			handleGetOrPutReq(getOrPutReq)
 		}
 		op.Finish(time.Millisecond * 100)
 	}
@@ -192,6 +211,26 @@ func handlePutReq(putReq *putReq) {
 	if putReq.callback != nil {
 		post.Post(func() {
 			putReq.callback(err)
+		})
+	}
+
+	if err != nil && kvdbEngine.IsEOF(err) {
+		kvdbEngine.Close()
+		kvdbEngine = nil
+	}
+}
+
+func handleGetOrPutReq(getOrPutReq *getOrPutReq) {
+	val, err := kvdbEngine.Get(getOrPutReq.key)
+	if err == nil {
+		if val != "" {
+			err = kvdbEngine.Put(getOrPutReq.key, getOrPutReq.val)
+		}
+	}
+
+	if getOrPutReq.callback != nil {
+		post.Post(func() {
+			getOrPutReq.callback(val, err)
 		})
 	}
 
