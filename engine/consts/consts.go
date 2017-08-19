@@ -63,7 +63,7 @@ const (
 // Debug Options
 const (
 	// DEBUG_PACKETS prints packet send/recv debug logs
-	DEBUG_PACKETS = false
+	DEBUG_PACKETS = true
 	// DEBUG_SPACES prints space operation debug logs
 	DEBUG_SPACES = false
 	// DEBUG_SAVE_LOAD prints save & load debug logs

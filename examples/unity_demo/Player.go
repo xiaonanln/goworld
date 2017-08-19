@@ -1,8 +1,6 @@
 package main
 
 import (
-	"math/rand"
-
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -62,17 +60,17 @@ func (a *Player) EnterSpace_Client(kind int) {
 // DoEnterSpace is called by SpaceService to notify avatar entering specified space
 func (a *Player) DoEnterSpace(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
-	a.EnterSpace(spaceID, a.randomPosition())
+	a.EnterSpace(spaceID, entity.Position{})
 }
 
-func (a *Player) randomPosition() entity.Position {
-	minCoord, maxCoord := -400, 400
-	return entity.Position{
-		X: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
-		Y: 0,
-		Z: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
-	}
-}
+//func (a *Player) randomPosition() entity.Position {
+//	minCoord, maxCoord := -400, 400
+//	return entity.Position{
+//		X: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
+//		Y: 0,
+//		Z: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
+//	}
+//}
 
 // OnEnterSpace is called when avatar enters a space
 func (a *Player) OnEnterSpace() {

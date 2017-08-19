@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -23,11 +22,17 @@ type MySpace struct {
 func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
 	space.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
-
+	space.AddTimer(time.Second*5, "DumpEntityStatus")
 	//M := 10
 	//for i := 0; i < M; i++ {
 	//	space.CreateEntity("Monster", entity.Position{})
 	//}
+}
+
+func (space *MySpace) DumpEntityStatus() {
+	space.ForEachEntity(func(e *entity.Entity) {
+		gwlog.Debugf(">>> %s @ position %s, neighbors=%d", e, e.GetPosition(), len(e.Neighbors()))
+	})
 }
 
 // OnEntityEnterSpace is called when entity enters space
@@ -38,6 +43,7 @@ func (space *MySpace) OnEntityEnterSpace(entity *entity.Entity) {
 }
 
 func (space *MySpace) onPlayerEnterSpace(entity *entity.Entity) {
+	gwlog.Debugf("Player %s enter space %s, total avatar count %d", entity, space, space.CountEntities("Player"))
 	space.clearDestroyCheckTimer()
 }
 
@@ -49,9 +55,7 @@ func (space *MySpace) OnEntityLeaveSpace(entity *entity.Entity) {
 }
 
 func (space *MySpace) onPlayerLeaveSpace(entity *entity.Entity) {
-	if consts.DEBUG_SPACES {
-		gwlog.Infof("Player %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Player"))
-	}
+	gwlog.Infof("Player %s leave space %s, left avatar count %d", entity, space, space.CountEntities("Player"))
 	if space.CountEntities("Player") == 0 {
 		// no avatar left, start destroying space
 		space.setDestroyCheckTimer()
