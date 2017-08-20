@@ -261,7 +261,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		x := entity.Coord(packet.ReadFloat32())
 		y := entity.Coord(packet.ReadFloat32())
 		z := entity.Coord(packet.ReadFloat32())
-		bot.updateEntityPosition(entityID, entity.Position{x, y, z})
+		bot.updateEntityPosition(entityID, entity.Vector3{x, y, z})
 	} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT { // todo: this msgtype useful ?
 		entityID := packet.ReadEntityID()
 		yaw := entity.Yaw(packet.ReadFloat32())
@@ -273,7 +273,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 			y := entity.Coord(packet.ReadFloat32())
 			z := entity.Coord(packet.ReadFloat32())
 			yaw := entity.Yaw(packet.ReadFloat32())
-			bot.updateEntityPosition(entityID, entity.Position{x, y, z})
+			bot.updateEntityPosition(entityID, entity.Vector3{x, y, z})
 			bot.updateEntityYaw(entityID, yaw)
 		}
 	} else {
@@ -283,7 +283,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		}
 	}
 }
-func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Position) {
+func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Vector3) {
 	//gwlog.Debugf("updateEntityPosition %s => %s", entityID, position)
 	if bot.entities[entityID] == nil {
 		gwlog.Errorf("e %s not found", entityID)

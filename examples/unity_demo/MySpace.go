@@ -23,9 +23,10 @@ func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
 	space.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 	space.AddTimer(time.Second*5, "DumpEntityStatus")
+	space.AddTimer(time.Second*5, "SummonMonsters")
 	//M := 10
 	//for i := 0; i < M; i++ {
-	//	space.CreateEntity("Monster", entity.Position{})
+	//	space.CreateEntity("Monster", entity.Vector3{})
 	//}
 }
 
@@ -33,6 +34,12 @@ func (space *MySpace) DumpEntityStatus() {
 	space.ForEachEntity(func(e *entity.Entity) {
 		gwlog.Debugf(">>> %s @ position %s, neighbors=%d", e, e.GetPosition(), len(e.Neighbors()))
 	})
+}
+
+func (space *MySpace) SummonMonsters() {
+	if space.CountEntities("Monster") < space.CountEntities("Player")*2 {
+		space.CreateEntity("Monster", entity.Vector3{})
+	}
 }
 
 // OnEntityEnterSpace is called when entity enters space

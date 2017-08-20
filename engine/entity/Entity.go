@@ -65,7 +65,7 @@ type Entity struct {
 
 	enteringSpaceRequest struct {
 		SpaceID     common.EntityID
-		EnterPos    Position
+		EnterPos    Vector3
 		RequestTime int64
 	}
 
@@ -229,6 +229,15 @@ func (e *Entity) uninterest(other *Entity) {
 // Never modify the return value !
 func (e *Entity) Neighbors() EntitySet {
 	return e.aoi.neighbors
+}
+
+func (e *Entity) IsNeighbor(other *Entity) bool {
+	return e.aoi.neighbors.Contains(other)
+}
+
+// DistanceTo calculates the distance between two entities
+func (e *Entity) DistanceTo(other *Entity) Coord {
+	return e.aoi.pos.DistanceTo(other.aoi.pos)
 }
 
 // Timer & Callback Management
@@ -411,7 +420,7 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
 	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
-	e.setPositionYaw(Position{x, y, z}, yaw, true)
+	e.setPositionYaw(Vector3{x, y, z}, yaw, true)
 }
 
 func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
@@ -612,13 +621,13 @@ type clientData struct {
 
 type enteringSpaceRequestData struct {
 	SpaceID  common.EntityID
-	EnterPos Position
+	EnterPos Vector3
 }
 
 type entityFreezeData struct {
 	Type      string
 	TimerData []byte
-	Pos       Position
+	Pos       Vector3
 	Attrs     map[string]interface{}
 	Yaw       Yaw
 	SpaceID   common.EntityID
@@ -897,7 +906,7 @@ func (e *Entity) GetListAttr(key string) *ListAttr {
 // Enter Space
 
 // EnterSpace let the entity enters space
-func (e *Entity) EnterSpace(spaceID common.EntityID, pos Position) {
+func (e *Entity) EnterSpace(spaceID common.EntityID, pos Vector3) {
 	if e.isEnteringSpace() {
 		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
 		e.I.OnEnterSpace()
@@ -916,7 +925,7 @@ func (e *Entity) EnterSpace(spaceID common.EntityID, pos Position) {
 	}
 }
 
-func (e *Entity) enterLocalSpace(space *Space, pos Position) {
+func (e *Entity) enterLocalSpace(space *Space, pos Vector3) {
 	if space == e.Space {
 		// space not changed
 		gwlog.TraceError("%s.enterLocalSpace: already in space %s", e, space)
@@ -947,7 +956,7 @@ func (e *Entity) isEnteringSpace() bool {
 }
 
 // Migrate to the server of space
-func (e *Entity) requestMigrateTo(spaceID common.EntityID, pos Position) {
+func (e *Entity) requestMigrateTo(spaceID common.EntityID, pos Vector3) {
 	e.enteringSpaceRequest.SpaceID = spaceID
 	e.enteringSpaceRequest.EnterPos = pos
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
@@ -957,7 +966,7 @@ func (e *Entity) requestMigrateTo(spaceID common.EntityID, pos Position) {
 
 func (e *Entity) clearEnteringSpaceRequest() {
 	e.enteringSpaceRequest.SpaceID = ""
-	e.enteringSpaceRequest.EnterPos = Position{}
+	e.enteringSpaceRequest.EnterPos = Vector3{}
 	e.enteringSpaceRequest.RequestTime = 0
 }
 
@@ -990,7 +999,7 @@ func OnMigrateRequestAck(entityID common.EntityID, spaceID common.EntityID, spac
 	entity.realMigrateTo(spaceID, entity.enteringSpaceRequest.EnterPos, spaceLoc)
 }
 
-func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Position, spaceLoc uint16) {
+func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Vector3, spaceLoc uint16) {
 	var clientid common.ClientID
 	var clientsrv uint16
 	if e.client != nil {
@@ -1021,7 +1030,7 @@ func OnRealMigrate(entityID common.EntityID, spaceID common.EntityID, x, y, z fl
 	if !clientid.IsNil() {
 		client = MakeGameClient(clientid, clientsrv)
 	}
-	pos := Position{Coord(x), Coord(y), Coord(z)}
+	pos := Vector3{Coord(x), Coord(y), Coord(z)}
 	createEntity(typeName, space, pos, entityID, migrateData, timerData, client, ccMigrate)
 }
 
@@ -1076,16 +1085,16 @@ func (e *Entity) IsUseAOI() bool {
 }
 
 // GetPosition returns the entity position
-func (e *Entity) GetPosition() Position {
+func (e *Entity) GetPosition() Vector3 {
 	return e.aoi.pos
 }
 
 // SetPosition sets the entity position
-func (e *Entity) SetPosition(pos Position) {
+func (e *Entity) SetPosition(pos Vector3) {
 	e.setPositionYaw(pos, e.yaw, false)
 }
 
-func (e *Entity) setPositionYaw(pos Position, yaw Yaw, fromClient bool) {
+func (e *Entity) setPositionYaw(pos Vector3, yaw Yaw, fromClient bool) {
 	space := e.Space
 	if space == nil {
 		gwlog.Warnf("%s.SetPosition(%s): space is nil", e, pos)
@@ -1179,9 +1188,24 @@ func (e *Entity) GetYaw() Yaw {
 // SetYaw sets entity yaw
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
-	e.ForAllClients(func(client *GameClient) {
-		client.updateYawOnClient(e.ID, e.yaw)
-	})
+	e.syncInfoFlag |= (sifSyncNeighborClients | sifSyncOwnClient)
+	//e.ForAllClients(func(client *GameClient) {
+	//	client.updateYawOnClient(e.ID, e.yaw)
+	//})
+}
+
+// FaceTo let entity face to another entity by setting yaw accordingly
+func (e *Entity) FaceTo(other *Entity) {
+	e.FaceToPos(other.aoi.pos)
+}
+
+// FaceTo let entity face to a specified position, setting yaw accordingly
+
+func (e *Entity) FaceToPos(pos Vector3) {
+	dir := pos.Sub(e.aoi.pos)
+	dir.Y = 0
+
+	e.SetYaw(dir.DirToYaw())
 }
 
 // Some Other Useful Utilities

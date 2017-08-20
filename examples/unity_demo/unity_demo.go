@@ -29,10 +29,16 @@ func main() {
 	goworld.RegisterEntity("SpaceService", &SpaceService{}, false, false)
 	// 注册Account类型
 	goworld.RegisterEntity("Account", &Account{}, false, false)
+	// 注册Monster类型
+	goworld.RegisterEntity("Monster", &Monster{}, false, true).DefineAttrs(map[string][]string{
+		"name": {"Client"},
+		"lv":   {"Client"},
+	})
 	// 注册Avatar类型，并定义属性
 	goworld.RegisterEntity("Player", &Player{}, true, true).DefineAttrs(map[string][]string{
-		"name":      {"Client", "Persistent"},
-		"lv":        {"Client", "Persistent"},
+		"name":      {"AllClients", "Persistent"},
+		"lv":        {"AllClients", "Persistent"},
+		"action":    {"AllClients"},
 		"spaceKind": {"Persistent"},
 	})
 

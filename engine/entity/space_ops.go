@@ -4,7 +4,7 @@ import "github.com/xiaonanln/goworld/engine/common"
 
 // CreateSpaceLocally creates a space in the local game server
 func CreateSpaceLocally(kind int) common.EntityID {
-	return createEntity(_SPACE_ENTITY_TYPE, nil, Position{}, "", map[string]interface{}{
+	return createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, "", map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: kind,
 	}, nil, nil, ccCreate)
 }

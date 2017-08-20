@@ -109,7 +109,7 @@ func TestXAOIList_Interested(t *testing.T) {
 
 func randAOI() *aoi {
 	return &aoi{
-		pos: Position{
+		pos: Vector3{
 			X: Coord(rand.Intn(100)),
 			Y: Coord(rand.Intn(100)),
 			Z: Coord(rand.Intn(100)),

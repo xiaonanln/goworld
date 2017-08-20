@@ -192,18 +192,18 @@ func (gwc *GoWorldConnection) SendSyncPositionOnClient(gid uint16, clientid comm
 	return err
 }
 
-// SendUpdateYawOnClient sends MT_UPDATE_YAW_ON_CLIENT message
-func (gwc *GoWorldConnection) SendUpdateYawOnClient(gid uint16, clientid common.ClientID, entityID common.EntityID, yaw float32) error {
-	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_UPDATE_YAW_ON_CLIENT)
-	packet.AppendUint16(gid)
-	packet.AppendClientID(clientid)
-	packet.AppendEntityID(entityID)
-	packet.AppendFloat32(yaw)
-	err := gwc.SendPacket(packet)
-	packet.Release()
-	return err
-}
+//// SendUpdateYawOnClient sends MT_UPDATE_YAW_ON_CLIENT message
+//func (gwc *GoWorldConnection) SendUpdateYawOnClient(gid uint16, clientid common.ClientID, entityID common.EntityID, yaw float32) error {
+//	packet := gwc.packetConn.NewPacket()
+//	packet.AppendUint16(MT_UPDATE_YAW_ON_CLIENT)
+//	packet.AppendUint16(gid)
+//	packet.AppendClientID(clientid)
+//	packet.AppendEntityID(entityID)
+//	packet.AppendFloat32(yaw)
+//	err := gwc.SendPacket(packet)
+//	packet.Release()
+//	return err
+//}
 
 // SendDestroyEntityOnClient sends MT_DESTROY_ENTITY_ON_CLIENT message
 func (gwc *GoWorldConnection) SendDestroyEntityOnClient(gid uint16, clientid common.ClientID, typeName string, entityid common.EntityID) error {

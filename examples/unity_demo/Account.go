@@ -91,7 +91,7 @@ func (a *Account) OnGetPlayerSpaceID(playerID common.EntityID, spaceID common.En
 	}
 
 	a.Attrs.Set("loginPlayerID", playerID)
-	a.EnterSpace(spaceID, entity.Position{})
+	a.EnterSpace(spaceID, entity.Vector3{})
 }
 
 func (a *Account) onPlayerEntityFound(player *entity.Entity) {

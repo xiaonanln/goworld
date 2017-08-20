@@ -3,11 +3,11 @@ package entity
 // AOICalculator defines interface for aoi Calculators
 type AOICalculator interface {
 	// Let Entity aoi enter at specified position
-	Enter(aoi *aoi, pos Position)
+	Enter(aoi *aoi, pos Vector3)
 	// Let Entity aoi leave
 	Leave(aoi *aoi)
 	// Let Entity aoi move
-	Move(aoi *aoi, newPos Position)
+	Move(aoi *aoi, newPos Vector3)
 	// Calculate EntityAOI Adjustment of neighbors
 	Adjust(aoi *aoi) (enter []*aoi, leave []*aoi)
 }
@@ -26,7 +26,7 @@ func newXZListAOICalculator() *XZListAOICalculator {
 }
 
 // Enter is called when Entity enters Space
-func (cal *XZListAOICalculator) Enter(aoi *aoi, pos Position) {
+func (cal *XZListAOICalculator) Enter(aoi *aoi, pos Vector3) {
 	aoi.pos = pos
 	cal.xSweepList.Insert(aoi)
 	cal.zSweepList.Insert(aoi)
@@ -46,7 +46,7 @@ func (cal *XZListAOICalculator) Leave(aoi *aoi) {
 }
 
 // Move is called when Entity moves in Space
-func (cal *XZListAOICalculator) Move(aoi *aoi, pos Position) {
+func (cal *XZListAOICalculator) Move(aoi *aoi, pos Vector3) {
 	oldPos := aoi.pos
 	aoi.pos = pos
 	if oldPos.X != pos.X {

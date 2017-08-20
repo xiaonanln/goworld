@@ -212,7 +212,7 @@ const (
 	ccRestore
 )
 
-func createEntity(typeName string, space *Space, pos Position, entityID common.EntityID, data map[string]interface{}, timerData []byte, client *GameClient, cause createCause) common.EntityID {
+func createEntity(typeName string, space *Space, pos Vector3, entityID common.EntityID, data map[string]interface{}, timerData []byte, client *GameClient, cause createCause) common.EntityID {
 	//gwlog.Debugf("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -285,7 +285,7 @@ func createEntity(typeName string, space *Space, pos Position, entityID common.E
 	return entityID
 }
 
-func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, pos Position) {
+func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, pos Vector3) {
 	// load the data from storage
 	storage.Load(typeName, entityID, func(data interface{}, err error) {
 		// callback runs in main routine
@@ -314,7 +314,7 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) {
 
 // CreateEntityLocally creates new entity in the local game
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) common.EntityID {
-	return createEntity(typeName, nil, Position{}, "", data, nil, client, ccCreate)
+	return createEntity(typeName, nil, Vector3{}, "", data, nil, client, ccCreate)
 }
 
 // CreateEntityAnywhere creates new entity in any game
@@ -326,7 +326,7 @@ func CreateEntityAnywhere(typeName string) {
 //
 // LoadEntityLocally has no effect if entity already exists on any game
 func LoadEntityLocally(typeName string, entityID common.EntityID) {
-	loadEntityLocally(typeName, entityID, nil, Position{})
+	loadEntityLocally(typeName, entityID, nil, Vector3{})
 }
 
 // LoadEntityAnywhere loads entity in the any game

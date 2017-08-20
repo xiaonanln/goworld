@@ -114,9 +114,9 @@ func (a *Avatar) DoEnterSpace(kind int, spaceID common.EntityID) {
 	a.EnterSpace(spaceID, a.randomPosition())
 }
 
-func (a *Avatar) randomPosition() entity.Position {
+func (a *Avatar) randomPosition() entity.Vector3 {
 	minCoord, maxCoord := -400, 400
-	return entity.Position{
+	return entity.Vector3{
 		X: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
 		Y: 0,
 		Z: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
@@ -202,7 +202,7 @@ func (a *Avatar) Say_Client(channel string, content string) {
 }
 
 // Move_Client is client RPC for moving
-func (a *Avatar) Move_Client(pos entity.Position) {
+func (a *Avatar) Move_Client(pos entity.Vector3) {
 	gwlog.Debugf("Move from %s -> %s", a.GetPosition(), pos)
 	a.SetPosition(pos)
 }

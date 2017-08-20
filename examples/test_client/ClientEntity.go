@@ -37,7 +37,7 @@ type clientEntity struct {
 	destroyed bool
 	timers    map[*timer.Timer]bool
 
-	pos entity.Position
+	pos entity.Vector3
 	yaw entity.Yaw
 
 	currentThing          string
@@ -54,7 +54,7 @@ func newClientEntity(owner *ClientBot, typeName string, entityid common.EntityID
 		Attrs:    clientData,
 		IsPlayer: isPlayer,
 		timers:   map[*timer.Timer]bool{},
-		pos:      entity.Position{x, y, z},
+		pos:      entity.Vector3{x, y, z},
 		yaw:      yaw,
 	}
 

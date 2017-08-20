@@ -189,6 +189,25 @@ func (a *MapAttr) PopMapAttr(key string) *MapAttr {
 	return val.(*MapAttr)
 }
 
+//// Clear removes all key-values from the MapAttr
+//func (a *MapAttr) Clear() {
+//
+//	val, ok := a.attrs[key]
+//	if !ok {
+//		gwlog.Panicf("key not exists: %s", key)
+//	}
+//
+//	delete(a.attrs, key)
+//	if sa, ok := val.(*MapAttr); ok {
+//		sa.clearOwner()
+//	} else if sa, ok := val.(*ListAttr); ok {
+//		sa.clearOwner()
+//	}
+//
+//	a.sendAttrDelToClients(key)
+//	return val
+//}
+
 //// GetKeys returns all keys of MapAttr as slice of strings
 //func (a *MapAttr) GetKeys() []string {
 //	size := len(a.attrs)

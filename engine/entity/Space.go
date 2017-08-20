@@ -127,18 +127,18 @@ func (space *Space) IsNil() bool {
 }
 
 // CreateEntity creates a new local entity in this space
-func (space *Space) CreateEntity(typeName string, pos Position) {
+func (space *Space) CreateEntity(typeName string, pos Vector3) {
 	createEntity(typeName, space, pos, "", nil, nil, nil, ccCreate)
 }
 
 // LoadEntity loads a entity of specified entityID to the space
 //
 // If the entity already exists on server, this call has no effect
-func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Position) {
+func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Vector3) {
 	loadEntityLocally(typeName, entityID, space, pos)
 }
 
-func (space *Space) enter(entity *Entity, pos Position, isRestore bool) {
+func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debugf("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))
 	}
@@ -211,7 +211,7 @@ func (space *Space) leave(entity *Entity) {
 	entity.I.OnLeaveSpace(space)
 }
 
-func (space *Space) move(entity *Entity, newPos Position) {
+func (space *Space) move(entity *Entity, newPos Vector3) {
 	if space.IsNil() {
 		return // never move in nil space
 	}

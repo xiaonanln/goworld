@@ -23,6 +23,7 @@ func (a *Player) setDefaultAttrs() {
 	a.Attrs.SetDefault("spaceKind", 1)
 	a.Attrs.SetDefault("name", "noname")
 	a.Attrs.SetDefault("lv", 1)
+	a.Attrs.SetDefault("action", "idle")
 }
 
 // GetSpaceID 获得玩家的场景ID并发给调用者
@@ -60,12 +61,12 @@ func (a *Player) EnterSpace_Client(kind int) {
 // DoEnterSpace is called by SpaceService to notify avatar entering specified space
 func (a *Player) DoEnterSpace(kind int, spaceID common.EntityID) {
 	// let the avatar enter space with spaceID
-	a.EnterSpace(spaceID, entity.Position{})
+	a.EnterSpace(spaceID, entity.Vector3{})
 }
 
-//func (a *Player) randomPosition() entity.Position {
+//func (a *Player) randomPosition() entity.Vector3 {
 //	minCoord, maxCoord := -400, 400
-//	return entity.Position{
+//	return entity.Vector3{
 //		X: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
 //		Y: 0,
 //		Z: entity.Coord(minCoord + rand.Intn(maxCoord-minCoord)),
@@ -75,4 +76,8 @@ func (a *Player) DoEnterSpace(kind int, spaceID common.EntityID) {
 // OnEnterSpace is called when avatar enters a space
 func (a *Player) OnEnterSpace() {
 	gwlog.Infof("%s ENTER SPACE %s", a, a.Space)
+}
+
+func (a *Player) SetAction_Client(action string) {
+	a.Attrs.Set("action", action)
 }

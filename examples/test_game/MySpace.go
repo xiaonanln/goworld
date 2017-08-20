@@ -26,7 +26,7 @@ func (space *MySpace) OnSpaceCreated() {
 
 	M := 10
 	for i := 0; i < M; i++ {
-		space.CreateEntity("Monster", entity.Position{})
+		space.CreateEntity("Monster", entity.Vector3{})
 	}
 }
 

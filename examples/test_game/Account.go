@@ -76,7 +76,7 @@ func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.En
 	}
 
 	a.Attrs.Set("loginAvatarID", avatarID)
-	a.EnterSpace(spaceID, entity.Position{})
+	a.EnterSpace(spaceID, entity.Vector3{})
 }
 
 func (a *Account) onAvatarEntityFound(avatar *entity.Entity) {
