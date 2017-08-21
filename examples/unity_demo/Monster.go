@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 // Monster type
@@ -15,9 +16,18 @@ type Monster struct {
 }
 
 func (monster *Monster) OnEnterSpace() {
+	monster.setDefaultAttrs()
 	monster.AddTimer(time.Millisecond*100, "AI")
 	monster.lastTickTime = time.Now()
 	monster.AddTimer(time.Millisecond*30, "Tick")
+}
+
+func (monster *Monster) setDefaultAttrs() {
+	monster.Attrs.SetDefault("name", "minion")
+	monster.Attrs.SetDefault("lv", 1)
+	monster.Attrs.SetDefault("hpmax", 100)
+	monster.Attrs.SetDefault("hp", 100)
+	monster.Attrs.SetDefault("action", "idle")
 }
 
 func (monster *Monster) AI() {
@@ -84,4 +94,19 @@ func (monster *Monster) MovingTo(player *entity.Entity) {
 func (monster *Monster) Attacking(player *entity.Entity) {
 	monster.movingToTarget = nil
 	monster.attackingTarget = player
+}
+
+func (monster *Monster) TakeDamage(damage int) {
+	hp := monster.GetInt("hp")
+	hp = hp - damage
+	if hp < 0 {
+		hp = 0
+	}
+
+	monster.Attrs.Set("hp", hp)
+	gwlog.Infof("%s TakeDamage %d => hp=%d", monster, damage, hp)
+	if hp <= 0 {
+		monster.Attrs.Set("action", "death")
+		monster.Destroy()
+	}
 }

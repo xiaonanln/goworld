@@ -81,3 +81,23 @@ func (a *Player) OnEnterSpace() {
 func (a *Player) SetAction_Client(action string) {
 	a.Attrs.Set("action", action)
 }
+
+func (a *Player) ShootMiss_Client() {
+	a.CallAllClients("Shoot")
+}
+
+func (a *Player) ShootHit_Client(victimID common.EntityID) {
+	a.CallAllClients("Shoot")
+	victim := a.Space.GetEntity(victimID)
+	if victim == nil {
+		gwlog.Warnf("Shoot %s, but monster not found", victimID)
+		return
+	}
+
+	if victim.Attrs.GetInt("hp") <= 0 {
+		return
+	}
+
+	monster := victim.I.(*Monster)
+	monster.TakeDamage(10)
+}

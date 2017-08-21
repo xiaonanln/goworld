@@ -299,6 +299,20 @@ func (space *Space) ForEachEntity(f func(e *Entity)) {
 	}
 }
 
+// GetEntity returns the entity in space with specified ID, nil otherwise
+func (space *Space) GetEntity(entityID common.EntityID) *Entity {
+	entity := GetEntity(entityID)
+	if entity == nil {
+		return nil
+	}
+
+	if space.entities.Contains(entity) {
+		return entity
+	} else {
+		return nil
+	}
+}
+
 // aoi Management
 func (space *Space) addToAOI(entity *Entity) {
 

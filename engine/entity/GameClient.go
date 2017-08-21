@@ -57,7 +57,7 @@ func (client *GameClient) sendDestroyEntity(entity *Entity) {
 	dispatcherclient.GetDispatcherClientForSend().SendDestroyEntityOnClient(client.gateid, client.clientid, entity.TypeName, entity.ID)
 }
 
-func (client *GameClient) call(entityID common.EntityID, method string, args ...interface{}) {
+func (client *GameClient) call(entityID common.EntityID, method string, args []interface{}) {
 	if client == nil {
 		return
 	}

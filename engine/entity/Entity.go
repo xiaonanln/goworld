@@ -720,7 +720,16 @@ func (e *Entity) SetClient(client *GameClient) {
 
 // CallClient calls the client entity
 func (e *Entity) CallClient(method string, args ...interface{}) {
-	e.client.call(e.ID, method, args...)
+	e.client.call(e.ID, method, args)
+}
+
+// CallAllClients calls the entity method on all clients
+func (e *Entity) CallAllClients(method string, args ...interface{}) {
+	e.client.call(e.ID, method, args)
+
+	for neighbor := range e.Neighbors() {
+		neighbor.client.call(e.ID, method, args)
+	}
 }
 
 // GiveClientTo gives client to other entity
