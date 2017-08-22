@@ -23,7 +23,10 @@ func (a *Player) setDefaultAttrs() {
 	a.Attrs.SetDefault("spaceKind", 1)
 	a.Attrs.SetDefault("name", "noname")
 	a.Attrs.SetDefault("lv", 1)
+	a.Attrs.SetDefault("hp", 100)
+	a.Attrs.SetDefault("hpmax", 100)
 	a.Attrs.SetDefault("action", "idle")
+
 }
 
 // GetSpaceID 获得玩家的场景ID并发给调用者
@@ -79,6 +82,10 @@ func (a *Player) OnEnterSpace() {
 }
 
 func (a *Player) SetAction_Client(action string) {
+	if a.GetInt("hp") <= 0 { // dead already
+		return
+	}
+
 	a.Attrs.Set("action", action)
 }
 
@@ -100,4 +107,24 @@ func (a *Player) ShootHit_Client(victimID common.EntityID) {
 
 	monster := victim.I.(*Monster)
 	monster.TakeDamage(10)
+}
+
+func (player *Player) TakeDamage(damage int64) {
+	hp := player.GetInt("hp")
+	if hp <= 0 {
+		return
+	}
+
+	hp = hp - int(damage)
+	if hp < 0 {
+		hp = 0
+	}
+
+	player.Attrs.Set("hp", hp)
+
+	if hp <= 0 {
+		// now player dead ...
+		player.Attrs.Set("action", "death")
+	}
+
 }

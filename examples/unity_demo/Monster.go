@@ -13,6 +13,9 @@ type Monster struct {
 	movingToTarget  *entity.Entity
 	attackingTarget *entity.Entity
 	lastTickTime    time.Time
+
+	attackCD       time.Duration
+	lastAttackTime time.Time
 }
 
 func (monster *Monster) OnEnterSpace() {
@@ -28,6 +31,9 @@ func (monster *Monster) setDefaultAttrs() {
 	monster.Attrs.SetDefault("hpmax", 100)
 	monster.Attrs.SetDefault("hp", 100)
 	monster.Attrs.SetDefault("action", "idle")
+
+	monster.attackCD = time.Second
+	monster.lastAttackTime = time.Now()
 }
 
 func (monster *Monster) AI() {
@@ -35,6 +41,11 @@ func (monster *Monster) AI() {
 	for entity := range monster.Neighbors() {
 
 		if entity.TypeName != "Player" {
+			continue
+		}
+
+		if entity.GetInt("hp") <= 0 {
+			// dead
 			continue
 		}
 
@@ -57,7 +68,12 @@ func (monster *Monster) AI() {
 
 func (monster *Monster) Tick() {
 	if monster.attackingTarget != nil && monster.IsNeighbor(monster.attackingTarget) {
-		monster.FaceTo(monster.attackingTarget)
+		now := time.Now()
+		if !now.Before(monster.lastAttackTime.Add(monster.attackCD)) {
+			monster.FaceTo(monster.attackingTarget)
+			monster.attack(monster.attackingTarget.I.(*Player))
+			monster.lastAttackTime = now
+		}
 		return
 	}
 
@@ -71,6 +87,7 @@ func (monster *Monster) Tick() {
 		monster.FaceTo(monster.movingToTarget)
 		return
 	}
+
 }
 
 func (monster *Monster) GetSpeed() entity.Coord {
@@ -78,27 +95,57 @@ func (monster *Monster) GetSpeed() entity.Coord {
 }
 
 func (monster *Monster) GetAttackRange() entity.Coord {
-	return 5
+	return 3
 }
 
 func (monster *Monster) Idling() {
+	if monster.movingToTarget == nil && monster.attackingTarget == nil {
+		return
+	}
+
 	monster.movingToTarget = nil
 	monster.attackingTarget = nil
+	monster.Attrs.Set("action", "idle")
 }
 
 func (monster *Monster) MovingTo(player *entity.Entity) {
+	if monster.movingToTarget == player {
+		// moving target not changed
+		return
+	}
+
 	monster.movingToTarget = player
 	monster.attackingTarget = nil
+	monster.Attrs.Set("action", "move")
 }
 
 func (monster *Monster) Attacking(player *entity.Entity) {
+	if monster.attackingTarget == player {
+		return
+	}
+
 	monster.movingToTarget = nil
 	monster.attackingTarget = player
+	monster.Attrs.Set("action", "move")
 }
 
-func (monster *Monster) TakeDamage(damage int) {
+func (monster *Monster) attack(player *Player) {
+	monster.CallAllClients("DisplayAttack", player.ID)
+
+	if player.GetInt("hp") <= 0 {
+		return
+	}
+
+	player.TakeDamage(monster.GetDamage())
+}
+
+func (monster *Monster) GetDamage() int64 {
+	return 10
+}
+
+func (monster *Monster) TakeDamage(damage int64) {
 	hp := monster.GetInt("hp")
-	hp = hp - damage
+	hp = hp - int(damage)
 	if hp < 0 {
 		hp = 0
 	}

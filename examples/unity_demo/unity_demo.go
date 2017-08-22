@@ -41,6 +41,8 @@ func main() {
 	goworld.RegisterEntity("Player", &Player{}, true, true).DefineAttrs(map[string][]string{
 		"name":      {"AllClients", "Persistent"},
 		"lv":        {"AllClients", "Persistent"},
+		"hp":        {"AllClients"},
+		"hpmax":     {"AllClients"},
 		"action":    {"AllClients"},
 		"spaceKind": {"Persistent"},
 	})
