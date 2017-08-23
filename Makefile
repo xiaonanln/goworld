@@ -40,5 +40,4 @@ covertest:
 
 install-deps:
 	pip install psutil
-	which glide || curl https://glide.sh/get | sh
 	glide install

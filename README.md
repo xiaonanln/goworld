@@ -7,7 +7,9 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
   * [Introduction](#introduction)
   * [Get GoWorld](#get-goworld)
   * [Manage GoWorld using goworld.py](#manage-goworld-using-goworldpy)
-  * [Run Example Chatroom Client](#run-example-chatroom-client)
+  * [Demos](#demos)
+    * [Chatroom Demo](#chatroom-demo)
+    * [Unity Demo](#unity-demo)
 ---------------------------------------
 >  中文资料：
 > [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
@@ -45,14 +47,16 @@ $ go get github.com/xiaonanln/goworld
 
 ### Install dependencies
 
+GoWorld uses [Glide](http://glide.sh/) to manage packages. 
+[![Glide](http://glide.sh/assets/logo-small.png)](http://glide.sh/)
+
 **Windows**:
 1. get `glide.exe` from [https://github.com/Masterminds/glide/releases](https://github.com/Masterminds/glide/releases) and put it to `$GOPATH/bin`
 2. run `install-deps-win.bat`
 
-**Linux**: `make install-deps`
-
-GoWorld uses [Glide](http://glide.sh/) to manage packages. 
-![Glide](http://glide.sh/assets/logo-small.png)
+**Linux**: 
+1. Install [Glide](http://glide.sh/): `$ curl https://glide.sh/get | sh`
+2. `$ make install-deps`
 
 ## Manage GoWorld using goworld.py
 
@@ -90,7 +94,53 @@ $ python goworld.py reload
 ```
 Reload will reboot game processes with the current executive while presearving all game server states. 
 
-## Run Example Chatroom Client ##
+
+## Demos
+
+### Chatroom Demo
+
+The chatroom demo provides following features:
+* register & login
+* send chat message
+* switch chatrooms
+
+**Build Server:**
+```bash
+$ python goworld.py build dispatcher gate chatroom_demo
+```
+**Run Server:**
+```bash
+$ python goworld.py start chatroom_demo
+```
+
+**Chatroom Demo Client:**
 
 The client for chatroom demo is hosted at [github.com/xiaonanln/goworld-chatroom-demo-client](https://github.com/xiaonanln/goworld-chatroom-demo-client).
 The project was created and built in [Cocos Creater 1.5](http://www.cocos2d-x.org/). A running server & client demo can also be found at [http://goworldgs.com/chatclient/](http://goworldgs.com/chatclient/).
+
+### Unity Demo
+Unity Demo is a simple multiple player monster shooting game to show how spaces and entities of GoWorld
+can be used to create multiple player online games.  
+
+* register & login
+* move players in space
+* summon monsters
+* player shoot monsters
+* monsters attack players
+
+Developing features:
+* Support multiple spaces and players migrate among spaces
+
+**Build Server:**
+```bash
+$ python goworld.py build dispatcher gate unity_demo
+```
+**Run Server:**
+```bash
+$ python goworld.py start unity_demo
+```
+
+**Unity Demo Client:**
+
+The client for unity demo is hosted at [https://github.com/xiaonanln/goworld-unity-demo](https://github.com/xiaonanln/goworld-unity-demo).
+The project was created and built in [Unity 2017.1.0f3](https://unity3d.com/). 
