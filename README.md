@@ -98,6 +98,8 @@ Reload will reboot game processes with the current executive while presearving a
 ## Demos
 
 ### Chatroom Demo
+The chatroom demo is a simple implementation of chatroom server and client. It illustrates how
+GoWorld can also be used for games which don't divide players by spaces. 
 
 The chatroom demo provides following features:
 * register & login
@@ -115,6 +117,7 @@ $ python goworld.py start chatroom_demo
 
 **Chatroom Demo Client:**
 
+Chatroom demo client implements the client-server protocol in Javascript.  
 The client for chatroom demo is hosted at [github.com/xiaonanln/goworld-chatroom-demo-client](https://github.com/xiaonanln/goworld-chatroom-demo-client).
 The project was created and built in [Cocos Creater 1.5](http://www.cocos2d-x.org/). A running server & client demo can also be found at [http://goworldgs.com/chatclient/](http://goworldgs.com/chatclient/).
 
@@ -142,5 +145,6 @@ $ python goworld.py start unity_demo
 
 **Unity Demo Client:**
 
+Unity demo client implements the client-server protocol in C#. 
 The client for unity demo is hosted at [https://github.com/xiaonanln/goworld-unity-demo](https://github.com/xiaonanln/goworld-unity-demo).
 The project was created and built in [Unity 2017.1.0f3](https://unity3d.com/). 
