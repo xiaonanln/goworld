@@ -132,7 +132,9 @@ can be used to create multiple player online games.
 * monsters attack players
 
 Developing features:
-* Support multiple spaces and players migrate among spaces
+* Hit effects
+* Players migrate among multiple spaces
+* Server side map navigation
 
 **Build Server:**
 ```bash
@@ -147,4 +149,4 @@ $ python goworld.py start unity_demo
 
 Unity demo client implements the client-server protocol in C#. 
 The client for unity demo is hosted at [https://github.com/xiaonanln/goworld-unity-demo](https://github.com/xiaonanln/goworld-unity-demo).
-The project was created and built in [Unity 2017.1.0f3](https://unity3d.com/). 
+The project was created and built in [Unity 2017.1](https://unity3d.com/). 
