@@ -93,6 +93,7 @@ $ python goworld.py stop
 $ python goworld.py reload
 ```
 Reload will reboot game processes with the current executive while presearving all game server states. 
+**However, it is not workable on Windows.**  
 
 
 ## Demos
