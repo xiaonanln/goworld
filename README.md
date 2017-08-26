@@ -31,13 +31,13 @@ Entities in the same space can visit each other directly by calling methods or a
 Entities in different spaces can call each over using RPC.
 
 A GoWorld server consists of one dispatcher, one or more games and one or more gates. 
-The gates are responsable for handling client connections and receive/send packets from/to clients. 
+The gates are responsible for handling client connections and receive/send packets from/to clients. 
 The games manages all entities and runs all game logic. 
-The dispatcher is responsable for redirecting packets among games and between games and gates.  
+The dispatcher is responsible for redirecting packets among games and between games and gates.  
 
 The game processes are **hot-swappable**. 
 We can swap a game by sending SIGUSR1 to the process and restart the process with **-restore** parameter to bring game 
-back to work but with the latest executive image. This feature enables updating server-side logic or fixing server bugs
+back to work but with the latest executable image. This feature enables updating server-side logic or fixing server bugs
  transparently without significant interference of online players. 
 
 ## Get GoWorld
@@ -92,7 +92,7 @@ $ python goworld.py stop
 ```bash
 $ python goworld.py reload
 ```
-Reload will reboot game processes with the current executive while presearving all game server states. 
+Reload will reboot game processes with the current executable while preserving all game server states. 
 
 
 ## Demos
@@ -119,7 +119,7 @@ $ python goworld.py start chatroom_demo
 
 Chatroom demo client implements the client-server protocol in Javascript.  
 The client for chatroom demo is hosted at [github.com/xiaonanln/goworld-chatroom-demo-client](https://github.com/xiaonanln/goworld-chatroom-demo-client).
-The project was created and built in [Cocos Creater 1.5](http://www.cocos2d-x.org/). A running server & client demo can also be found at [http://goworldgs.com/chatclient/](http://goworldgs.com/chatclient/).
+The project was created and built in [Cocos Creater 1.5](http://www.cocos2d-x.org/). A running server and client demo can also be found at [http://goworldgs.com/chatclient/](http://goworldgs.com/chatclient/).
 
 ### Unity Demo
 Unity Demo is a simple multiple player monster shooting game to show how spaces and entities of GoWorld
