@@ -28,6 +28,7 @@ func (a *MapAttr) HasKey(key string) bool {
 
 // Set sets the key-attribute pair in MapAttr
 func (a *MapAttr) Set(key string, val interface{}) {
+	var flag attrFlag
 	a.attrs[key] = val
 	if sa, ok := val.(*MapAttr); ok {
 		// val is MapAttr, set parent and owner accordingly
@@ -35,15 +36,12 @@ func (a *MapAttr) Set(key string, val interface{}) {
 			gwlog.Panicf("MapAttr reused in key %s", key)
 		}
 
-		sa.parent = a
-		sa.owner = a.owner
-		sa.pkey = key
 		if a == a.owner.Attrs { // this is the root
-			sa.flag = a.owner.getAttrFlag(key)
+			flag = a.owner.getAttrFlag(key)
 		} else {
-			sa.flag = a.flag
+			flag = a.flag
 		}
-
+		sa.setParent(a.owner, a, key, flag)
 		a.sendAttrChangeToClients(key, sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		// val is ListATtr, set parent and owner accordingly
@@ -51,15 +49,12 @@ func (a *MapAttr) Set(key string, val interface{}) {
 			gwlog.Panicf("ListAttr reused in key %s", key)
 		}
 
-		sa.parent = a
-		sa.owner = a.owner
-		sa.pkey = key
 		if a == a.owner.Attrs { // this is the root
-			sa.flag = a.owner.getAttrFlag(key)
+			flag = a.owner.getAttrFlag(key)
 		} else {
-			sa.flag = a.flag
+			flag = a.flag
 		}
-
+		sa.setParent(a.owner, a, key, flag)
 		a.sendAttrChangeToClients(key, sa.ToList())
 	} else {
 		a.sendAttrChangeToClients(key, val)
@@ -169,9 +164,9 @@ func (a *MapAttr) Pop(key string) interface{} {
 
 	delete(a.attrs, key)
 	if sa, ok := val.(*MapAttr); ok {
-		sa.clearOwner()
+		sa.clearParent()
 	} else if sa, ok := val.(*ListAttr); ok {
-		sa.clearOwner()
+		sa.clearParent()
 	}
 
 	a.sendAttrDelToClients(key)
@@ -199,9 +194,9 @@ func (a *MapAttr) PopMapAttr(key string) *MapAttr {
 //
 //	delete(a.attrs, key)
 //	if sa, ok := val.(*MapAttr); ok {
-//		sa.clearOwner()
+//		sa.clearParent()
 //	} else if sa, ok := val.(*ListAttr); ok {
-//		sa.clearOwner()
+//		sa.clearParent()
 //	}
 //
 //	a.sendAttrDelToClients(key)
@@ -299,12 +294,45 @@ func (a *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(st
 	}
 }
 
-func (a *MapAttr) clearOwner() {
-	a.owner = nil
+func (a *MapAttr) clearParent() {
 	a.parent = nil
 	a.pkey = nil
+	a.clearOwner()
+}
+
+func (a *MapAttr) clearOwner() {
+	a.owner = nil
 	a.path = nil
 	a.flag = 0
+
+	// clear owner of children recursively
+	for _, v := range a.attrs {
+		if ma, ok := v.(*MapAttr); ok {
+			ma.clearOwner()
+		} else if la, ok := v.(*ListAttr); ok {
+			la.clearOwner()
+		}
+	}
+}
+
+func (a *MapAttr) setParent(owner *Entity, parent interface{}, pkey interface{}, flag attrFlag) {
+	a.owner = owner
+	a.parent = parent
+	a.setOwner(owner, flag)
+}
+
+func (a *MapAttr) setOwner(owner *Entity, flag attrFlag) {
+	a.owner = owner
+	a.flag = flag
+
+	// set owner of children recursively
+	for _, v := range a.attrs {
+		if ma, ok := v.(*MapAttr); ok {
+			ma.setOwner(owner, flag)
+		} else if la, ok := v.(*ListAttr); ok {
+			la.setOwner(owner, flag)
+		}
+	}
 }
 
 // NewMapAttr creates a new MapAttr

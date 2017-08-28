@@ -20,12 +20,47 @@ func (a *ListAttr) Size() int {
 	return len(a.items)
 }
 
-func (a *ListAttr) clearOwner() {
-	a.owner = nil
+func (a *ListAttr) clearParent() {
 	a.parent = nil
 	a.pkey = nil
-	a.path = nil
+
+	a.clearOwner()
+}
+
+func (a *ListAttr) clearOwner() {
+	a.owner = nil
 	a.flag = 0
+	a.path = nil
+
+	// clear owner of children recursively
+	for _, v := range a.items {
+		if ma, ok := v.(*MapAttr); ok {
+			ma.clearOwner()
+		} else if la, ok := v.(*ListAttr); ok {
+			la.clearOwner()
+		}
+	}
+}
+
+func (a *ListAttr) setParent(owner *Entity, parent interface{}, pkey interface{}, flag attrFlag) {
+	a.parent = parent
+	a.pkey = pkey
+
+	a.setOwner(owner, flag)
+}
+
+func (a *ListAttr) setOwner(owner *Entity, flag attrFlag) {
+	a.owner = owner
+	a.flag = flag
+
+	// set owner of children recursively
+	for _, v := range a.items {
+		if ma, ok := v.(*MapAttr); ok {
+			ma.setOwner(owner, flag)
+		} else if la, ok := v.(*ListAttr); ok {
+			la.setOwner(owner, flag)
+		}
+	}
 }
 
 // Set sets item value
@@ -37,22 +72,14 @@ func (a *ListAttr) Set(index int, val interface{}) {
 			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
-		sa.parent = a
-		sa.owner = a.owner
-		sa.pkey = index
-		sa.flag = a.flag
-
+		sa.setParent(a.owner, a, index, a.flag)
 		a.sendListAttrChangeToClients(index, sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
-		sa.parent = a
-		sa.owner = a.owner
-		sa.pkey = index
-		sa.flag = a.flag
-
+		sa.setParent(a.owner, a, index, a.flag)
 		a.sendListAttrChangeToClients(index, sa.ToList())
 	} else {
 		a.sendListAttrChangeToClients(index, val)
@@ -150,9 +177,9 @@ func (a *ListAttr) Pop() interface{} {
 	a.items = a.items[:size-1]
 
 	if sa, ok := val.(*MapAttr); ok {
-		sa.clearOwner()
+		sa.clearParent()
 	} else if sa, ok := val.(*ListAttr); ok {
-		sa.clearOwner()
+		sa.clearParent()
 	}
 
 	a.sendListAttrPopToClients()
@@ -187,11 +214,7 @@ func (a *ListAttr) Append(val interface{}) {
 			gwlog.Panicf("MapAttr reused in append")
 		}
 
-		sa.parent = a
-		sa.owner = a.owner
-		sa.pkey = index
-		sa.flag = a.flag
-
+		sa.setParent(a.owner, a, index, a.flag)
 		a.sendListAttrAppendToClients(sa.ToList())
 	} else {
 		a.sendListAttrAppendToClients(val)
