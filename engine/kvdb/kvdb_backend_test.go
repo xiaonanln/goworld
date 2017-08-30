@@ -11,8 +11,8 @@ import (
 	"os"
 
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbmysql"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
-	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbsql"
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
@@ -24,8 +24,8 @@ func TestRedisBackendSet(t *testing.T) {
 	testKVDBBackendSet(t, openTestRedisKVDB(t))
 }
 
-func TestSQLBackendSet(t *testing.T) {
-	testKVDBBackendSet(t, openTestSQLKVDB(t))
+func TestMySQLBackendSet(t *testing.T) {
+	testKVDBBackendSet(t, openTestMySQLKVDB(t))
 }
 
 func testKVDBBackendSet(t *testing.T, kvdb KVDBEngine) {
@@ -62,8 +62,8 @@ func TestRedisBackendFind(t *testing.T) {
 	testBackendFind(t, openTestRedisKVDB(t))
 }
 
-func TestSQLBackendFind(t *testing.T) {
-	testBackendFind(t, openTestSQLKVDB(t))
+func TestMySQLBackendFind(t *testing.T) {
+	testBackendFind(t, openTestMySQLKVDB(t))
 }
 
 func testBackendFind(t *testing.T, kvdb KVDBEngine) {
@@ -131,7 +131,7 @@ func BenchmarkRedisBackendGetSet(b *testing.B) {
 }
 
 func BenchmarkSQLBackendGetSet(b *testing.B) {
-	benchmarkBackendGetSet(b, openTestSQLKVDB(b))
+	benchmarkBackendGetSet(b, openTestMySQLKVDB(b))
 }
 
 func benchmarkBackendGetSet(b *testing.B, kvdb KVDBEngine) {
@@ -160,7 +160,7 @@ func BenchmarkRedisBackendFind(b *testing.B) {
 }
 
 func BenchmarkSQLBackendFind(b *testing.B) {
-	benchmarkBackendFind(b, openTestSQLKVDB(b))
+	benchmarkBackendFind(b, openTestMySQLKVDB(b))
 }
 
 func benchmarkBackendFind(b *testing.B, kvdb KVDBEngine) {
@@ -215,12 +215,12 @@ func openTestRedisKVDB(f _Fataler) KVDBEngine {
 	return kvdb
 }
 
-func openTestSQLKVDB(f _Fataler) KVDBEngine {
+func openTestMySQLKVDB(f _Fataler) KVDBEngine {
 	testpwd := "testmysql"
 	if os.Getenv("TRAVIS") != "" {
 		testpwd = ""
 	}
-	kvdb, err := kvdbsql.OpenSQLKVDB("mysql", fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/goworld", testpwd))
+	kvdb, err := kvdbmysql.OpenMySQLKVDB(fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/goworld", testpwd))
 	if err != nil {
 		f.Fatal(err)
 	}

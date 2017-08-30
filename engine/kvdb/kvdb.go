@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbmysql"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/opmon"
@@ -71,6 +72,12 @@ func assureKVDBEngineReady() (err error) {
 			}
 		}
 		kvdbEngine, err = kvdbredis.OpenRedisKVDB(kvdbCfg.Url, dbindex)
+	} else if kvdbCfg.Type == "sql" {
+		if kvdbCfg.Driver == "mysql" {
+			kvdbEngine, err = kvdbmysql.OpenMySQLKVDB(kvdbCfg.Url)
+		} else {
+			gwlog.Fatalf("KVDB mysql driver %s is unknown", kvdbCfg.Driver)
+		}
 	} else {
 		gwlog.Fatalf("KVDB type %s is not implemented", kvdbCfg.Type)
 	}

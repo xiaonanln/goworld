@@ -100,6 +100,7 @@ type KVDBConfig struct {
 	Url        string // MongoDB
 	DB         string // MongoDB
 	Collection string // MongoDB
+	Driver     string // SQL Driver: e.x. mysql
 
 }
 
@@ -411,6 +412,8 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 			config.DB = key.MustString(config.DB)
 		} else if name == "collection" {
 			config.Collection = key.MustString(config.Collection)
+		} else if name == "driver" {
+			config.Driver = key.MustString(config.Driver)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -442,6 +445,15 @@ func validateKVDBConfig(config *KVDBConfig) {
 		_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
 		if err != nil {
 			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
+		}
+	} else if config.Type == "sql" {
+		if config.Driver == "" {
+			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
+			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+		}
+		if config.Url == "" {
+			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
+			gwlog.Panicf("invalid %s KVDB config above", config.Type)
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
