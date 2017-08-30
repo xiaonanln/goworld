@@ -3,7 +3,12 @@ language: go
 go:
   - 1.8.x
 
+
+env:
+  - TRAVIS=1
+
 services:
+  - mysql
   - mongodb
   - redis-server
 
@@ -15,6 +20,8 @@ before_install:
   - mkdir /tmp/glide
   - tar --directory=/tmp/glide -xvf /tmp/glide.tar.gz
   - export PATH=$PATH:/tmp/glide/${GLIDE_OS_ARCH}
+
+  - mysql -e 'CREATE DATABASE goworld;'
 
 install:
   - pip install psutil

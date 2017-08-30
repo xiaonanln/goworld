@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbsql"
@@ -214,7 +216,11 @@ func openTestRedisKVDB(f _Fataler) KVDBEngine {
 }
 
 func openTestSQLKVDB(f _Fataler) KVDBEngine {
-	kvdb, err := kvdbsql.OpenSQLKVDB("mysql", "root:testmysql@tcp(127.0.0.1:3306)/goworld")
+	testpwd := "testmysql"
+	if os.Getenv("TRAVIS") != "" {
+		testpwd = ""
+	}
+	kvdb, err := kvdbsql.OpenSQLKVDB("mysql", fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/goworld", testpwd))
 	if err != nil {
 		f.Fatal(err)
 	}
