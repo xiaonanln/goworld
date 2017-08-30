@@ -200,7 +200,7 @@ func handleGetReq(getReq *getReq) {
 		})
 	}
 
-	if err != nil && kvdbEngine.IsEOF(err) {
+	if err != nil && kvdbEngine.IsConnectionError(err) {
 		kvdbEngine.Close()
 		kvdbEngine = nil
 	}
@@ -214,7 +214,7 @@ func handlePutReq(putReq *putReq) {
 		})
 	}
 
-	if err != nil && kvdbEngine.IsEOF(err) {
+	if err != nil && kvdbEngine.IsConnectionError(err) {
 		kvdbEngine.Close()
 		kvdbEngine = nil
 	}
@@ -234,7 +234,7 @@ func handleGetOrPutReq(getOrPutReq *getOrPutReq) {
 		})
 	}
 
-	if err != nil && kvdbEngine.IsEOF(err) {
+	if err != nil && kvdbEngine.IsConnectionError(err) {
 		kvdbEngine.Close()
 		kvdbEngine = nil
 	}

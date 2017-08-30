@@ -95,6 +95,6 @@ func (kvdb *mongoKVDB) Close() {
 	kvdb.s.Close()
 }
 
-func (kvdb *mongoKVDB) IsEOF(err error) bool {
+func (kvdb *mongoKVDB) IsConnectionError(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

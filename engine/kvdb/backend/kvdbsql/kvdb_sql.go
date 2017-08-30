@@ -92,6 +92,6 @@ func (sqlkvdb *sqlKVDB) Close() {
 		gwlog.Errorf("%s: close error: %s", sqlkvdb.String(), err)
 	}
 }
-func (sqlkvdb *sqlKVDB) IsEOF(err error) bool {
-	return err == io.EOF
+func (sqlkvdb *sqlKVDB) IsConnectionError(err error) bool {
+	return true
 }

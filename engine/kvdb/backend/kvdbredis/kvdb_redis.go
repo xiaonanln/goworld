@@ -140,6 +140,6 @@ func (db *redisKVDB) Close() {
 	db.c.Close()
 }
 
-func (db *redisKVDB) IsEOF(err error) bool {
+func (db *redisKVDB) IsConnectionError(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

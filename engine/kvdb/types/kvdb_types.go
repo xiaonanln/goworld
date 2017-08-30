@@ -6,7 +6,7 @@ type KVDBEngine interface {
 	Put(key string, val string) (err error)
 	Find(beginKey string, endKey string) (Iterator, error)
 	Close()
-	IsEOF(err error) bool
+	IsConnectionError(err error) bool
 }
 
 // Iterator is the interface for iterators for KVDB
