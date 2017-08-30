@@ -83,12 +83,12 @@ func (it *mongoKVIterator) Next() (kvdbtypes.KVItem, error) {
 	return kvdbtypes.KVItem{}, io.EOF
 }
 
-func (kvdb *mongoKVDB) Find(beginKey string, endKey string) kvdbtypes.Iterator {
+func (kvdb *mongoKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
 	q := kvdb.c.Find(bson.M{"_id": bson.M{"$gte": beginKey, "$lt": endKey}})
 	it := q.Iter()
 	return &mongoKVIterator{
 		it: it,
-	}
+	}, nil
 }
 
 func (kvdb *mongoKVDB) Close() {

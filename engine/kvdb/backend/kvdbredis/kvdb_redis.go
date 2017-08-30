@@ -123,7 +123,7 @@ func (it *redisKVDBIterator) Next() (kvdbtypes.KVItem, error) {
 	return kvdbtypes.KVItem{key, val}, nil
 }
 
-func (db *redisKVDB) Find(beginKey string, endKey string) kvdbtypes.Iterator {
+func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
 	keys := []string{} // retrive all keys in the range, ordered
 	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it btree.Item) bool {
 		keys = append(keys, it.(keyTreeItem).key)
@@ -133,7 +133,7 @@ func (db *redisKVDB) Find(beginKey string, endKey string) kvdbtypes.Iterator {
 	return &redisKVDBIterator{
 		db:       db,
 		leftKeys: keys,
-	}
+	}, nil
 }
 
 func (db *redisKVDB) Close() {

@@ -4,7 +4,7 @@ package kvdbtypes
 type KVDBEngine interface {
 	Get(key string) (val string, err error)
 	Put(key string, val string) (err error)
-	Find(beginKey string, endKey string) Iterator
+	Find(beginKey string, endKey string) (Iterator, error)
 	Close()
 	IsEOF(err error) bool
 }

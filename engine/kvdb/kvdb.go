@@ -241,7 +241,16 @@ func handleGetOrPutReq(getOrPutReq *getOrPutReq) {
 }
 
 func handleGetRangeReq(getRangeReq *getRangeReq) {
-	it := kvdbEngine.Find(getRangeReq.beginKey, getRangeReq.endKey)
+	it, err := kvdbEngine.Find(getRangeReq.beginKey, getRangeReq.endKey)
+	if err != nil {
+		if getRangeReq.callback != nil {
+			post.Post(func() {
+				getRangeReq.callback(nil, err)
+			})
+		}
+		return
+	}
+
 	var items []kvdbtypes.KVItem
 	for {
 		item, err := it.Next()

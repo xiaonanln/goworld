@@ -10,6 +10,7 @@ import (
 
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
+	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbsql"
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
@@ -19,6 +20,10 @@ func TestMongoBackendSet(t *testing.T) {
 
 func TestRedisBackendSet(t *testing.T) {
 	testKVDBBackendSet(t, openTestRedisKVDB(t))
+}
+
+func TestSQLBackendSet(t *testing.T) {
+	testKVDBBackendSet(t, openTestSQLKVDB(t))
 }
 
 func testKVDBBackendSet(t *testing.T, kvdb KVDBEngine) {
@@ -55,6 +60,10 @@ func TestRedisBackendFind(t *testing.T) {
 	testBackendFind(t, openTestRedisKVDB(t))
 }
 
+func TestSQLBackendFind(t *testing.T) {
+	testBackendFind(t, openTestSQLKVDB(t))
+}
+
 func testBackendFind(t *testing.T, kvdb KVDBEngine) {
 	beginKey := strconv.Itoa(1000 + rand.Intn(2000-1000))
 	if len(beginKey) != 4 {
@@ -69,7 +78,12 @@ func testBackendFind(t *testing.T, kvdb KVDBEngine) {
 	kvdb.Put(beginKey, beginKey)
 	kvdb.Put(endKey, endKey)
 
-	it := kvdb.Find(beginKey, endKey)
+	it, err := kvdb.Find(beginKey, endKey)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	oldKey := ""
 	beginKeyFound, endKeyFound := false, false
 	//println("testBackendFind", beginKey, endKey)
@@ -114,6 +128,10 @@ func BenchmarkRedisBackendGetSet(b *testing.B) {
 	benchmarkBackendGetSet(b, openTestRedisKVDB(b))
 }
 
+func BenchmarkSQLBackendGetSet(b *testing.B) {
+	benchmarkBackendGetSet(b, openTestSQLKVDB(b))
+}
+
 func benchmarkBackendGetSet(b *testing.B, kvdb KVDBEngine) {
 	key := "testkey"
 
@@ -135,8 +153,12 @@ func BenchmarkMongoBackendFind(b *testing.B) {
 	benchmarkBackendFind(b, openTestMongoKVDB(b))
 }
 
-func BenchmarkRedisBackend_Find(b *testing.B) {
+func BenchmarkRedisBackendFind(b *testing.B) {
 	benchmarkBackendFind(b, openTestRedisKVDB(b))
+}
+
+func BenchmarkSQLBackendFind(b *testing.B) {
+	benchmarkBackendFind(b, openTestSQLKVDB(b))
 }
 
 func benchmarkBackendFind(b *testing.B, kvdb KVDBEngine) {
@@ -152,7 +174,12 @@ func benchmarkBackendFind(b *testing.B, kvdb KVDBEngine) {
 	beginKey, endKey := keys[0], keys[len(keys)-1]
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		it := kvdb.Find(beginKey, endKey)
+		it, err := kvdb.Find(beginKey, endKey)
+		if err != nil {
+			b.Error(err)
+			continue
+		}
+
 		for {
 			_, err := it.Next()
 			if err == io.EOF {
@@ -180,6 +207,14 @@ func openTestMongoKVDB(f _Fataler) KVDBEngine {
 
 func openTestRedisKVDB(f _Fataler) KVDBEngine {
 	kvdb, err := kvdbredis.OpenRedisKVDB("redis://127.0.0.1:6379", 0)
+	if err != nil {
+		f.Fatal(err)
+	}
+	return kvdb
+}
+
+func openTestSQLKVDB(f _Fataler) KVDBEngine {
+	kvdb, err := kvdbsql.OpenSQLKVDB("mysql", "root:testmysql@tcp(127.0.0.1:3306)/goworld")
 	if err != nil {
 		f.Fatal(err)
 	}
