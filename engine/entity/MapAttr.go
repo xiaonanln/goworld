@@ -316,8 +316,8 @@ func (a *MapAttr) clearOwner() {
 }
 
 func (a *MapAttr) setParent(owner *Entity, parent interface{}, pkey interface{}, flag attrFlag) {
-	a.owner = owner
 	a.parent = parent
+	a.pkey = pkey
 	a.setOwner(owner, flag)
 }
 
