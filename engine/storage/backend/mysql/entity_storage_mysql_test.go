@@ -47,6 +47,22 @@ func TestMySQLEntityStorage(t *testing.T) {
 		t.Errorf("read wrong data: %v", verifyData)
 	}
 
+	exists, err := es.Exists("Avatar", entityID)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exists {
+		t.Fatalf("should exist")
+	}
+
+	exists, err = es.Exists("Avatar", common.GenEntityID())
+	if err != nil {
+		t.Error(err)
+	}
+	if exists {
+		t.Fatalf("should not exist")
+	}
+
 	avatarIDs, err := es.List("Avatar")
 	if err != nil {
 		t.Error(err)

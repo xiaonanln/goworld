@@ -100,9 +100,13 @@ func (es *mysqlEntityStorage) Write(typeName string, entityID common.EntityID, d
 }
 
 func (es *mysqlEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
+	if err := es.createTableForEntityTypeIfNotExists(typeName); err != nil {
+		return nil, err
+	}
+
 	var err error
 
-	row := es.db.QueryRow("SELECT `data` FROM `?` WHERE `id` = ?", typeName, string(entityID))
+	row := es.db.QueryRow("SELECT `data` FROM `"+typeName+"` WHERE `id` = ?", string(entityID))
 	var b []byte
 	err = row.Scan(&b)
 	if err != nil {
@@ -118,7 +122,20 @@ func (es *mysqlEntityStorage) Read(typeName string, entityID common.EntityID) (i
 }
 
 func (es *mysqlEntityStorage) Exists(typeName string, entityID common.EntityID) (bool, error) {
-	return false, nil
+	if err := es.createTableForEntityTypeIfNotExists(typeName); err != nil {
+		return false, err
+	}
+
+	row := es.db.QueryRow("SELECT 1 FROM `"+typeName+"` WHERE `id` = ?", string(entityID))
+	var dummy int
+	err := row.Scan(&dummy)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (es *mysqlEntityStorage) Close() {
