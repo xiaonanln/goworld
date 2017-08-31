@@ -3,13 +3,19 @@ package entitystoragemysql
 import (
 	"testing"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/typeconv"
 )
 
 func TestMySQLEntityStorage(t *testing.T) {
-	es, err := OpenMySQL("root:testmysql@tcp(127.0.0.1:3306)/goworld")
+	pwd := "testmysql"
+	if os.Getenv("TRAVIS") != "" {
+		pwd = ""
+	}
+	es, err := OpenMySQL("root:" + pwd + "@tcp(127.0.0.1:3306)/goworld")
 	if err != nil {
 		t.Error(err)
 	}
