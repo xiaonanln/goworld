@@ -1,7 +1,7 @@
-.PHONY: dispatcher test_game test_client gate chatroom_demo
+.PHONY: dispatcher test_game test_client gate chatroom_demo unity_demo
 .PHONY: runtestserver killtestserver test covertest install-deps
 
-all: dispatcher test_game test_client gate chatroom_demo
+all: dispatcher test_game test_client gate chatroom_demo unity_demo
 
 dispatcher:
 	cd components/dispatcher && go build
@@ -17,6 +17,9 @@ test_client:
 
 chatroom_demo:
 	cd examples/chatroom_demo && go build
+
+unity_demo:
+	cd examples/unity_demo && go build
 
 runtestserver: dispatcher gate test_game
 	components/dispatcher/dispatcher &
