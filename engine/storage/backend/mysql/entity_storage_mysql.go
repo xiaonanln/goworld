@@ -62,29 +62,59 @@ func packData(data interface{}) (b []byte, err error) {
 }
 
 func (es *mysqlEntityStorage) List(typeName string) ([]common.EntityID, error) {
-	es.createTableForEntityTypeIfNotExists(typeName)
+	if err := es.createTableForEntityTypeIfNotExists(typeName); err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	rows, err := es.db.Query(fmt.Sprintf("SELECT `id` FROM `%s`", typeName))
+	if err != nil {
+		return nil, err
+	}
+
+	eids := []common.EntityID{}
+	for rows.Next() {
+		var id string
+		if err = rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		eids = append(eids, common.EntityID(id))
+	}
+
+	return eids, nil
 }
 
 func (es *mysqlEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
-	es.createTableForEntityTypeIfNotExists(typeName)
-
-	_, err := packData(data)
+	err := es.createTableForEntityTypeIfNotExists(typeName)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	b, err := packData(data)
+	if err != nil {
+		return err
+	}
+
+	_, err = es.db.Exec(fmt.Sprintf("INSERT INTO `%s`(`id`, `data`) VALUES(?, ?) ON DUPLICATE KEY UPDATE `data` = ?", typeName), string(entityID), b, b)
+	//gwlog.Infof("INSERT ...: %v", err)
+	return err
 }
 
 func (es *mysqlEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
-	return nil, nil
-	//var err error
-	//var data map[string]interface{}
-	//if err = dataPacker.UnpackMsg(b, &data); err != nil {
-	//	return nil, err
-	//}
-	//return data, nil
+	var err error
+
+	row := es.db.QueryRow("SELECT `data` FROM `?` WHERE `id` = ?", typeName, string(entityID))
+	var b []byte
+	err = row.Scan(&b)
+	if err != nil {
+		return nil, err
+	}
+
+	var data map[string]interface{}
+	if err = dataPacker.UnpackMsg(b, &data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (es *mysqlEntityStorage) Exists(typeName string, entityID common.EntityID) (bool, error) {
