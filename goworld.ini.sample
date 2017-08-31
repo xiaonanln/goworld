@@ -5,6 +5,9 @@ db=goworld
 ;type=redis
 ;url=redis://127.0.0.1:6379/0/
 ;db=0
+;type=sql
+;driver=mysql
+;url=root:testmysql@tcp(127.0.0.1:3306)/goworld
 
 [kvdb]
 type=mongodb
@@ -14,6 +17,10 @@ collection=__kv__
 ;type=redis
 ;url=redis://127.0.0.1:6379/1/
 ;db=1
+;type=sql
+;driver=mysql
+;url=root:testmysql@tcp(127.0.0.1:3306)/goworld
+
 
 [dispatcher]
 ip=127.0.0.1
