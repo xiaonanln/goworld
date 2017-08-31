@@ -1,4 +1,4 @@
-package entitystorageredis
+package entitystoragemysql
 
 import (
 	"testing"

@@ -88,10 +88,11 @@ type GoWorldConfig struct {
 
 // StorageConfig defines fields of storage config
 type StorageConfig struct {
-	Type      string // Type of storage
-	Directory string // Directory of filesystem storage
-	Url       string // Url of MongoDB server
-	DB        string
+	Type      string // Type of storage (filesystem, mongodb, redis, mysql)
+	Directory string // Directory of filesystem storage (filesystem)
+	Url       string // Connection URL (mongodb, redis, mysql)
+	DB        string // Database name (mongodb, redis)
+	Driver    string // SQL Driver name (mysql)
 }
 
 // KVDBConfig defines fields of KVDB config
@@ -376,6 +377,7 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 	config.Directory = "_entity_storage"
 	config.DB = _DEFAULT_STORAGE_DB
 	config.Url = ""
+	config.Driver = ""
 
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
@@ -387,6 +389,8 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 			config.Url = key.MustString(config.Url)
 		} else if name == "db" {
 			config.DB = key.MustString(config.DB)
+		} else if name == "driver" {
+			config.Driver = key.MustString(config.Driver)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -492,6 +496,14 @@ func validateStorageConfig(config *StorageConfig) {
 		if _, err := strconv.Atoi(config.DB); err != nil {
 			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
 		}
+	} else if config.Type == "sql" {
+		if config.Driver == "" {
+			gwlog.Panicf("sql driver is not set")
+		}
+		if config.Url == "" {
+			gwlog.Panicf("db url is not set")
+		}
+
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
 		if consts.DEBUG_MODE {

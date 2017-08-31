@@ -16,6 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/engine/storage/backend/mongodb"
+	"github.com/xiaonanln/goworld/engine/storage/backend/mysql"
 	"github.com/xiaonanln/goworld/engine/storage/backend/redis"
 	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
@@ -151,6 +152,12 @@ func assureStorageEngineReady() (err error) {
 			}
 		}
 		storageEngine, err = entitystorageredis.OpenRedis(cfg.Url, dbindex)
+	} else if cfg.Type == "sql" {
+		if cfg.Driver == "mysql" {
+			storageEngine, err = entitystoragemysql.OpenMySQL(cfg.Url)
+		} else {
+			gwlog.Panicf("unknown sql driver: %s", cfg.Driver)
+		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
 		if consts.DEBUG_MODE {
