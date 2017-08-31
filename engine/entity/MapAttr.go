@@ -69,15 +69,15 @@ func (a *MapAttr) SetDefault(key string, val interface{}) {
 }
 
 func (a *MapAttr) sendAttrChangeToClients(key string, val interface{}) {
-	if owner := a.owner; owner != nil {
+	if a.owner != nil {
 		// send the change to owner's client
-		owner.sendMapAttrChangeToClients(a, key, val)
+		a.owner.sendMapAttrChangeToClients(a, key, val)
 	}
 }
 
 func (a *MapAttr) sendAttrDelToClients(key string) {
-	if owner := a.owner; owner != nil {
-		owner.sendMapAttrDelToClients(a, key)
+	if a.owner != nil {
+		a.owner.sendMapAttrDelToClients(a, key)
 	}
 }
 
