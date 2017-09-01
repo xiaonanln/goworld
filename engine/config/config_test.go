@@ -42,8 +42,8 @@ func TestLoad(t *testing.T) {
 }
 
 func TestReload(t *testing.T) {
-	config := Get()
-	config = Reload()
+	Get()
+	config := Reload()
 	gwlog.Debugf("goworld config: \n%s", config)
 }
 

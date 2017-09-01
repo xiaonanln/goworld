@@ -380,8 +380,6 @@ func (service *DispatcherService) handleLoadEntityAnywhere(dcp *dispatcherClient
 		entityDispatchInfo.gameid = dcp.gameid
 		entityDispatchInfo.blockRPC(consts.DISPATCHER_LOAD_TIMEOUT)
 		dcp.SendPacket(pkt)
-	} else {
-		// entity already loaded
 	}
 }
 
