@@ -1,5 +1,7 @@
 # GoWorld [![GoDoc](https://godoc.org/github.com/xiaonanln/goworld?status.png)](https://godoc.org/github.com/xiaonanln/goworld) [![Build Status](https://api.travis-ci.org/xiaonanln/goworld.svg?branch=master)](https://travis-ci.org/xiaonanln/goworld) [![Go Report Card](https://goreportcard.com/badge/github.com/xiaonanln/goworld)](https://goreportcard.com/report/github.com/xiaonanln/goworld) [![codecov](https://codecov.io/gh/xiaonanln/goworld/branch/master/graph/badge.svg)](https://codecov.io/gh/xiaonanln/goworld) [![ApacheLicense](https://img.shields.io/badge/license-APACHE%20License-blue.svg)](https://raw.githubusercontent.com/xiaonanln/goworld/master/LICENSE)
 
+[![Join the chat at https://gitter.im/goworldgs/Lobby](https://badges.gitter.im/goworldgs/Lobby.svg)](https://gitter.im/goworldgs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 ---------------------------------------
   * [Features](#features)
