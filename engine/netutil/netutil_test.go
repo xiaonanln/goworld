@@ -9,6 +9,8 @@ import (
 
 	"fmt"
 
+	"os"
+
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -34,13 +36,62 @@ func (ts *testEchoTcpServer) ServeTCPConnection(conn net.Conn) {
 	}
 }
 
-func TestPacketConnection(t *testing.T) {
-	PORT := 14572
+const PORT = 14572
+
+func init() {
 	go func() {
 		ServeTCP(fmt.Sprintf("localhost:%d", PORT), &testEchoTcpServer{})
 	}()
 	time.Sleep(time.Millisecond * 200)
+}
 
+func TestCompressedConnection(t *testing.T) {
+
+	_conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", PORT))
+	if err != nil {
+		t.Errorf("connect error: %s", err)
+	}
+
+	conn := NewCompressedConnection(NetConnection{_conn})
+	s := ""
+	for i := 0; i < 600000; i++ {
+		s = s + "a"
+	}
+
+	SR := 1
+	for {
+		for i := 0; i < SR; i++ {
+			n, err := conn.Write([]byte(s))
+			if err != nil {
+				panic(err)
+			}
+			if n != len(s) {
+				panic("write wrong size")
+			}
+		}
+
+		println("written", SR)
+		conn.Flush()
+
+		recvbuf := make([]byte, len(s))
+		for len(recvbuf) > 0 {
+			var n int
+			var err error
+			if len(recvbuf) > 1000 {
+				n, err = conn.Read(recvbuf[:1000])
+			} else {
+				n, err = conn.Read(recvbuf)
+			}
+
+			recvbuf = recvbuf[n:]
+			fmt.Fprintf(os.Stderr, "Read %d/%d: %v\n", len(s)*SR-len(recvbuf), len(s)*SR, err)
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
+func TestPacketConnection(t *testing.T) {
 	for compressed := 0; compressed <= 1; compressed += 1 {
 
 		_conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", PORT))

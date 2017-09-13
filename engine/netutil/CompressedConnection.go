@@ -19,7 +19,7 @@ func NewCompressedConnection(conn Connection) *CompressedConnection {
 }
 
 func (cc *CompressedConnection) Read(p []byte) (int, error) {
-	cc.compressReader.Reset(cc.Connection)
+	//cc.compressReader.Reset(cc.Connection)
 	return cc.compressReader.Read(p)
 }
 
