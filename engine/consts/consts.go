@@ -9,6 +9,12 @@ const (
 
 // Tunable Options
 const (
+	// For Underlying Networking
+	// BUFFERED_READ_BUFFSIZE is the read buffer size for BufferedReadConnection
+	BUFFERED_READ_BUFFSIZE = 16384
+	// BUFFERED_WRITE_BUFFSIZE is the write buffer size for BufferedWriteConnection
+	BUFFERED_WRITE_BUFFSIZE = 16384
+
 	// For Packets Send & Recv
 	// PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD is the minimal packet payload length that should be compressed
 	PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD = 512

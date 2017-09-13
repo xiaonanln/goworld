@@ -1,6 +1,10 @@
 package netutil
 
-import "bufio"
+import (
+	"bufio"
+
+	"github.com/xiaonanln/goworld/engine/consts"
+)
 
 // BufferedReadConnection provides buffered read to connections
 type BufferedReadConnection struct {
@@ -13,10 +17,11 @@ func NewBufferedReadConnection(conn Connection) *BufferedReadConnection {
 	brc := &BufferedReadConnection{
 		Connection: conn,
 	}
-	brc.bufReader = bufio.NewReaderSize(conn, 8192*2)
+	brc.bufReader = bufio.NewReaderSize(conn, consts.BUFFERED_READ_BUFFSIZE)
 	return brc
 }
 
+// Read
 func (brc *BufferedReadConnection) Read(p []byte) (int, error) {
 	return brc.bufReader.Read(p)
 }
