@@ -34,7 +34,7 @@ func testKVDBBackendSet(t *testing.T, kvdb KVDBEngine) {
 		t.Fatal(err)
 	}
 
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 100; i++ {
 		key := strconv.Itoa(rand.Intn(10000))
 		val := strconv.Itoa(rand.Intn(10000))
 		err = kvdb.Put(key, val)
