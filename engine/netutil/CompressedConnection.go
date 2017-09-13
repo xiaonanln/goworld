@@ -18,7 +18,10 @@ func NewCompressedConnection(conn Connection) *CompressedConnection {
 	return cc
 }
 
-func (cc *CompressedConnection) Write(p []byte) (int, error) {
+func (cc *CompressedConnection) Read(p []byte) (int, error) {
+	return cc.compressReader.Read(p)
+}
 
+func (cc *CompressedConnection) Write(p []byte) (int, error) {
 	return cc.compressWriter.Write(p)
 }

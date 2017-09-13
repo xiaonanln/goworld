@@ -1,13 +1,16 @@
 package compresstest
 
 import (
-	"compress/flate"
 	"io"
 	"math/rand"
 	"os"
 	"testing"
 
 	"time"
+
+	"compress/flate"
+
+	"github.com/golang/snappy"
 )
 
 type randomFailWriter struct {
@@ -34,9 +37,13 @@ func TestFlateWriterSize(t *testing.T) {
 		panic(err)
 	}
 
-	for i := 0; i < 10000; i++ {
-		flate.NewReader(f)
-		flate.NewWriter(f, flate.BestSpeed)
+	all := []interface{}{}
+	for i := 0; i < 5000; i++ {
+		all = append(all, snappy.NewReader(f))
+		all = append(all, snappy.NewBufferedWriter(f))
+		all = append(all, flate.NewReader(f))
+		w, _ := flate.NewWriter(f, flate.BestSpeed)
+		all = append(all, w)
 	}
 	println("created")
 	time.Sleep(time.Second * 10)

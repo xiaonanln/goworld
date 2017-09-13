@@ -34,7 +34,7 @@ type ClientProxy struct {
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
-	conn = netutil.NewBufferedReadConnection(conn)
+	conn = netutil.NewCompressedConnection(netutil.NewBufferedReadConnection(conn))
 
 	gwc := proto.NewGoWorldConnection(conn, cfg.CompressConnection)
 	return &ClientProxy{
