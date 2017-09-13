@@ -29,6 +29,9 @@ func (cc *CompressedConnection) Write(p []byte) (int, error) {
 
 func (cc *CompressedConnection) Flush() error {
 	err := cc.compressWriter.Flush()
-	cc.compressWriter.Reset(cc.Connection)
+	if err == nil {
+		err = cc.Connection.Flush()
+	}
+	//cc.compressWriter.Reset(cc.Connection)
 	return err
 }
