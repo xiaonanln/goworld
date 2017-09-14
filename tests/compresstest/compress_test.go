@@ -10,7 +10,7 @@ import (
 
 	"compress/flate"
 
-	"github.com/golang/snappy"
+	"github.com/xiaonanln/goworld/engine/compress/gwsnappy"
 )
 
 type randomFailWriter struct {
@@ -39,8 +39,8 @@ func TestFlateWriterSize(t *testing.T) {
 
 	all := []interface{}{}
 	for i := 0; i < 5000; i++ {
-		all = append(all, snappy.NewReader(f))
-		all = append(all, snappy.NewBufferedWriter(f))
+		all = append(all, gwsnappy.NewReader(f))
+		all = append(all, gwsnappy.NewBufferedWriter(f))
 		all = append(all, flate.NewReader(f))
 		w, _ := flate.NewWriter(f, flate.BestSpeed)
 		all = append(all, w)
