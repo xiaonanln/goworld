@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -37,6 +39,7 @@ func main() {
 		config.SetConfigFile(configFile)
 	}
 	binutil.SetupGWLog("test_client", "info", "test_client.log", true)
+	binutil.SetupHTTPServer("localhost", 18888, nil)
 	var wait sync.WaitGroup
 	wait.Add(numClients)
 	for i := 0; i < numClients; i++ {
