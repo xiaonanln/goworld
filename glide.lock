@@ -1,14 +1,19 @@
 hash: 4ceebd893bf3560f8cf0c6be350b695e7d387fef8daf659587f3af16fbb1e2e4
-updated: 2017-09-14T16:37:38.363009136+08:00
+updated: 2017-09-14T17:04:03.66064991+08:00
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
   subpackages:
+  - internal
   - redis
 - name: github.com/go-ini/ini
   version: 20b96f641a5ea98f2f8619ff4f3e061cff4833bd
 - name: github.com/go-sql-driver/mysql
   version: a0583e0143b1624142adab07e0e97fe106d99561
+- name: github.com/golang/protobuf
+  version: 17ce1425424ab154092bbb43af630bd647f3bb0d
+  subpackages:
+  - proto
 - name: github.com/google/btree
   version: 316fb6d3f031ae8f4d457c6c5186b9e3ded70435
 - name: github.com/natefinch/lumberjack
@@ -30,9 +35,40 @@ imports:
 - name: golang.org/x/net
   version: 859d1a86bb617c0c20d154590c3c5d3fcb670b07
   subpackages:
+  - context
   - websocket
+- name: golang.org/x/sys
+  version: 062cd7e4e68206d8bab9b18396626e855c992658
+  subpackages:
+  - unix
+- name: google.golang.org/appengine
+  version: d9a072cfa7b9736e44311ef77b3e09d804bfa599
+  subpackages:
+  - datastore
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+- name: gopkg.in/eapache/queue.v1
+  version: ded5959c0d4e360646dc9e9908cff48666781367
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
+- name: gopkg.in/vmihailenco/msgpack.v2
+  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
+  subpackages:
+  - codes
 testImports:
 - name: github.com/bmizerany/assert
-  version: ""
+  version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
+- name: github.com/kr/pretty
+  version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
+- name: github.com/kr/text
+  version: 7cafcd837844e784b526369c9bce262804aebc60
