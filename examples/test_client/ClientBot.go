@@ -83,7 +83,7 @@ func (bot *ClientBot) run() {
 	gwlog.Infof("connected: %s", netconn.RemoteAddr())
 
 	var conn netutil.Connection = netutil.NetConnection{netconn}
-	conn = netutil.NewCompressedConnection(netutil.NewBufferedWriteConnection(netutil.NewBufferedReadConnection(conn)))
+	conn = netutil.NewCompressedConnection(netutil.NewBufferedConnection(conn))
 
 	bot.conn = proto.NewGoWorldConnection(conn, cfg.CompressConnection)
 	defer bot.conn.Close()
@@ -101,7 +101,7 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 	}
 
 	conn, err := netutil.ConnectTCP(serverAddr, cfg.Port)
-	if err != nil {
+	if err == nil {
 		conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
 		conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
 	}

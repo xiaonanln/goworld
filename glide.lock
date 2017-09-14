@@ -1,5 +1,5 @@
-hash: 92d660622189f275bde933a6047ab7144d8c7c43dcfcc9801d55cf93ab9da3bd
-updated: 2017-09-13T19:52:50.649723872+08:00
+hash: d44d26e80ac3934d757d4c754221ac059e44dd8f4c5a130790eb61b23213dde0
+updated: 2017-09-14T14:00:12.136161+08:00
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -15,7 +15,8 @@ imports:
   subpackages:
   - proto
 - name: github.com/golang/snappy
-  version: 553a641470496b2327abcac10b36396bd98e45c9
+  version: 90d29198b03171866c13ae26b849f128477bfbdd
+  repo: https://github.com/xiaonanln/snappy.git
 - name: github.com/google/btree
   version: 316fb6d3f031ae8f4d457c6c5186b9e3ded70435
 - name: github.com/natefinch/lumberjack

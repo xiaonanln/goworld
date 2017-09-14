@@ -7,6 +7,7 @@ import (
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 )
@@ -421,6 +422,9 @@ func (gwc *GoWorldConnection) Recv(msgtype *MsgType) (*netutil.Packet, error) {
 	}
 
 	*msgtype = MsgType(pkt.ReadUint16())
+	if consts.DEBUG_PACKETS {
+		gwlog.Infof("%s: Recv msgtype=%v, payload size=%d", gwc, *msgtype, pkt.GetPayloadLen())
+	}
 	return pkt, nil
 }
 

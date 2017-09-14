@@ -26,5 +26,9 @@ func (brc *BufferedWriteConnection) Write(p []byte) (int, error) {
 }
 
 func (brc *BufferedWriteConnection) Flush() error {
-	return brc.bufWriter.Flush()
+	err := brc.bufWriter.Flush()
+	if err != nil {
+		return err
+	}
+	return brc.Connection.Flush()
 }

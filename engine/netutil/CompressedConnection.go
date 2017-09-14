@@ -1,6 +1,9 @@
 package netutil
 
-import "github.com/golang/snappy"
+import (
+	"github.com/golang/snappy"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+)
 
 type CompressedConnection struct {
 	Connection
@@ -20,11 +23,19 @@ func NewCompressedConnection(conn Connection) *CompressedConnection {
 
 func (cc *CompressedConnection) Read(p []byte) (int, error) {
 	//cc.compressReader.Reset(cc.Connection)
-	return cc.compressReader.Read(p)
+	n, err := cc.compressReader.Read(p)
+	if err != nil {
+		cc.compressReader.ClearError()
+	}
+
+	gwlog.Debugf("CompressedConnection: Read %d %v", n, err)
+	return n, err
 }
 
 func (cc *CompressedConnection) Write(p []byte) (int, error) {
-	return cc.compressWriter.Write(p)
+	n, err := cc.compressWriter.Write(p)
+	gwlog.Debugf("CompressedConnection: Write %d/%d bytes, err=%v", len(p), n, err)
+	return n, err
 }
 
 func (cc *CompressedConnection) Flush() error {
