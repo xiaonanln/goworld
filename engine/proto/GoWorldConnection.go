@@ -403,7 +403,7 @@ func (gwc *GoWorldConnection) Flush(reason string) error {
 // SetAutoFlush starts a goroutine to flush connection writes at some specified interval
 func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
 	go func() {
-		defer gwlog.Debugf("%s: auto flush routine quited", gwc)
+		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 		for !gwc.IsClosed() {
 			time.Sleep(interval)
 			err := gwc.Flush("AutoFlush")

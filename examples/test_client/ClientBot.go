@@ -83,10 +83,13 @@ func (bot *ClientBot) run() {
 	gwlog.Infof("connected: %s", netconn.RemoteAddr())
 
 	var conn netutil.Connection = netutil.NetConnection{netconn}
-	conn = netutil.NewCompressedConnection(netutil.NewBufferedConnection(conn))
-	//conn = netutil.NewBufferedConnection(conn)
+	if cfg.CompressConnection {
+		conn = netutil.NewCompressedConnection(netutil.NewBufferedConnection(conn))
+	} else {
+		conn = netutil.NewBufferedConnection(conn)
+	}
 
-	bot.conn = proto.NewGoWorldConnection(conn, cfg.CompressConnection)
+	bot.conn = proto.NewGoWorldConnection(conn, false)
 	defer bot.conn.Close()
 
 	bot.loop()

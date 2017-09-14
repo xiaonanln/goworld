@@ -134,7 +134,7 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 
 	// flush should only be called in one goroutine
 	op := opmon.StartOperation("FlushPackets-" + reason)
-	defer op.Finish(time.Millisecond * 100)
+	defer op.Finish(time.Millisecond * 300)
 
 	var cw *flate.Writer
 

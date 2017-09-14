@@ -64,6 +64,9 @@ const (
 	// For Operation Monitor
 	// OPMON_DUMP_INTERVAL is the interval to print opmon infos to output
 	OPMON_DUMP_INTERVAL = 0
+
+	// For Snappy Compress
+	SNAPPY_CHECKSUM_ENABLED = true
 )
 
 // Debug Options

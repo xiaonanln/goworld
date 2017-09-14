@@ -8,6 +8,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+
+	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 // Encode returns the encoded form of src. The returned slice may be a sub-
@@ -222,8 +225,12 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 		} else {
 			uncompressed, p = p, nil
 		}
-		//checksum := crc(uncompressed)
-		checksum := uint32(0)
+		var checksum uint32
+		if consts.SNAPPY_CHECKSUM_ENABLED {
+			checksum = crc(uncompressed)
+		} else {
+			checksum = 0
+		}
 
 		// Compress the buffer, discarding the result if the improvement
 		// isn't at least 12.5%.
@@ -258,12 +265,20 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 		w.obuf[len(magicChunk)+6] = uint8(checksum >> 16)
 		w.obuf[len(magicChunk)+7] = uint8(checksum >> 24)
 
-		if _, err := w.w.Write(w.obuf[obufStart:obufEnd]); err != nil {
+		n, err := w.w.Write(w.obuf[obufStart:obufEnd])
+		if n != obufEnd-obufStart {
+			gwlog.Fatalf("should send %d bytes, but only send %d bytes, error=%v", obufEnd-obufStart, n, err)
+		}
+		if err != nil {
 			w.err = err
 			return nRet, err
 		}
 		if chunkType == chunkTypeUncompressedData {
-			if _, err := w.w.Write(uncompressed); err != nil {
+			n, err := w.w.Write(uncompressed)
+			if n != len(uncompressed) {
+				gwlog.Fatalf("should send %d bytes, but only send %d bytes, error=%v", len(uncompressed), n, err)
+			}
+			if err != nil {
 				w.err = err
 				return nRet, err
 			}

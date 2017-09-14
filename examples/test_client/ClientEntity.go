@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"time"
 
+	"os"
+
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -118,6 +120,10 @@ func (e *clientEntity) AddCallback(d time.Duration, callback timer.CallbackFunc)
 
 		callback()
 	})
+	if e == nil {
+		gwlog.TraceError("entity is nil: %e", e)
+		os.Exit(2)
+	}
 	e.timers[t] = true
 	return t
 }

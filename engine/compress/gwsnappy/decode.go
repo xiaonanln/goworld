@@ -13,8 +13,8 @@ import (
 
 	"time"
 
+	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/netutil"
 )
 
 var (
@@ -115,6 +115,10 @@ func (r *Reader) ClearError() {
 	r.err = nil
 }
 
+type readDeadlineSetter interface {
+	SetReadDeadline(time.Time) error
+}
+
 func (r *Reader) readFull(p []byte, allowEOF bool) (ok bool) {
 	var n int
 	if n, r.err = io.ReadFull(r.r, p); r.err != nil {
@@ -124,7 +128,7 @@ func (r *Reader) readFull(p []byte, allowEOF bool) (ok bool) {
 				// temporary / timeout, keep trying until full
 				p = p[n:]
 				for len(p) > 0 {
-					r.r.(netutil.Connection).SetReadDeadline(time.Now().Add(10 * time.Millisecond))
+					r.r.(readDeadlineSetter).SetReadDeadline(time.Now().Add(10 * time.Millisecond))
 					n, r.err = io.ReadFull(r.r, p)
 					p = p[n:]
 					if neterr, ok := r.err.(net.Error); ok && (neterr.Temporary() || neterr.Timeout()) {
@@ -188,7 +192,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 			if !r.readFull(buf, false) {
 				return 0, r.err
 			}
-			//checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
+			checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
 			buf = buf[checksumSize:]
 
 			n, err := DecodedLen(buf)
@@ -204,10 +208,12 @@ func (r *Reader) Read(p []byte) (int, error) {
 				r.err = err
 				return 0, r.err
 			}
-			//if crc(r.decoded[:n]) != checksum {
-			//	r.err = ErrCorrupt
-			//	return 0, r.err
-			//}
+			if consts.SNAPPY_CHECKSUM_ENABLED {
+				if crc(r.decoded[:n]) != checksum {
+					r.err = ErrCorrupt
+					return 0, r.err
+				}
+			}
 			r.i, r.j = 0, n
 			continue
 
@@ -221,7 +227,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 			if !r.readFull(buf, false) {
 				return 0, r.err
 			}
-			//checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
+			checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
 			// Read directly into r.decoded instead of via r.buf.
 			n := chunkLen - checksumSize
 			if n > len(r.decoded) {
@@ -231,10 +237,12 @@ func (r *Reader) Read(p []byte) (int, error) {
 			if !r.readFull(r.decoded[:n], false) {
 				return 0, r.err
 			}
-			//if crc(r.decoded[:n]) != checksum {
-			//	r.err = ErrCorrupt
-			//	return 0, r.err
-			//}
+			if consts.SNAPPY_CHECKSUM_ENABLED {
+				if crc(r.decoded[:n]) != checksum {
+					r.err = ErrCorrupt
+					return 0, r.err
+				}
+			}
 			r.i, r.j = 0, n
 			continue
 

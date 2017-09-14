@@ -39,6 +39,7 @@ func (cc *CompressedConnection) Read(p []byte) (int, error) {
 func (cc *CompressedConnection) Write(p []byte) (int, error) {
 	n, err := cc.compressWriter.Write(p)
 	gwlog.Debugf("CompressedConnection: Write %d/%d bytes, err=%v", len(p), n, err)
+
 	return n, err
 }
 
