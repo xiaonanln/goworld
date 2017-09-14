@@ -11,7 +11,10 @@ import (
 
 	"net"
 
+	"time"
+
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil"
 )
 
 var (
@@ -121,6 +124,7 @@ func (r *Reader) readFull(p []byte, allowEOF bool) (ok bool) {
 				// temporary / timeout, keep trying until full
 				p = p[n:]
 				for len(p) > 0 {
+					r.r.(netutil.Connection).SetReadDeadline(time.Now().Add(10 * time.Millisecond))
 					n, r.err = io.ReadFull(r.r, p)
 					p = p[n:]
 					if neterr, ok := r.err.(net.Error); ok && (neterr.Temporary() || neterr.Timeout()) {
