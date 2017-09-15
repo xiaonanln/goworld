@@ -77,8 +77,12 @@ func testBackendFind(t *testing.T, kvdb KVDBEngine) {
 	if len(endKey) != 4 {
 		t.Fatalf("wrong end key: %s", endKey)
 	}
-	kvdb.Put(beginKey, beginKey)
-	kvdb.Put(endKey, endKey)
+	if err := kvdb.Put(beginKey, beginKey); err != nil {
+		t.Error(err)
+	}
+	if err := kvdb.Put(endKey, endKey); err != nil {
+		t.Error(err)
+	}
 
 	it, err := kvdb.Find(beginKey, endKey)
 	if err != nil {
