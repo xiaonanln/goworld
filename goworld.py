@@ -63,7 +63,7 @@ def main():
 			if not os.path.exists(gamePath):
 				print >>sys.stderr, "! %s is not found, goworld.py build %s first" % (gamePath, gameName)
 				exit(2)
-			
+
 			if cmd == "start":
 				startServer()
 			elif cmd == "restore":
@@ -71,6 +71,8 @@ def main():
 
 		elif cmd == 'stop':
 			stopServer()
+		elif cmd == 'kill':
+			stopServer(kill=True)
 		elif cmd == 'build':
 			buildTargets = cmdArgs
 			if not buildTargets: buildTargets = ['engine']
@@ -86,7 +88,7 @@ def main():
 			print >>sys.stderr, "invalid command: %s" % cmd
 			showUsage()
 			exit(1)
-	
+
 	print >>sys.stderr, '> %s %s OK' % (sys.argv[0], ' '.join(args))
 
 def parseArguments(args):
@@ -116,7 +118,7 @@ def parseArguments(args):
 		else:
 			cmds.append( (cmd, args) )
 
-	return cmds 
+	return cmds
 
 
 def detectCurrentGameId():
@@ -127,24 +129,24 @@ def detectCurrentGameId():
 
 	_, _, gameProcs = visitProcs()
 	if not gameProcs:
-		return 
-	
+		return
+
 	gameExe = None
 	for proc in gameProcs:
 		if gameExe is None: gameExe = proc.exe()
 		elif gameExe != proc.exe():
 			print >>sys.stderr, '! found multiple game processes with different exe: %s & %s' % gameExe, proc.exe()
-			return 
-	
+			return
+
 	if gameExe == '':
 		print >>sys.stderr, '! get process exe failed'
-		return 
-	
+		return
+
 	gameExe = os.path.relpath(gameExe, goworldPath)
 	print >>sys.stderr, '> Found game exe: %s' % gameExe
 	if os.name == 'nt' and gameExe.endswith('.exe'): # strip .exe if necessary
 		gameExe = gameExe[:-4]
-	
+
 	currentGameId = os.path.dirname(gameExe)
 
 def verifyExecutionEnv(cmd):
@@ -197,6 +199,7 @@ def showUsage():
 	goworld.py build engine|<game-name> - build server engine / game
 	goworld.py start <game-name> - start game server
 	goworld.py stop - stop game server
+	goworld.py kill - kill game server processes
 	"""
 
 def build(target):
@@ -238,7 +241,7 @@ def freezeGames():
 	if not gameProcs:
 		print >>sys.stderr, "! game process is not found"
 		exit(2)
-	
+
 	for proc in gameProcs:
 		proc.send_signal(signal.SIGINT)
 
@@ -284,12 +287,12 @@ def restoreGames():
 
 	global nohup
 	nohupArgs = ['nohup'] if nohup else []
-	
+
 	for gameid in gameids:
 		print >> sys.stderr, "Restore game%d ..." % gameid,
 		gameProc = psutil.Popen(nohupArgs+[getGameExe(), "-gid=%d" % gameid, "-log", loglevel, '-restore'])
 		print >> sys.stderr, gameProc.status()
-	
+
 	_showStatus(1, len(gateids), len(gameids))
 
 def startServer():
@@ -318,7 +321,7 @@ def startServer():
 
 	_showStatus(1, len(gateids), len(gameids))
 
-def stopServer():
+def stopServer(kill=False):
 	dispatcherProcs, gateProcs, gameProcs = visitProcs()
 	if not dispatcherProcs and not gateProcs and not gameProcs:
 		_showStatus(1, len(gateids), len(gameids))
@@ -334,7 +337,10 @@ def stopServer():
 	print >>sys.stderr, 'OK'
 
 	for proc in gameProcs:
-		proc.send_signal(signal.SIGTERM)
+		if not kill:
+			proc.send_signal(signal.SIGTERM)
+		else:
+			killProc(proc)
 
 	print >>sys.stderr, "Waiting for game processes to terminate ...",
 	waitProcsToTerminate(isGameProcess)
