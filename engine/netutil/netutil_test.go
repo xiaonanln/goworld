@@ -54,12 +54,12 @@ func TestCompressedConnection(t *testing.T) {
 
 	conn := NewCompressedConnection(NetConnection{_conn})
 	s := ""
-	for i := 0; i < 600000; i++ {
+	for i := 0; i < 1000; i++ {
 		s = s + "a"
 	}
 
 	SR := 1
-	for {
+	for tm := 0; tm < 10; tm++ {
 		for i := 0; i < SR; i++ {
 			n, err := conn.Write([]byte(s))
 			if err != nil {
@@ -86,8 +86,6 @@ func TestCompressedConnection(t *testing.T) {
 			recvbuf = recvbuf[n:]
 			fmt.Fprintf(os.Stderr, "Read %d/%d: %v\n", len(s)*SR-len(recvbuf), len(s)*SR, err)
 		}
-
-		time.Sleep(time.Second)
 	}
 }
 

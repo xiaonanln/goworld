@@ -36,10 +36,10 @@ killtestserver:
 	- killall dispatcher
 
 test:
-	go test `go list ./... | grep -v "/vendor/"`
+	go test -v `go list ./... | grep -v "/vendor/"`
 
 covertest:
-	go test -covermode=count `go list ./... | grep -v "/vendor/"`
+	go test -v -covermode=count `go list ./... | grep -v "/vendor/"`
 
 install-deps:
 	pip install psutil
