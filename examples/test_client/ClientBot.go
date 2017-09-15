@@ -89,7 +89,7 @@ func (bot *ClientBot) run() {
 		conn = netutil.NewBufferedConnection(conn)
 	}
 
-	bot.conn = proto.NewGoWorldConnection(conn, false)
+	bot.conn = proto.NewGoWorldConnection(conn)
 	defer bot.conn.Close()
 
 	bot.loop()
