@@ -27,7 +27,7 @@ func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *dispatc
 	//if consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY > 0 {
 	//	conn = netutil.NewBufferedConnection(conn, consts.DISPATCHER_CLIENT_PROXY_BUFFERED_DELAY)
 	//}
-	gwc := proto.NewGoWorldConnection(netutil.NewBufferedReadConnection(conn))
+	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn))
 
 	dcp := &dispatcherClientProxy{
 		GoWorldConnection: gwc,

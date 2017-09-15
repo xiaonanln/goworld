@@ -50,7 +50,7 @@ type PacketConnection struct {
 	conn               Connection
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
-	sendBuffer         *sendBuffer // each PacketConnection uses 1 sendBuffer for sending packets
+	//sendBuffer         *sendBuffer // each PacketConnection uses 1 sendBuffer for sending packets
 
 	// buffers and infos for receiving a packet
 	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
@@ -63,8 +63,8 @@ type PacketConnection struct {
 // NewPacketConnection creates a packet connection based on network connection
 func NewPacketConnection(conn Connection) *PacketConnection {
 	pc := &PacketConnection{
-		conn:       conn,
-		sendBuffer: newSendBuffer(),
+		conn: conn,
+		//sendBuffer: newSendBuffer(),
 	}
 
 	return pc
@@ -120,39 +120,36 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 		return
 	}
 
-	sendBuffer := pc.sendBuffer // the send buffer
-
-send_packets_loop:
+	//sendBuffer := pc.sendBuffer // the send buffer
 	for _, packet := range packets {
-		packetData := packet.data()
-		if len(packetData) > sendBuffer.FreeSpace() {
-			// can not append data to send buffer, so clear send buffer first
-			if err = sendBuffer.WriteAllTo(pc.conn); err != nil {
-				return err
-			}
-
-			if len(packetData) >= _SEND_BUFFER_SIZE {
-				// packet is too large, impossible to put to send buffer
-				err = WriteAll(pc.conn, packetData)
-				packet.Release()
-
-				if err != nil {
-					return
-				}
-				continue send_packets_loop
-			}
-		}
+		//packetData := packet.data()
+		//if len(packetData) > sendBuffer.FreeSpace() {
+		//	// can not append data to send buffer, so clear send buffer first
+		//	if err = sendBuffer.WriteAllTo(pc.conn); err != nil {
+		//		return err
+		//	}
+		//
+		//	if len(packetData) >= _SEND_BUFFER_SIZE {
+		//		// packet is too large, impossible to put to send buffer
+		//		err = WriteAll(pc.conn, packetData)
+		//		packet.Release()
+		//
+		//		if err != nil {
+		//			return
+		//		}
+		//		continue send_packets_loop
+		//	}
+		//}
 
 		// now we are sure that len(packetData) <= sendBuffer.FreeSize()
-		n, _ := sendBuffer.Write(packetData)
-		if n != len(packetData) {
-			gwlog.Panicf("packet is not fully written")
-		}
+		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
+		if err != nil {
+			break
+		}
 	}
 
 	// now we send all data in the send buffer
-	err = sendBuffer.WriteAllTo(pc.conn)
 	if err == nil {
 		err = pc.conn.Flush()
 	}
