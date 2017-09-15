@@ -98,8 +98,12 @@ func (db *redisKVDB) Get(key string) (val string, err error) {
 
 func (db *redisKVDB) Put(key string, val string) error {
 	_, err := db.c.Do("SET", keyPrefix+key, val)
+	gwlog.Infof("kvdb set key %s to redis: err=%v", key, err)
 	if err != nil {
 		db.keyTree.ReplaceOrInsert(keyTreeItem{key})
+		if !db.keyTree.Has(keyTreeItem{key}) {
+			panic(errors.New("insert key tree fail"))
+		}
 	}
 	return err
 }
