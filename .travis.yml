@@ -6,7 +6,7 @@ go:
 
 env:
   - TRAVIS=1
-  - PYTHONWARNINGS="ignore"
+  - PYTHONWARNINGS=ignore
 
 services:
   - mysql
