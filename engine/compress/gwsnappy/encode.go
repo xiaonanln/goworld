@@ -270,6 +270,7 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 			gwlog.Fatalf("should send %d bytes, but only send %d bytes, error=%v", obufEnd-obufStart, n, err)
 		}
 		if err != nil {
+			gwlog.Fatalf("write error = %v", err)
 			w.err = err
 			return nRet, err
 		}
@@ -279,6 +280,7 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 				gwlog.Fatalf("should send %d bytes, but only send %d bytes, error=%v", len(uncompressed), n, err)
 			}
 			if err != nil {
+				gwlog.Fatalf("write error = %v", err)
 				w.err = err
 				return nRet, err
 			}
