@@ -129,6 +129,8 @@ func (it *redisKVDBIterator) Next() (kvdbtypes.KVItem, error) {
 }
 
 func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
+	gwlog.Infof("found keys from %s to %s: has begin key %v, has end key %v", beginKey, endKey,
+		db.keyTree.Has(keyTreeItem{beginKey}), db.keyTree.Has(keyTreeItem{endKey}))
 	keys := []string{} // retrive all keys in the range, ordered
 	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it btree.Item) bool {
 		keys = append(keys, it.(keyTreeItem).key)
