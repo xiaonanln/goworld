@@ -119,11 +119,11 @@ type readDeadlineSetter interface {
 	SetReadDeadline(time.Time) error
 }
 
-func (r *Reader) readFull(p []byte, allowEOF bool) (ok bool) {
+func (r *Reader) readFull(p []byte, allowEOF bool, allowTimeout bool) (ok bool) {
 	var n int
 	if n, r.err = io.ReadFull(r.r, p); r.err != nil {
 
-		if n > 0 {
+		if n > 0 || !allowTimeout {
 			if neterr, ok := r.err.(net.Error); ok && (neterr.Temporary() || neterr.Timeout()) {
 				// temporary / timeout, keep trying until full
 				p = p[n:]
@@ -161,7 +161,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 			r.i += n
 			return n, nil
 		}
-		if !r.readFull(r.buf[:4], true) {
+		if !r.readFull(r.buf[:4], true, true) {
 			return 0, r.err
 		}
 		chunkType := r.buf[0]
@@ -189,7 +189,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 				return 0, r.err
 			}
 			buf := r.buf[:chunkLen]
-			if !r.readFull(buf, false) {
+			if !r.readFull(buf, false, false) {
 				return 0, r.err
 			}
 			checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
@@ -224,7 +224,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 				return 0, r.err
 			}
 			buf := r.buf[:checksumSize]
-			if !r.readFull(buf, false) {
+			if !r.readFull(buf, false, false) {
 				return 0, r.err
 			}
 			checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
@@ -234,7 +234,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 				r.err = ErrCorrupt
 				return 0, r.err
 			}
-			if !r.readFull(r.decoded[:n], false) {
+			if !r.readFull(r.decoded[:n], false, false) {
 				return 0, r.err
 			}
 			if consts.SNAPPY_CHECKSUM_ENABLED {
@@ -252,7 +252,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 				r.err = ErrCorrupt
 				return 0, r.err
 			}
-			if !r.readFull(r.buf[:len(magicBody)], false) {
+			if !r.readFull(r.buf[:len(magicBody)], false, false) {
 				return 0, r.err
 			}
 			for i := 0; i < len(magicBody); i++ {
@@ -271,7 +271,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 		}
 		// Section 4.4 Padding (chunk type 0xfe).
 		// Section 4.6. Reserved skippable chunks (chunk types 0x80-0xfd).
-		if !r.readFull(r.buf[:chunkLen], false) {
+		if !r.readFull(r.buf[:chunkLen], false, false) {
 			return 0, r.err
 		}
 	}

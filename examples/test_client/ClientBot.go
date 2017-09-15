@@ -153,6 +153,13 @@ func (bot *ClientBot) loop() {
 }
 
 func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			gwlog.Errorf("handle packet faild: %v", err)
+		}
+	}()
+
 	bot.Lock()
 	defer bot.Unlock()
 
