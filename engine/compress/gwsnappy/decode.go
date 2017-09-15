@@ -138,9 +138,16 @@ func (r *Reader) readFull(p []byte, allowEOF bool, allowTimeout bool) (ok bool) 
 			}
 		}
 
+		if len(p) == 0 {
+			// all is read
+			r.err = nil
+			return true
+		}
+
 		if r.err == io.ErrUnexpectedEOF || (r.err == io.EOF && !allowEOF) {
 			r.err = ErrCorrupt
 		}
+
 		return false
 	}
 	return true
