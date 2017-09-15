@@ -66,7 +66,7 @@ const (
 	OPMON_DUMP_INTERVAL = 0
 
 	// For Snappy Compress
-	SNAPPY_CHECKSUM_ENABLED = true
+	SNAPPY_CHECKSUM_ENABLED = false
 )
 
 // Debug Options
