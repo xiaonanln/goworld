@@ -6,6 +6,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/google/btree"
 	"github.com/pkg/errors"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
@@ -130,6 +131,7 @@ func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, e
 		return true
 	})
 
+	gwlog.Infof("found keys from %s to %s: %v", beginKey, endKey, keys)
 	return &redisKVDBIterator{
 		db:       db,
 		leftKeys: keys,
