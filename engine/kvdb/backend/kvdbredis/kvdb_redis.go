@@ -6,7 +6,6 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/google/btree"
 	"github.com/pkg/errors"
-	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )
 
@@ -64,7 +63,6 @@ func (db *redisKVDB) initialize(dbindex int) error {
 		if err != nil {
 			return err
 		}
-		//gwlog.Info("SCAN: %v, nextcursor=%s", keys, string(nextCursor.([]byte)))
 		for _, key := range keys {
 			key := key[len(keyPrefix):]
 			db.keyTree.ReplaceOrInsert(keyTreeItem{key})
@@ -98,12 +96,8 @@ func (db *redisKVDB) Get(key string) (val string, err error) {
 
 func (db *redisKVDB) Put(key string, val string) error {
 	_, err := db.c.Do("SET", keyPrefix+key, val)
-	gwlog.Infof("kvdb set key %s to redis: err=%v", key, err)
 	if err == nil {
 		db.keyTree.ReplaceOrInsert(keyTreeItem{key})
-		if !db.keyTree.Has(keyTreeItem{key}) {
-			panic(errors.New("insert key tree fail"))
-		}
 	}
 	return err
 }
@@ -129,15 +123,12 @@ func (it *redisKVDBIterator) Next() (kvdbtypes.KVItem, error) {
 }
 
 func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
-	gwlog.Infof("found keys from %s to %s: has begin key %v, has end key %v", beginKey, endKey,
-		db.keyTree.Has(keyTreeItem{beginKey}), db.keyTree.Has(keyTreeItem{endKey}))
 	keys := []string{} // retrive all keys in the range, ordered
 	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it btree.Item) bool {
 		keys = append(keys, it.(keyTreeItem).key)
 		return true
 	})
 
-	gwlog.Infof("found keys from %s to %s: %v", beginKey, endKey, keys)
 	return &redisKVDBIterator{
 		db:       db,
 		leftKeys: keys,
