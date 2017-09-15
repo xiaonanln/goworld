@@ -239,7 +239,7 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 		var chunkLen int
 		var obufEnd int
 
-		if len(uncompressed) < 512 {
+		if len(uncompressed) < consts.MIN_DATA_SIZE_TO_COMPRESS { // data size too small, not compress at all
 			chunkType = chunkTypeUncompressedData
 			chunkLen = 4 + len(uncompressed)
 			obufEnd = obufHeaderLen
