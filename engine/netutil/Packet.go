@@ -1,8 +1,6 @@
 package netutil
 
 import (
-	"bytes"
-	"compress/flate"
 	"encoding/binary"
 
 	"unsafe"
@@ -11,11 +9,6 @@ import (
 
 	"sync"
 
-	"io"
-
-	"fmt"
-
-	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -24,9 +17,6 @@ import (
 const (
 	_MIN_PAYLOAD_CAP = 128
 	_CAP_GROW_SHIFT  = uint(2)
-
-	_PAYLOAD_LEN_MASK    = 0x7FFFFFFF
-	_COMPRESSED_BIT_MASK = 0x80000000
 )
 
 var (
@@ -93,7 +83,6 @@ func getPayloadCapOfPayloadLen(payloadLen uint32) uint32 {
 type Packet struct {
 	readCursor uint32
 
-	notCompress  bool
 	refcount     int64
 	bytes        []byte
 	initialBytes [_PREPAYLOAD_SIZE + _MIN_PAYLOAD_CAP]byte
@@ -103,16 +92,8 @@ func allocPacket() *Packet {
 	pkt := packetPool.Get().(*Packet)
 	pkt.refcount = 1
 
-	if pkt.notCompress {
-		gwlog.Panicf("notCompress should be false")
-	}
-
 	if consts.DEBUG_PACKET_ALLOC {
 		atomic.AddInt64(&debugInfo.AllocCount, 1)
-	}
-
-	if pkt.GetPayloadLen() != 0 || pkt.isCompressed() {
-		gwlog.Panicf("allocPacket: payload should be 0 not not compressed, but is %d, compressed %v", pkt.GetPayloadLen(), pkt.isCompressed())
 	}
 
 	return pkt
@@ -121,11 +102,6 @@ func allocPacket() *Packet {
 // NewPacket allocates a new packet
 func NewPacket() *Packet {
 	return allocPacket()
-}
-
-// SetNotCompress force the packet not to be compressed
-func (p *Packet) SetNotCompress() {
-	p.notCompress = true
 }
 
 func (p *Packet) assureCapacity(need uint32) {
@@ -200,8 +176,7 @@ func (p *Packet) Release() {
 		}
 
 		p.readCursor = 0
-		p.setPayloadLenCompressed(0, false)
-		p.notCompress = false
+		p.SetPayloadLen(0)
 		packetPool.Put(p)
 
 		if consts.DEBUG_PACKET_ALLOC {
@@ -469,106 +444,10 @@ func (p *Packet) ReadStringList() []string {
 
 // GetPayloadLen returns the payload length
 func (p *Packet) GetPayloadLen() uint32 {
-	return *(*uint32)(unsafe.Pointer(&p.bytes[0])) & _PAYLOAD_LEN_MASK
+	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))
 }
 
 // SetPayloadLen sets the payload l
 func (p *Packet) SetPayloadLen(plen uint32) {
-	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	*pplen = (*pplen & _COMPRESSED_BIT_MASK) | plen
-}
-
-func (p *Packet) setPayloadLenCompressed(plen uint32, compressed bool) {
-	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	if compressed {
-		*pplen = _COMPRESSED_BIT_MASK | plen
-	} else {
-		*pplen = plen
-	}
-}
-
-func (p *Packet) requireCompress() bool {
-	return !p.notCompress && !p.isCompressed() && p.GetPayloadLen() >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD
-}
-
-func (p *Packet) compress(cw *flate.Writer) {
-	if !p.requireCompress() {
-		return
-	}
-
-	payloadCap := p.PayloadCap()
-	compressedBuffer := packetBufferPools[payloadCap].Get().([]byte)
-	w := bytes.NewBuffer(compressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE])
-	cw.Reset(w)
-
-	oldPayload := p.Payload()
-	oldPayloadLen := len(oldPayload)
-	if err := WriteAll(cw, oldPayload); err != nil {
-		gwlog.Panicf("compress error: %v", err)
-	}
-
-	if err := cw.Flush(); err != nil {
-		gwlog.Panicf("compress error: %v", err)
-	}
-
-	compressedPayload := w.Bytes()
-	compressedPayloadLen := len(compressedPayload)
-
-	//gwlog.Infof("COMPRESS %v => %v", oldPayload, compressedPayload)
-	//gwlog.Infof("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
-	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
-
-	if compressedPayloadLen >= oldPayloadLen-4 { // leave 4 bytes for AppendUint32 in the last
-		return // compress not useful enough, throw away
-	}
-
-	if &compressedPayload[0] != &compressedBuffer[_PREPAYLOAD_SIZE] {
-		gwlog.Panicf("should equal")
-	}
-
-	// reclaim the old payload buffer and use new compressed buffer
-	packetBufferPools[payloadCap].Put(p.bytes)
-	p.bytes = compressedBuffer
-	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	*pplen = _COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
-
-	p.AppendUint32(uint32(oldPayloadLen)) // append the size of old payload to the end of packet
-	return
-}
-
-func (p *Packet) decompress(cr io.ReadCloser) {
-	if !p.isCompressed() {
-		return
-	}
-
-	// pop the uncompressed payload len from payload
-	uncompressedPayloadLen := p.PopUint32()
-
-	oldPayloadCap := p.PayloadCap()
-	oldPayload := p.Payload()
-	uncompressedBuffer := packetBufferPools[getPayloadCapOfPayloadLen(uncompressedPayloadLen)].Get().([]byte)
-	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
-
-	//newPayloadLen, err := cr.Read(uncompressedBuffer[_PREPAYLOAD_SIZE:])
-	err := ReadAll(cr, uncompressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+uncompressedPayloadLen])
-	if err != nil {
-		gwlog.Panic(errors.Wrap(err, "decompress failed"))
-	}
-	//if err := cr.Close(); err != nil {
-	//	gwlog.Panic(errors.Wrap(err, "close uncompressor failed"))
-	//}
-
-	//gwlog.Infof("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
-	//gwlog.Infof("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)
-	if oldPayloadCap != _MIN_PAYLOAD_CAP {
-		packetBufferPools[oldPayloadCap].Put(p.bytes)
-	}
-
-	p.bytes = uncompressedBuffer
-	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	*pplen = uncompressedPayloadLen
-}
-
-func (p *Packet) isCompressed() bool {
-	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))&_COMPRESSED_BIT_MASK != 0
+	*(*uint32)(unsafe.Pointer(&p.bytes[0])) = plen
 }

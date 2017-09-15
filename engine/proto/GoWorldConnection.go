@@ -19,9 +19,9 @@ type GoWorldConnection struct {
 }
 
 // NewGoWorldConnection creates a GoWorldConnection using network connection
-func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConnection {
+func NewGoWorldConnection(conn netutil.Connection) *GoWorldConnection {
 	return &GoWorldConnection{
-		packetConn: netutil.NewPacketConnection(conn, compressed),
+		packetConn: netutil.NewPacketConnection(conn),
 	}
 }
 
