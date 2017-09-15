@@ -24,7 +24,7 @@ before_install:
   - mysql -e 'CREATE DATABASE goworld;'
 
 install:
-  - pip install psutil==5.2.2
+  - pip install psutil
   - glide install
 
 script:
