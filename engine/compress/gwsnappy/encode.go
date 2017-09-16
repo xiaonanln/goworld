@@ -241,16 +241,16 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 
 		if len(uncompressed) < consts.MIN_DATA_SIZE_TO_COMPRESS { // data size too small, not compress at all
 			chunkType = chunkTypeUncompressedData
-			chunkLen = 4 + len(uncompressed)
+			chunkLen = len(uncompressed)
 			obufEnd = obufHeaderLen
 		} else {
 			compressed := Encode(w.obuf[obufHeaderLen:], uncompressed)
 			chunkType = uint8(chunkTypeCompressedData)
-			chunkLen = 4 + len(compressed)
+			chunkLen = len(compressed)
 			obufEnd = obufHeaderLen + len(compressed)
 			if len(compressed) >= len(uncompressed)-len(uncompressed)/8 {
 				chunkType = chunkTypeUncompressedData
-				chunkLen = 4 + len(uncompressed)
+				chunkLen = len(uncompressed)
 				obufEnd = obufHeaderLen
 			}
 		}

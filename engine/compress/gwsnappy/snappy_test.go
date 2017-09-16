@@ -957,8 +957,7 @@ func TestFlush(t *testing.T) {
 
 func TestReaderUncompressedDataOK(t *testing.T) {
 	r := NewReader(strings.NewReader(magicChunk +
-		"\x01\x08\x00\x00" + // Uncompressed chunk, 8 bytes long (including 4 byte checksum).
-		"\x68\x10\xe6\xb6" + // Checksum.
+		"\x01\x04\x00\x00" + // Uncompressed chunk, 8 bytes long (including 4 byte checksum).
 		"\x61\x62\x63\x64", // Uncompressed payload: "abcd".
 	))
 	g, err := ioutil.ReadAll(r)
