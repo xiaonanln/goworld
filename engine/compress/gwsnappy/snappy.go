@@ -45,7 +45,7 @@ const (
 )
 
 const (
-	checksumSize    = 4
+	//checksumSize    = 4
 	chunkHeaderSize = 4
 	magicChunk      = "\xff\x06\x00\x00" + magicBody
 	magicBody       = "sNaPpY"
@@ -66,7 +66,7 @@ const (
 	// TestMaxEncodedLenOfMaxBlockSize.
 	maxEncodedLenOfMaxBlockSize = 76490
 
-	obufHeaderLen = len(magicChunk) + checksumSize + chunkHeaderSize
+	obufHeaderLen = len(magicChunk) + chunkHeaderSize
 	obufLen       = obufHeaderLen + maxEncodedLenOfMaxBlockSize
 )
 

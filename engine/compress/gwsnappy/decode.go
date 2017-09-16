@@ -13,7 +13,6 @@ import (
 
 	"time"
 
-	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -85,7 +84,7 @@ func NewReader(r io.Reader) *Reader {
 	return &Reader{
 		r:       r,
 		decoded: make([]byte, maxBlockSize),
-		buf:     make([]byte, maxEncodedLenOfMaxBlockSize+checksumSize),
+		buf:     make([]byte, maxEncodedLenOfMaxBlockSize),
 	}
 }
 
@@ -191,7 +190,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 		switch chunkType {
 		case chunkTypeCompressedData:
 			// Section 4.2. Compressed data (chunk type 0x00).
-			if chunkLen < checksumSize {
+			if chunkLen < 0 {
 				r.err = ErrCorrupt
 				return 0, r.err
 			}
@@ -199,8 +198,8 @@ func (r *Reader) Read(p []byte) (int, error) {
 			if !r.readFull(buf, false, false) {
 				return 0, r.err
 			}
-			checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
-			buf = buf[checksumSize:]
+			//checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
+			//buf = buf[checksumSize:]
 
 			n, err := DecodedLen(buf)
 			if err != nil {
@@ -215,28 +214,28 @@ func (r *Reader) Read(p []byte) (int, error) {
 				r.err = err
 				return 0, r.err
 			}
-			if consts.SNAPPY_CHECKSUM_ENABLED {
-				if crc(r.decoded[:n]) != checksum {
-					r.err = ErrCorrupt
-					return 0, r.err
-				}
-			}
+			//if consts.SNAPPY_CHECKSUM_ENABLED {
+			//	if crc(r.decoded[:n]) != checksum {
+			//		r.err = ErrCorrupt
+			//		return 0, r.err
+			//	}
+			//}
 			r.i, r.j = 0, n
 			continue
 
 		case chunkTypeUncompressedData:
 			// Section 4.3. Uncompressed data (chunk type 0x01).
-			if chunkLen < checksumSize {
+			if chunkLen < 0 {
 				r.err = ErrCorrupt
 				return 0, r.err
 			}
-			buf := r.buf[:checksumSize]
-			if !r.readFull(buf, false, false) {
-				return 0, r.err
-			}
-			checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
+			//buf := r.buf[:checksumSize] // read checksum
+			//if !r.readFull(buf, false, false) {
+			//	return 0, r.err
+			//}
+			//checksum := uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
 			// Read directly into r.decoded instead of via r.buf.
-			n := chunkLen - checksumSize
+			n := chunkLen
 			if n > len(r.decoded) {
 				r.err = ErrCorrupt
 				return 0, r.err
@@ -244,12 +243,12 @@ func (r *Reader) Read(p []byte) (int, error) {
 			if !r.readFull(r.decoded[:n], false, false) {
 				return 0, r.err
 			}
-			if consts.SNAPPY_CHECKSUM_ENABLED {
-				if crc(r.decoded[:n]) != checksum {
-					r.err = ErrCorrupt
-					return 0, r.err
-				}
-			}
+			//if consts.SNAPPY_CHECKSUM_ENABLED {
+			//	if crc(r.decoded[:n]) != checksum {
+			//		r.err = ErrCorrupt
+			//		return 0, r.err
+			//	}
+			//}
 			r.i, r.j = 0, n
 			continue
 

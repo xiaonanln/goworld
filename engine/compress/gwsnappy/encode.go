@@ -225,12 +225,12 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 		} else {
 			uncompressed, p = p, nil
 		}
-		var checksum uint32
-		if consts.SNAPPY_CHECKSUM_ENABLED {
-			checksum = crc(uncompressed)
-		} else {
-			checksum = 0
-		}
+		//var checksum uint32
+		//if consts.SNAPPY_CHECKSUM_ENABLED {
+		//	checksum = crc(uncompressed)
+		//} else {
+		//	checksum = 0
+		//}
 
 		// Compress the buffer, discarding the result if the improvement
 		// isn't at least 12.5%.
@@ -260,10 +260,10 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 		w.obuf[len(magicChunk)+1] = uint8(chunkLen >> 0)
 		w.obuf[len(magicChunk)+2] = uint8(chunkLen >> 8)
 		w.obuf[len(magicChunk)+3] = uint8(chunkLen >> 16)
-		w.obuf[len(magicChunk)+4] = uint8(checksum >> 0)
-		w.obuf[len(magicChunk)+5] = uint8(checksum >> 8)
-		w.obuf[len(magicChunk)+6] = uint8(checksum >> 16)
-		w.obuf[len(magicChunk)+7] = uint8(checksum >> 24)
+		//w.obuf[len(magicChunk)+4] = uint8(checksum >> 0)
+		//w.obuf[len(magicChunk)+5] = uint8(checksum >> 8)
+		//w.obuf[len(magicChunk)+6] = uint8(checksum >> 16)
+		//w.obuf[len(magicChunk)+7] = uint8(checksum >> 24)
 
 		n, err := w.w.Write(w.obuf[obufStart:obufEnd])
 		if n != obufEnd-obufStart {

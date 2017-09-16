@@ -66,7 +66,6 @@ const (
 	OPMON_DUMP_INTERVAL = 0
 
 	// For Snappy Compress
-	SNAPPY_CHECKSUM_ENABLED   = false
 	MIN_DATA_SIZE_TO_COMPRESS = 1024
 )
 
