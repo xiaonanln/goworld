@@ -27,6 +27,7 @@ func (a *Player) setDefaultAttrs() {
 	a.Attrs.SetDefault("hpmax", 100)
 	a.Attrs.SetDefault("action", "idle")
 
+	a.SetClientSyncing(true)
 }
 
 // GetSpaceID 获得玩家的场景ID并发给调用者
@@ -125,6 +126,7 @@ func (player *Player) TakeDamage(damage int64) {
 	if hp <= 0 {
 		// now player dead ...
 		player.Attrs.Set("action", "death")
+		player.SetClientSyncing(false)
 	}
 
 }

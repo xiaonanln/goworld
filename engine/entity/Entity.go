@@ -57,9 +57,9 @@ type Entity struct {
 	timers      map[EntityTimerID]*entityTimerInfo
 	lastTimerId EntityTimerID
 
-	client           *GameClient
-	declaredServices common.StringSet
-	becamePlayer     bool
+	client            *GameClient
+	declaredServices  common.StringSet
+	syncingFromClient bool
 
 	Attrs *MapAttr
 
@@ -420,7 +420,14 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
 	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
-	e.setPositionYaw(Vector3{x, y, z}, yaw, true)
+	if e.syncingFromClient {
+		e.setPositionYaw(Vector3{x, y, z}, yaw, true)
+	}
+}
+
+// SetClientSyncing set if entity infos (position, yaw) is syncing with client
+func (e *Entity) SetClientSyncing(syncing bool) {
+	e.syncingFromClient = syncing
 }
 
 func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
