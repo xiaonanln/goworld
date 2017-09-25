@@ -18,6 +18,10 @@ func BenchmarkJSONMsgPacker(b *testing.B) {
 	benchmarkMsgPacker(b, &JSONMsgPacker{})
 }
 
+func BenchmarkJsoniterMsgPacker(b *testing.B) {
+	benchmarkMsgPacker(b, &JsoniterMsgPacker{})
+}
+
 func BenchmarkMessagePackMsgPacker(b *testing.B) {
 	benchmarkMsgPacker(b, &MessagePackMsgPacker{})
 }
@@ -38,10 +42,12 @@ func benchmarkMsgPacker(b *testing.B, packer MsgPacker) {
 		msg.MapField[uuid.GenUUID()] = uuid.GenUUID()
 	}
 
+	var totalSize int64
 	for i := 0; i < b.N; i++ {
 
 		buf := make([]byte, 0, 100)
 		buf, _ = packer.PackMsg(msg, buf)
+		totalSize += int64(len(buf))
 
 		var restoreMsg map[string]interface{}
 		_ = packer.UnpackMsg(buf, &restoreMsg)
@@ -49,6 +55,7 @@ func benchmarkMsgPacker(b *testing.B, packer MsgPacker) {
 		//	b.Fail()
 		//}
 	}
+	b.Logf("average size: %d", totalSize/int64(b.N))
 }
 
 func TestMessagePackMsgPacker_UnpackMsg(t *testing.T) {
@@ -73,7 +80,7 @@ func TestMessagePackMsgPacker_UnpackMsg(t *testing.T) {
 }
 
 func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
-	packer := MessagePackMsgPacker{}
+	packer := JsoniterMsgPacker{}
 	items := []testMsg{}
 	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{
@@ -90,7 +97,7 @@ func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
 }
 
 func BenchmarkMessagePackMsgPacker_PackMsg_Array_OneByOne(b *testing.B) {
-	packer := MessagePackMsgPacker{}
+	packer := JsoniterMsgPacker{}
 	items := []testMsg{}
 	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{

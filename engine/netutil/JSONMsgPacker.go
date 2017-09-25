@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-// JSONMsgPacker packs and unpacks messages in JSON format
+// JsoniterMsgPacker packs and unpacks messages in JSON format
 type JSONMsgPacker struct{}
 
 // PackMsg packs message to bytes of JSON format
