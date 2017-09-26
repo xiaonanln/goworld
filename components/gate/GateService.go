@@ -56,7 +56,12 @@ func (gs *GateService) run() {
 	gwlog.Infof("Compress connection: %v", cfg.CompressConnection)
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
-	netutil.ServeForever(gs.handlePacketRoutine)
+
+	syncListenAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", cfg.Ip, cfg.SyncPort))
+	if err != nil {
+		gwlog.Panic(err)
+	}
+	net.ListenUDP("udp", syncListenAddr)
 }
 
 func (gs *GateService) String() string {
