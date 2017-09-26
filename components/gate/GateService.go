@@ -61,7 +61,16 @@ func (gs *GateService) run() {
 	if err != nil {
 		gwlog.Panic(err)
 	}
-	net.ListenUDP("udp", syncListenAddr)
+
+	syncUdpConn, err := net.ListenUDP("udp", syncListenAddr)
+	if err != nil {
+		gwlog.Panic(err)
+	}
+
+	gwlog.Infof("Listening on UDP port for syncing: %s ...", syncUdpConn.LocalAddr())
+	go netutil.ServeForever(gs.serveSyncUDPConn, syncUdpConn)
+
+	netutil.ServeForever(gs.handlePacketRoutine)
 }
 
 func (gs *GateService) String() string {
@@ -76,6 +85,18 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn.SetNoDelay(consts.CLIENT_PROXY_SET_TCP_NO_DELAY)
 
 	gs.handleClientConnection(conn)
+}
+
+func (gs *GateService) serveSyncUDPConn(syncConn *net.UDPConn) {
+	pktbuf := make([]byte, 65536)
+
+	for {
+		n, fromAddr, err := syncConn.ReadFromUDP(pktbuf)
+		gwlog.Infof("Recv from UDP: n=%d, fromAddr=%s, err=%v", n, fromAddr.String(), err)
+		if err != nil {
+			gwlog.Panic(err)
+		}
+	}
 }
 
 func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {

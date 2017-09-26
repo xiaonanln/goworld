@@ -41,6 +41,8 @@ type ClientBot struct {
 	startedDoingThings bool
 	syncPosTime        time.Time
 	useWebSocket       bool
+	syncRAddr          *net.UDPAddr
+	syncUdpConn        *net.UDPConn
 }
 
 func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
@@ -92,6 +94,19 @@ func (bot *ClientBot) run() {
 	bot.conn = proto.NewGoWorldConnection(conn)
 	defer bot.conn.Close()
 
+	// connect the udp port
+	raddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", serverAddr, cfg.SyncPort))
+	if err != nil {
+		gwlog.Panic(err)
+	}
+
+	syncUdpConn, err := net.DialUDP("udp", nil, raddr)
+	if err != nil {
+		gwlog.Panic(err)
+	}
+	bot.syncRAddr = raddr
+	bot.syncUdpConn = syncUdpConn
+
 	bot.loop()
 }
 
@@ -140,7 +155,13 @@ func (bot *ClientBot) loop() {
 					player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
 					//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
 					player.yaw = entity.Yaw(rand.Float32() * 3.14)
-					bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+					b := make([]byte, 65500)
+					for i := 0; i < len(b); i++ {
+						b[i] = 'A'
+					}
+					gwlog.Infof("Writing to UDP on %s ...", bot.syncRAddr.String())
+					bot.syncUdpConn.Write(b)
+					//bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
 				}
 
 				bot.syncPosTime = now
