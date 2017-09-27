@@ -185,7 +185,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 
 		pc.recvedPayloadLen = 0
 		pc.recvingPacket = NewPacket()
-		pc.recvingPacket.assureCapacity(pc.recvTotalPayloadLen)
+		pc.recvingPacket.AssureCapacity(pc.recvTotalPayloadLen)
 	}
 
 	// now all bytes of payload len is received, start receiving payload

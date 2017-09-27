@@ -8,6 +8,8 @@ import (
 
 	"os"
 
+	"unsafe"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -129,4 +131,8 @@ func runServe(f reflect.Value, args []reflect.Value) {
 
 	rets := f.Call(args)
 	gwlog.Debugf("ServeForever: func %v returns %v", f, rets)
+}
+
+func PutFloat32(b []byte, f float32) {
+	NETWORK_ENDIAN.PutUint32(b, *(*uint32)(unsafe.Pointer(&f)))
 }

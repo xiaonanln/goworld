@@ -129,6 +129,8 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 
 func (bot *ClientBot) loop() {
 	var msgtype proto.MsgType
+	udpSyncPacket := make([]byte, proto.UDP_SYNC_PACKET_SIZE)
+
 	for {
 		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 100))
 		if err != nil {
@@ -155,12 +157,13 @@ func (bot *ClientBot) loop() {
 					player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
 					//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
 					player.yaw = entity.Yaw(rand.Float32() * 3.14)
-					b := make([]byte, 65500)
-					for i := 0; i < len(b); i++ {
-						b[i] = 'A'
-					}
 					gwlog.Infof("Writing to UDP on %s ...", bot.syncRAddr.String())
-					bot.syncUdpConn.Write(b)
+					copy(udpSyncPacket[:common.ENTITYID_LENGTH], []byte(player.ID))
+					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+0:common.ENTITYID_LENGTH+4], float32(player.pos.X))
+					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+4:common.ENTITYID_LENGTH+8], float32(player.pos.Y))
+					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+8:common.ENTITYID_LENGTH+12], float32(player.pos.Z))
+					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+12:common.ENTITYID_LENGTH+16], float32(player.yaw))
+					bot.syncUdpConn.Write(udpSyncPacket)
 					//bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
 				}
 

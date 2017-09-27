@@ -3,6 +3,7 @@ package proto
 import (
 	"unsafe"
 
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -99,6 +100,7 @@ const (
 const (
 	// SYNC_INFO_SIZE_PER_ENTITY is the size of sync info per entity
 	SYNC_INFO_SIZE_PER_ENTITY = 16
+	UDP_SYNC_PACKET_SIZE      = common.ENTITYID_LENGTH + SYNC_INFO_SIZE_PER_ENTITY
 )
 
 // EntitySyncInfo defines fields of entity sync info

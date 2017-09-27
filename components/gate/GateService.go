@@ -88,14 +88,29 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 }
 
 func (gs *GateService) serveSyncUDPConn(syncConn *net.UDPConn) {
-	pktbuf := make([]byte, 65536)
+	//pktbuf := make([]byte, proto.UDP_SYNC_PACKET_SIZE)
 
 	for {
-		n, fromAddr, err := syncConn.ReadFromUDP(pktbuf)
-		gwlog.Infof("Recv from UDP: n=%d, fromAddr=%s, err=%v", n, fromAddr.String(), err)
+		pkt := netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		pkt.ReadUint16() // fake the reading of the msgtype
+		pkt.AssureCapacity(proto.UDP_SYNC_PACKET_SIZE)
+
+		n, _, err := syncConn.ReadFromUDP(pkt.Payload()[2 : 2+proto.UDP_SYNC_PACKET_SIZE])
+		//gwlog.Infof("Recv from UDP: n=%d, fromAddr=%s, err=%v", n, fromAddr.String(), err)
 		if err != nil {
 			gwlog.Panic(err)
 		}
+
+		if n != proto.UDP_SYNC_PACKET_SIZE {
+			gwlog.Panicf("UDP sync packet's size should be %d bytes, but received %d bytes", proto.UDP_SYNC_PACKET_SIZE, n)
+		}
+
+		fmt.Fprintf(os.Stderr, "S")
+		//pkt.AppendBytes(pktbuf)
+		pkt.SetPayloadLen(2 + proto.UDP_SYNC_PACKET_SIZE)
+		gs.handleSyncPositionYawFromClient(pkt)
+		//gs.packetQueue.Push(packetQueueItem{proto.MT_SYNC_POSITION_YAW_FROM_CLIENT, pkt})
 	}
 }
 

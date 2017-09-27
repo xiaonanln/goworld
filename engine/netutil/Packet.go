@@ -104,7 +104,7 @@ func NewPacket() *Packet {
 	return allocPacket()
 }
 
-func (p *Packet) assureCapacity(need uint32) {
+func (p *Packet) AssureCapacity(need uint32) {
 	requireCap := p.GetPayloadLen() + need
 	oldCap := p.PayloadCap()
 
@@ -195,7 +195,7 @@ func (p *Packet) ClearPayload() {
 
 // AppendByte appends one byte to the end of payload
 func (p *Packet) AppendByte(b byte) {
-	p.assureCapacity(1)
+	p.AssureCapacity(1)
 	p.bytes[_PREPAYLOAD_SIZE+p.GetPayloadLen()] = b
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 1
 }
@@ -224,7 +224,7 @@ func (p *Packet) ReadBool() (v bool) {
 
 // AppendUint16 appends one uint16 to the end of payload
 func (p *Packet) AppendUint16(v uint16) {
-	p.assureCapacity(2)
+	p.AssureCapacity(2)
 	payloadEnd := _PREPAYLOAD_SIZE + p.GetPayloadLen()
 	packetEndian.PutUint16(p.bytes[payloadEnd:payloadEnd+2], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 2
@@ -232,7 +232,7 @@ func (p *Packet) AppendUint16(v uint16) {
 
 // AppendUint32 appends one uint32 to the end of payload
 func (p *Packet) AppendUint32(v uint32) {
-	p.assureCapacity(4)
+	p.AssureCapacity(4)
 	payloadEnd := _PREPAYLOAD_SIZE + p.GetPayloadLen()
 	packetEndian.PutUint32(p.bytes[payloadEnd:payloadEnd+4], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 4
@@ -248,7 +248,7 @@ func (p *Packet) PopUint32() (v uint32) {
 
 // AppendUint64 appends one uint64 to the end of payload
 func (p *Packet) AppendUint64(v uint64) {
-	p.assureCapacity(8)
+	p.AssureCapacity(8)
 	payloadEnd := _PREPAYLOAD_SIZE + p.GetPayloadLen()
 	packetEndian.PutUint64(p.bytes[payloadEnd:payloadEnd+8], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += 8
@@ -292,7 +292,7 @@ func (p *Packet) ReadFloat64() float64 {
 // AppendBytes appends slice of bytes to the end of payload
 func (p *Packet) AppendBytes(v []byte) {
 	bytesLen := uint32(len(v))
-	p.assureCapacity(bytesLen)
+	p.AssureCapacity(bytesLen)
 	payloadEnd := _PREPAYLOAD_SIZE + p.GetPayloadLen()
 	copy(p.bytes[payloadEnd:payloadEnd+bytesLen], v)
 	*(*uint32)(unsafe.Pointer(&p.bytes[0])) += bytesLen
