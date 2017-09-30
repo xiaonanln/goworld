@@ -14,7 +14,7 @@ import (
 
 // GoWorldConnection is the network protocol implementation of GoWorld components (dispatcher, gate, game)
 type GoWorldConnection struct {
-	packetConn *netutil.PacketConnection
+	packetConn *netutil.StreamPacketConnection
 	closed     xnsyncutil.AtomicBool
 }
 

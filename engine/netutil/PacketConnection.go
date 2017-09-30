@@ -45,12 +45,11 @@ func (err _ErrRecvAgain) Timeout() bool {
 	return false
 }
 
-// PacketConnection is a connection that send and receive data packets
-type PacketConnection struct {
+// StreamPacketConnection is a connection that send and receive data packets upon a network stream connection
+type StreamPacketConnection struct {
 	conn               Connection
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
-	//sendBuffer         *sendBuffer // each PacketConnection uses 1 sendBuffer for sending packets
 
 	// buffers and infos for receiving a packet
 	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
@@ -61,22 +60,21 @@ type PacketConnection struct {
 }
 
 // NewPacketConnection creates a packet connection based on network connection
-func NewPacketConnection(conn Connection) *PacketConnection {
-	pc := &PacketConnection{
+func NewPacketConnection(conn Connection) *StreamPacketConnection {
+	pc := &StreamPacketConnection{
 		conn: conn,
-		//sendBuffer: newSendBuffer(),
 	}
 
 	return pc
 }
 
 // NewPacket allocates a new packet (usually for sending)
-func (pc *PacketConnection) NewPacket() *Packet {
+func (pc *StreamPacketConnection) NewPacket() *Packet {
 	return allocPacket()
 }
 
 // SendPacket send packets to remote
-func (pc *PacketConnection) SendPacket(packet *Packet) error {
+func (pc *StreamPacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
 			packetEndian.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
@@ -95,7 +93,7 @@ func (pc *PacketConnection) SendPacket(packet *Packet) error {
 }
 
 // Flush connection writes
-func (pc *PacketConnection) Flush(reason string) (err error) {
+func (pc *StreamPacketConnection) Flush(reason string) (err error) {
 	pc.pendingPacketsLock.Lock()
 	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
 		pc.pendingPacketsLock.Unlock()
@@ -120,28 +118,7 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 		return
 	}
 
-	//sendBuffer := pc.sendBuffer // the send buffer
 	for _, packet := range packets {
-		//packetData := packet.data()
-		//if len(packetData) > sendBuffer.FreeSpace() {
-		//	// can not append data to send buffer, so clear send buffer first
-		//	if err = sendBuffer.WriteAllTo(pc.conn); err != nil {
-		//		return err
-		//	}
-		//
-		//	if len(packetData) >= _SEND_BUFFER_SIZE {
-		//		// packet is too large, impossible to put to send buffer
-		//		err = WriteAll(pc.conn, packetData)
-		//		packet.Release()
-		//
-		//		if err != nil {
-		//			return
-		//		}
-		//		continue send_packets_loop
-		//	}
-		//}
-
-		// now we are sure that len(packetData) <= sendBuffer.FreeSize()
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
 		if err != nil {
@@ -157,12 +134,12 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 }
 
 // SetRecvDeadline sets the receive deadline
-func (pc *PacketConnection) SetRecvDeadline(deadline time.Time) error {
+func (pc *StreamPacketConnection) SetRecvDeadline(deadline time.Time) error {
 	return pc.conn.SetReadDeadline(deadline)
 }
 
 // RecvPacket receives the next packet
-func (pc *PacketConnection) RecvPacket() (*Packet, error) {
+func (pc *StreamPacketConnection) RecvPacket() (*Packet, error) {
 	if pc.payloadLenBytesRecved < _SIZE_FIELD_SIZE {
 		// receive more of payload len bytes
 		n, err := pc.conn.Read(pc.payloadLenBuf[pc.payloadLenBytesRecved:])
@@ -206,7 +183,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	}
 	return nil, err
 }
-func (pc *PacketConnection) resetRecvStates() {
+func (pc *StreamPacketConnection) resetRecvStates() {
 	pc.payloadLenBytesRecved = 0
 	pc.recvTotalPayloadLen = 0
 	pc.recvedPayloadLen = 0
@@ -214,20 +191,20 @@ func (pc *PacketConnection) resetRecvStates() {
 }
 
 // Close the connection
-func (pc *PacketConnection) Close() error {
+func (pc *StreamPacketConnection) Close() error {
 	return pc.conn.Close()
 }
 
 // RemoteAddr return the remote address
-func (pc *PacketConnection) RemoteAddr() net.Addr {
+func (pc *StreamPacketConnection) RemoteAddr() net.Addr {
 	return pc.conn.RemoteAddr()
 }
 
 // LocalAddr returns the local address
-func (pc *PacketConnection) LocalAddr() net.Addr {
+func (pc *StreamPacketConnection) LocalAddr() net.Addr {
 	return pc.conn.LocalAddr()
 }
 
-func (pc *PacketConnection) String() string {
+func (pc *StreamPacketConnection) String() string {
 	return fmt.Sprintf("[%s >>> %s]", pc.LocalAddr(), pc.RemoteAddr())
 }
