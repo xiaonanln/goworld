@@ -31,7 +31,9 @@ const _SPACE_ENTITY_TYPE = "__space__"
 type ClientBot struct {
 	sync.Mutex
 
-	id                 int
+	id       int
+	clientid common.ClientID
+
 	waiter             *sync.WaitGroup
 	conn               *proto.GoWorldConnection
 	entities           map[common.EntityID]*clientEntity
@@ -42,6 +44,8 @@ type ClientBot struct {
 	syncPosTime        time.Time
 	useWebSocket       bool
 	udpSyncConn        netutil.PacketConnectionUDP
+
+	udpSyncConnClientidNotifyAcked bool
 }
 
 func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
@@ -326,6 +330,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 
 func (bot *ClientBot) setClientID(clientid common.ClientID) {
 	gwlog.Infof("%s set client id = %s", bot, clientid)
+	bot.clientid = clientid
 }
 
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Vector3) {

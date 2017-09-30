@@ -102,6 +102,8 @@ const (
 const (
 	// MT_SET_CLIENT_CLIENTID message is sent to client to set its clientid
 	MT_SET_CLIENT_CLIENTID = 2001 + iota
+	MT_UDP_SYNC_CONN_NOTIFY_CLIENTID
+	MT_UDP_SYNC_CONN_NOTIFY_CLIENTID_ACK
 )
 
 const (
