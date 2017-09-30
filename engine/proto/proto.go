@@ -86,15 +86,22 @@ const (
 	// MT_CLEAR_CLIENTPROXY_FILTER_PROPS message type
 	MT_CLEAR_CLIENTPROXY_FILTER_PROPS
 	// MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP message type
-	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP = 1500
+	MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP = 1499
 )
+
 const (
-	// MT_CALL_FILTERED_CLIENTS message type
+	// MT_CALL_FILTERED_CLIENTS message type: messages to be processed by GateService from Dispatcher, but not redirected to clients
 	MT_CALL_FILTERED_CLIENTS = 1501 + iota
 	// MT_SYNC_POSITION_YAW_ON_CLIENTS message type
 	MT_SYNC_POSITION_YAW_ON_CLIENTS
 	// MT_GATE_SERVICE_MSG_TYPE_STOP message type
-	MT_GATE_SERVICE_MSG_TYPE_STOP = 2000
+	MT_GATE_SERVICE_MSG_TYPE_STOP = 1999
+)
+
+// Messages types that is sent directly between Gate & Client
+const (
+	// MT_SET_CLIENT_CLIENTID message is sent to client to set its clientid
+	MT_SET_CLIENT_CLIENTID = 2001 + iota
 )
 
 const (

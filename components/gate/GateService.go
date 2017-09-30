@@ -109,7 +109,12 @@ func (gs *GateService) serveSyncUDPConn(syncConn *net.UDPConn) {
 		fmt.Fprintf(os.Stderr, "S")
 		//pkt.AppendBytes(pktbuf)
 		pkt.SetPayloadLen(2 + proto.UDP_SYNC_PACKET_SIZE)
+		//entityID := common.EntityID(pkt.UnreadPayload()[:common.ENTITYID_LENGTH]) // get entityID
+		// now we can setup client's sync connection
+
 		gs.handleSyncPositionYawFromClient(pkt)
+
+		pkt.Release()
 		//gs.packetQueue.Push(packetQueueItem{proto.MT_SYNC_POSITION_YAW_FROM_CLIENT, pkt})
 	}
 }
