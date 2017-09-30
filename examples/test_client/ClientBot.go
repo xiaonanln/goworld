@@ -41,8 +41,7 @@ type ClientBot struct {
 	startedDoingThings bool
 	syncPosTime        time.Time
 	useWebSocket       bool
-	syncRAddr          *net.UDPAddr
-	udpSyncConn        *net.UDPConn
+	udpSyncConn        netutil.PacketConnectionUDP
 }
 
 func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
@@ -104,8 +103,7 @@ func (bot *ClientBot) run() {
 	if err != nil {
 		gwlog.Panic(err)
 	}
-	bot.syncRAddr = raddr
-	bot.udpSyncConn = syncUdpConn
+	bot.udpSyncConn = netutil.NewPacketConnectionUDP(syncUdpConn)
 
 	bot.loop()
 }
@@ -129,7 +127,6 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 
 func (bot *ClientBot) loop() {
 	var msgtype proto.MsgType
-	udpSyncPacket := make([]byte, proto.UDP_SYNC_PACKET_SIZE)
 
 	for {
 		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 100))
@@ -158,12 +155,17 @@ func (bot *ClientBot) loop() {
 					//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
 					player.yaw = entity.Yaw(rand.Float32() * 3.14)
 					//gwlog.Infof("Writing to UDP on %s ...", bot.syncRAddr.String())
-					copy(udpSyncPacket[:common.ENTITYID_LENGTH], []byte(player.ID))
-					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+0:common.ENTITYID_LENGTH+4], float32(player.pos.X))
-					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+4:common.ENTITYID_LENGTH+8], float32(player.pos.Y))
-					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+8:common.ENTITYID_LENGTH+12], float32(player.pos.Z))
-					netutil.PutFloat32(udpSyncPacket[common.ENTITYID_LENGTH+12:common.ENTITYID_LENGTH+16], float32(player.yaw))
-					bot.udpSyncConn.Write(udpSyncPacket)
+
+					udpSyncPacket := netutil.NewPacket()
+					udpSyncPacket.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+					udpSyncPacket.AppendEntityID(player.ID)
+					udpSyncPacket.AppendFloat32(float32(player.pos.X))
+					udpSyncPacket.AppendFloat32(float32(player.pos.Y))
+					udpSyncPacket.AppendFloat32(float32(player.pos.Z))
+					udpSyncPacket.AppendFloat32(float32(player.yaw))
+
+					bot.udpSyncConn.SendPacket(udpSyncPacket)
+					udpSyncPacket.Release()
 					//bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
 				}
 
@@ -187,7 +189,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	bot.Lock()
 	defer bot.Unlock()
 
-	if msgtype != proto.MT_CALL_FILTERED_CLIENTS && msgtype != proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
+	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 		_ = packet.ReadUint16()
 		_ = packet.ReadClientID() // TODO: strip these two fields ? seems a little difficult, maybe later.
 	}
@@ -311,6 +313,9 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 			bot.updateEntityPosition(entityID, entity.Vector3{x, y, z})
 			bot.updateEntityYaw(entityID, yaw)
 		}
+	} else if msgtype == proto.MT_SET_CLIENT_CLIENTID {
+		clientid := packet.ReadClientID()
+		bot.setClientID(clientid)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
 		if consts.DEBUG_MODE {
@@ -318,6 +323,11 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		}
 	}
 }
+
+func (bot *ClientBot) setClientID(clientid common.ClientID) {
+	gwlog.Infof("%s set client id = %s", bot, clientid)
+}
+
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Vector3) {
 	//gwlog.Debugf("updateEntityPosition %s => %s", entityID, position)
 	if bot.entities[entityID] == nil {

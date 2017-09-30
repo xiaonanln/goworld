@@ -66,7 +66,12 @@ const (
 	OPMON_DUMP_INTERVAL = 0
 
 	// For Snappy Compress
+	// MIN_DATA_SIZE_TO_COMPRESS is the minimal data size to compress
 	MIN_DATA_SIZE_TO_COMPRESS = 1024
+
+	// For UDP Connections between Gates and Clients
+	// UDP_MAX_PACKET_PAYLOAD_SIZE is the max packet payload size of UDP packets. Since UDP are only used for sync, this value can be very small
+	UDP_MAX_PACKET_PAYLOAD_SIZE = 128 // try to make sure that this value is smaller or equal to _MIN_PAYLOAD_CAP, so that no buffer needs to be allocated
 )
 
 // Debug Options

@@ -140,6 +140,16 @@ func (p *Packet) Payload() []byte {
 	return p.bytes[_PREPAYLOAD_SIZE : _PREPAYLOAD_SIZE+p.GetPayloadLen()]
 }
 
+// UnwrittenPayload returns the unwritten payload, which is the left payload capacity
+func (p *Packet) UnwrittenPayload() []byte {
+	payloadLen := p.GetPayloadLen()
+	return p.bytes[_PREPAYLOAD_SIZE+payloadLen:]
+}
+
+func (p *Packet) TotalPayload() []byte {
+	return p.bytes[_PREPAYLOAD_SIZE:]
+}
+
 // UnreadPayload returns the unread payload
 func (p *Packet) UnreadPayload() []byte {
 	pos := p.readCursor + _PREPAYLOAD_SIZE
