@@ -94,7 +94,7 @@ func (bot *ClientBot) run() {
 		conn = netutil.NewBufferedConnection(conn)
 	}
 
-	bot.conn = proto.NewGoWorldConnection(conn)
+	bot.conn = proto.NewGoWorldConnection(conn, false)
 	defer bot.conn.Close()
 
 	// connect the udp port
