@@ -57,9 +57,7 @@ compress_connection=0
 [gate1]
 port=15011
 http_port=15012
-sync_port=15013
 
 ;[gate2]
 ;port=15021
 ;http_port=15022
-;sync_port=15023

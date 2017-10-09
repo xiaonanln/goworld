@@ -57,19 +57,6 @@ func (gs *GateService) run() {
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 
-	syncListenAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", cfg.Ip, cfg.SyncPort))
-	if err != nil {
-		gwlog.Panic(err)
-	}
-
-	syncUdpConn, err := net.ListenUDP("udp", syncListenAddr)
-	if err != nil {
-		gwlog.Panic(err)
-	}
-
-	gwlog.Infof("Listening on UDP port for syncing: %s ...", syncUdpConn.LocalAddr())
-	go netutil.ServeForever(gs.serveSyncUDPConn, syncUdpConn)
-
 	netutil.ServeForever(gs.handlePacketRoutine)
 }
 
@@ -85,38 +72,6 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn.SetNoDelay(consts.CLIENT_PROXY_SET_TCP_NO_DELAY)
 
 	gs.handleClientConnection(conn)
-}
-
-func (gs *GateService) serveSyncUDPConn(syncConn *net.UDPConn) {
-	//pktbuf := make([]byte, proto.UDP_SYNC_PACKET_SIZE)
-
-	for {
-		pkt := netutil.NewPacket()
-		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
-		pkt.ReadUint16() // fake the reading of the msgtype
-		pkt.AssureCapacity(proto.UDP_SYNC_PACKET_SIZE)
-
-		n, _, err := syncConn.ReadFromUDP(pkt.Payload()[2 : 2+proto.UDP_SYNC_PACKET_SIZE])
-		//gwlog.Infof("Recv from UDP: n=%d, fromAddr=%s, err=%v", n, fromAddr.String(), err)
-		if err != nil {
-			gwlog.Panic(err)
-		}
-
-		if n != proto.UDP_SYNC_PACKET_SIZE {
-			gwlog.Panicf("UDP sync packet's size should be %d bytes, but received %d bytes", proto.UDP_SYNC_PACKET_SIZE, n)
-		}
-
-		fmt.Fprintf(os.Stderr, "S")
-		//pkt.AppendBytes(pktbuf)
-		pkt.SetPayloadLen(2 + proto.UDP_SYNC_PACKET_SIZE)
-		//entityID := common.EntityID(pkt.UnreadPayload()[:common.ENTITYID_LENGTH]) // get entityID
-		// now we can setup client's sync connection
-
-		gs.handleSyncPositionYawFromClient(pkt)
-
-		pkt.Release()
-		//gs.packetQueue.Push(packetQueueItem{proto.MT_SYNC_POSITION_YAW_FROM_CLIENT, pkt})
-	}
 }
 
 func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {

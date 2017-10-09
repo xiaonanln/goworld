@@ -12,7 +12,14 @@ import (
 
 	"sync/atomic"
 
+	"compress/flate"
+
+	"os"
+
+	"io"
+
 	"github.com/pkg/errors"
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/opmon"
@@ -27,9 +34,23 @@ const (
 
 var (
 	// NETWORK_ENDIAN is the network Endian of connections
-	NETWORK_ENDIAN = binary.LittleEndian
-	errRecvAgain   = _ErrRecvAgain{}
+	NETWORK_ENDIAN      = binary.LittleEndian
+	errRecvAgain        = _ErrRecvAgain{}
+	compressWritersPool = xnsyncutil.NewNewlessPool()
 )
+
+func init() {
+	for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
+		cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
+		if err != nil {
+			gwlog.Fatalf("create flate compressor failed: %v", err)
+		}
+
+		compressWritersPool.Put(cw)
+	}
+
+	gwlog.Infof("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
+}
 
 type _ErrRecvAgain struct{}
 
@@ -45,36 +66,42 @@ func (err _ErrRecvAgain) Timeout() bool {
 	return false
 }
 
-// PacketConnectionStream is a connection that send and receive data packets upon a network stream connection
-type PacketConnectionStream struct {
+// PacketConnection is a connection that send and receive data packets upon a network stream connection
+type PacketConnection struct {
 	conn               Connection
+	compressed         bool
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
 
 	// buffers and infos for receiving a packet
 	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
 	payloadLenBytesRecved int
+	recvCompressed        bool
 	recvTotalPayloadLen   uint32
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
+
+	compressReader io.ReadCloser
 }
 
 // NewPacketConnection creates a packet connection based on network connection
-func NewPacketConnection(conn Connection) *PacketConnectionStream {
-	pc := &PacketConnectionStream{
-		conn: conn,
+func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
+	pc := &PacketConnection{
+		conn:       conn,
+		compressed: compressed,
 	}
 
+	pc.compressReader = flate.NewReader(os.Stdin) // reader is always needed
 	return pc
 }
 
 // NewPacket allocates a new packet (usually for sending)
-func (pc *PacketConnectionStream) NewPacket() *Packet {
+func (pc *PacketConnection) NewPacket() *Packet {
 	return allocPacket()
 }
 
 // SendPacket send packets to remote
-func (pc *PacketConnectionStream) SendPacket(packet *Packet) error {
+func (pc *PacketConnection) SendPacket(packet *Packet) error {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s SEND PACKET %p: msgtype=%v, payload(%d)=%v", pc, packet,
 			packetEndian.Uint16(packet.bytes[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+2]),
@@ -93,7 +120,7 @@ func (pc *PacketConnectionStream) SendPacket(packet *Packet) error {
 }
 
 // Flush connection writes
-func (pc *PacketConnectionStream) Flush(reason string) (err error) {
+func (pc *PacketConnection) Flush(reason string) (err error) {
 	pc.pendingPacketsLock.Lock()
 	if len(pc.pendingPackets) == 0 { // no packets to send, common to happen, so handle efficiently
 		pc.pendingPacketsLock.Unlock()
@@ -107,9 +134,24 @@ func (pc *PacketConnectionStream) Flush(reason string) (err error) {
 	op := opmon.StartOperation("FlushPackets-" + reason)
 	defer op.Finish(time.Millisecond * 300)
 
+	var cw *flate.Writer
+
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
+		if cw == nil && pc.compressed && packet.requireCompress() {
+			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
+			if _cw != nil {
+				cw = _cw.(*flate.Writer)
+				defer compressWritersPool.Put(cw)
+			} else {
+				gwlog.Warnf("Fail to get compressor, packet is not compressed")
+			}
+		}
+
+		if cw != nil {
+			packet.compress(cw)
+		}
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
 		if err == nil {
@@ -119,11 +161,23 @@ func (pc *PacketConnectionStream) Flush(reason string) (err error) {
 	}
 
 	for _, packet := range packets {
-		err = WriteAll(pc.conn, packet.data())
-		packet.Release()
-		if err != nil {
-			break
+		if cw == nil && pc.compressed && packet.requireCompress() {
+			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
+			if _cw != nil {
+				cw = _cw.(*flate.Writer)
+				//noinspection GoDeferInLoop
+				defer compressWritersPool.Put(cw)
+			} else {
+				gwlog.Warnf("Fail to get compressor, packet is not compressed")
+			}
 		}
+
+		if cw != nil {
+			packet.compress(cw)
+		}
+
+		WriteAll(pc.conn, packet.data())
+		packet.Release()
 	}
 
 	// now we send all data in the send buffer
@@ -134,12 +188,12 @@ func (pc *PacketConnectionStream) Flush(reason string) (err error) {
 }
 
 // SetRecvDeadline sets the receive deadline
-func (pc *PacketConnectionStream) SetRecvDeadline(deadline time.Time) error {
+func (pc *PacketConnection) SetRecvDeadline(deadline time.Time) error {
 	return pc.conn.SetReadDeadline(deadline)
 }
 
 // RecvPacket receives the next packet
-func (pc *PacketConnectionStream) RecvPacket() (*Packet, error) {
+func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	if pc.payloadLenBytesRecved < _SIZE_FIELD_SIZE {
 		// receive more of payload len bytes
 		n, err := pc.conn.Read(pc.payloadLenBuf[pc.payloadLenBytesRecved:])
@@ -152,6 +206,14 @@ func (pc *PacketConnectionStream) RecvPacket() (*Packet, error) {
 		}
 
 		pc.recvTotalPayloadLen = NETWORK_ENDIAN.Uint32(pc.payloadLenBuf[:])
+		//pc.recvCompressed = false
+		if pc.recvCompressed {
+			gwlog.Panicf("should be false")
+		}
+		if pc.recvTotalPayloadLen&_COMPRESSED_BIT_MASK != 0 {
+			pc.recvTotalPayloadLen &= _PAYLOAD_LEN_MASK
+			pc.recvCompressed = true
+		}
 
 		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > _MAX_PAYLOAD_LENGTH {
 			err := errors.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
@@ -172,8 +234,9 @@ func (pc *PacketConnectionStream) RecvPacket() (*Packet, error) {
 	if pc.recvedPayloadLen == pc.recvTotalPayloadLen {
 		// full packet received, return the packet
 		packet := pc.recvingPacket
-		packet.SetPayloadLen(pc.recvTotalPayloadLen)
+		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
 		pc.resetRecvStates()
+		packet.decompress(pc.compressReader)
 
 		return packet, nil
 	}
@@ -183,28 +246,29 @@ func (pc *PacketConnectionStream) RecvPacket() (*Packet, error) {
 	}
 	return nil, err
 }
-func (pc *PacketConnectionStream) resetRecvStates() {
+func (pc *PacketConnection) resetRecvStates() {
 	pc.payloadLenBytesRecved = 0
 	pc.recvTotalPayloadLen = 0
 	pc.recvedPayloadLen = 0
 	pc.recvingPacket = nil
+	pc.recvCompressed = false
 }
 
 // Close the connection
-func (pc *PacketConnectionStream) Close() error {
+func (pc *PacketConnection) Close() error {
 	return pc.conn.Close()
 }
 
 // RemoteAddr return the remote address
-func (pc *PacketConnectionStream) RemoteAddr() net.Addr {
+func (pc *PacketConnection) RemoteAddr() net.Addr {
 	return pc.conn.RemoteAddr()
 }
 
 // LocalAddr returns the local address
-func (pc *PacketConnectionStream) LocalAddr() net.Addr {
+func (pc *PacketConnection) LocalAddr() net.Addr {
 	return pc.conn.LocalAddr()
 }
 
-func (pc *PacketConnectionStream) String() string {
+func (pc *PacketConnection) String() string {
 	return fmt.Sprintf("[%s >>> %s]", pc.LocalAddr(), pc.RemoteAddr())
 }

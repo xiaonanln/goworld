@@ -43,9 +43,6 @@ type ClientBot struct {
 	startedDoingThings bool
 	syncPosTime        time.Time
 	useWebSocket       bool
-	udpSyncConn        netutil.PacketConnectionUDP
-
-	udpSyncConnClientidNotifyAcked bool
 }
 
 func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
@@ -87,27 +84,8 @@ func (bot *ClientBot) run() {
 
 	gwlog.Infof("connected: %s", netconn.RemoteAddr())
 
-	var conn netutil.Connection = netutil.NetConnection{netconn}
-	if cfg.CompressConnection {
-		conn = netutil.NewCompressedConnection(netutil.NewBufferedConnection(conn))
-	} else {
-		conn = netutil.NewBufferedConnection(conn)
-	}
-
-	bot.conn = proto.NewGoWorldConnection(conn, false)
+	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{netconn}), cfg.CompressConnection)
 	defer bot.conn.Close()
-
-	// connect the udp port
-	raddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", serverAddr, cfg.SyncPort))
-	if err != nil {
-		gwlog.Panic(err)
-	}
-
-	syncUdpConn, err := net.DialUDP("udp", nil, raddr)
-	if err != nil {
-		gwlog.Panic(err)
-	}
-	bot.udpSyncConn = netutil.NewPacketConnectionUDP(syncUdpConn)
 
 	bot.loop()
 }
@@ -158,19 +136,7 @@ func (bot *ClientBot) loop() {
 					player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
 					//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
 					player.yaw = entity.Yaw(rand.Float32() * 3.14)
-					//gwlog.Infof("Writing to UDP on %s ...", bot.syncRAddr.String())
-
-					udpSyncPacket := netutil.NewPacket()
-					udpSyncPacket.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
-					udpSyncPacket.AppendEntityID(player.ID)
-					udpSyncPacket.AppendFloat32(float32(player.pos.X))
-					udpSyncPacket.AppendFloat32(float32(player.pos.Y))
-					udpSyncPacket.AppendFloat32(float32(player.pos.Z))
-					udpSyncPacket.AppendFloat32(float32(player.yaw))
-
-					bot.udpSyncConn.SendPacket(udpSyncPacket)
-					udpSyncPacket.Release()
-					//bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+					bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
 				}
 
 				bot.syncPosTime = now

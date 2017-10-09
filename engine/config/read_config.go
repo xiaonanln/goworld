@@ -54,7 +54,6 @@ type GameConfig struct {
 type GateConfig struct {
 	Ip                 string
 	Port               int
-	SyncPort           int
 	LogFile            string
 	LogStderr          bool
 	HTTPIp             string
@@ -332,8 +331,6 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
 		} else if name == "compress_connection" {
 			sc.CompressConnection = key.MustBool(sc.CompressConnection)
-		} else if name == "sync_port" {
-			sc.SyncPort = key.MustInt(sc.SyncPort)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
