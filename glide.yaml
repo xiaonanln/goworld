@@ -28,5 +28,6 @@ import:
 - package: gopkg.in/mgo.v2
 - package: github.com/go-sql-driver/mysql
   version: ~1.3.0
+- package: github.com/golang/snappy
 testImport:
 - package: github.com/bmizerany/assert
