@@ -12,14 +12,10 @@ import (
 
 	"sync/atomic"
 
-	"compress/flate"
-
 	"os"
 
-	"io"
-
+	"github.com/golang/snappy"
 	"github.com/pkg/errors"
-	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/opmon"
@@ -34,22 +30,22 @@ const (
 
 var (
 	// NETWORK_ENDIAN is the network Endian of connections
-	NETWORK_ENDIAN      = binary.LittleEndian
-	errRecvAgain        = _ErrRecvAgain{}
-	compressWritersPool = xnsyncutil.NewNewlessPool()
+	NETWORK_ENDIAN = binary.LittleEndian
+	errRecvAgain   = _ErrRecvAgain{}
+	//compressWritersPool = xnsyncutil.NewNewlessPool()
 )
 
 func init() {
-	for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
-		cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
-		if err != nil {
-			gwlog.Fatalf("create flate compressor failed: %v", err)
-		}
+	//for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
+	//	cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
+	//	if err != nil {
+	//		gwlog.Fatalf("create flate compressor failed: %v", err)
+	//	}
+	//
+	//	compressWritersPool.Put(cw)
+	//}
 
-		compressWritersPool.Put(cw)
-	}
-
-	gwlog.Infof("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
+	//gwlog.Infof("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
 }
 
 type _ErrRecvAgain struct{}
@@ -81,7 +77,8 @@ type PacketConnection struct {
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
 
-	compressReader io.ReadCloser
+	compressReader *snappy.Reader
+	compressWriter *snappy.Writer
 }
 
 // NewPacketConnection creates a packet connection based on network connection
@@ -91,7 +88,8 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 		compressed: compressed,
 	}
 
-	pc.compressReader = flate.NewReader(os.Stdin) // reader is always needed
+	pc.compressReader = snappy.NewReader(os.Stdin)
+	pc.compressWriter = snappy.NewWriter(os.Stdout)
 	return pc
 }
 
@@ -134,24 +132,25 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 	op := opmon.StartOperation("FlushPackets-" + reason)
 	defer op.Finish(time.Millisecond * 300)
 
-	var cw *flate.Writer
+	//var cw *flate.Writer
 
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
-		if cw == nil && pc.compressed && packet.requireCompress() {
-			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
-			if _cw != nil {
-				cw = _cw.(*flate.Writer)
-				defer compressWritersPool.Put(cw)
-			} else {
-				gwlog.Warnf("Fail to get compressor, packet is not compressed")
-			}
+		//if cw == nil && pc.compressed && packet.requireCompress() {
+		//	_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
+		//	if _cw != nil {
+		//		cw = _cw.(*flate.Writer)
+		//		defer compressWritersPool.Put(cw)
+		//	} else {
+		//		gwlog.Warnf("Fail to get compressor, packet is not compressed")
+		//	}
+		//}
+
+		if pc.compressed && packet.requireCompress() {
+			packet.compress(pc.compressWriter)
 		}
 
-		if cw != nil {
-			packet.compress(cw)
-		}
 		err = WriteAll(pc.conn, packet.data())
 		packet.Release()
 		if err == nil {
@@ -161,19 +160,22 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 	}
 
 	for _, packet := range packets {
-		if cw == nil && pc.compressed && packet.requireCompress() {
-			_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
-			if _cw != nil {
-				cw = _cw.(*flate.Writer)
-				//noinspection GoDeferInLoop
-				defer compressWritersPool.Put(cw)
-			} else {
-				gwlog.Warnf("Fail to get compressor, packet is not compressed")
-			}
-		}
-
-		if cw != nil {
-			packet.compress(cw)
+		//if cw == nil && pc.compressed && packet.requireCompress() {
+		//	_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
+		//	if _cw != nil {
+		//		cw = _cw.(*flate.Writer)
+		//		//noinspection GoDeferInLoop
+		//		defer compressWritersPool.Put(cw)
+		//	} else {
+		//		gwlog.Warnf("Fail to get compressor, packet is not compressed")
+		//	}
+		//}
+		//
+		//if cw != nil {
+		//	packet.compress(cw)
+		//}
+		if pc.compressed && packet.requireCompress() {
+			packet.compress(pc.compressWriter)
 		}
 
 		WriteAll(pc.conn, packet.data())

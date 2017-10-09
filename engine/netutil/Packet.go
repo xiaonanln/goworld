@@ -2,7 +2,6 @@ package netutil
 
 import (
 	"bytes"
-	"compress/flate"
 	"encoding/binary"
 
 	"unsafe"
@@ -11,10 +10,9 @@ import (
 
 	"sync"
 
-	"io"
-
 	"fmt"
 
+	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -501,7 +499,7 @@ func (p *Packet) requireCompress() bool {
 	return !p.notCompress && !p.isCompressed() && p.GetPayloadLen() >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD
 }
 
-func (p *Packet) compress(cw *flate.Writer) {
+func (p *Packet) compress(cw *snappy.Writer) {
 	if !p.requireCompress() {
 		return
 	}
@@ -546,7 +544,7 @@ func (p *Packet) compress(cw *flate.Writer) {
 	return
 }
 
-func (p *Packet) decompress(cr io.ReadCloser) {
+func (p *Packet) decompress(cr *snappy.Reader) {
 	if !p.isCompressed() {
 		return
 	}
@@ -557,7 +555,7 @@ func (p *Packet) decompress(cr io.ReadCloser) {
 	oldPayloadCap := p.PayloadCap()
 	oldPayload := p.Payload()
 	uncompressedBuffer := packetBufferPools[getPayloadCapOfPayloadLen(uncompressedPayloadLen)].Get().([]byte)
-	cr.(flate.Resetter).Reset(bytes.NewReader(oldPayload), nil)
+	cr.Reset(bytes.NewReader(oldPayload))
 
 	//newPayloadLen, err := cr.Read(uncompressedBuffer[_PREPAYLOAD_SIZE:])
 	err := ReadAll(cr, uncompressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+uncompressedPayloadLen])

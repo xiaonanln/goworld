@@ -46,7 +46,7 @@ const (
 	// CLIENT_PROXY_READ_BUFFER_SIZE is the read buffer size for gates' client proxies
 	CLIENT_PROXY_READ_BUFFER_SIZE = 1024 * 1024
 	// COMPRESS_WRITER_POOL_SIZE is number of write compressors in the pool for gate
-	COMPRESS_WRITER_POOL_SIZE = 100
+	//COMPRESS_WRITER_POOL_SIZE = 100
 	// CLIENT_PROXY_SET_TCP_NO_DELAY = true sets client proxies to TcpNoDelay
 	CLIENT_PROXY_SET_TCP_NO_DELAY = true
 
