@@ -9,13 +9,17 @@ func TestSnappyCompressor(t *testing.T) {
 	testCompressor(t, NewSnappyCompressor())
 }
 
+func TestLz4Compressor(t *testing.T) {
+	testCompressor(t, NewLz4Compressor())
+}
+
 func TestFlateCompressor(t *testing.T) {
 	testCompressor(t, NewFlateCompressor())
 }
 
-func TestZlibCompressor(t *testing.T) {
-	testCompressor(t, NewZlibCompressor())
-}
+//func TestZlibCompressor(t *testing.T) {
+//	testCompressor(t, NewZlibCompressor())
+//}
 
 func TestLzwCompressor(t *testing.T) {
 	testCompressor(t, NewLzwCompressor())
