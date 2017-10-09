@@ -40,7 +40,7 @@ func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProx
 		conn = netutil.NewBufferedConnection(conn)
 	}
 
-	gwc := proto.NewGoWorldConnection(conn)
+	gwc := proto.NewGoWorldConnection(conn, false)
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid
