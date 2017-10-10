@@ -5,7 +5,7 @@ import (
 
 	"compress/lzw"
 
-	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 )
 
 func NewLzwCompressor() Compressor {
@@ -32,5 +32,5 @@ func (fc lzwCompressor) Compress(b []byte, c []byte) ([]byte, error) {
 
 func (fc lzwCompressor) Decompress(c []byte, b []byte) error {
 	lzwReader := lzw.NewReader(bytes.NewReader(c), lzw.LSB, 8)
-	return netutil.ReadAll(lzwReader, b)
+	return gwioutil.ReadAll(lzwReader, b)
 }

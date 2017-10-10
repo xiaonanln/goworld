@@ -6,7 +6,7 @@ import (
 	"bytes"
 
 	"github.com/pierrec/lz4"
-	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 )
 
 func NewLz4Compressor() Compressor {
@@ -38,5 +38,5 @@ func (sc *lz4Compressor) Compress(b []byte, c []byte) ([]byte, error) {
 
 func (sc *lz4Compressor) Decompress(c []byte, b []byte) error {
 	sc.reader.Reset(bytes.NewReader(c))
-	return netutil.ReadAll(sc.reader, b)
+	return gwioutil.ReadAll(sc.reader, b)
 }

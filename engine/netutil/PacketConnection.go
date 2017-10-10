@@ -12,12 +12,11 @@ import (
 
 	"sync/atomic"
 
-	"os"
-
-	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil/compress"
 	"github.com/xiaonanln/goworld/engine/opmon"
 )
 
@@ -76,9 +75,7 @@ type PacketConnection struct {
 	recvTotalPayloadLen   uint32
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
-
-	compressReader *snappy.Reader
-	compressWriter *snappy.Writer
+	compressor            compress.Compressor
 }
 
 // NewPacketConnection creates a packet connection based on network connection
@@ -88,8 +85,7 @@ func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
 		compressed: compressed,
 	}
 
-	pc.compressReader = snappy.NewReader(os.Stdin)
-	pc.compressWriter = snappy.NewWriter(os.Stdout)
+	pc.compressor = compress.NewSnappyCompressor()
 	return pc
 }
 
@@ -137,21 +133,12 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 	if len(packets) == 1 {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
-		//if cw == nil && pc.compressed && packet.requireCompress() {
-		//	_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
-		//	if _cw != nil {
-		//		cw = _cw.(*flate.Writer)
-		//		defer compressWritersPool.Put(cw)
-		//	} else {
-		//		gwlog.Warnf("Fail to get compressor, packet is not compressed")
-		//	}
-		//}
 
 		if pc.compressed && packet.requireCompress() {
-			packet.compress(pc.compressWriter)
+			packet.compress(pc.compressor)
 		}
 
-		err = WriteAll(pc.conn, packet.data())
+		err = gwioutil.WriteAll(pc.conn, packet.data())
 		packet.Release()
 		if err == nil {
 			err = pc.conn.Flush()
@@ -160,25 +147,11 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 	}
 
 	for _, packet := range packets {
-		//if cw == nil && pc.compressed && packet.requireCompress() {
-		//	_cw := compressWritersPool.TryGet() // try to get a usable compress writer, might fail
-		//	if _cw != nil {
-		//		cw = _cw.(*flate.Writer)
-		//		//noinspection GoDeferInLoop
-		//		defer compressWritersPool.Put(cw)
-		//	} else {
-		//		gwlog.Warnf("Fail to get compressor, packet is not compressed")
-		//	}
-		//}
-		//
-		//if cw != nil {
-		//	packet.compress(cw)
-		//}
 		if pc.compressed && packet.requireCompress() {
-			packet.compress(pc.compressWriter)
+			packet.compress(pc.compressor)
 		}
 
-		WriteAll(pc.conn, packet.data())
+		gwioutil.WriteAll(pc.conn, packet.data())
 		packet.Release()
 	}
 
@@ -238,7 +211,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		packet := pc.recvingPacket
 		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
 		pc.resetRecvStates()
-		packet.decompress(pc.compressReader)
+		packet.decompress(pc.compressor)
 
 		return packet, nil
 	}

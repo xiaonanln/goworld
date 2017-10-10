@@ -3,6 +3,8 @@ package compress
 import (
 	"os"
 
+	"github.com/xiaonanln/goworld/engine/gwioutil"
+
 	"bytes"
 
 	"compress/flate"
@@ -10,8 +12,6 @@ import (
 	"io"
 
 	"io/ioutil"
-
-	"github.com/xiaonanln/goworld/engine/netutil"
 )
 
 func NewFlateCompressor() Compressor {
@@ -48,5 +48,5 @@ func (fc *flateCompressor) Compress(b []byte, c []byte) ([]byte, error) {
 
 func (fc *flateCompressor) Decompress(c []byte, b []byte) error {
 	fc.reader.(flate.Resetter).Reset(bytes.NewReader(c), nil)
-	return netutil.ReadAll(fc.reader, b)
+	return gwioutil.ReadAll(fc.reader, b)
 }

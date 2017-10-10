@@ -9,7 +9,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 )
 
 func NewZlibCompressor() Compressor {
@@ -58,5 +58,5 @@ func (fc *zlibCompressor) Compress(b []byte, c []byte) ([]byte, error) {
 
 func (fc *zlibCompressor) Decompress(c []byte, b []byte) error {
 	fc.reader.(zlib.Resetter).Reset(bytes.NewReader(c), nil)
-	return netutil.ReadAll(fc.reader, b)
+	return gwioutil.ReadAll(fc.reader, b)
 }

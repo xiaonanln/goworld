@@ -1,7 +1,6 @@
 package netutil
 
 import (
-	"bytes"
 	"encoding/binary"
 
 	"unsafe"
@@ -12,11 +11,11 @@ import (
 
 	"fmt"
 
-	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/netutil/compress"
 )
 
 const (
@@ -499,31 +498,25 @@ func (p *Packet) requireCompress() bool {
 	return !p.notCompress && !p.isCompressed() && p.GetPayloadLen() >= consts.PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD
 }
 
-func (p *Packet) compress(cw *snappy.Writer) {
+func (p *Packet) compress(compressor compress.Compressor) {
 	if !p.requireCompress() {
 		return
 	}
 
 	payloadCap := p.PayloadCap()
 	compressedBuffer := packetBufferPools[payloadCap].Get().([]byte)
-	w := bytes.NewBuffer(compressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE])
-	cw.Reset(w)
+	//w := bytes.NewBuffer(compressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE])
+	//cw.Reset(w)
 
 	oldPayload := p.Payload()
 	oldPayloadLen := len(oldPayload)
-	if err := WriteAll(cw, oldPayload); err != nil {
-		gwlog.Panicf("compress error: %v", err)
+	compressedPayload, err := compressor.Compress(oldPayload, compressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE])
+	if err != nil {
+		gwlog.Panic(errors.Wrap(err, "compress failed"))
 	}
 
-	if err := cw.Flush(); err != nil {
-		gwlog.Panicf("compress error: %v", err)
-	}
-
-	compressedPayload := w.Bytes()
 	compressedPayloadLen := len(compressedPayload)
 
-	//gwlog.Infof("COMPRESS %v => %v", oldPayload, compressedPayload)
-	//gwlog.Infof("Old payload len %d, compressed payload len %d", oldPayloadLen, compressedPayloadLen)
 	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
 
 	if compressedPayloadLen >= oldPayloadLen-4 { // leave 4 bytes for AppendUint32 in the last
@@ -544,7 +537,7 @@ func (p *Packet) compress(cw *snappy.Writer) {
 	return
 }
 
-func (p *Packet) decompress(cr *snappy.Reader) {
+func (p *Packet) decompress(compressor compress.Compressor) {
 	if !p.isCompressed() {
 		return
 	}
@@ -555,16 +548,9 @@ func (p *Packet) decompress(cr *snappy.Reader) {
 	oldPayloadCap := p.PayloadCap()
 	oldPayload := p.Payload()
 	uncompressedBuffer := packetBufferPools[getPayloadCapOfPayloadLen(uncompressedPayloadLen)].Get().([]byte)
-	cr.Reset(bytes.NewReader(oldPayload))
-
-	//newPayloadLen, err := cr.Read(uncompressedBuffer[_PREPAYLOAD_SIZE:])
-	err := ReadAll(cr, uncompressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+uncompressedPayloadLen])
-	if err != nil {
+	if err := compressor.Decompress(oldPayload, uncompressedBuffer[_PREPAYLOAD_SIZE:_PREPAYLOAD_SIZE+uncompressedPayloadLen]); err != nil {
 		gwlog.Panic(errors.Wrap(err, "decompress failed"))
 	}
-	//if err := cr.Close(); err != nil {
-	//	gwlog.Panic(errors.Wrap(err, "close uncompressor failed"))
-	//}
 
 	//gwlog.Infof("Compressed payload: %d, after decompress: %d", len(oldPayload), newPayloadLen)
 	//gwlog.Infof("UNCOMPRESS: %v => %v", oldPayload, compressedPayload)

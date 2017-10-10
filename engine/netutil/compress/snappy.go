@@ -6,7 +6,7 @@ import (
 	"bytes"
 
 	"github.com/golang/snappy"
-	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 )
 
 func NewSnappyCompressor() Compressor {
@@ -38,5 +38,5 @@ func (sc *snappyCompressor) Compress(b []byte, c []byte) ([]byte, error) {
 
 func (sc *snappyCompressor) Decompress(c []byte, b []byte) error {
 	sc.reader.Reset(bytes.NewReader(c))
-	return netutil.ReadAll(sc.reader, b)
+	return gwioutil.ReadAll(sc.reader, b)
 }

@@ -1,6 +1,10 @@
 package netutil
 
-import "io"
+import (
+	"io"
+
+	"github.com/xiaonanln/goworld/engine/gwioutil"
+)
 
 const (
 	_SEND_BUFFER_SIZE = 8192 * 2
@@ -28,7 +32,7 @@ func (sb *sendBuffer) WriteAllTo(writer io.Writer) error {
 		return nil
 	}
 
-	err := WriteAll(writer, sb.buffer[:sb.written])
+	err := gwioutil.WriteAll(writer, sb.buffer[:sb.written])
 	sb.reset()
 	return err
 }
