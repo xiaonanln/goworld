@@ -9,8 +9,7 @@ import (
 
 	"fmt"
 
-	"os"
-
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -22,7 +21,7 @@ func (ts *testEchoTcpServer) ServeTCPConnection(conn net.Conn) {
 	for {
 		n, err := conn.Read(buf)
 		if n > 0 {
-			WriteAll(conn, buf[:n])
+			gwioutil.WriteAll(conn, buf[:n])
 		}
 
 		if err != nil {
@@ -45,49 +44,49 @@ func init() {
 	time.Sleep(time.Millisecond * 200)
 }
 
-func TestCompressedConnection(t *testing.T) {
-
-	_conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", PORT))
-	if err != nil {
-		t.Errorf("connect error: %s", err)
-	}
-
-	conn := NewCompressedConnection(NetConnection{_conn})
-	s := ""
-	for i := 0; i < 1000; i++ {
-		s = s + "a"
-	}
-
-	SR := 1
-	for tm := 0; tm < 10; tm++ {
-		for i := 0; i < SR; i++ {
-			n, err := conn.Write([]byte(s))
-			if err != nil {
-				panic(err)
-			}
-			if n != len(s) {
-				panic("write wrong size")
-			}
-		}
-
-		println("written", SR)
-		conn.Flush()
-
-		recvbuf := make([]byte, len(s))
-		for len(recvbuf) > 0 {
-			var n int
-			var err error
-			if len(recvbuf) > 1000 {
-				n, err = conn.Read(recvbuf[:1000])
-			} else {
-				n, err = conn.Read(recvbuf)
-			}
-
-			recvbuf = recvbuf[n:]
-			fmt.Fprintf(os.Stderr, "Read %d/%d: %v\n", len(s)*SR-len(recvbuf), len(s)*SR, err)
-		}
-	}
-}
+//func TestCompressedConnection(t *testing.T) {
+//
+//	_conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", PORT))
+//	if err != nil {
+//		t.Errorf("connect error: %s", err)
+//	}
+//
+//	conn := NewCompressedConnection(NetConnection{_conn})
+//	s := ""
+//	for i := 0; i < 1000; i++ {
+//		s = s + "a"
+//	}
+//
+//	SR := 1
+//	for tm := 0; tm < 10; tm++ {
+//		for i := 0; i < SR; i++ {
+//			n, err := conn.Write([]byte(s))
+//			if err != nil {
+//				panic(err)
+//			}
+//			if n != len(s) {
+//				panic("write wrong size")
+//			}
+//		}
+//
+//		println("written", SR)
+//		conn.Flush()
+//
+//		recvbuf := make([]byte, len(s))
+//		for len(recvbuf) > 0 {
+//			var n int
+//			var err error
+//			if len(recvbuf) > 1000 {
+//				n, err = conn.Read(recvbuf[:1000])
+//			} else {
+//				n, err = conn.Read(recvbuf)
+//			}
+//
+//			recvbuf = recvbuf[n:]
+//			fmt.Fprintf(os.Stderr, "Read %d/%d: %v\n", len(s)*SR-len(recvbuf), len(s)*SR, err)
+//		}
+//	}
+//}
 
 func TestPacketConnection(t *testing.T) {
 
@@ -96,7 +95,7 @@ func TestPacketConnection(t *testing.T) {
 		t.Errorf("connect error: %s", err)
 	}
 
-	conn := NewPacketConnection(NetConnection{_conn})
+	conn := NewPacketConnection(NetConnection{_conn}, false)
 
 	for i := 0; i < 10; i++ {
 		var PAYLOAD_LEN uint32 = uint32(rand.Intn(4096 + 1))
