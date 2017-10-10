@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"testing"
 )
 
@@ -54,7 +53,7 @@ AUeJ6PeW+DAkmJWF6QIDAQAB
 
 	encryptText, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, pubKey, plainText, nil)
 	checkError(err)
-	ioutil.WriteFile("encrypt.txt", encryptText, 0644)
+	fmt.Printf("Encrypt text: %s", encryptText)
 
 	decryptText, err := rsa.DecryptOAEP(sha1.New(), rand.Reader, priKey, encryptText, nil)
 	checkError(err)
