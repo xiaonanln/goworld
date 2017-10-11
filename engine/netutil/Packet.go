@@ -22,8 +22,8 @@ const (
 	_MIN_PAYLOAD_CAP = 128
 	_CAP_GROW_SHIFT  = uint(2)
 
-	_PAYLOAD_LEN_MASK    = 0x7FFFFFFF
-	_COMPRESSED_BIT_MASK = 0x80000000
+	_PAYLOAD_LEN_MASK            = 0x7FFFFFFF
+	_PAYLOAD_COMPRESSED_BIT_MASK = 0x80000000
 )
 
 var (
@@ -482,13 +482,13 @@ func (p *Packet) GetPayloadLen() uint32 {
 // SetPayloadLen sets the payload l
 func (p *Packet) SetPayloadLen(plen uint32) {
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	*pplen = (*pplen & _COMPRESSED_BIT_MASK) | plen
+	*pplen = (*pplen & _PAYLOAD_COMPRESSED_BIT_MASK) | plen
 }
 
 func (p *Packet) setPayloadLenCompressed(plen uint32, compressed bool) {
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
 	if compressed {
-		*pplen = _COMPRESSED_BIT_MASK | plen
+		*pplen = _PAYLOAD_COMPRESSED_BIT_MASK | plen
 	} else {
 		*pplen = plen
 	}
@@ -531,7 +531,7 @@ func (p *Packet) compress(compressor compress.Compressor) {
 	packetBufferPools[payloadCap].Put(p.bytes)
 	p.bytes = compressedBuffer
 	pplen := (*uint32)(unsafe.Pointer(&p.bytes[0]))
-	*pplen = _COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
+	*pplen = _PAYLOAD_COMPRESSED_BIT_MASK | uint32(compressedPayloadLen)
 
 	p.AppendUint32(uint32(oldPayloadLen)) // append the size of old payload to the end of packet
 	return
@@ -564,5 +564,5 @@ func (p *Packet) decompress(compressor compress.Compressor) {
 }
 
 func (p *Packet) isCompressed() bool {
-	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))&_COMPRESSED_BIT_MASK != 0
+	return *(*uint32)(unsafe.Pointer(&p.bytes[0]))&_PAYLOAD_COMPRESSED_BIT_MASK != 0
 }

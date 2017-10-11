@@ -185,7 +185,7 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		if pc.recvCompressed {
 			gwlog.Panicf("should be false")
 		}
-		if pc.recvTotalPayloadLen&_COMPRESSED_BIT_MASK != 0 {
+		if pc.recvTotalPayloadLen&_PAYLOAD_COMPRESSED_BIT_MASK != 0 {
 			pc.recvTotalPayloadLen &= _PAYLOAD_LEN_MASK
 			pc.recvCompressed = true
 		}
