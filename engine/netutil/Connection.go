@@ -1,11 +1,20 @@
 package netutil
 
-import "net"
+import (
+	"io"
+	"net"
+	"time"
+)
 
 // Connection interface for connections to servers
 type Connection interface {
-	net.Conn // Connection is more than net.Conn
+	io.ReadWriteCloser
 	Flush() error
+
+	RemoteAddr() net.Addr
+	LocalAddr() net.Addr
+	SetWriteDeadline(time.Time) error
+	SetReadDeadline(time.Time) error
 }
 
 // NetConnection converts net.Conn to Connection

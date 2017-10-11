@@ -316,13 +316,7 @@ func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig 
 	_readGateConfig(sec, &sc)
 	// validate game config here
 	if sc.CompressConnection && sc.CompressFormat == "" {
-		gwlog.Fatalf("Gate %s: compress_connection is enabled, but compress format is not set", sec.Name())
-	}
-	if sc.EncryptConnection && sc.RSAKey == "" {
-		gwlog.Fatalf("Gate %s: encrypt_connection is enabled, but rsa_key is not set", sec.Name())
-	}
-	if sc.EncryptConnection && sc.RSACertificate == "" {
-		gwlog.Fatalf("Gate %s: encrypt_connection is enabled, but rsa_certificate is not set", sec.Name())
+		gwlog.Fatalf("Gate %s: compress_connection is enabled, but compress format is empty", sec.Name())
 	}
 	return &sc
 }
