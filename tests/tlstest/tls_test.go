@@ -1,18 +1,81 @@
 package tlstest
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
+	"bufio"
+	"crypto/tls"
+	"fmt"
+	"io"
+	"net"
+	"sync"
 	"testing"
 )
 
-func TestTLS(t *testing.T) {
-	prikey, err := rsa.GenerateKey(rand.Reader, 2048)
-	checkError(err)
-	t.Logf("private key generated: %d", prikey.D.BitLen())
-	pubkey := prikey.Public().(*rsa.PublicKey)
-	t.Logf("public key generated: %d", pubkey.N.BitLen())
+var (
+	wait sync.WaitGroup
+)
 
+func TestTLS(t *testing.T) {
+	wait.Add(2)
+	go serverRoutine(t)
+	go clientRoutine(t)
+	wait.Wait()
+}
+
+func serverRoutine(t *testing.T) {
+	defer wait.Done()
+
+	cert, err := tls.LoadX509KeyPair("../../rsa.cert", "../../rsa.key")
+	checkError(err)
+	t.Logf("server: certificate loaded")
+
+	tlsConfig := &tls.Config{Certificates: []tls.Certificate{cert}}
+
+	ln, err := net.Listen("tcp", ":10443")
+	t.Log("server: listenning on :10443")
+	checkError(err)
+	defer ln.Close()
+
+	conn, err := ln.Accept()
+	checkError(err)
+
+	go func() {
+		defer conn.Close()
+		conn = net.Conn(tls.Server(conn, tlsConfig))
+		r := bufio.NewReader(conn)
+		for {
+			msg, err := r.ReadString('\n')
+			if err == io.EOF {
+				break
+			}
+			checkError(err)
+			t.Logf("server: recv '%s'", msg)
+			_, err = conn.Write([]byte("world\n"))
+			checkError(err)
+		}
+	}()
+
+}
+
+func clientRoutine(t *testing.T) {
+	defer wait.Done()
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	conn, err := net.Dial("tcp", "127.0.0.1:10443")
+	checkError(err)
+
+	defer conn.Close()
+	conn = net.Conn(tls.Client(conn, tlsConfig))
+
+	for i := 0; i < 10; i++ {
+		n, err := conn.Write([]byte(fmt.Sprintf("hello %d\n", i)))
+		checkError(err)
+		buf := make([]byte, 100)
+		n, err = conn.Read(buf)
+		checkError(err)
+		t.Logf("client: recv '%s'", string(buf[:n]))
+	}
 }
 
 func checkError(e error) {
