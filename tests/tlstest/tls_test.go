@@ -11,12 +11,15 @@ import (
 )
 
 var (
-	wait sync.WaitGroup
+	wait         sync.WaitGroup
+	waitServerOk sync.WaitGroup
 )
 
 func TestTLS(t *testing.T) {
 	wait.Add(2)
+	waitServerOk.Add(1)
 	go serverRoutine(t)
+	waitServerOk.Wait()
 	go clientRoutine(t)
 	wait.Wait()
 }
@@ -30,10 +33,12 @@ func serverRoutine(t *testing.T) {
 
 	tlsConfig := &tls.Config{Certificates: []tls.Certificate{cert}}
 
-	ln, err := net.Listen("tcp", ":10443")
+	ln, err := net.Listen("tcp", "127.0.0.1:10443")
 	t.Log("server: listenning on :10443")
 	checkError(err)
 	defer ln.Close()
+
+	waitServerOk.Done()
 
 	conn, err := ln.Accept()
 	checkError(err)
