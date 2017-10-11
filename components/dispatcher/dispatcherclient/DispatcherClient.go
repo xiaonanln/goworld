@@ -15,7 +15,7 @@ type DispatcherClient struct {
 }
 
 func newDispatcherClient(conn net.Conn, autoFlush bool) *DispatcherClient {
-	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{conn}), false)
+	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{conn}), false, "")
 
 	dc := &DispatcherClient{
 		GoWorldConnection: gwc,

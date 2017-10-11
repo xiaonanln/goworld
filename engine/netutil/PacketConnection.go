@@ -79,10 +79,10 @@ type PacketConnection struct {
 }
 
 // NewPacketConnection creates a packet connection based on network connection
-func NewPacketConnection(conn Connection, compressed bool) *PacketConnection {
+func NewPacketConnection(conn Connection, compressor compress.Compressor) *PacketConnection {
 	pc := &PacketConnection{
 		conn:       conn,
-		compressed: compressed,
+		compressed: compressor != nil,
 	}
 
 	pc.compressor = compress.NewSnappyCompressor()

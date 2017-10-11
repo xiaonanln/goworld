@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func BenchmarkGWSnappyCompressor(b *testing.B) {
+	benchmarkCompressor(b, NewGWSnappyCompressor())
+}
+
 func BenchmarkSnappyCompressor(b *testing.B) {
 	benchmarkCompressor(b, NewSnappyCompressor())
 }

@@ -61,6 +61,7 @@ type GateConfig struct {
 	LogLevel           string
 	GoMaxProcs         int
 	CompressConnection bool
+	CompressFormat     string
 }
 
 // DispatcherConfig defines fields of dispatcher config
@@ -299,6 +300,7 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 	gcc.HTTPIp = _DEFAULT_HTTP_IP
 	gcc.HTTPPort = 0 // pprof not enabled by default
 	gcc.GoMaxProcs = 0
+	gcc.CompressFormat = ""
 
 	_readGateConfig(section, gcc)
 }
@@ -306,7 +308,10 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig {
 	var sc GateConfig = *gateCommonConfig // copy from game_common
 	_readGateConfig(sec, &sc)
-	// validate game config
+	// validate game config here
+	if sc.CompressConnection && sc.CompressFormat == "" {
+		gwlog.Fatalf("Gate %s: compress_connection is enabled, but compress format is empty", sec.Name())
+	}
 	return &sc
 }
 
@@ -331,6 +336,8 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
 		} else if name == "compress_connection" {
 			sc.CompressConnection = key.MustBool(sc.CompressConnection)
+		} else if name == "compress_format" {
+			sc.CompressFormat = key.MustString(sc.CompressFormat)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}

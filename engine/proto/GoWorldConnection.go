@@ -10,6 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/netutil/compress"
 )
 
 // GoWorldConnection is the network protocol implementation of GoWorld components (dispatcher, gate, game)
@@ -19,9 +20,14 @@ type GoWorldConnection struct {
 }
 
 // NewGoWorldConnection creates a GoWorldConnection using network connection
-func NewGoWorldConnection(conn netutil.Connection, compressed bool) *GoWorldConnection {
+func NewGoWorldConnection(conn netutil.Connection, compressConnection bool, compressFormat string) *GoWorldConnection {
+	var compressor compress.Compressor
+	if compressConnection {
+		compressor = compress.NewCompressor(compressFormat)
+	}
+
 	return &GoWorldConnection{
-		packetConn: netutil.NewPacketConnection(conn, compressed),
+		packetConn: netutil.NewPacketConnection(conn, compressor),
 	}
 }
 
