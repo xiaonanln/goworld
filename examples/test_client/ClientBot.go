@@ -14,6 +14,8 @@ import (
 
 	"os"
 
+	"crypto/tls"
+
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -26,6 +28,12 @@ import (
 )
 
 const _SPACE_ENTITY_TYPE = "__space__"
+
+var (
+	tlsConfig = &tls.Config{
+		InsecureSkipVerify: true,
+	}
+)
 
 // ClientBot is  a client bot representing a game client
 type ClientBot struct {
@@ -83,7 +91,9 @@ func (bot *ClientBot) run() {
 	}
 
 	gwlog.Infof("connected: %s", netconn.RemoteAddr())
-
+	if cfg.EncryptConnection {
+		netconn = tls.Client(netconn, tlsConfig)
+	}
 	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{netconn}), cfg.CompressConnection, cfg.CompressFormat)
 	defer bot.conn.Close()
 

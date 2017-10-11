@@ -12,6 +12,9 @@ import (
 
 	"os"
 
+	"crypto/tls"
+
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
@@ -38,6 +41,7 @@ type GateService struct {
 
 	terminating xnsyncutil.AtomicBool
 	terminated  *xnsyncutil.OneTimeCond
+	tlsConfig   *tls.Config
 }
 
 func newGateService() *GateService {
@@ -53,11 +57,36 @@ func newGateService() *GateService {
 
 func (gs *GateService) run() {
 	cfg := config.GetGate(gateid)
-	gwlog.Infof("Compress connection: %v", cfg.CompressConnection)
+	gwlog.Infof("Compress connection: %v, encrypt connection: %v", cfg.CompressConnection, cfg.EncryptConnection)
+
+	if cfg.EncryptConnection {
+		gs.setupTLSConfig(cfg)
+	}
+
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 
 	netutil.ServeForever(gs.handlePacketRoutine)
+}
+
+func (gs *GateService) setupTLSConfig(cfg *config.GateConfig) {
+	cert, err := tls.LoadX509KeyPair(cfg.RSACertificate, cfg.RSAKey)
+	if err != nil {
+		gwlog.Panic(errors.Wrap(err, "load RSA key & certificate failed"))
+	}
+
+	gs.tlsConfig = &tls.Config{
+		//MinVersion:       tls.VersionTLS12,
+		//CurvePreferences: []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		Certificates: []tls.Certificate{cert},
+		//CipherSuites: []uint16{
+		//	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		//	tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		//	tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+		//	tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		//},
+		//PreferServerCipherSuites: true,
+	}
 }
 
 func (gs *GateService) String() string {
@@ -89,6 +118,16 @@ func (gs *GateService) handleClientConnection(netconn net.Conn) {
 	}
 
 	cfg := config.GetGate(gateid)
+
+	if cfg.EncryptConnection {
+		tlsConn := tls.Server(netconn, gs.tlsConfig)
+		//if err := tlsConn.Handshake(); err != nil {
+		//	gwlog.Errorf("TLS handshake failed: %v", err)
+		//	netconn.Close()
+		//	return
+		//}
+		netconn = net.Conn(tlsConn)
+	}
 
 	conn := netutil.NetConnection{netconn}
 	cp := newClientProxy(conn, cfg)
