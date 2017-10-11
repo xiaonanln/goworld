@@ -353,9 +353,9 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 		} else if name == "encrypt_connection" {
 			sc.EncryptConnection = key.MustBool(sc.EncryptConnection)
 		} else if name == "rsa_key" {
-			sc.RSAKey = "rsa.key"
+			sc.RSAKey = key.MustString(sc.RSAKey)
 		} else if name == "rsa_certificate" {
-			sc.RSACertificate = "rsa.crt"
+			sc.RSACertificate = key.MustString(sc.RSACertificate)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
