@@ -27,7 +27,7 @@ func TestTLS(t *testing.T) {
 func serverRoutine(t *testing.T) {
 	defer wait.Done()
 
-	cert, err := tls.LoadX509KeyPair("../../rsa.crt", "../../rsa.key")
+	cert, err := tls.LoadX509KeyPair("../../rsa.cert", "../../rsa.key")
 	checkError(err)
 	t.Logf("server: certificate loaded")
 

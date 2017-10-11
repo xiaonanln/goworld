@@ -62,9 +62,6 @@ type GateConfig struct {
 	GoMaxProcs         int
 	CompressConnection bool
 	CompressFormat     string
-	EncryptConnection  bool
-	RSAKey             string
-	RSACertificate     string
 }
 
 // DispatcherConfig defines fields of dispatcher config
@@ -304,9 +301,6 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 	gcc.HTTPPort = 0 // pprof not enabled by default
 	gcc.GoMaxProcs = 0
 	gcc.CompressFormat = ""
-	gcc.CompressFormat = "gwsnappy"
-	gcc.RSAKey = "rsa.key"
-	gcc.RSACertificate = "rsa.crt"
 
 	_readGateConfig(section, gcc)
 }
@@ -344,12 +338,6 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 			sc.CompressConnection = key.MustBool(sc.CompressConnection)
 		} else if name == "compress_format" {
 			sc.CompressFormat = key.MustString(sc.CompressFormat)
-		} else if name == "encrypt_connection" {
-			sc.EncryptConnection = key.MustBool(sc.EncryptConnection)
-		} else if name == "rsa_key" {
-			sc.RSAKey = "rsa.key"
-		} else if name == "rsa_certificate" {
-			sc.RSACertificate = "rsa.crt"
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}

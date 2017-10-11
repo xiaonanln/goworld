@@ -89,7 +89,6 @@ func (gs *GateService) handleClientConnection(netconn net.Conn) {
 	}
 
 	cfg := config.GetGate(gateid)
-
 	conn := netutil.NetConnection{netconn}
 	cp := newClientProxy(conn, cfg)
 
