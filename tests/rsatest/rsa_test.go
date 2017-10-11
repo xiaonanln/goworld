@@ -12,19 +12,13 @@ import (
 )
 
 func TestRSA(t *testing.T) {
-	pemData, err := ioutil.ReadFile("../../goworld.pem")
+	pemData, err := ioutil.ReadFile("../../rsa.key")
 	checkError(err)
 	privateBlock, _ := pem.Decode(pemData)
 	priKey, err := x509.ParsePKCS1PrivateKey(privateBlock.Bytes)
 	checkError(err)
 
-	pubData, err := ioutil.ReadFile("../../goworld.pub")
-	checkError(err)
-	pubBlock, _ := pem.Decode(pubData)
-
-	pubKeyValue, err := x509.ParsePKIXPublicKey(pubBlock.Bytes)
-	checkError(err)
-	pubKey := pubKeyValue.(*rsa.PublicKey)
+	pubKey := priKey.Public().(*rsa.PublicKey)
 
 	var plainText []byte
 	for i := 0; i < 50; i++ {
