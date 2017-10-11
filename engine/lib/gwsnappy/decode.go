@@ -95,8 +95,8 @@ type Reader struct {
 	decoded []byte
 	buf     []byte
 	// decoded[i:j] contains decoded bytes that have not yet been passed on.
-	i, j       int
-	readHeader bool
+	i, j int
+	//readHeader bool
 }
 
 // Reset discards any buffered data, resets all state, and switches the Snappy
@@ -107,7 +107,7 @@ func (r *Reader) Reset(reader io.Reader) {
 	r.err = nil
 	r.i = 0
 	r.j = 0
-	r.readHeader = false
+	//r.readHeader = false
 }
 
 func (r *Reader) ClearError() {
@@ -171,13 +171,13 @@ func (r *Reader) Read(p []byte) (int, error) {
 			return 0, r.err
 		}
 		chunkType := r.buf[0]
-		if !r.readHeader {
-			if chunkType != chunkTypeStreamIdentifier {
-				r.err = ErrCorrupt
-				return 0, r.err
-			}
-			r.readHeader = true
-		}
+		//if !r.readHeader {
+		//	if chunkType != chunkTypeStreamIdentifier {
+		//		r.err = ErrCorrupt
+		//		return 0, r.err
+		//	}
+		//	r.readHeader = true
+		//}
 		chunkLen := int(r.buf[1]) | int(r.buf[2])<<8 | int(r.buf[3])<<16
 		if chunkLen > len(r.buf) {
 			gwlog.Fatalf("chunkLen = %d > %d!!!", chunkLen, len(r.buf))

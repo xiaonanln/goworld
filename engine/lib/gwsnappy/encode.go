@@ -157,7 +157,7 @@ type Writer struct {
 	obuf []byte
 
 	// wroteStreamHeader is whether we have written the stream header.
-	wroteStreamHeader bool
+	//wroteStreamHeader bool
 }
 
 // Reset discards the writer's state and switches the Snappy writer to write to
@@ -168,7 +168,7 @@ func (w *Writer) Reset(writer io.Writer) {
 	if w.ibuf != nil {
 		w.ibuf = w.ibuf[:0]
 	}
-	w.wroteStreamHeader = false
+	//w.wroteStreamHeader = false
 }
 
 // Write satisfies the io.Writer interface.
@@ -213,11 +213,11 @@ func (w *Writer) write(p []byte) (nRet int, errRet error) {
 	}
 	for len(p) > 0 {
 		obufStart := len(magicChunk)
-		if !w.wroteStreamHeader {
-			w.wroteStreamHeader = true
-			copy(w.obuf, magicChunk)
-			obufStart = 0
-		}
+		//if !w.wroteStreamHeader {
+		//	w.wroteStreamHeader = true
+		//	copy(w.obuf, magicChunk)
+		//	obufStart = 0
+		//}
 
 		var uncompressed []byte
 		if len(p) > maxBlockSize {
