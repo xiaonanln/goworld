@@ -85,7 +85,7 @@ func NewPacketConnection(conn Connection, compressor compress.Compressor) *Packe
 		compressed: compressor != nil,
 	}
 
-	pc.compressor = compress.NewSnappyCompressor()
+	pc.compressor = compressor
 	return pc
 }
 
