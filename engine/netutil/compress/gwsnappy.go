@@ -9,6 +9,8 @@ import (
 	"github.com/xiaonanln/goworld/engine/lib/gwsnappy"
 )
 
+// NewGWSnappyCompressor creates a new Compressor in gwsnappy format
+// gwsnappy is an optimized version of snappy format, but strips many useless fields
 func NewGWSnappyCompressor() Compressor {
 	return &gwsnappyCompressor{
 		writer: gwsnappy.NewWriter(os.Stdout),
