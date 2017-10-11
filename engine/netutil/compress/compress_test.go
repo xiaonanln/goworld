@@ -26,7 +26,7 @@ func BenchmarkZLibCompressor(b *testing.B) {
 }
 
 func benchmarkCompressor(b_ *testing.B, cr Compressor) {
-	dataSize := 100 * 1024
+	dataSize := 10 * 1024
 	b := make([]byte, dataSize)
 	for j := 0; j < dataSize; j++ {
 		b[j] = byte(97 + rand.Intn(3))

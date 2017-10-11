@@ -252,22 +252,22 @@ func (r *Reader) Read(p []byte) (int, error) {
 			r.i, r.j = 0, n
 			continue
 
-		case chunkTypeStreamIdentifier:
-			// Section 4.1. Stream identifier (chunk type 0xff).
-			if chunkLen != len(magicBody) {
-				r.err = ErrCorrupt
-				return 0, r.err
-			}
-			if !r.readFull(r.buf[:len(magicBody)], false, false) {
-				return 0, r.err
-			}
-			for i := 0; i < len(magicBody); i++ {
-				if r.buf[i] != magicBody[i] {
-					r.err = ErrCorrupt
-					return 0, r.err
-				}
-			}
-			continue
+			//case chunkTypeStreamIdentifier:
+			//	// Section 4.1. Stream identifier (chunk type 0xff).
+			//	if chunkLen != len(magicBody) {
+			//		r.err = ErrCorrupt
+			//		return 0, r.err
+			//	}
+			//	if !r.readFull(r.buf[:len(magicBody)], false, false) {
+			//		return 0, r.err
+			//	}
+			//	for i := 0; i < len(magicBody); i++ {
+			//		if r.buf[i] != magicBody[i] {
+			//			r.err = ErrCorrupt
+			//			return 0, r.err
+			//		}
+			//	}
+			//	continue
 		}
 
 		if chunkType <= 0x7f {

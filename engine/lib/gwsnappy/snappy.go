@@ -74,7 +74,7 @@ const (
 	chunkTypeCompressedData   = 0x00
 	chunkTypeUncompressedData = 0x01
 	chunkTypePadding          = 0xfe
-	chunkTypeStreamIdentifier = 0xff
+	//chunkTypeStreamIdentifier = 0xff
 )
 
 var crcTable = crc32.MakeTable(crc32.Castagnoli)
