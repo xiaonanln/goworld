@@ -52,6 +52,10 @@ func benchmarkCompressor(b_ *testing.B, cr Compressor) {
 	}
 }
 
+func TestGWSnappyCompressor(t *testing.T) {
+	testCompressor(t, NewGWSnappyCompressor())
+}
+
 func TestSnappyCompressor(t *testing.T) {
 	testCompressor(t, NewSnappyCompressor())
 }
