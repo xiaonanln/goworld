@@ -31,7 +31,7 @@ func IsConnectionError(_err interface{}) bool {
 	if !ok {
 		return false
 	}
-	if neterr.Temporary() || neterr.Timeout() {
+	if neterr.Timeout() {
 		return false
 	}
 

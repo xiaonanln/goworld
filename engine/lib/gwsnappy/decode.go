@@ -123,14 +123,14 @@ func (r *Reader) readFull(p []byte, allowEOF bool, allowTimeout bool) (ok bool) 
 	if n, r.err = io.ReadFull(r.r, p); r.err != nil {
 
 		if n > 0 || !allowTimeout {
-			if neterr, ok := r.err.(net.Error); ok && (neterr.Temporary() || neterr.Timeout()) {
+			if neterr, ok := r.err.(net.Error); ok && neterr.Timeout() {
 				// temporary / timeout, keep trying until full
 				p = p[n:]
 				for len(p) > 0 {
 					r.r.(readDeadlineSetter).SetReadDeadline(time.Now().Add(10 * time.Millisecond))
 					n, r.err = io.ReadFull(r.r, p)
 					p = p[n:]
-					if neterr, ok := r.err.(net.Error); ok && (neterr.Temporary() || neterr.Timeout()) {
+					if neterr, ok := r.err.(net.Error); ok && neterr.Timeout() {
 						continue
 					}
 				}
@@ -155,7 +155,7 @@ func (r *Reader) readFull(p []byte, allowEOF bool, allowTimeout bool) (ok bool) 
 // Read satisfies the io.Reader interface.
 func (r *Reader) Read(p []byte) (int, error) {
 	if r.err != nil {
-		if neterr, ok := r.err.(net.Error); ok && (neterr.Temporary() || neterr.Timeout()) {
+		if neterr, ok := r.err.(net.Error); ok && neterr.Timeout() {
 			r.err = nil
 		} else {
 			return 0, r.err
