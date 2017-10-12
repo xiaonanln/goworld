@@ -78,7 +78,7 @@ func TestLzwCompressor(t *testing.T) {
 
 func testCompressor(t *testing.T, cr Compressor) {
 	dataSize := 10 * 1024
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		b := make([]byte, dataSize)
 		for j := 0; j < dataSize; j++ {
 			b[j] = byte(97 + rand.Intn(10))
