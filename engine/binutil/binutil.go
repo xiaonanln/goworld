@@ -14,6 +14,15 @@ import (
 
 // SetupHTTPServer starts the HTTP server for go tool pprof and websockets
 func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
+	setupHTTPServer(ip, port, wsHandler, "", "")
+}
+
+// SetupHTTPServerTLS starts the HTTPs server for go tool pprof and websockets
+func SetupHTTPServerTLS(ip string, port int, wsHandler func(ws *websocket.Conn), certFile string, keyFile string) {
+	setupHTTPServer(ip, port, wsHandler, certFile, keyFile)
+}
+
+func setupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn), certFile string, keyFile string) {
 	if port == 0 {
 		// pprof not enabled
 		gwlog.Infof("pprof server not enabled")
@@ -25,6 +34,9 @@ func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 	gwlog.Infof("pprof http://%s/debug/pprof/ ... available commands: ", httpHost)
 	gwlog.Infof("    go tool pprof http://%s/debug/pprof/heap", httpHost)
 	gwlog.Infof("    go tool pprof http://%s/debug/pprof/profile", httpHost)
+	if keyFile != "" || certFile != "" {
+		gwlog.Infof("TLS is enabled on http: key=%s, cert=%s", keyFile, certFile)
+	}
 
 	//http.Handle("/", http.FileServer(http.Dir(".")))
 	if wsHandler != nil {
@@ -32,7 +44,11 @@ func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
 	}
 
 	go func() {
-		http.ListenAndServe(httpHost, nil)
+		if keyFile == "" && certFile == "" {
+			http.ListenAndServe(httpHost, nil)
+		} else {
+			http.ListenAndServeTLS(httpHost, certFile, keyFile, nil)
+		}
 	}()
 }
 

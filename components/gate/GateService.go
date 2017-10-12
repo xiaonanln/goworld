@@ -100,17 +100,17 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 	tcpConn.SetNoDelay(consts.CLIENT_PROXY_SET_TCP_NO_DELAY)
 
-	gs.handleClientConnection(conn)
+	gs.handleClientConnection(conn, false)
 }
 
 func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
 	gwlog.Debugf("WebSocket Connection: %s", wsConn.RemoteAddr())
 	//var conn netutil.Connection = NewWebSocketConn(wsConn)
 	wsConn.PayloadType = websocket.BinaryFrame
-	gs.handleClientConnection(wsConn)
+	gs.handleClientConnection(wsConn, true)
 }
 
-func (gs *GateService) handleClientConnection(netconn net.Conn) {
+func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool) {
 	if gs.terminating.Load() {
 		// server terminating, not accepting more connectionsF
 		netconn.Close()
@@ -119,7 +119,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn) {
 
 	cfg := config.GetGate(gateid)
 
-	if cfg.EncryptConnection {
+	if cfg.EncryptConnection && !isWebSocket {
 		tlsConn := tls.Server(netconn, gs.tlsConfig)
 		netconn = net.Conn(tlsConn)
 	}

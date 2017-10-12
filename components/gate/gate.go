@@ -65,7 +65,12 @@ func main() {
 	binutil.SetupGWLog(fmt.Sprintf("gate%d", gateid), logLevel, gateConfig.LogFile, gateConfig.LogStderr)
 
 	gateService = newGateService()
-	binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
+	if gateConfig.EncryptConnection {
+		binutil.SetupHTTPServerTLS(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn, gateConfig.RSACertificate, gateConfig.RSAKey)
+	} else {
+		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
+	}
+
 	dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
