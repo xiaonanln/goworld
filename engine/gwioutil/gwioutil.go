@@ -1,18 +1,24 @@
 package gwioutil
 
-import "io"
+import (
+	"io"
 
-type temporaryError interface {
-	Temporary() bool // Is the error temporary?
+	"github.com/pkg/errors"
+)
+
+type timeoutError interface {
+	Timeout() bool // Is it a timeout error
 }
 
-func isTemporaryError(err error) bool {
+// IsTimeoutError checks if the error is a timeout error
+func IsTimeoutError(err error) bool {
 	if err == nil {
 		return false
 	}
 
-	terr, ok := err.(temporaryError)
-	return ok && terr.Temporary()
+	err = errors.Cause(err)
+	ne, ok := err.(timeoutError)
+	return ok && ne.Timeout()
 }
 
 // WriteAll write all bytes of data to the writer
@@ -29,7 +35,7 @@ func WriteAll(conn io.Writer, data []byte) error {
 			left -= n
 		}
 
-		if err != nil && !isTemporaryError(err) {
+		if err != nil && !IsTimeoutError(err) {
 			return err
 		}
 	}
@@ -50,7 +56,7 @@ func ReadAll(conn io.Reader, data []byte) error {
 			left -= n
 		}
 
-		if err != nil && !isTemporaryError(err) {
+		if err != nil && !IsTimeoutError(err) {
 			return err
 		}
 	}

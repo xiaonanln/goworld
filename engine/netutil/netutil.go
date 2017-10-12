@@ -15,21 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-// IsTemporaryNetError checks if the error is a temporary network error
-func IsTemporaryNetError(err error) bool {
-	if err == nil {
-		println("nil")
-		return false
-	}
-
-	err = errors.Cause(err)
-	netErr, ok := err.(net.Error)
-	if !ok {
-		return false
-	}
-	return netErr.Temporary() || netErr.Timeout()
-}
-
 // IsConnectionError check if the error is a connection error (close)
 func IsConnectionError(_err interface{}) bool {
 	err, ok := _err.(error)

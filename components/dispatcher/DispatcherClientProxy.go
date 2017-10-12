@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -68,7 +69,7 @@ func (dcp *dispatcherClientProxy) serve() {
 		pkt, err := dcp.Recv(&msgtype)
 
 		if err != nil {
-			if netutil.IsTemporaryNetError(err) {
+			if gwioutil.IsTimeoutError(err) {
 				continue
 			} else if netutil.IsConnectionError(err) {
 				break

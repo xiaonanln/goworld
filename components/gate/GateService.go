@@ -121,11 +121,6 @@ func (gs *GateService) handleClientConnection(netconn net.Conn) {
 
 	if cfg.EncryptConnection {
 		tlsConn := tls.Server(netconn, gs.tlsConfig)
-		//if err := tlsConn.Handshake(); err != nil {
-		//	gwlog.Errorf("TLS handshake failed: %v", err)
-		//	netconn.Close()
-		//	return
-		//}
 		netconn = net.Conn(tlsConn)
 	}
 

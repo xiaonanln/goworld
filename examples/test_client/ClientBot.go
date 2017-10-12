@@ -20,6 +20,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -131,7 +132,7 @@ func (bot *ClientBot) loop() {
 		if pkt != nil {
 			bot.handlePacket(msgtype, pkt)
 			pkt.Release()
-		} else if err != nil && !netutil.IsTemporaryNetError(err) {
+		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			// bad error
 			gwlog.Panic(err)
 		}

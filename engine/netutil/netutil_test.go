@@ -25,7 +25,7 @@ func (ts *testEchoTcpServer) ServeTCPConnection(conn net.Conn) {
 		}
 
 		if err != nil {
-			if IsTemporaryNetError(err) {
+			if gwioutil.IsTimeoutError(err) {
 				continue
 			} else {
 				gwlog.Errorf("read error: %s", err.Error())
