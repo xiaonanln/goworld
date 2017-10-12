@@ -52,6 +52,12 @@ type ClientBot struct {
 	startedDoingThings bool
 	syncPosTime        time.Time
 	useWebSocket       bool
+	packetQueue        chan packetQueueItem
+}
+
+type packetQueueItem struct { // packet queue from dispatcher client
+	msgtype proto.MsgType
+	packet  *netutil.Packet
 }
 
 func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
@@ -60,6 +66,7 @@ func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot 
 		waiter:       waiter,
 		entities:     map[common.EntityID]*clientEntity{},
 		useWebSocket: useWebSocket,
+		packetQueue:  make(chan packetQueueItem),
 	}
 }
 
@@ -98,6 +105,7 @@ func (bot *ClientBot) run() {
 	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{netconn}), cfg.CompressConnection, cfg.CompressFormat)
 	defer bot.conn.Close()
 
+	go bot.recvLoop()
 	bot.loop()
 }
 
@@ -118,44 +126,55 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 	return conn, err
 }
 
-func (bot *ClientBot) loop() {
+func (bot *ClientBot) recvLoop() {
 	var msgtype proto.MsgType
 
 	for {
-		err := bot.conn.SetRecvDeadline(time.Now().Add(time.Millisecond * 100))
-		if err != nil {
-			gwlog.Panic(err)
-		}
-
 		pkt, err := bot.conn.Recv(&msgtype)
-
 		if pkt != nil {
-			bot.handlePacket(msgtype, pkt)
-			pkt.Release()
+			//fmt.Fprintf(os.Stderr, "P")
+			bot.packetQueue <- packetQueueItem{msgtype, pkt}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			// bad error
 			gwlog.Panic(err)
 		}
+	}
+}
 
-		if bot.player != nil && bot.player.TypeName == "Avatar" {
-			now := time.Now()
-			if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
-				player := bot.player
-				const moveRange = 0.01
-				if rand.Float32() < 0.5 { // let the posibility of avatar moving to be 50%
-					player.pos.X += entity.Coord(-moveRange + moveRange*2*rand.Float32())
-					player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
-					//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
-					player.yaw = entity.Yaw(rand.Float32() * 3.14)
-					bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+func (bot *ClientBot) loop() {
+	ticker := time.Tick(time.Millisecond * 100)
+	for {
+		select {
+		case item := <-bot.packetQueue:
+			//fmt.Fprintf(os.Stderr, "p")
+			msgtype := item.msgtype
+			pkt := item.packet
+			bot.handlePacket(msgtype, pkt)
+			pkt.Release()
+			break
+		case <-ticker:
+			//fmt.Fprintf(os.Stderr, "|")
+			if bot.player != nil && bot.player.TypeName == "Avatar" {
+				now := time.Now()
+				if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
+					player := bot.player
+					const moveRange = 0.01
+					if rand.Float32() < 0.5 { // let the posibility of avatar moving to be 50%
+						player.pos.X += entity.Coord(-moveRange + moveRange*2*rand.Float32())
+						player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
+						//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
+						player.yaw = entity.Yaw(rand.Float32() * 3.14)
+						bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+					}
+
+					bot.syncPosTime = now
 				}
-
-				bot.syncPosTime = now
 			}
-		}
 
-		bot.conn.Flush("ClientBot")
-		post.Tick()
+			bot.conn.Flush("ClientBot")
+			post.Tick()
+			break
+		}
 	}
 }
 
