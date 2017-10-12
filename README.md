@@ -24,7 +24,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 * **Spaces & Entities**: manage multiple spaces and entities with AOI support
 * **Distributed**: increase server capacity by using more machines
 * **Hot-Swappable**: update game logic by restarting server process
-* **Traffic Compression & Encryption** traffic between clients and servers can be compressed and encrypted
+* **Traffic Compression & Encryption**: traffic between clients and servers can be compressed and encrypted
 
 ## Architecture
 ![GoWorld Architecture](http://goworldgs.com/static/goworld_arch.png "GoWorld Architecture")
