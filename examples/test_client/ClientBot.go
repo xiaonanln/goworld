@@ -99,7 +99,7 @@ func (bot *ClientBot) run() {
 	}
 
 	gwlog.Infof("connected: %s", netconn.RemoteAddr())
-	if cfg.EncryptConnection {
+	if cfg.EncryptConnection && !bot.useWebSocket {
 		netconn = tls.Client(netconn, tlsConfig)
 	}
 	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{netconn}), cfg.CompressConnection, cfg.CompressFormat)
@@ -111,11 +111,27 @@ func (bot *ClientBot) run() {
 
 func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 	if bot.useWebSocket {
-		origin := fmt.Sprintf("http://%s:%d/", serverAddr, cfg.HTTPPort)
-		wsaddr := fmt.Sprintf("ws://%s:%d/ws", serverAddr, cfg.HTTPPort)
+		originProto := "http"
+		wsProto := "ws"
+		if cfg.EncryptConnection {
+			originProto = "https"
+			wsProto = "wss"
+		}
+		origin := fmt.Sprintf("%s://%s:%d/", originProto, serverAddr, cfg.HTTPPort)
+		wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverAddr, cfg.HTTPPort)
 
-		wsConn, err := websocket.Dial(wsaddr, "", origin)
-		return wsConn, err
+		if cfg.EncryptConnection {
+			dialCfg, err := websocket.NewConfig(wsaddr, origin)
+			if err != nil {
+				return nil, err
+			}
+			dialCfg.TlsConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			return websocket.DialConfig(dialCfg)
+		} else {
+			return websocket.Dial(wsaddr, "", origin)
+		}
 	}
 
 	conn, err := netutil.ConnectTCP(serverAddr, cfg.Port)
