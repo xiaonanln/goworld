@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -107,7 +108,7 @@ func serveDispatcherClient() {
 		pkt, err := dispatcherClient.Recv(&msgtype)
 
 		if err != nil {
-			if netutil.IsTemporaryNetError(err) {
+			if gwioutil.IsTimeoutError(err) {
 				continue
 			}
 

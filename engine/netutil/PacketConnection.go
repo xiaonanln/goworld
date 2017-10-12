@@ -58,7 +58,7 @@ func (err _ErrRecvAgain) Temporary() bool {
 }
 
 func (err _ErrRecvAgain) Timeout() bool {
-	return false
+	return true
 }
 
 // PacketConnection is a connection that send and receive data packets upon a network stream connection
