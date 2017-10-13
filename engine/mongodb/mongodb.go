@@ -31,10 +31,10 @@ func checkSessionValid() bool {
 	return session != nil
 }
 
-func Dial(url string, dbname string, async *async.AsyncRequest) {
+func Dial(url string, dbname string, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if checkSessionValid() {
-			async.Error(errors.Errorf("multiple dail"))
+			ac.Callback(nil, errors.Errorf("multiple dail"))
 			return
 		}
 
@@ -42,7 +42,7 @@ func Dial(url string, dbname string, async *async.AsyncRequest) {
 		gwlog.Infof("Dailing MongoDB: %s ...", url)
 		session, err = mgo.Dial(url)
 		if err != nil {
-			async.Error(err)
+			ac.Callback(nil, err)
 			return
 		}
 
@@ -50,52 +50,52 @@ func Dial(url string, dbname string, async *async.AsyncRequest) {
 		if dbname != "" {
 			db = session.DB(dbname)
 		}
-		async.Done()
+		ac.Callback(nil, nil)
 	}
 }
 
-func Close(async *async.AsyncRequest) {
+func Close(ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		session.Close()
 		session = nil
 		db = nil
-		async.Done()
+		ac.Callback(nil, nil)
 	}
 }
 
-func UseDB(dbname string, async *async.AsyncRequest) {
+func UseDB(dbname string, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		db = session.DB(dbname)
-		async.Done()
+		ac.Callback(nil, nil)
 	}
 }
 
-func SetMode(consistency mgo.Mode, async *async.AsyncRequest) {
+func SetMode(consistency mgo.Mode, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		session.SetMode(consistency, true)
-		async.Done()
+		ac.Callback(nil, nil)
 	}
 }
 
-func FindId(collectionName string, id interface{}, setupQuery func(query *mgo.Query), async *async.AsyncRequest) {
+func FindId(collectionName string, id interface{}, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 		q := db.C(collectionName).FindId(id)
@@ -104,14 +104,14 @@ func FindId(collectionName string, id interface{}, setupQuery func(query *mgo.Qu
 		}
 		var res bson.M
 		err := q.One(&res)
-		async.Error(err, res)
+		ac.Callback(res, err)
 	}
 }
 
-func FindOne(collectionName string, query bson.M, setupQuery func(query *mgo.Query), async *async.AsyncRequest) {
+func FindOne(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
@@ -121,14 +121,14 @@ func FindOne(collectionName string, query bson.M, setupQuery func(query *mgo.Que
 		}
 		var res bson.M
 		err := q.One(&res)
-		async.Error(err, res)
+		ac.Callback(res, err)
 	}
 }
 
-func FindAll(collectionName string, query bson.M, setupQuery func(query *mgo.Query), async *async.AsyncRequest) {
+func FindAll(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 		q := db.C(collectionName).Find(query)
@@ -137,14 +137,14 @@ func FindAll(collectionName string, query bson.M, setupQuery func(query *mgo.Que
 		}
 		var res []bson.M
 		err := q.All(&res)
-		async.Error(err, res)
+		ac.Callback(res, err)
 	}
 }
 
-func Count(collectionName string, query bson.M, setupQuery func(query *mgo.Query), async *async.AsyncRequest) {
+func Count(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 		q := db.C(collectionName).Find(query)
@@ -152,25 +152,25 @@ func Count(collectionName string, query bson.M, setupQuery func(query *mgo.Query
 			setupQuery(q)
 		}
 		n, err := q.Count()
-		async.Error(err, n)
+		ac.Callback(n, err)
 	}
 }
 
-func Insert(collectionName string, doc bson.M, async *async.AsyncRequest) {
+func Insert(collectionName string, doc bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 		err := db.C(collectionName).Insert(doc)
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func InsertMany(collectionName string, docs []bson.M, async *async.AsyncRequest) {
+func InsertMany(collectionName string, docs []bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 		insertDocs := make([]interface{}, len(docs))
@@ -178,38 +178,38 @@ func InsertMany(collectionName string, docs []bson.M, async *async.AsyncRequest)
 			insertDocs[i] = docs[i]
 		}
 		err := db.C(collectionName).Insert(insertDocs...)
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func UpdateId(collectionName string, id interface{}, update bson.M, async *async.AsyncRequest) {
+func UpdateId(collectionName string, id interface{}, update bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		err := db.C(collectionName).UpdateId(id, update)
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func Update(collectionName string, query bson.M, update bson.M, async *async.AsyncRequest) {
+func Update(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		err := db.C(collectionName).Update(query, update)
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func UpdateAll(collectionName string, query bson.M, update bson.M, async *async.AsyncRequest) {
+func UpdateAll(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession, 0)
+			ac.Callback(0, errNoSession)
 			return
 		}
 
@@ -218,14 +218,14 @@ func UpdateAll(collectionName string, query bson.M, update bson.M, async *async.
 		if info != nil {
 			updated = info.Updated
 		}
-		async.Error(err, updated)
+		ac.Callback(updated, err)
 	}
 }
 
-func UpsertId(collectionName string, id interface{}, update bson.M, async *async.AsyncRequest) {
+func UpsertId(collectionName string, id interface{}, update bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession, nil)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
@@ -234,14 +234,14 @@ func UpsertId(collectionName string, id interface{}, update bson.M, async *async
 		if info != nil {
 			upsertId = info.UpsertedId
 		}
-		async.Error(err, upsertId)
+		ac.Callback(upsertId, err)
 	}
 }
 
-func Upsert(collectionName string, query bson.M, update bson.M, async *async.AsyncRequest) {
+func Upsert(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession, nil)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
@@ -250,38 +250,38 @@ func Upsert(collectionName string, query bson.M, update bson.M, async *async.Asy
 		if info != nil {
 			upsertId = info.UpsertedId
 		}
-		async.Error(err, upsertId)
+		ac.Callback(upsertId, err)
 	}
 }
 
-func RemoveId(collectionName string, id interface{}, async *async.AsyncRequest) {
+func RemoveId(collectionName string, id interface{}, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		err := db.C(collectionName).RemoveId(id)
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func Remove(collectionName string, query bson.M, async *async.AsyncRequest) {
+func Remove(collectionName string, query bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		err := db.C(collectionName).Remove(query)
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func RemoveAll(collectionName string, query bson.M, async *async.AsyncRequest) {
+func RemoveAll(collectionName string, query bson.M, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession, 0)
+			ac.Callback(0, errNoSession)
 			return
 		}
 
@@ -290,30 +290,30 @@ func RemoveAll(collectionName string, query bson.M, async *async.AsyncRequest) {
 		if info != nil {
 			n = info.Removed
 		}
-		async.Error(err, n)
+		ac.Callback(n, err)
 	}
 }
 
-func DropCollection(collectionName string, async *async.AsyncRequest) {
+func DropCollection(collectionName string, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		err := db.C(collectionName).DropCollection()
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
 
-func DropDatabase(async *async.AsyncRequest) {
+func DropDatabase(ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {
-			async.Error(errNoSession)
+			ac.Callback(nil, errNoSession)
 			return
 		}
 
 		err := db.DropDatabase()
-		async.Error(err)
+		ac.Callback(nil, err)
 	}
 }
