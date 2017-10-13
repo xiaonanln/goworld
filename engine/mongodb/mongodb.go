@@ -294,6 +294,54 @@ func RemoveAll(collectionName string, query bson.M, ac async.AsyncCallback) {
 	}
 }
 
+func EnsureIndex(collectionName string, index mgo.Index, ac async.AsyncCallback) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			ac.Callback(nil, errNoSession)
+			return
+		}
+
+		err := db.C(collectionName).EnsureIndex(index)
+		ac.Callback(nil, err)
+	}
+}
+
+func EnsureIndexKey(collectionName string, keys []string, ac async.AsyncCallback) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			ac.Callback(nil, errNoSession)
+			return
+		}
+
+		err := db.C(collectionName).EnsureIndexKey(keys...)
+		ac.Callback(nil, err)
+	}
+}
+
+func DropIndex(collectionName string, keys []string, ac async.AsyncCallback) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			ac.Callback(nil, errNoSession)
+			return
+		}
+
+		err := db.C(collectionName).DropIndex(keys...)
+		ac.Callback(nil, err)
+	}
+}
+
+//func DropIndexName(collectionName string, indexName string, ac async.AsyncCallback) {
+//	opQueue <- func() {
+//		if !checkSessionValid() {
+//			ac.Callback(nil, errNoSession)
+//			return
+//		}
+//
+//		err := db.C(collectionName).DropIndexName(indexName)
+//		ac.Callback(nil, err)
+//	}
+//}
+
 func DropCollection(collectionName string, ac async.AsyncCallback) {
 	opQueue <- func() {
 		if !checkSessionValid() {

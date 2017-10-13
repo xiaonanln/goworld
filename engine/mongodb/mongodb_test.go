@@ -42,10 +42,7 @@ func TestSetMode(t *testing.T) {
 	wait.Add(1)
 	SetMode(mgo.SecondaryPreferred, func(res interface{}, err error) {
 		checkRequest(t, err, res)
-		wait.Done()
 	})
-	wait.Wait()
-	wait.Add(1)
 	SetMode(mgo.Monotonic, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		wait.Done()
@@ -219,6 +216,44 @@ func TestUpsert(t *testing.T) {
 
 	wait.Wait()
 }
+
+func TestEnsureIndex(t *testing.T) {
+	wait.Add(1)
+	EnsureIndex("mongodb_test", mgo.Index{
+		Key: []string{"a"},
+	}, func(res interface{}, err error) {
+		checkRequest(t, err, res)
+		wait.Done()
+	})
+	wait.Wait()
+}
+
+func TestEnsureIndexKey(t *testing.T) {
+	wait.Add(1)
+	EnsureIndexKey("mongodb_test", []string{"a", "b", "c"}, func(res interface{}, err error) {
+		checkRequest(t, err, res)
+		wait.Done()
+	})
+	wait.Wait()
+}
+
+func TestDropIndex(t *testing.T) {
+	wait.Add(1)
+	DropIndex("mongodb_test", []string{"a"}, func(res interface{}, err error) {
+		checkRequest(t, err, res)
+		wait.Done()
+	})
+	wait.Wait()
+}
+
+//func TestDropIndexName(t *testing.T) {
+//	wait.Add(1)
+//	DropIndexName("mongodb_test", "a_b_c", func(res interface{}, err error) {
+//		checkRequest(t, err, res)
+//		wait.Done()
+//	})
+//	wait.Wait()
+//}
 
 func TestRemoveId(t *testing.T) {
 	var id interface{}
