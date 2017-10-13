@@ -20,8 +20,7 @@ var (
 
 func init() {
 	go netutil.ServeForever(func() {
-		for {
-			op := <-opQueue
+		for op := range opQueue {
 			op()
 		}
 	})
