@@ -97,3 +97,8 @@ const (
 	// DEBUG_MODE = true turns on debug mode
 	DEBUG_MODE = false
 )
+
+// MongoDB configurations
+const (
+	MONGODB_OP_QUEUE_MAXLEN = 10000
+)
