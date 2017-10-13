@@ -10,6 +10,7 @@ import:
 - package: github.com/pkg/errors
   version: v0.8.0
 - package: github.com/xiaonanln/go-xnsyncutil
+  version: ^v0.0.2
   subpackages:
   - xnsyncutil
 - package: github.com/xiaonanln/goTimer

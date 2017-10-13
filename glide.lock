@@ -1,5 +1,5 @@
-hash: 7ed38080c86310d058f5db44220c422ca02f340ac714bea0cf150c940ca7b7c0
-updated: 2017-10-11T13:18:21.966572817+08:00
+hash: 966b098b39e52c5d27fc156a8550de937b7a99c21e3403146839abbf23e457fd
+updated: 2017-10-13T16:29:00.4927507+08:00
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -33,7 +33,7 @@ imports:
 - name: github.com/vmihailenco/msgpack
   version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
 - name: github.com/xiaonanln/go-xnsyncutil
-  version: 636b8be5ea62696fe6c0714beda09d5e3bb7b020
+  version: c7fdf3d35fc983ee5f9d7fa561be5ce71c6196bf
   subpackages:
   - xnsyncutil
 - name: github.com/xiaonanln/goTimer
