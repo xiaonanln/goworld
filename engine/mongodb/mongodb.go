@@ -215,10 +215,82 @@ func UpdateAll(collectionName string, query bson.M, update bson.M, async *async.
 
 		var updated int
 		info, err := db.C(collectionName).UpdateAll(query, update)
-		if err == nil {
+		if info != nil {
 			updated = info.Updated
 		}
 		async.Error(err, updated)
+	}
+}
+
+func UpsertId(collectionName string, id interface{}, update bson.M, async *async.AsyncRequest) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			async.Error(errNoSession, nil)
+			return
+		}
+
+		var upsertId interface{}
+		info, err := db.C(collectionName).UpsertId(id, update)
+		if info != nil {
+			upsertId = info.UpsertedId
+		}
+		async.Error(err, upsertId)
+	}
+}
+
+func Upsert(collectionName string, query bson.M, update bson.M, async *async.AsyncRequest) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			async.Error(errNoSession, nil)
+			return
+		}
+
+		var upsertId interface{}
+		info, err := db.C(collectionName).Upsert(query, update)
+		if info != nil {
+			upsertId = info.UpsertedId
+		}
+		async.Error(err, upsertId)
+	}
+}
+
+func RemoveId(collectionName string, id interface{}, async *async.AsyncRequest) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			async.Error(errNoSession)
+			return
+		}
+
+		err := db.C(collectionName).RemoveId(id)
+		async.Error(err)
+	}
+}
+
+func Remove(collectionName string, query bson.M, async *async.AsyncRequest) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			async.Error(errNoSession)
+			return
+		}
+
+		err := db.C(collectionName).Remove(query)
+		async.Error(err)
+	}
+}
+
+func RemoveAll(collectionName string, query bson.M, async *async.AsyncRequest) {
+	opQueue <- func() {
+		if !checkSessionValid() {
+			async.Error(errNoSession, 0)
+			return
+		}
+
+		var n int
+		info, err := db.C(collectionName).RemoveAll(query)
+		if info != nil {
+			n = info.Removed
+		}
+		async.Error(err, n)
 	}
 }
 

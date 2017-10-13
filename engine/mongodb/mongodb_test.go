@@ -143,6 +143,28 @@ func TestFindId(t *testing.T) {
 	wait.Wait()
 }
 
+func TestUpdateId(t *testing.T) {
+	id := bson.NewObjectId()
+	Insert("mongodb_test", bson.M{"_id": id, "TestUpdateId": 1}, nil)
+
+	wait.Add(1)
+	UpdateId("mongodb_test", id, bson.M{"$set": bson.M{"TestUpdateId": 2}}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+		wait.Done()
+	}))
+	wait.Wait()
+
+	wait.Add(1)
+	UpdateId("mongodb_test", bson.NewObjectId(), bson.M{"$set": bson.M{"TestUpdateId": 2}}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		if err == nil {
+			t.Errorf("should returns error")
+		}
+		checkRequest(t, err, res)
+		wait.Done()
+	}))
+	wait.Wait()
+}
+
 func TestUpdate(t *testing.T) {
 	wait.Add(1)
 	Update("mongodb_test", bson.M{"TestFindId": 1}, bson.M{"$set": bson.M{"TestUpdate": 1}}, async.NewAsyncRequest(func(err error, res ...interface{}) {
@@ -170,6 +192,99 @@ func TestUpdateAll(t *testing.T) {
 	wait.Wait()
 }
 
+func TestUpsertId(t *testing.T) {
+	wait.Add(1)
+	id := bson.NewObjectId()
+	UpsertId("mongodb_test", id, bson.M{"TestUpsertId": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+	}))
+
+	UpsertId("mongodb_test", id, bson.M{"$set": bson.M{"TestUpdateId": 2}}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+		wait.Done()
+	}))
+	wait.Wait()
+}
+
+func TestUpsert(t *testing.T) {
+	wait.Add(1)
+
+	Upsert("mongodb_test", bson.M{"TestUpsert": 1}, bson.M{"TestUpsert": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+	}))
+
+	Upsert("mongodb_test", bson.M{"TestUpsert": 1}, bson.M{"TestUpsert": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+		wait.Done()
+	}))
+
+	wait.Wait()
+}
+
+func TestRemoveId(t *testing.T) {
+	var id interface{}
+	wait.Add(1)
+
+	Upsert("mongodb_test", bson.M{"TestRemoveId": 1}, bson.M{"TestRemoveId": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+		id = res[0]
+		RemoveId("mongodb_test", id, async.NewAsyncRequest(func(err error, res ...interface{}) {
+			checkRequest(t, err, res)
+		}))
+		RemoveId("mongodb_test", id, async.NewAsyncRequest(func(err error, res ...interface{}) {
+			checkRequest(t, err, res)
+			if err != mgo.ErrNotFound {
+				t.Errorf("error should be not found")
+			}
+			wait.Done()
+		}))
+	}))
+	wait.Wait()
+}
+
+func TestRemove(t *testing.T) {
+	wait.Add(1)
+
+	Upsert("mongodb_test", bson.M{"TestRemove": 1}, bson.M{"TestRemove": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+		Remove("mongodb_test", bson.M{"TestRemove": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+			checkRequest(t, err, res)
+		}))
+		Remove("mongodb_test", bson.M{"TestRemove": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+			checkRequest(t, err, res)
+			if err != mgo.ErrNotFound {
+				t.Errorf("error should be not found")
+			}
+			wait.Done()
+		}))
+	}))
+	wait.Wait()
+}
+
+func TestRemoveAll(t *testing.T) {
+	wait.Add(1)
+
+	Insert("mongodb_test", bson.M{"TestRemove": 1}, nil)
+	Insert("mongodb_test", bson.M{"TestRemove": 1}, nil)
+	Insert("mongodb_test", bson.M{"TestRemove": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+		checkRequest(t, err, res)
+		RemoveAll("mongodb_test", bson.M{"TestRemove": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+			checkRequest(t, err, res)
+			if res[0].(int) != 3 {
+				t.Errorf("should remove 3 docs")
+			}
+		}))
+		RemoveAll("mongodb_test", bson.M{"TestRemove": 1}, async.NewAsyncRequest(func(err error, res ...interface{}) {
+			checkRequest(t, err, res)
+			if res[0].(int) != 0 {
+				t.Errorf("should remove 0 docs")
+			}
+			wait.Done()
+		}))
+	}))
+	wait.Wait()
+}
+
 func TestDropCollection(t *testing.T) {
 	wait.Add(1)
 	DropCollection("mongodb_test", async.NewAsyncRequest(func(err error, res ...interface{}) {
@@ -190,7 +305,7 @@ func TestDropCollection(t *testing.T) {
 
 func checkRequest(t *testing.T, err error, res []interface{}) {
 	if err != nil {
-		t.Errorf("error = %v, res = %v", err, res)
+		t.Logf("error = %v, res = %v", err, res)
 	} else {
 		t.Logf("success, res = %v", res)
 	}
