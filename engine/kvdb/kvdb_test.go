@@ -95,5 +95,4 @@ func TestBasic(t *testing.T) {
 
 func TestClose(t *testing.T) {
 	Close()
-	Initialize()
 }
