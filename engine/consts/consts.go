@@ -98,7 +98,8 @@ const (
 	DEBUG_MODE = false
 )
 
-// MongoDB configurations
+// Async & MongoDB configurations
 const (
+	ASYNC_JOB_QUEUE_MAXLEN  = 10000
 	MONGODB_OP_QUEUE_MAXLEN = 10000
 )

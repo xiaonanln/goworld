@@ -1,6 +1,12 @@
 package async
 
-import "github.com/xiaonanln/goworld/engine/post"
+import (
+	"sync"
+
+	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
+)
 
 type AsyncCallback func(res interface{}, err error)
 
@@ -12,42 +18,63 @@ func (ac AsyncCallback) Callback(res interface{}, err error) {
 	}
 }
 
-//type AsyncRequest struct {
-//	callback func(err error, res ...interface{})
-//	finished xnsyncutil.AtomicBool
-//}
-//
-//func NewAsyncRequest(callback func(err error, res ...interface{})) *AsyncRequest {
-//	ar := &AsyncRequest{
-//		callback: callback,
-//	}
-//	return ar
-//}
-//
-//func (ar *AsyncRequest) Done(res ...interface{}) {
-//	ar.Error(nil, res...)
-//}
-//
-//func (ar *AsyncRequest) Error(err error, res ...interface{}) {
-//	if ar == nil {
-//		return
-//	}
-//
-//	if ar.finished.Load() {
-//		// request is already finished
-//		gwlog.Errorf("async request is finished multiple times: error=%v, res=%v", err, res)
-//		return
-//	}
-//
-//	ar.finished.Store(true)
-//
-//	post.Post(func() { // post to main game routine
-//		if err != nil {
-//			gwlog.Errorf("async request failed with error: %v", err)
-//		}
-//
-//		if ar.callback != nil {
-//			ar.callback(err, res...)
-//		}
-//	})
-//}
+type AsyncRoutine func() (res interface{}, err error)
+
+type AsyncJobWorker struct {
+	jobQueue chan asyncJobItem
+}
+
+type asyncJobItem struct {
+	routine  AsyncRoutine
+	callback AsyncCallback
+}
+
+func newAsyncJobWorker() *AsyncJobWorker {
+	ajw := &AsyncJobWorker{
+		jobQueue: make(chan asyncJobItem, consts.ASYNC_JOB_QUEUE_MAXLEN),
+	}
+	go netutil.ServeForever(ajw.loop)
+	return ajw
+}
+
+func (ajw *AsyncJobWorker) appendJob(routine AsyncRoutine, callback AsyncCallback) {
+	ajw.jobQueue <- asyncJobItem{routine, callback}
+}
+
+func (ajw *AsyncJobWorker) loop() {
+	for item := range ajw.jobQueue {
+		res, err := item.routine()
+		if item.callback != nil {
+			post.Post(func() {
+				item.callback(res, err)
+			})
+		}
+	}
+}
+
+var (
+	asyncJobWorkersLock sync.RWMutex
+	asyncJobWorkers     = map[string]*AsyncJobWorker{}
+)
+
+func getAsyncJobWorker(group string) (ajw *AsyncJobWorker) {
+	asyncJobWorkersLock.RLock()
+	ajw = asyncJobWorkers[group]
+	asyncJobWorkersLock.RUnlock()
+
+	if ajw == nil {
+		asyncJobWorkersLock.Lock()
+		ajw = asyncJobWorkers[group]
+		if ajw == nil {
+			ajw = newAsyncJobWorker()
+			asyncJobWorkers[group] = ajw
+		}
+		asyncJobWorkersLock.Unlock()
+	}
+	return
+}
+
+func NewAsyncJob(group string, routine AsyncRoutine, callback AsyncCallback) {
+	ajw := getAsyncJobWorker(group)
+	ajw.appendJob(routine, callback)
+}
