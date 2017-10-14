@@ -93,6 +93,6 @@ func TestBasic(t *testing.T) {
 	})
 }
 
-func TestClose(t *testing.T) {
-	Close()
+func TestShutdown(t *testing.T) {
+	Shutdown()
 }

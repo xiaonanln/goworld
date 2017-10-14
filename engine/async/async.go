@@ -6,6 +6,12 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
+	"golang.org/x/net/context"
+)
+
+var (
+	asyncRunning, asyncCancelRunning = context.WithCancel(context.Background())
+	numAsyncJobWorkersRunning        sync.WaitGroup
 )
 
 type AsyncCallback func(res interface{}, err error)
@@ -33,6 +39,7 @@ func newAsyncJobWorker() *AsyncJobWorker {
 	ajw := &AsyncJobWorker{
 		jobQueue: make(chan asyncJobItem, consts.ASYNC_JOB_QUEUE_MAXLEN),
 	}
+	numAsyncJobWorkersRunning.Add(1)
 	go netutil.ServeForever(ajw.loop)
 	return ajw
 }
@@ -46,6 +53,7 @@ func (ajw *AsyncJobWorker) loop() {
 		res, err := item.routine()
 		item.callback.Callback(res, err)
 	}
+	numAsyncJobWorkersRunning.Done()
 }
 
 var (
@@ -70,7 +78,20 @@ func getAsyncJobWorker(group string) (ajw *AsyncJobWorker) {
 	return
 }
 
-func NewAsyncJob(group string, routine AsyncRoutine, callback AsyncCallback) {
+func AppendAsyncJob(group string, routine AsyncRoutine, callback AsyncCallback) {
 	ajw := getAsyncJobWorker(group)
 	ajw.appendJob(routine, callback)
+}
+
+func Shutdown() {
+	// Close all job queue workers
+	asyncJobWorkersLock.Lock()
+	for _, alw := range asyncJobWorkers {
+		close(alw.jobQueue)
+	}
+	asyncJobWorkers = map[string]*AsyncJobWorker{}
+	asyncJobWorkersLock.Unlock()
+
+	// wait for all job workers to quit
+	numAsyncJobWorkersRunning.Wait()
 }

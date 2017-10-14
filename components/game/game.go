@@ -168,15 +168,13 @@ func waitGameServiceStateSatisfied(s func(rs int) bool) {
 func waitKVDBFinish() {
 	// wait until kvdb's queue is empty
 	gwlog.Infof("Closing KVDB ...")
-	kvdb.Close()
-	kvdb.WaitTerminated()
+	kvdb.Shutdown()
 }
 
 func waitEntityStorageFinish() {
 	// wait until entity storage's queue is empty
 	gwlog.Infof("Closing Entity Storage ...")
-	storage.Close()
-	storage.WaitTerminated()
+	storage.Shutdown()
 	gwlog.Infof("*** DB OK ***")
 }
 

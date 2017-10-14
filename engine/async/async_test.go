@@ -12,7 +12,7 @@ import (
 func TestNewAsyncJob(t *testing.T) {
 	var wait sync.WaitGroup
 	wait.Add(2)
-	NewAsyncJob("1", func() (res interface{}, err error) {
+	AppendAsyncJob("1", func() (res interface{}, err error) {
 		wait.Done()
 		return 1, nil
 	}, func(res interface{}, err error) {

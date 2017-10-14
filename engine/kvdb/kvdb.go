@@ -144,9 +144,10 @@ func NextLargerKey(key string) string {
 	return key + "\x00" // the next string that is larger than key, but smaller than any other keys > key
 }
 
-// Close the KVDB
-func Close() {
+// Shutdown the KVDB
+func Shutdown() {
 	kvdbOpQueue.Close()
+	kvdbTerminated.Wait()
 }
 
 var recentWarnedQueueLen = 0
@@ -192,11 +193,6 @@ func kvdbRoutine() {
 	}
 
 	kvdbTerminated.Signal()
-}
-
-// WaitTerminated waits for KVDB to terminate
-func WaitTerminated() {
-	kvdbTerminated.Wait()
 }
 
 func handleGetReq(getReq *getReq) {

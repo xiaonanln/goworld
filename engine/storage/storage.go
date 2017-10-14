@@ -115,13 +115,9 @@ func checkOperationQueueLen() {
 	}
 }
 
-// Close storage module
-func Close() {
+// Shutdown storage module
+func Shutdown() {
 	operationQueue.Close()
-}
-
-// WaitTerminated waits for storage module to terminate
-func WaitTerminated() {
 	storageRoutineTerminated.Wait()
 }
 

@@ -179,6 +179,7 @@ func (gs *_GameService) waitPostsComplete() {
 
 func (gs *_GameService) doTerminate() {
 	// wait for all posts to complete
+	kvdb.Shutdown()
 	gs.waitPostsComplete()
 
 	// destroy all entities
@@ -196,8 +197,7 @@ var freezePacker = netutil.JSONMsgPacker{}
 func (gs *_GameService) doFreeze() {
 	// wait for all posts to complete
 
-	kvdb.Close()
-	kvdb.WaitTerminated()
+	kvdb.Shutdown()
 	gs.waitPostsComplete()
 
 	// destroy all entities
@@ -221,7 +221,7 @@ func (gs *_GameService) doFreeze() {
 
 	err := freeze()
 	if err != nil {
-		gwlog.Errorf("Game freeze failed: %s", err)
+		gwlog.Errorf("Game freeze failed: %s, server has to quit", err)
 		kvdb.Initialize() // restore kvdb module
 		gs.runState.Store(rsRunning)
 		return
