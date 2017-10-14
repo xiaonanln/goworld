@@ -44,11 +44,7 @@ func (ajw *AsyncJobWorker) appendJob(routine AsyncRoutine, callback AsyncCallbac
 func (ajw *AsyncJobWorker) loop() {
 	for item := range ajw.jobQueue {
 		res, err := item.routine()
-		if item.callback != nil {
-			post.Post(func() {
-				item.callback(res, err)
-			})
-		}
+		item.callback.Callback(res, err)
 	}
 }
 

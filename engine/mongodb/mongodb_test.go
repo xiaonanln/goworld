@@ -352,7 +352,7 @@ func init() {
 	go func() {
 		for {
 			post.Tick()
-			time.Sleep(time.Millisecond * 1)
+			time.Sleep(time.Millisecond * 10)
 		}
 	}()
 }
