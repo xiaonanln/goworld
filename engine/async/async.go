@@ -15,9 +15,10 @@ var (
 	numAsyncJobWorkersRunning        sync.WaitGroup
 )
 
+// AsyncCallback is a function which will be called after async job is finished with result and error
 type AsyncCallback func(res interface{}, err error)
 
-func (ac AsyncCallback) Callback(res interface{}, err error) {
+func (ac AsyncCallback) callback(res interface{}, err error) {
 	if ac != nil {
 		post.Post(func() {
 			ac(res, err)
@@ -25,9 +26,10 @@ func (ac AsyncCallback) Callback(res interface{}, err error) {
 	}
 }
 
+// AsyncRoutine is a function that will be executed in the async goroutine and its result and error will be passed to AsyncCallback
 type AsyncRoutine func() (res interface{}, err error)
 
-type AsyncJobWorker struct {
+type asyncJobWorker struct {
 	jobQueue chan asyncJobItem
 }
 
@@ -36,8 +38,8 @@ type asyncJobItem struct {
 	callback AsyncCallback
 }
 
-func newAsyncJobWorker() *AsyncJobWorker {
-	ajw := &AsyncJobWorker{
+func newAsyncJobWorker() *asyncJobWorker {
+	ajw := &asyncJobWorker{
 		jobQueue: make(chan asyncJobItem, consts.ASYNC_JOB_QUEUE_MAXLEN),
 	}
 	numAsyncJobWorkersRunning.Add(1)
@@ -45,24 +47,24 @@ func newAsyncJobWorker() *AsyncJobWorker {
 	return ajw
 }
 
-func (ajw *AsyncJobWorker) appendJob(routine AsyncRoutine, callback AsyncCallback) {
+func (ajw *asyncJobWorker) appendJob(routine AsyncRoutine, callback AsyncCallback) {
 	ajw.jobQueue <- asyncJobItem{routine, callback}
 }
 
-func (ajw *AsyncJobWorker) loop() {
+func (ajw *asyncJobWorker) loop() {
 	for item := range ajw.jobQueue {
 		res, err := item.routine()
-		item.callback.Callback(res, err)
+		item.callback.callback(res, err)
 	}
 	numAsyncJobWorkersRunning.Done()
 }
 
 var (
 	asyncJobWorkersLock sync.RWMutex
-	asyncJobWorkers     = map[string]*AsyncJobWorker{}
+	asyncJobWorkers     = map[string]*asyncJobWorker{}
 )
 
-func getAsyncJobWorker(group string) (ajw *AsyncJobWorker) {
+func getAsyncJobWorker(group string) (ajw *asyncJobWorker) {
 	asyncJobWorkersLock.RLock()
 	ajw = asyncJobWorkers[group]
 	asyncJobWorkersLock.RUnlock()
@@ -79,11 +81,13 @@ func getAsyncJobWorker(group string) (ajw *AsyncJobWorker) {
 	return
 }
 
+// AppendAsyncJob append an async job to be executed asyncly (not in the game goroutine)
 func AppendAsyncJob(group string, routine AsyncRoutine, callback AsyncCallback) {
 	ajw := getAsyncJobWorker(group)
 	ajw.appendJob(routine, callback)
 }
 
+// WaitClear wait for all async job workers to finish (should only be called in the game goroutine)
 func WaitClear() bool {
 	var cleared bool
 	// Close all job queue workers
@@ -94,7 +98,7 @@ func WaitClear() bool {
 			close(alw.jobQueue)
 			gwlog.Infof("\tclear %s", group)
 		}
-		asyncJobWorkers = map[string]*AsyncJobWorker{}
+		asyncJobWorkers = map[string]*asyncJobWorker{}
 		cleared = true
 	}
 	asyncJobWorkersLock.Unlock()
