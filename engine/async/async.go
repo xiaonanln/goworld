@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"golang.org/x/net/context"
@@ -83,15 +84,22 @@ func AppendAsyncJob(group string, routine AsyncRoutine, callback AsyncCallback) 
 	ajw.appendJob(routine, callback)
 }
 
-func Shutdown() {
+func WaitClear() bool {
+	var cleared bool
 	// Close all job queue workers
+	gwlog.Infof("Waiting for all async job workers to be cleared ...")
 	asyncJobWorkersLock.Lock()
-	for _, alw := range asyncJobWorkers {
-		close(alw.jobQueue)
+	if len(asyncJobWorkers) > 0 {
+		for group, alw := range asyncJobWorkers {
+			close(alw.jobQueue)
+			gwlog.Infof("\tclear %s", group)
+		}
+		asyncJobWorkers = map[string]*AsyncJobWorker{}
+		cleared = true
 	}
-	asyncJobWorkers = map[string]*AsyncJobWorker{}
 	asyncJobWorkersLock.Unlock()
 
 	// wait for all job workers to quit
 	numAsyncJobWorkersRunning.Wait()
+	return cleared
 }

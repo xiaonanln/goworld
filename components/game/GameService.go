@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/async"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -180,6 +181,10 @@ func (gs *_GameService) waitPostsComplete() {
 func (gs *_GameService) doTerminate() {
 	// wait for all posts to complete
 	kvdb.Shutdown()
+	// wait for all async to clear
+	for async.WaitClear() { // wait for all async to stop
+		gs.waitPostsComplete()
+	}
 	gs.waitPostsComplete()
 
 	// destroy all entities
@@ -198,6 +203,11 @@ func (gs *_GameService) doFreeze() {
 	// wait for all posts to complete
 
 	kvdb.Shutdown()
+	// wait for all async to clear
+	for async.WaitClear() { // wait for all async to stop
+		gs.waitPostsComplete()
+	}
+
 	gs.waitPostsComplete()
 
 	// destroy all entities

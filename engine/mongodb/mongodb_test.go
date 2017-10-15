@@ -255,7 +255,7 @@ func TestDropIndex(t *testing.T) {
 //		checkRequest(t, err, res)
 //		wait.Done()
 //	})
-//	wait.Wait()
+//	wait.WaitClear()
 //}
 
 func TestRemoveId(t *testing.T) {
@@ -337,7 +337,7 @@ func TestDropCollection(t *testing.T) {
 //		checkRequest(t, err, res)
 //		wait.Done()
 //	})
-//	wait.Wait()
+//	wait.WaitClear()
 //}
 
 func checkRequest(t *testing.T, err error, res interface{}) {
