@@ -179,13 +179,13 @@ func (gs *_GameService) waitPostsComplete() {
 }
 
 func (gs *_GameService) doTerminate() {
-	// wait for all posts to complete
 	kvdb.Shutdown()
+	// wait for all posts to complete
+	gs.waitPostsComplete()
 	// wait for all async to clear
 	for async.WaitClear() { // wait for all async to stop
 		gs.waitPostsComplete()
 	}
-	gs.waitPostsComplete()
 
 	// destroy all entities
 	entity.OnGameTerminating()
@@ -200,15 +200,15 @@ func (gs *_GameService) doTerminate() {
 var freezePacker = netutil.JSONMsgPacker{}
 
 func (gs *_GameService) doFreeze() {
-	// wait for all posts to complete
 
 	kvdb.Shutdown()
+	// wait for all posts to complete
+	gs.waitPostsComplete()
+
 	// wait for all async to clear
 	for async.WaitClear() { // wait for all async to stop
 		gs.waitPostsComplete()
 	}
-
-	gs.waitPostsComplete()
 
 	// destroy all entities
 	freeze := func() error {
