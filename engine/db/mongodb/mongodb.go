@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	_MONGODB_ASYNC_JOB_GROUP = "mongodb"
+	_MONGODB_ASYNC_JOB_GROUP = "_mongodb"
 )
 
 var (
