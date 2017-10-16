@@ -214,11 +214,14 @@ func (a *Avatar) Move_Client(pos entity.Vector3) {
 	a.SetPosition(pos)
 }
 
-var _TEST_PUBLISH_SUBSCRIBE_SUBJECTS = []string{"monster", "npc", "item", "avatar"}
+var _TEST_PUBLISH_SUBSCRIBE_SUBJECTS = []string{"monster", "npc", "item", "avatar", "boss_*"}
 
 // TestPublish_Client is client RPC for Publish/Subscribe testing
 func (a *Avatar) TestPublish_Client() {
 	subject := _TEST_PUBLISH_SUBSCRIBE_SUBJECTS[rand.Intn(len(_TEST_PUBLISH_SUBSCRIBE_SUBJECTS))]
+	if subject[len(subject)-1] == '*' {
+		subject = subject[:len(subject)-1] + strconv.Itoa(rand.Intn(100))
+	}
 	a.CallService(pubsub.ServiceName, "Publish", subject, fmt.Sprintf("%s: hello %s, this is a test publish message", a.ID, subject))
 }
 
