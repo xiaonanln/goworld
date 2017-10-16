@@ -8,6 +8,7 @@ import (
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/ext/pubsub"
 )
 
 var (
@@ -36,6 +37,7 @@ func main() {
 	goworld.RegisterEntity("MailService", &MailService{}, true, false).DefineAttrs(map[string][]string{
 		"lastMailID": {"Persistent"},
 	})
+	pubsub.RegisterService()
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{}, false, true).DefineAttrs(map[string][]string{
