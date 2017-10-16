@@ -16,6 +16,7 @@ var (
 		"OnlineService",
 		"SpaceService",
 		"MailService",
+		pubsub.ServiceName,
 	}
 )
 

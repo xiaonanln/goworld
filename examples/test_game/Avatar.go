@@ -12,6 +12,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/ext/pubsub"
 	"github.com/xiaonanln/typeconv"
 )
 
@@ -34,6 +35,9 @@ func (a *Avatar) OnCreated() {
 
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
+	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
+		a.CallService("PublishSubscribeService", "Subscribe", a.ID, subject)
+	}
 
 	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
 }
@@ -138,6 +142,9 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 // OnDestroy is called when avatar is destroying
 func (a *Avatar) OnDestroy() {
 	a.CallService("OnlineService", "CheckOut", a.ID)
+	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
+		a.CallService("PublishSubscribeService", "Unsubscribe", a.ID, subject)
+	}
 }
 
 // SendMail_Client is a client RPC to send mail to others
@@ -205,4 +212,19 @@ func (a *Avatar) Say_Client(channel string, content string) {
 func (a *Avatar) Move_Client(pos entity.Vector3) {
 	gwlog.Debugf("Move from %s -> %s", a.GetPosition(), pos)
 	a.SetPosition(pos)
+}
+
+var _TEST_PUBLISH_SUBSCRIBE_SUBJECTS = []string{"monster", "npc", "item", "avatar"}
+
+// TestPublish_Client is client RPC for Publish/Subscribe testing
+func (a *Avatar) TestPublish_Client() {
+	subject := _TEST_PUBLISH_SUBSCRIBE_SUBJECTS[rand.Intn(len(_TEST_PUBLISH_SUBSCRIBE_SUBJECTS))]
+	a.CallService(pubsub.ServiceName, "Publish", subject, fmt.Sprintf("%s: hello %s, this is a test publish message", a.ID, subject))
+}
+
+func (a *Avatar) OnPublish(subject string, content string) {
+	var publisher common.EntityID
+	publisher = common.EntityID(content[:common.ENTITYID_LENGTH])
+	gwlog.Debugf("OnPublish: publisher=%s, subject=%s, content=%s", publisher, subject, content)
+	a.CallClient("OnTestPublish", publisher, subject, content)
 }

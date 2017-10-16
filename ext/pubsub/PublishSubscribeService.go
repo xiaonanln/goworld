@@ -8,6 +8,10 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
+const (
+	ServiceName = "PublishSubscribeService"
+)
+
 type subscribing struct {
 	subscribers entity.EntityIDSet
 	//wildcardSubscribers entity.EntityIDSet
@@ -79,5 +83,5 @@ func (s *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subjec
 
 // RegisterService registeres PublishSubscribeService to goworld
 func RegisterService() {
-	goworld.RegisterEntity("PublishSubscribeService", &PublishSubscribeService{}, false, false).DefineAttrs(map[string][]string{})
+	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{}, false, false).DefineAttrs(map[string][]string{})
 }

@@ -164,12 +164,13 @@ type _Something struct {
 
 var (
 	_DO_THINGS = []*_Something{
-		{"DoEnterRandomSpace", 10, time.Minute},
-		{"DoSendMail", 5, time.Minute},
-		{"DoGetMails", 10, time.Minute},
-		{"DoSayInWorldChannel", 5, time.Minute},
-		{"DoSayInProfChannel", 5, time.Minute},
-		{"DoTestListField", 10, time.Minute},
+		//{"DoEnterRandomSpace", 10, time.Minute},
+		//{"DoSendMail", 5, time.Minute},
+		//{"DoGetMails", 10, time.Minute},
+		//{"DoSayInWorldChannel", 5, time.Minute},
+		//{"DoSayInProfChannel", 5, time.Minute},
+		//{"DoTestListField", 10, time.Minute},
+		{"DoTestPublish", 10, time.Minute},
 	}
 )
 
@@ -327,6 +328,17 @@ func (e *clientEntity) OnTestListField(serverList []interface{}) {
 	}
 
 	e.notifyThingDone("DoTestListField")
+}
+
+func (e *clientEntity) DoTestPublish() {
+	e.CallServer("TestPublish")
+}
+
+func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, content string) {
+	gwlog.Debugf("OnTestPublish: publisher=%v, subject=%v, content=%v", publisher, subject, content)
+	if publisher == e.ID {
+		e.notifyThingDone("DoTestPublish")
+	}
 }
 
 func (e *clientEntity) onAccountCreated() {
