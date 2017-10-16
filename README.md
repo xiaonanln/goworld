@@ -62,6 +62,10 @@ GoWorld uses [Glide](http://glide.sh/) to manage packages.
 1. Install [Glide](http://glide.sh/): `$ curl https://glide.sh/get | sh`
 2. `$ make install-deps`
 
+**For Chinese only:** 
+中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.zip](http://goworldgs.com/goworld_files/vendor.zip)，并将其解压到goworld根目录下。
+不过vendor.zip里的内容有可能不是最新的。
+
 ## Manage GoWorld using goworld.py
 
 goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module.
