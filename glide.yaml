@@ -32,5 +32,6 @@ import:
 - package: github.com/pierrec/lz4
   version: ^1.0.1
 - package: github.com/golang/snappy
+- package: github.com/xiaonanln/go-trie-tst
 testImport:
 - package: github.com/bmizerany/assert
