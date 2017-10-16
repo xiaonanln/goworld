@@ -15,8 +15,8 @@ type subscribing struct {
 
 func newSubscribing() *subscribing {
 	return &subscribing{
-		subscribers:         entity.EntityIDSet{},
-		wildcardSubscribers: entity.EntityIDSet{},
+		subscribers: entity.EntityIDSet{},
+		//wildcardSubscribers: entity.EntityIDSet{},
 	}
 }
 
