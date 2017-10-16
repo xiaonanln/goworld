@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 15
+	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 10
 )
 
 type clientAttrs map[string]interface{}
@@ -164,12 +164,12 @@ type _Something struct {
 
 var (
 	_DO_THINGS = []*_Something{
-		//{"DoEnterRandomSpace", 10, time.Minute},
-		//{"DoSendMail", 5, time.Minute},
-		//{"DoGetMails", 10, time.Minute},
-		//{"DoSayInWorldChannel", 5, time.Minute},
-		//{"DoSayInProfChannel", 5, time.Minute},
-		//{"DoTestListField", 10, time.Minute},
+		{"DoEnterRandomSpace", 10, time.Minute},
+		{"DoSendMail", 5, time.Minute},
+		{"DoGetMails", 10, time.Minute},
+		{"DoSayInWorldChannel", 5, time.Minute},
+		{"DoSayInProfChannel", 5, time.Minute},
+		{"DoTestListField", 10, time.Minute},
 		{"DoTestPublish", 10, time.Minute},
 	}
 )
