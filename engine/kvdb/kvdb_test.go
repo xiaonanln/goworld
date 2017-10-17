@@ -94,7 +94,3 @@ func TestBasic(t *testing.T) {
 
 	Put("__key_not_exists__", "", nil)
 }
-
-func TestShutdown(t *testing.T) {
-	Shutdown()
-}
