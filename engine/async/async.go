@@ -53,6 +53,7 @@ func (ajw *asyncJobWorker) appendJob(routine AsyncRoutine, callback AsyncCallbac
 
 func (ajw *asyncJobWorker) loop() {
 	defer numAsyncJobWorkersRunning.Done()
+
 	gwutils.RepeatUntilPanicless(func() {
 		for item := range ajw.jobQueue {
 			res, err := item.routine()
