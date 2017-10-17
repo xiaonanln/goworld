@@ -175,6 +175,7 @@ func (gs *_GameService) serveRoutine() {
 }
 
 func (gs *_GameService) waitPostsComplete() {
+	gwlog.Infof("waiting for posts to complete ...")
 	post.Tick() // just tick is Ok, tick will consume all posts
 }
 
