@@ -5,7 +5,7 @@ import (
 
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/post"
 	"golang.org/x/net/context"
 )
@@ -43,7 +43,7 @@ func newAsyncJobWorker() *asyncJobWorker {
 		jobQueue: make(chan asyncJobItem, consts.ASYNC_JOB_QUEUE_MAXLEN),
 	}
 	numAsyncJobWorkersRunning.Add(1)
-	go netutil.ServeForever(ajw.loop)
+	go ajw.loop()
 	return ajw
 }
 
@@ -52,11 +52,13 @@ func (ajw *asyncJobWorker) appendJob(routine AsyncRoutine, callback AsyncCallbac
 }
 
 func (ajw *asyncJobWorker) loop() {
-	for item := range ajw.jobQueue {
-		res, err := item.routine()
-		item.callback.callback(res, err)
-	}
-	numAsyncJobWorkersRunning.Done()
+	defer numAsyncJobWorkersRunning.Done()
+	gwutils.RepeatUntilPanicless(func() {
+		for item := range ajw.jobQueue {
+			res, err := item.routine()
+			item.callback.callback(res, err)
+		}
+	})
 }
 
 var (
