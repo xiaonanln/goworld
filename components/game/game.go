@@ -118,7 +118,6 @@ func setupSignals() {
 					continue
 				}
 
-				waitKVDBFinish()
 				waitEntityStorageFinish()
 
 				gwlog.Infof("Game %d shutdown gracefully.", gameid)
@@ -142,7 +141,6 @@ func setupSignals() {
 					continue
 				}
 
-				waitKVDBFinish()
 				waitEntityStorageFinish()
 
 				gwlog.Infof("Game %d freezed gracefully.", gameid)
@@ -163,12 +161,6 @@ func waitGameServiceStateSatisfied(s func(rs int) bool) {
 		}
 		time.Sleep(time.Millisecond * 100)
 	}
-}
-
-func waitKVDBFinish() {
-	// wait until kvdb's queue is empty
-	gwlog.Infof("Closing KVDB ...")
-	kvdb.Shutdown()
 }
 
 func waitEntityStorageFinish() {

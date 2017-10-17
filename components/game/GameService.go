@@ -179,7 +179,6 @@ func (gs *_GameService) waitPostsComplete() {
 }
 
 func (gs *_GameService) doTerminate() {
-	kvdb.Shutdown()
 	// wait for all posts to complete
 	gs.waitPostsComplete()
 	// wait for all async to clear
@@ -200,8 +199,6 @@ func (gs *_GameService) doTerminate() {
 var freezePacker = netutil.JSONMsgPacker{}
 
 func (gs *_GameService) doFreeze() {
-
-	kvdb.Shutdown()
 	// wait for all posts to complete
 	gs.waitPostsComplete()
 
