@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	_KVDB_ASYNC_JOB_GROUP = "kvdb"
+	_KVDB_ASYNC_JOB_GROUP = "_kvdb"
 )
 
 var (

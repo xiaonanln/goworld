@@ -1,4 +1,4 @@
-package mongodb
+package gwmongo
 
 import (
 	"testing"
@@ -13,13 +13,13 @@ import (
 )
 
 var wait sync.WaitGroup
-var mongodb *MongoDB
+var mongodb *DB
 
 func TestDial(t *testing.T) {
 	wait.Add(1)
 	Dial("mongodb://localhost:27017/", "goworld", func(res interface{}, err error) {
 		checkRequest(t, err, res)
-		mongodb = res.(*MongoDB)
+		mongodb = res.(*DB)
 		wait.Done()
 	})
 	wait.Wait()
@@ -35,7 +35,7 @@ func TestClose(t *testing.T) {
 	wait.Add(1)
 	Dial("mongodb://localhost:27017/", "goworld", func(res interface{}, err error) {
 		checkRequest(t, err, res)
-		mongodb = res.(*MongoDB)
+		mongodb = res.(*DB)
 		wait.Done()
 	})
 	wait.Wait()

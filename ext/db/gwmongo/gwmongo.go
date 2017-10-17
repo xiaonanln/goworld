@@ -1,4 +1,4 @@
-package mongodb
+package gwmongo
 
 import (
 	"github.com/pkg/errors"
@@ -17,12 +17,12 @@ var (
 )
 
 // MongoDB is a MongoDB instance can be used to manipulate Mongo DBs
-type MongoDB struct {
+type DB struct {
 	session *mgo.Session
 	db      *mgo.Database
 }
 
-func (mdb *MongoDB) checkConnected() bool {
+func (mdb *DB) checkConnected() bool {
 	return mdb.session != nil && mdb.db != nil
 }
 
@@ -38,12 +38,12 @@ func Dial(url string, dbname string, ac async.AsyncCallback) {
 
 		session.SetMode(mgo.Monotonic, true)
 		db := session.DB(dbname)
-		return &MongoDB{session, db}, nil
+		return &DB{session, db}, nil
 	}, ac)
 }
 
 // Close closes MongoDB
-func (mdb *MongoDB) Close(ac async.AsyncCallback) {
+func (mdb *DB) Close(ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -57,7 +57,7 @@ func (mdb *MongoDB) Close(ac async.AsyncCallback) {
 }
 
 // UseDB uses the specified DB
-func (mdb *MongoDB) UseDB(dbname string, ac async.AsyncCallback) {
+func (mdb *DB) UseDB(dbname string, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -69,7 +69,7 @@ func (mdb *MongoDB) UseDB(dbname string, ac async.AsyncCallback) {
 }
 
 // SetMode sets the consistency mode
-func (mdb *MongoDB) SetMode(consistency mgo.Mode, ac async.AsyncCallback) {
+func (mdb *DB) SetMode(consistency mgo.Mode, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -81,7 +81,7 @@ func (mdb *MongoDB) SetMode(consistency mgo.Mode, ac async.AsyncCallback) {
 }
 
 // FindId finds document in collection by Id
-func (mdb *MongoDB) FindId(collectionName string, id interface{}, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) FindId(collectionName string, id interface{}, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -97,7 +97,7 @@ func (mdb *MongoDB) FindId(collectionName string, id interface{}, setupQuery fun
 }
 
 // FindOne finds one document with specified query
-func (mdb *MongoDB) FindOne(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) FindOne(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -114,7 +114,7 @@ func (mdb *MongoDB) FindOne(collectionName string, query bson.M, setupQuery func
 }
 
 // FindAll finds all documents with specified query
-func (mdb *MongoDB) FindAll(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) FindAll(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -130,7 +130,7 @@ func (mdb *MongoDB) FindAll(collectionName string, query bson.M, setupQuery func
 }
 
 // Count counts the number of documents by query
-func (mdb *MongoDB) Count(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) Count(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -145,7 +145,7 @@ func (mdb *MongoDB) Count(collectionName string, query bson.M, setupQuery func(q
 }
 
 // Insert inserts a document
-func (mdb *MongoDB) Insert(collectionName string, doc bson.M, ac async.AsyncCallback) {
+func (mdb *DB) Insert(collectionName string, doc bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -156,7 +156,7 @@ func (mdb *MongoDB) Insert(collectionName string, doc bson.M, ac async.AsyncCall
 }
 
 // InsertMany inserts multiple documents
-func (mdb *MongoDB) InsertMany(collectionName string, docs []bson.M, ac async.AsyncCallback) {
+func (mdb *DB) InsertMany(collectionName string, docs []bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -171,7 +171,7 @@ func (mdb *MongoDB) InsertMany(collectionName string, docs []bson.M, ac async.As
 }
 
 // UpdateId updates a document by id
-func (mdb *MongoDB) UpdateId(collectionName string, id interface{}, update bson.M, ac async.AsyncCallback) {
+func (mdb *DB) UpdateId(collectionName string, id interface{}, update bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -183,7 +183,7 @@ func (mdb *MongoDB) UpdateId(collectionName string, id interface{}, update bson.
 }
 
 // Update updates a document by query
-func (mdb *MongoDB) Update(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
+func (mdb *DB) Update(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -195,7 +195,7 @@ func (mdb *MongoDB) Update(collectionName string, query bson.M, update bson.M, a
 }
 
 // UpdateAll updates all documents by query
-func (mdb *MongoDB) UpdateAll(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
+func (mdb *DB) UpdateAll(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return 0, errNoSession
@@ -211,7 +211,7 @@ func (mdb *MongoDB) UpdateAll(collectionName string, query bson.M, update bson.M
 }
 
 // UpsertId updates or inserts a document by id
-func (mdb *MongoDB) UpsertId(collectionName string, id interface{}, update bson.M, ac async.AsyncCallback) {
+func (mdb *DB) UpsertId(collectionName string, id interface{}, update bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -227,7 +227,7 @@ func (mdb *MongoDB) UpsertId(collectionName string, id interface{}, update bson.
 }
 
 // Upsert updates or inserts a document by query
-func (mdb *MongoDB) Upsert(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
+func (mdb *DB) Upsert(collectionName string, query bson.M, update bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -243,7 +243,7 @@ func (mdb *MongoDB) Upsert(collectionName string, query bson.M, update bson.M, a
 }
 
 // RemoveId removes a document by id
-func (mdb *MongoDB) RemoveId(collectionName string, id interface{}, ac async.AsyncCallback) {
+func (mdb *DB) RemoveId(collectionName string, id interface{}, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -255,7 +255,7 @@ func (mdb *MongoDB) RemoveId(collectionName string, id interface{}, ac async.Asy
 }
 
 // Remove removes a document by query
-func (mdb *MongoDB) Remove(collectionName string, query bson.M, ac async.AsyncCallback) {
+func (mdb *DB) Remove(collectionName string, query bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -267,7 +267,7 @@ func (mdb *MongoDB) Remove(collectionName string, query bson.M, ac async.AsyncCa
 }
 
 // Remove removes all documents by query
-func (mdb *MongoDB) RemoveAll(collectionName string, query bson.M, ac async.AsyncCallback) {
+func (mdb *DB) RemoveAll(collectionName string, query bson.M, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return 0, errNoSession
@@ -283,7 +283,7 @@ func (mdb *MongoDB) RemoveAll(collectionName string, query bson.M, ac async.Asyn
 }
 
 // EnsureIndex creates an index
-func (mdb *MongoDB) EnsureIndex(collectionName string, index mgo.Index, ac async.AsyncCallback) {
+func (mdb *DB) EnsureIndex(collectionName string, index mgo.Index, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -295,7 +295,7 @@ func (mdb *MongoDB) EnsureIndex(collectionName string, index mgo.Index, ac async
 }
 
 // EnsureIndexKey creates an index by keys
-func (mdb *MongoDB) EnsureIndexKey(collectionName string, keys []string, ac async.AsyncCallback) {
+func (mdb *DB) EnsureIndexKey(collectionName string, keys []string, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -307,7 +307,7 @@ func (mdb *MongoDB) EnsureIndexKey(collectionName string, keys []string, ac asyn
 }
 
 // DropIndex drops an index by keys
-func (mdb *MongoDB) DropIndex(collectionName string, keys []string, ac async.AsyncCallback) {
+func (mdb *DB) DropIndex(collectionName string, keys []string, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -331,7 +331,7 @@ func (mdb *MongoDB) DropIndex(collectionName string, keys []string, ac async.Asy
 //}
 
 // DropCollection drops c collection
-func (mdb *MongoDB) DropCollection(collectionName string, ac async.AsyncCallback) {
+func (mdb *DB) DropCollection(collectionName string, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
@@ -343,7 +343,7 @@ func (mdb *MongoDB) DropCollection(collectionName string, ac async.AsyncCallback
 }
 
 // DropDatabase drops the database
-func (mdb *MongoDB) DropDatabase(ac async.AsyncCallback) {
+func (mdb *DB) DropDatabase(ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
