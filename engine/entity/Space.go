@@ -161,7 +161,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 		entity.client.sendCreateEntity(&space.Entity, false) // create Space entity before every other entities
 
 		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
-		gwlog.Infof("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
+		// gwlog.Infof("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
 
 		for _, naoi := range enter {
 			neighbor := naoi.getEntity()
