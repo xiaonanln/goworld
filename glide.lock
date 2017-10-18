@@ -1,5 +1,5 @@
 hash: 6a6c1195743614c8d02064955a7ddfb4f8b109aaa6cbe1b7f12515743bf5731c
-updated: 2017-10-17T01:29:28.25042151Z
+updated: 2017-10-18T20:05:32.9126478+08:00
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -33,7 +33,7 @@ imports:
 - name: github.com/vmihailenco/msgpack
   version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
 - name: github.com/xiaonanln/go-trie-tst
-  version: f7e4ac258f7c440f43c73c912da5fe5a43c8d360
+  version: 5b9678d554381de6839d42cfae140a1e50183bfe
 - name: github.com/xiaonanln/go-xnsyncutil
   version: c7fdf3d35fc983ee5f9d7fa561be5ce71c6196bf
   subpackages:

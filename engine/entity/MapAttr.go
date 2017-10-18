@@ -26,6 +26,13 @@ func (a *MapAttr) HasKey(key string) bool {
 	return ok
 }
 
+// ForEach calls f on all items
+func (a *MapAttr) ForEach(f func(key string, val interface{})) {
+	for k, v := range a.attrs {
+		f(k, v)
+	}
+}
+
 // Set sets the key-attribute pair in MapAttr
 func (a *MapAttr) Set(key string, val interface{}) {
 	var flag attrFlag

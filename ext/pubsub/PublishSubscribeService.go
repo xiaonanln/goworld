@@ -37,59 +37,61 @@ type PublishSubscribeService struct {
 }
 
 // OnInit initialize PublishSubscribeService fields
-func (s *PublishSubscribeService) OnInit() {
+func (pss *PublishSubscribeService) OnInit() {
 }
 
 // OnCreated is called when PublishSubscribeService is created
-func (s *PublishSubscribeService) OnCreated() {
+func (pss *PublishSubscribeService) OnCreated() {
 	gwlog.Infof("Registering PublishSubscribeService ...")
-	s.DeclareService("PublishSubscribeService")
+	pss.Attrs.SetDefault("subscribers", goworld.MapAttr())
+	pss.Attrs.SetDefault("wildcardSubscribers", goworld.MapAttr())
+	pss.DeclareService("PublishSubscribeService")
 }
 
 // Publish is called when Avatars login
-func (s *PublishSubscribeService) Publish(subject string, content string) {
-	gwlog.Debugf("Publish: subject=%s, content=%s", subject, content)
+func (pss *PublishSubscribeService) Publish(subject string, content string) {
+	gwlog.Debugf("Publish: subject=%pss, content=%pss", subject, content)
 	for _, c := range subject {
 		if c == '*' {
 			gwlog.Panicf("subject should not contains '*' while publishing")
 		}
 	}
 
-	s.publishInTree(subject, content, &s.tree, 0)
-	//subs := s.getSubscribing(subject)
+	pss.publishInTree(subject, content, &pss.tree, 0)
+	//subs := pss.getSubscribing(subject)
 	//for eid := range subs.subscribers {
-	//	s.Call(eid, "OnPublish", subject, content)
+	//	pss.Call(eid, "OnPublish", subject, content)
 	//}
 }
 
-func (s *PublishSubscribeService) publishInTree(subject string, content string, st *trietst.TST, idx int) {
+func (pss *PublishSubscribeService) publishInTree(subject string, content string, st *trietst.TST, idx int) {
 	// call all wildcard subscribers
-	subs := s.getSubscribingOfTree(st, false)
+	subs := pss.getSubscribingOfTree(st, false)
 	if subs != nil {
 		for eid := range subs.wildcardSubscribers {
-			//gwlog.Debugf("subject %s matches subscribe %s", subject, subject[:idx]+"*")
-			s.Call(eid, "OnPublish", subject, content)
+			//gwlog.Debugf("subject %pss matches subscribe %pss", subject, subject[:idx]+"*")
+			pss.Call(eid, "OnPublish", subject, content)
 		}
 	}
 	if idx < len(subject) {
-		s.publishInTree(subject, content, st.Child(subject[idx]), idx+1)
+		pss.publishInTree(subject, content, st.Child(subject[idx]), idx+1)
 	} else {
 		// exact match
 		if subs != nil {
 			for eid := range subs.subscribers {
-				//gwlog.Debugf("subject %s matches subscribe %s", subject, subject)
-				s.Call(eid, "OnPublish", subject, content)
+				//gwlog.Debugf("subject %pss matches subscribe %pss", subject, subject)
+				pss.Call(eid, "OnPublish", subject, content)
 			}
 		}
 	}
 }
 
-func (s *PublishSubscribeService) getSubscribing(subject string, newIfNotExists bool) *subscribing {
-	t := s.tree.Sub(subject)
-	return s.getSubscribingOfTree(t, newIfNotExists)
+func (pss *PublishSubscribeService) getSubscribing(subject string, newIfNotExists bool) *subscribing {
+	t := pss.tree.Sub(subject)
+	return pss.getSubscribingOfTree(t, newIfNotExists)
 }
 
-func (s *PublishSubscribeService) getSubscribingOfTree(t *trietst.TST, newIfNotExists bool) *subscribing {
+func (pss *PublishSubscribeService) getSubscribingOfTree(t *trietst.TST, newIfNotExists bool) *subscribing {
 	var subs *subscribing
 	if t.Val == nil {
 		if newIfNotExists {
@@ -106,8 +108,8 @@ func (s *PublishSubscribeService) getSubscribingOfTree(t *trietst.TST, newIfNotE
 // subject can endswith '*' which matches any zero or more characters
 // for example, if an entity subscribe to 'apple.*', it will receive published message on 'apple.', 'apple.1', 'apple.2', etc
 // There can be only one '*' at the end of subject while subscribing, same for unsubscribing
-func (s *PublishSubscribeService) Subscribe(subscriber common.EntityID, subject string) {
-	gwlog.Debugf("Subscribe: subject=%s, subscriber=%s", subject, subscriber)
+func (pss *PublishSubscribeService) Subscribe(subscriber common.EntityID, subject string) {
+	gwlog.Debugf("Subscribe: subject=%pss, subscriber=%pss", subject, subscriber)
 
 	for i, c := range subject {
 		if c == '*' && i != len(subject)-1 {
@@ -121,7 +123,11 @@ func (s *PublishSubscribeService) Subscribe(subscriber common.EntityID, subject 
 		wildcard = true
 		subject = subject[:len(subject)-1]
 	}
-	subs := s.getSubscribing(subject, true)
+	pss.subscribe(subscriber, subject, wildcard)
+}
+
+func (pss *PublishSubscribeService) subscribe(subscriber common.EntityID, subject string, wildcard bool) {
+	subs := pss.getSubscribing(subject, true)
 	if !wildcard {
 		subs.subscribers.Add(subscriber)
 	} else {
@@ -130,8 +136,8 @@ func (s *PublishSubscribeService) Subscribe(subscriber common.EntityID, subject 
 }
 
 // Unsubscribe subscribe to the specified subject
-func (s *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subject string) {
-	gwlog.Debugf("Unsubscribe: subject=%s, subscriber=%s", subject, subscriber)
+func (pss *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subject string) {
+	gwlog.Debugf("Unsubscribe: subject=%pss, subscriber=%pss", subject, subscriber)
 	for i, c := range subject {
 		if c == '*' && i != len(subject)-1 {
 			gwlog.Panicf("'*' can only be used at the end of subject while unsubscribing")
@@ -144,7 +150,7 @@ func (s *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subjec
 		wildcard = true
 		subject = subject[:len(subject)-1]
 	}
-	subs := s.getSubscribing(subject, false)
+	subs := pss.getSubscribing(subject, false)
 	if subs == nil {
 		return
 	}
@@ -157,13 +163,45 @@ func (s *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subjec
 }
 
 // OnFreeze converts all subscribings to entity attrs
-func (s *PublishSubscribeService) OnFreeze() {
+func (pss *PublishSubscribeService) OnFreeze() {
+	subscribersAttr := pss.GetMapAttr("subscirbers")
+	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscirbers")
 
+	pss.tree.ForEach(func(s string, val interface{}) {
+		subs := val.(*subscribing)
+		subscribersAttr.Set(s, goworld.MapAttr())
+		wildcardSubscribersAttr.Set(s, goworld.MapAttr())
+
+		for eid := range subs.subscribers {
+			subscribersAttr.GetMapAttr(s).Set(string(eid), 1)
+		}
+		for eid := range subs.wildcardSubscribers {
+			wildcardSubscribersAttr.GetMapAttr(s).Set(string(eid), 1)
+		}
+	})
 }
 
 // OnRestored restores subscribings from entity attrs
-func (s *PublishSubscribeService) OnRestored() {
+func (pss *PublishSubscribeService) OnRestored() {
+	subscribersAttr := pss.GetMapAttr("subscirbers")
+	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscirbers")
+	subscribersAttr.ForEach(func(subject string, val interface{}) {
+		eids := val.(*entity.MapAttr)
+		eids.ForEach(func(eidStr string, _ interface{}) {
+			eid := common.EntityID(eidStr)
+			pss.subscribe(eid, subject, false)
+			gwlog.Infof("%s: restored subscribing: %s -> %s", pss, eid, subject)
+		})
+	})
 
+	wildcardSubscribersAttr.ForEach(func(subject string, val interface{}) {
+		eids := val.(*entity.MapAttr)
+		eids.ForEach(func(eidStr string, _ interface{}) {
+			eid := common.EntityID(eidStr)
+			pss.subscribe(eid, subject, true)
+			gwlog.Infof("%s: restored subscribing: %s -> %s*", pss, eid, subject)
+		})
+	})
 }
 
 // RegisterService registeres PublishSubscribeService to goworld
