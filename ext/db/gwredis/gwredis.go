@@ -41,17 +41,3 @@ func (db *DB) Do(commandName string, args []interface{}, ac async.AsyncCallback)
 		return
 	}, ac)
 }
-
-func (db *DB) Send(commandName string, args []interface{}, ac async.AsyncCallback) {
-	async.AppendAsyncJob(_REDIS_ASYNC_JOB_GROUP, func() (res interface{}, err error) {
-		err = db.conn.Send(commandName, args...)
-		return
-	}, ac)
-}
-
-func (db *DB) Receive(ac async.AsyncCallback) {
-	async.AppendAsyncJob(_REDIS_ASYNC_JOB_GROUP, func() (res interface{}, err error) {
-		res, err = db.conn.Receive()
-		return
-	}, ac)
-}
