@@ -17,6 +17,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -77,7 +78,7 @@ func (gs *_GameService) run(restore bool) {
 		}
 	}
 
-	netutil.ServeForever(gs.serveRoutine)
+	gwutils.RepeatUntilPanicless(gs.serveRoutine)
 }
 
 func (gs *_GameService) serveRoutine() {

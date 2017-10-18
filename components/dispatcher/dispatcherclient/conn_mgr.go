@@ -14,6 +14,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
@@ -90,7 +91,7 @@ func Initialize(delegate IDispatcherClientDelegate, autoFlush bool) {
 	dispatcherClientAutoFlush = autoFlush
 
 	assureConnectedDispatcherClient()
-	go netutil.ServeForever(serveDispatcherClient) // start the recv routine
+	go gwutils.RepeatUntilPanicless(serveDispatcherClient) // start the recv routine
 }
 
 // GetDispatcherClientForSend returns the current dispatcher client for sending messages

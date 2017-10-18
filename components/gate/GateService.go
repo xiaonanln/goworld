@@ -21,6 +21,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -66,7 +67,7 @@ func (gs *GateService) run() {
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 
-	netutil.ServeForever(gs.handlePacketRoutine)
+	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
 }
 
 func (gs *GateService) setupTLSConfig(cfg *config.GateConfig) {
