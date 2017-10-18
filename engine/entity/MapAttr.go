@@ -43,7 +43,7 @@ func (a *MapAttr) Set(key string, val interface{}) {
 			gwlog.Panicf("MapAttr reused in key %s", key)
 		}
 
-		if a == a.owner.Attrs { // this is the root
+		if a.owner != nil && a == a.owner.Attrs { // this is the root
 			flag = a.owner.getAttrFlag(key)
 		} else {
 			flag = a.flag
@@ -56,7 +56,7 @@ func (a *MapAttr) Set(key string, val interface{}) {
 			gwlog.Panicf("ListAttr reused in key %s", key)
 		}
 
-		if a == a.owner.Attrs { // this is the root
+		if a.owner != nil && a == a.owner.Attrs { // this is the root
 			flag = a.owner.getAttrFlag(key)
 		} else {
 			flag = a.flag
