@@ -164,8 +164,8 @@ func (pss *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subj
 
 // OnFreeze converts all subscribings to entity attrs
 func (pss *PublishSubscribeService) OnFreeze() {
-	subscribersAttr := pss.GetMapAttr("subscirbers")
-	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscirbers")
+	subscribersAttr := pss.GetMapAttr("subscribers")
+	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscribers")
 
 	pss.tree.ForEach(func(s string, val interface{}) {
 		subs := val.(*subscribing)
@@ -183,8 +183,8 @@ func (pss *PublishSubscribeService) OnFreeze() {
 
 // OnRestored restores subscribings from entity attrs
 func (pss *PublishSubscribeService) OnRestored() {
-	subscribersAttr := pss.GetMapAttr("subscirbers")
-	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscirbers")
+	subscribersAttr := pss.GetMapAttr("subscribers")
+	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscribers")
 	subscribersAttr.ForEach(func(subject string, val interface{}) {
 		eids := val.(*entity.MapAttr)
 		eids.ForEach(func(eidStr string, _ interface{}) {
