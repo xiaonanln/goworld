@@ -202,28 +202,36 @@ var freezePacker = netutil.JSONMsgPacker{}
 
 func (gs *_GameService) doFreeze() {
 	// wait for all posts to complete
+	st := time.Now()
 	gs.waitPostsComplete()
 
 	// wait for all async to clear
 	for async.WaitClear() { // wait for all async to stop
 		gs.waitPostsComplete()
 	}
+	gwlog.Infof("wait async & posts clear takes %s", time.Now().Sub(st))
 
 	// destroy all entities
 	freeze := func() error {
+		st = time.Now()
 		freezeEntity, err := entity.Freeze(gameid)
 		if err != nil {
 			return err
 		}
+		gwlog.Infof("freeze entities takes %s", time.Now().Sub(st))
+		st = time.Now()
 		freezeData, err := freezePacker.PackMsg(freezeEntity, nil)
 		if err != nil {
 			return err
 		}
+		gwlog.Infof("pack entities takes %s, total data size: %d", time.Now().Sub(st), len(freezeData))
+		st = time.Now()
 		freezeFilename := freezeFilename(gameid)
 		err = ioutil.WriteFile(freezeFilename, freezeData, 0644)
 		if err != nil {
 			return err
 		}
+		gwlog.Infof("write freeze data to file takes %s", time.Now().Sub(st))
 
 		return nil
 	}
@@ -248,16 +256,23 @@ func freezeFilename(gameid uint16) string {
 }
 
 func (gs *_GameService) doRestore() error {
+	t0 := time.Now()
 	freezeFilename := freezeFilename(gameid)
 	data, err := ioutil.ReadFile(freezeFilename)
 	if err != nil {
 		return err
 	}
 
+	t1 := time.Now()
 	var freezeEntity entity.FreezeData
 	freezePacker.UnpackMsg(data, &freezeEntity)
+	t2 := time.Now()
 
-	return entity.RestoreFreezedEntities(&freezeEntity)
+	err = entity.RestoreFreezedEntities(&freezeEntity)
+	t3 := time.Now()
+
+	gwlog.Infof("restored game service: load = %s, unpack = %s, restore = %s", t1.Sub(t0), t2.Sub(t1), t3.Sub(t2))
+	return err
 }
 
 func (gs *_GameService) String() string {

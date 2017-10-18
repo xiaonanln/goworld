@@ -153,13 +153,17 @@ func setupSignals() {
 }
 
 func waitGameServiceStateSatisfied(s func(rs int) bool) {
+	waitCounter := 0
 	for {
 		state := gameService.runState.Load()
-		gwlog.Infof("game service status: %d", state)
 		if s(state) {
 			break
 		}
-		time.Sleep(time.Millisecond * 100)
+		waitCounter++
+		if waitCounter%10 == 0 {
+			gwlog.Infof("game service status: %d", state)
+		}
+		time.Sleep(time.Millisecond * 10)
 	}
 }
 
