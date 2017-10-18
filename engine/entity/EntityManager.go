@@ -439,6 +439,13 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 	entityFreezeInfos := map[common.EntityID]*entityFreezeData{}
 	foundNilSpace := false
 	for _, e := range entityManager.entities {
+
+		err := gwutils.CatchPanic(e.I.OnFreeze)
+		if err != nil {
+			// OnFreeze failed
+			return nil, errors.Errorf("OnFreeze paniced: %v", err)
+		}
+
 		entityFreezeInfos[e.ID] = e.GetFreezeData()
 		if e.IsSpaceEntity() {
 			if e.ToSpace().IsNil() {

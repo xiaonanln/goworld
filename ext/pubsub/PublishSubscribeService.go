@@ -156,6 +156,16 @@ func (s *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subjec
 	}
 }
 
+// OnFreeze converts all subscribings to entity attrs
+func (s *PublishSubscribeService) OnFreeze() {
+
+}
+
+// OnRestored restores subscribings from entity attrs
+func (s *PublishSubscribeService) OnRestored() {
+
+}
+
 // RegisterService registeres PublishSubscribeService to goworld
 func RegisterService() {
 	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{}, false, false).DefineAttrs(map[string][]string{})

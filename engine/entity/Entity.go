@@ -91,6 +91,7 @@ type IEntity interface {
 	OnMigrateOut() // Called just before entity is migrating out
 	OnMigrateIn()  // Called just after entity is migrating in
 	// Freeze && Restore
+	OnFreeze()   // Called when entity is freezing
 	OnRestored() // Called when entity is restored
 	// Space Operations
 	OnEnterSpace()             // Called when entity leaves space
@@ -548,6 +549,12 @@ func (e *Entity) OnInit() {
 // Can override this function in custom entity type
 func (e *Entity) OnCreated() {
 	//gwlog.Debugf("%s.OnCreated", e)
+}
+
+// OnFreeze is called when entity is freezed
+//
+// Can override this function in custom entity type
+func (e *Entity) OnFreeze() {
 }
 
 // OnRestored is called when entity is restored
