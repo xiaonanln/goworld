@@ -1,5 +1,5 @@
-hash: 5ccf4d20ce6691b48a6742b428144aafd06f532dcfb7a0f1ba868a3b3a538159
-updated: 2017-10-19T08:13:43.029761941Z
+hash: c88343449979ff517bf9ec4f44ef4e3b4a015ce5b75e5579119205aed50e2f35
+updated: 2017-10-19T12:34:56.551978627Z
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -30,6 +30,10 @@ imports:
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/Sirupsen/logrus
   version: a3f95b5c423586578a4e099b11a46c2479628cac
+- name: github.com/vmihailenco/msgpack
+  version: de4b4857c10538d591bee30e8114176008f8b9d0
+  repo: https://github.com/xiaonanln/msgpack.git
+  vcs: git
 - name: github.com/xiaonanln/go-trie-tst
   version: 5b9678d554381de6839d42cfae140a1e50183bfe
 - name: github.com/xiaonanln/go-xnsyncutil
@@ -70,9 +74,7 @@ imports:
   - internal/sasl
   - internal/scram
 - name: gopkg.in/vmihailenco/msgpack.v2
-  version: 7a11c4904cbad028472a6892a83953dbc3b3a5e2
-  repo: https://github.com/xiaonanln/msgpack.git
-  vcs: git
+  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
   subpackages:
   - codes
 testImports:
