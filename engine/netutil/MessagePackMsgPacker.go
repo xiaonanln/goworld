@@ -3,7 +3,7 @@ package netutil
 import (
 	"bytes"
 
-	"gopkg.in/vmihailenco/msgpack.v2"
+	"github.com/vmihailenco/msgpack"
 )
 
 // MessagePackMsgPacker packs and unpacks message in MessagePack format
