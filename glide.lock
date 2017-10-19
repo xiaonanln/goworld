@@ -1,5 +1,5 @@
-hash: e70ab9d325a743c9ff0dfdd9133a4f0e4b20d4e185668b5fa9c2c53917d942d1
-updated: 2017-10-19T07:56:43.245055528Z
+hash: 5ccf4d20ce6691b48a6742b428144aafd06f532dcfb7a0f1ba868a3b3a538159
+updated: 2017-10-19T08:13:43.029761941Z
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -70,8 +70,8 @@ imports:
   - internal/sasl
   - internal/scram
 - name: gopkg.in/vmihailenco/msgpack.v2
-  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
-  repo: https://gopkg.in/xiaonanln/msgpack.v2.git
+  version: 7a11c4904cbad028472a6892a83953dbc3b3a5e2
+  repo: https://github.com/xiaonanln/msgpack.git
   vcs: git
   subpackages:
   - codes
