@@ -33,7 +33,7 @@ func newSubscribing() *subscribing {
 // PublishSubscribeService is the service entity for maintain total online avatar infos
 type PublishSubscribeService struct {
 	entity.Entity
-	tree trietst.TST
+	tree trietst.TrieMO // althrough TST performs a little better, but it has bad worst case performance
 }
 
 // OnInit initialize PublishSubscribeService fields
@@ -64,7 +64,7 @@ func (pss *PublishSubscribeService) Publish(subject string, content string) {
 	//}
 }
 
-func (pss *PublishSubscribeService) publishInTree(subject string, content string, st *trietst.TST, idx int) {
+func (pss *PublishSubscribeService) publishInTree(subject string, content string, st *trietst.TrieMO, idx int) {
 	// call all wildcard subscribers
 	subs := pss.getSubscribingOfTree(st, false)
 	if subs != nil {
@@ -91,7 +91,7 @@ func (pss *PublishSubscribeService) getSubscribing(subject string, newIfNotExist
 	return pss.getSubscribingOfTree(t, newIfNotExists)
 }
 
-func (pss *PublishSubscribeService) getSubscribingOfTree(t *trietst.TST, newIfNotExists bool) *subscribing {
+func (pss *PublishSubscribeService) getSubscribingOfTree(t *trietst.TrieMO, newIfNotExists bool) *subscribing {
 	var subs *subscribing
 	if t.Val == nil {
 		if newIfNotExists {

@@ -26,6 +26,15 @@ func (a *MapAttr) HasKey(key string) bool {
 	return ok
 }
 
+// Keys returns all keys of attrs
+func (a *MapAttr) Keys() []string {
+	keys := make([]string, 0, len(a.attrs))
+	for k, _ := range a.attrs {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // ForEach calls f on all items
 func (a *MapAttr) ForEach(f func(key string, val interface{})) {
 	for k, v := range a.attrs {

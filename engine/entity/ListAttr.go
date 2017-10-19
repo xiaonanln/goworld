@@ -1,9 +1,6 @@
 package entity
 
-import (
-	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/typeconv"
-)
+import "github.com/xiaonanln/goworld/engine/gwlog"
 
 // ListAttr is a attribute for a list of attributes
 type ListAttr struct {
@@ -129,21 +126,9 @@ func (a *ListAttr) Get(index int) interface{} {
 }
 
 // GetInt gets item value as int
-func (a *ListAttr) GetInt(index int) int {
+func (a *ListAttr) GetInt(index int) int64 {
 	val := a.Get(index)
-	return int(typeconv.Int(val))
-}
-
-// GetInt64 gets item value as int64
-func (a *ListAttr) GetInt64(index int) int64 {
-	val := a.Get(index)
-	return typeconv.Int(val)
-}
-
-// GetUint64 gets item value as uint64
-func (a *ListAttr) GetUint64(index int) uint64 {
-	val := a.Get(index)
-	return uint64(typeconv.Int(val))
+	return val.(int64)
 }
 
 // GetStr gets item value as string
