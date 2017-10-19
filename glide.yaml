@@ -33,5 +33,7 @@ import:
 - package: github.com/xiaonanln/go-trie-tst
   version: ^0.1.0
 - package: gopkg.in/vmihailenco/msgpack.v2
+  vcs: git
+  repo: https://github.com/xiaonanln/msgpack.git
 testImport:
 - package: github.com/bmizerany/assert

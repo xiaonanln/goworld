@@ -1,5 +1,5 @@
-hash: 9de39a0ceb2f0c3c8a6136c612008cfb67d98169f879b9f8b3a409a786666fb6
-updated: 2017-10-19T07:01:08.890779293Z
+hash: c59b2c66d6e35ace93ccc32c86411f7b7daa9473505918b6430ffd002b33a79f
+updated: 2017-10-19T07:24:16.115448223Z
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -30,6 +30,10 @@ imports:
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/Sirupsen/logrus
   version: a3f95b5c423586578a4e099b11a46c2479628cac
+- name: github.com/vmihailenco/msgpack
+  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
+  subpackages:
+  - codes
 - name: github.com/xiaonanln/go-trie-tst
   version: 5b9678d554381de6839d42cfae140a1e50183bfe
 - name: github.com/xiaonanln/go-xnsyncutil
@@ -70,9 +74,9 @@ imports:
   - internal/sasl
   - internal/scram
 - name: gopkg.in/vmihailenco/msgpack.v2
-  version: f4f8982de4ef0de18be76456617cc3f5d8d8141e
-  subpackages:
-  - codes
+  version: 02a246563e0b9c5b01300bef8650b3e152e30149
+  repo: https://github.com/xiaonanln/msgpack.git
+  vcs: git
 testImports:
 - name: github.com/bmizerany/assert
   version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
