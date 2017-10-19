@@ -33,11 +33,16 @@ func newSubscribing() *subscribing {
 // PublishSubscribeService is the service entity for maintain total online avatar infos
 type PublishSubscribeService struct {
 	entity.Entity
-	tree trietst.TrieMO // althrough TST performs a little better, but it has bad worst case performance
+
+	tree                       trietst.TrieMO // althrough TST performs a little better, but it has bad worst case performance
+	avatarSubscribings         map[common.EntityID]common.StringSet
+	avatarWildcardSubscribings map[common.EntityID]common.StringSet
 }
 
 // OnInit initialize PublishSubscribeService fields
 func (pss *PublishSubscribeService) OnInit() {
+	pss.avatarSubscribings = map[common.EntityID]common.StringSet{}
+	pss.avatarWildcardSubscribings = map[common.EntityID]common.StringSet{}
 }
 
 // OnCreated is called when PublishSubscribeService is created
@@ -130,8 +135,20 @@ func (pss *PublishSubscribeService) subscribe(subscriber common.EntityID, subjec
 	subs := pss.getSubscribing(subject, true)
 	if !wildcard {
 		subs.subscribers.Add(subscriber)
+		avatarSubs, ok := pss.avatarSubscribings[subscriber]
+		if !ok {
+			avatarSubs = common.StringSet{}
+			pss.avatarSubscribings[subscriber] = avatarSubs
+		}
+		avatarSubs.Add(subject)
 	} else {
 		subs.wildcardSubscribers.Add(subscriber)
+		avatarSubs, ok := pss.avatarWildcardSubscribings[subscriber]
+		if !ok {
+			avatarSubs = common.StringSet{}
+			pss.avatarWildcardSubscribings[subscriber] = avatarSubs
+		}
+		avatarSubs.Add(subject)
 	}
 }
 
@@ -150,6 +167,11 @@ func (pss *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subj
 		wildcard = true
 		subject = subject[:len(subject)-1]
 	}
+
+	pss.unsubscribe(subscriber, subject, wildcard)
+
+}
+func (pss *PublishSubscribeService) unsubscribe(subscriber common.EntityID, subject string, wildcard bool) {
 	subs := pss.getSubscribing(subject, false)
 	if subs == nil {
 		return
@@ -157,8 +179,33 @@ func (pss *PublishSubscribeService) Unsubscribe(subscriber common.EntityID, subj
 
 	if !wildcard {
 		subs.subscribers.Del(subscriber)
+		avatarSubs, ok := pss.avatarSubscribings[subscriber]
+		if ok {
+			avatarSubs.Remove(subject)
+		}
 	} else {
 		subs.wildcardSubscribers.Del(subscriber)
+		avatarSubs, ok := pss.avatarWildcardSubscribings[subscriber]
+		if ok {
+			avatarSubs.Remove(subject)
+		}
+	}
+}
+
+// UnsubscribeAll unsubscribes all subjects for the subscriber
+func (pss *PublishSubscribeService) UnsubscribeAll(subscriber common.EntityID) {
+	if avatarSubs, ok := pss.avatarSubscribings[subscriber]; ok {
+		delete(pss.avatarSubscribings, subscriber)
+		for subject := range avatarSubs {
+			pss.unsubscribe(subscriber, subject, false)
+		}
+	}
+
+	if avatarSubs, ok := pss.avatarWildcardSubscribings[subscriber]; ok {
+		delete(pss.avatarWildcardSubscribings, subscriber)
+		for subject := range avatarSubs {
+			pss.unsubscribe(subscriber, subject, false)
+		}
 	}
 }
 

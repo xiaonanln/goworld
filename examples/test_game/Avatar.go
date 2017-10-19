@@ -142,9 +142,8 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 // OnDestroy is called when avatar is destroying
 func (a *Avatar) OnDestroy() {
 	a.CallService("OnlineService", "CheckOut", a.ID)
-	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
-		a.CallService("PublishSubscribeService", "Unsubscribe", a.ID, subject)
-	}
+	// unsubscribe all subjects
+	a.CallService("PublishSubscribeService", "UnsubscribeAll", a.ID)
 }
 
 // SendMail_Client is a client RPC to send mail to others
