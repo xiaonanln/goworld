@@ -198,7 +198,7 @@ func (gs *_GameService) doTerminate() {
 	}
 }
 
-var freezePacker = netutil.JSONMsgPacker{}
+var freezePacker = netutil.MessagePackMsgPacker{}
 
 func (gs *_GameService) doFreeze() {
 	// wait for all posts to complete
