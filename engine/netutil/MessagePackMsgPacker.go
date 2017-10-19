@@ -32,6 +32,8 @@ func (mp MessagePackMsgPacker) UnpackMsg(data []byte, msg interface{}) error {
 		*pv = mp.convertToStringKeys(*pv).([]interface{})
 	} else if pv, ok := msg.(*map[string]interface{}); ok {
 		*pv = mp.convertToStringKeys(*pv).(map[string]interface{})
+	} else if pv, ok := msg.(*map[interface{}]interface{}); ok {
+		*pv = mp.convertToStringKeys(*pv).(map[interface{}]interface{})
 	}
 
 	return err
