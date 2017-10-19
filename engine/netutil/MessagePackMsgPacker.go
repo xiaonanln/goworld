@@ -25,16 +25,6 @@ func (mp MessagePackMsgPacker) PackMsg(msg interface{}, buf []byte) ([]byte, err
 // UnpackMsg unpacksbytes in MessagePack format to message
 func (mp MessagePackMsgPacker) UnpackMsg(data []byte, msg interface{}) error {
 	err := msgpack.Unmarshal(data, msg)
-	//if pv, ok := msg.(*interface{}); ok {
-	//	*pv = mp.convertToStringKeys(*pv)
-	//} else if pv, ok := msg.(*[]interface{}); ok {
-	//	*pv = mp.convertToStringKeys(*pv).([]interface{})
-	//} else if pv, ok := msg.(*map[string]interface{}); ok {
-	//	*pv = mp.convertToStringKeys(*pv).(map[string]interface{})
-	//} else if pv, ok := msg.(*map[interface{}]interface{}); ok {
-	//	*pv = mp.convertToStringKeys(*pv).(map[interface{}]interface{})
-	//}
-
 	return err
 }
 
