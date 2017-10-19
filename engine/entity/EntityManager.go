@@ -501,7 +501,7 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
 				}
 				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, client, ccRestore)
-				gwlog.Infof("Restored %s<%s> in space %s", typeName, eid, space)
+				gwlog.Debugf("Restored %s<%s> in space %s", typeName, eid, space)
 
 				if info.ESR != nil { // entity was entering space before freeze, so restore entering space
 					post.Post(func() {

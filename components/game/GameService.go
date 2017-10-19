@@ -271,7 +271,7 @@ func (gs *_GameService) doRestore() error {
 	err = entity.RestoreFreezedEntities(&freezeEntity)
 	t3 := time.Now()
 
-	gwlog.Infof("restored game service: load = %s, unpack = %s, restore = %s", t1.Sub(t0), t2.Sub(t1), t3.Sub(t2))
+	gwlog.Infof("Restored game service: load = %s, unpack = %s, restore = %s", t1.Sub(t0), t2.Sub(t1), t3.Sub(t2))
 	return err
 }
 

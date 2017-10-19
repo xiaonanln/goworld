@@ -185,12 +185,14 @@ func (pss *PublishSubscribeService) OnFreeze() {
 func (pss *PublishSubscribeService) OnRestored() {
 	subscribersAttr := pss.GetMapAttr("subscribers")
 	wildcardSubscribersAttr := pss.GetMapAttr("wildcardSubscribers")
+	restoreCounter := 0
 	subscribersAttr.ForEach(func(subject string, val interface{}) {
 		eids := val.(*entity.MapAttr)
 		eids.ForEach(func(eidStr string, _ interface{}) {
 			eid := common.EntityID(eidStr)
 			pss.subscribe(eid, subject, false)
-			gwlog.Infof("%s: restored subscribing: %s -> %s", pss, eid, subject)
+			restoreCounter += 1
+			//gwlog.Infof("%s: restored subscribing: %s -> %s", pss, eid, subject)
 		})
 	})
 
@@ -199,9 +201,11 @@ func (pss *PublishSubscribeService) OnRestored() {
 		eids.ForEach(func(eidStr string, _ interface{}) {
 			eid := common.EntityID(eidStr)
 			pss.subscribe(eid, subject, true)
-			gwlog.Infof("%s: restored subscribing: %s -> %s*", pss, eid, subject)
+			restoreCounter += 1
+			//gwlog.Infof("%s: restored subscribing: %s -> %s*", pss, eid, subject)
 		})
 	})
+	gwlog.Infof("%s: restored %d subscribings", pss, restoreCounter)
 }
 
 // RegisterService registeres PublishSubscribeService to goworld
