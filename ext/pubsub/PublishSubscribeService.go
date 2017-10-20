@@ -53,6 +53,11 @@ func (pss *PublishSubscribeService) OnCreated() {
 	pss.DeclareService(ServiceName)
 }
 
+// RegisterService registeres PublishSubscribeService to goworld
+func RegisterService() {
+	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{}, false, false)
+}
+
 // Publish is called when Avatars login
 func (pss *PublishSubscribeService) Publish(subject string, content string) {
 	gwlog.Debugf("Publish: subject=%pss, content=%pss", subject, content)
@@ -63,10 +68,6 @@ func (pss *PublishSubscribeService) Publish(subject string, content string) {
 	}
 
 	pss.publishInTree(subject, content, &pss.tree, 0)
-	//subs := pss.getSubscribing(subject)
-	//for eid := range subs.subscribers {
-	//	pss.Call(eid, "OnPublish", subject, content)
-	//}
 }
 
 func (pss *PublishSubscribeService) publishInTree(subject string, content string, st *trietst.TrieMO, idx int) {
@@ -253,9 +254,4 @@ func (pss *PublishSubscribeService) OnRestored() {
 		})
 	})
 	gwlog.Infof("%s: restored %d subscribings", pss, restoreCounter)
-}
-
-// RegisterService registeres PublishSubscribeService to goworld
-func RegisterService() {
-	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{}, false, false).DefineAttrs(map[string][]string{})
 }
