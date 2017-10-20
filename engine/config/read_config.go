@@ -17,6 +17,8 @@ import (
 
 	"os"
 
+	"path"
+
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -111,6 +113,12 @@ type KVDBConfig struct {
 // SetConfigFile sets the config file path (goworld.ini by default)
 func SetConfigFile(f string) {
 	configFilePath = f
+}
+
+// GetConfigDir returns the directory of goworld.ini
+func GetConfigDir() string {
+	dir, _ := path.Split(configFilePath)
+	return dir
 }
 
 // Get returns the total GoWorld config

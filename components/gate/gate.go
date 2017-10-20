@@ -18,6 +18,8 @@ import (
 
 	"fmt"
 
+	"path"
+
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -66,7 +68,10 @@ func main() {
 
 	gateService = newGateService()
 	if gateConfig.EncryptConnection {
-		binutil.SetupHTTPServerTLS(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn, gateConfig.RSACertificate, gateConfig.RSAKey)
+		cfgdir := config.GetConfigDir()
+		rsaCert := path.Join(cfgdir, gateConfig.RSACertificate)
+		rsaKey := path.Join(cfgdir, gateConfig.RSAKey)
+		binutil.SetupHTTPServerTLS(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn, rsaCert, rsaKey)
 	} else {
 		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
 	}

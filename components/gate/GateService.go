@@ -14,6 +14,8 @@ import (
 
 	"crypto/tls"
 
+	"path"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
@@ -71,7 +73,10 @@ func (gs *GateService) run() {
 }
 
 func (gs *GateService) setupTLSConfig(cfg *config.GateConfig) {
-	cert, err := tls.LoadX509KeyPair(cfg.RSACertificate, cfg.RSAKey)
+	cfgdir := config.GetConfigDir()
+	rsaCert := path.Join(cfgdir, cfg.RSACertificate)
+	rsaKey := path.Join(cfgdir, cfg.RSAKey)
+	cert, err := tls.LoadX509KeyPair(rsaCert, rsaKey)
 	if err != nil {
 		gwlog.Panic(errors.Wrap(err, "load RSA key & certificate failed"))
 	}
