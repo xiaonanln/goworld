@@ -204,7 +204,7 @@ func (pss *PublishSubscribeService) UnsubscribeAll(subscriber common.EntityID) {
 	if avatarSubs, ok := pss.avatarWildcardSubscribings[subscriber]; ok {
 		delete(pss.avatarWildcardSubscribings, subscriber)
 		for subject := range avatarSubs {
-			pss.unsubscribe(subscriber, subject, false)
+			pss.unsubscribe(subscriber, subject, true)
 		}
 	}
 }
