@@ -123,22 +123,9 @@ func (a *MapAttr) Get(key string) interface{} {
 	return val
 }
 
-// GetInt returns the attribute of specified key in MapAttr as int
-func (a *MapAttr) GetInt(key string) int {
-	val := a.Get(key)
-	return int(typeconv.Int(val))
-}
-
-// GetInt64 returns the attribute of specified key in MapAttr as int64
-func (a *MapAttr) GetInt64(key string) int64 {
-	val := a.Get(key)
-	return typeconv.Int(val)
-}
-
-// GetUint64 returns the attribute of specified key in MapAttr as uint64
-func (a *MapAttr) GetUint64(key string) uint64 {
-	val := a.Get(key)
-	return uint64(typeconv.Int(val))
+// GetInt returns the attribute of specified key in MapAttr as int64
+func (a *MapAttr) GetInt(key string) int64 {
+	return typeconv.Int(a.Get(key))
 }
 
 // GetStr returns the attribute of specified key in MapAttr as string

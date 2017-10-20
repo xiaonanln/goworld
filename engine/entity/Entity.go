@@ -902,7 +902,7 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 // Fast access to attrs
 
 // GetInt gets an outtermost attribute as int
-func (e *Entity) GetInt(key string) int {
+func (e *Entity) GetInt(key string) int64 {
 	return e.Attrs.GetInt(key)
 }
 

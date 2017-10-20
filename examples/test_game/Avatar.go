@@ -29,9 +29,9 @@ func (a *Avatar) OnCreated() {
 
 	gwlog.Infof("Avatar %s on created: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
 
-	a.SetFilterProp("spaceKind", strconv.Itoa(a.GetInt("spaceKind")))
-	a.SetFilterProp("level", strconv.Itoa(a.GetInt("level")))
-	a.SetFilterProp("prof", strconv.Itoa(a.GetInt("prof")))
+	a.SetFilterProp("spaceKind", strconv.Itoa(int(a.GetInt("spaceKind"))))
+	a.SetFilterProp("level", strconv.Itoa(int(a.GetInt("level"))))
+	a.SetFilterProp("prof", strconv.Itoa(int(a.GetInt("prof"))))
 
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
@@ -98,7 +98,7 @@ func (a *Avatar) OnClientConnected() {
 
 	a.SetFilterProp("online", "0")
 	a.SetFilterProp("online", "1")
-	a.enterSpace(a.GetInt("spaceKind"))
+	a.enterSpace(int(a.GetInt("spaceKind")))
 }
 
 // OnClientDisconnected is called when client is lost
@@ -169,7 +169,7 @@ func (a *Avatar) GetMails_Client() {
 // OnGetMails is called by MailService to send mails to avatar
 func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 	//gwlog.Infof("%s.OnGetMails: lastMailID=%v/%v, mails=%v", a, a.GetInt("lastMailID"), lastMailID, mails)
-	if lastMailID != a.GetInt("lastMailID") {
+	if lastMailID != int(a.GetInt("lastMailID")) {
 		gwlog.Warnf("%s.OnGetMails: lastMailID mismatch: local=%v, return=%v", a, a.GetInt("lastMailID"), lastMailID)
 		a.CallClient("OnGetMails", false)
 		return
@@ -179,7 +179,7 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 	for _, _item := range mails {
 		item := _item.([]interface{})
 		mailId := int(typeconv.Int(item[0]))
-		if mailId <= a.GetInt("lastMailID") {
+		if mailId <= int(a.GetInt("lastMailID")) {
 			gwlog.Panicf("mail ID should be increasing")
 		}
 		if mailsAttr.HasKey(strconv.Itoa(mailId)) {
@@ -200,7 +200,7 @@ func (a *Avatar) Say_Client(channel string, content string) {
 	if channel == "world" {
 		a.CallFitleredClients("online", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
 	} else if channel == "prof" {
-		profStr := strconv.Itoa(a.GetInt("prof"))
+		profStr := strconv.Itoa(int(a.GetInt("prof")))
 		a.CallFitleredClients("prof", profStr, "OnSay", a.ID, a.GetStr("name"), channel, content)
 	} else {
 		gwlog.Panicf("%s.Say_Client: invalid channel: %s", a, channel)

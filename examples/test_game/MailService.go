@@ -88,7 +88,7 @@ func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 }
 
 func (s *MailService) genMailID() int {
-	lastMailID := s.Attrs.GetInt("lastMailID") + 1
+	lastMailID := int(s.Attrs.GetInt("lastMailID")) + 1
 	s.Attrs.Set("lastMailID", lastMailID)
 	return lastMailID
 }

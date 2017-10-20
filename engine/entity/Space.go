@@ -78,7 +78,7 @@ func (space *Space) OnRestored() {
 }
 
 func (space *Space) onSpaceCreated() {
-	space.Kind = space.GetInt(_SPACE_KIND_ATTR_KEY)
+	space.Kind = int(space.GetInt(_SPACE_KIND_ATTR_KEY))
 	spaceManager.putSpace(space)
 
 	if space.Kind == 0 {
