@@ -19,16 +19,16 @@ type MsgboxService struct {
 	entity.Entity
 }
 
-// Msgboxe PublishSubscribeService fields
+// OnInit initialize MsgboxService fields
 func (mbs *MsgboxService) OnInit() {
 }
 
-// Msgboxled when PublishSubscribeService is created
+// OnCreated is called when MsgboxService is created
 func (mbs *MsgboxService) OnCreated() {
 	mbs.DeclareService(ServiceName)
 }
 
-// Msgboxregisteres PublishSubscribeService to goworld
+// RegisterService registeres MsgboxService to goworld
 func RegisterService() {
 	goworld.RegisterEntity(ServiceName, &MsgboxService{}, false, false)
 }
