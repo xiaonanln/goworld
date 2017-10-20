@@ -3,6 +3,8 @@ package msgbox
 import (
 	"fmt"
 
+	"strconv"
+
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -29,6 +31,11 @@ var (
 
 type MsgboxService struct {
 	entity.Entity
+}
+
+type Msg struct {
+	Id  int64
+	Msg interface{}
 }
 
 // OnInit initialize MsgboxService fields
@@ -72,11 +79,41 @@ func (mbs *MsgboxService) Recv(targetID common.EntityID, beginMsgId int64) {
 			gwlog.Panic(err)
 		}
 
+		var msgs []interface{}
+		var endMsgId int64
+		for _, item := range items {
+			_, msgid := mbs.parseMsgKey(item.Key)
+			endMsgId = msgid
+
+			msgBytes := []byte(item.Val)
+			var msg interface{}
+			err := msgpacker.UnpackMsg(msgBytes, &msg)
+			if err != nil {
+				gwlog.Panic(err)
+			}
+			msgs = append(msgs, msg)
+
+		}
+
+		mbs.Call(targetID, "OnRecvMsg", beginMsgId, endMsgId, msgs)
 	})
 }
 
 func (mbs *MsgboxService) getMsgKey(targetID common.EntityID, msgid int64) string {
 	return fmt.Sprintf("__Msg_%s_%010d", targetID, msgid)
+}
+
+func (mbs *MsgboxService) parseMsgKey(msgkey string) (common.EntityID, int64) {
+	if msgkey[:6] != "__Msg_" {
+		gwlog.Panicf("not a valid msg key: %s", msgkey)
+	}
+
+	targetID := common.EntityID(msgkey[6 : 6+common.ENTITYID_LENGTH])
+	msgid, err := strconv.Atoi(msgkey[6+common.ENTITYID_LENGTH:])
+	if err != nil {
+		gwlog.Panic(err)
+	}
+	return targetID, int64(msgid)
 }
 
 func (mbs *MsgboxService) getNextMsgId() int64 {
