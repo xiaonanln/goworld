@@ -48,7 +48,7 @@ func (p *Player) enterSpace(spaceKind int) {
 // OnClientConnected is called when client is connected
 func (a *Player) OnClientConnected() {
 	gwlog.Infof("%s client connected", a)
-	a.enterSpace(a.GetInt("spaceKind"))
+	a.enterSpace(int(a.GetInt("spaceKind")))
 }
 
 // OnClientDisconnected is called when client is lost
@@ -116,7 +116,7 @@ func (player *Player) TakeDamage(damage int64) {
 		return
 	}
 
-	hp = hp - int(damage)
+	hp = hp - damage
 	if hp < 0 {
 		hp = 0
 	}

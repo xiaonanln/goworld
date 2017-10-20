@@ -145,7 +145,7 @@ func (monster *Monster) GetDamage() int64 {
 
 func (monster *Monster) TakeDamage(damage int64) {
 	hp := monster.GetInt("hp")
-	hp = hp - int(damage)
+	hp = hp - damage
 	if hp < 0 {
 		hp = 0
 	}
