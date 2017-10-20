@@ -36,7 +36,7 @@ func (a *Avatar) OnCreated() {
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	a.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
-		a.CallService("PublishSubscribeService", "Subscribe", a.ID, subject)
+		a.CallService(pubsub.ServiceName, "Subscribe", a.ID, subject)
 	}
 
 	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
@@ -143,7 +143,7 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 func (a *Avatar) OnDestroy() {
 	a.CallService("OnlineService", "CheckOut", a.ID)
 	// unsubscribe all subjects
-	a.CallService("PublishSubscribeService", "UnsubscribeAll", a.ID)
+	a.CallService(pubsub.ServiceName, "UnsubscribeAll", a.ID)
 }
 
 // SendMail_Client is a client RPC to send mail to others

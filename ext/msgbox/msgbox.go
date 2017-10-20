@@ -10,6 +10,10 @@ import (
 // Message can always be received by target entity even when target entity is not online, in which case target entity
 // will receive this message when it is loaded and calls Msgbox.Receive.
 
+type MsgboxService struct {
+	entity.Entity
+}
+
 // Msgbox is used to send messages among entities: e.x. Msgbox{&a.Entity}.Send(targetID, msg, callback)
 type Msgbox struct {
 	entity *entity.Entity

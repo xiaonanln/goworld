@@ -50,7 +50,7 @@ func (pss *PublishSubscribeService) OnCreated() {
 	gwlog.Infof("Registering PublishSubscribeService ...")
 	pss.Attrs.SetDefault("subscribers", goworld.MapAttr())
 	pss.Attrs.SetDefault("wildcardSubscribers", goworld.MapAttr())
-	pss.DeclareService("PublishSubscribeService")
+	pss.DeclareService(ServiceName)
 }
 
 // Publish is called when Avatars login
