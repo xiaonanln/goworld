@@ -32,3 +32,4 @@ engine/storage/backend/filesystem/test_entity_storage/
 vendor/
 .idea.bak/
 .vscode/
+tests/
