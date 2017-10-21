@@ -195,7 +195,15 @@ func RegisterEntity(typeName string, entityPtr IEntity, isPersistent bool, useAO
 
 	for i := 0; i < entityType.NumField(); i++ {
 		f := entityType.Field(i)
-		gwlog.Infof("Entity type %s.field: %s %s", entityType, f.Type, f.Name)
+		if f.Type.Kind() != reflect.Struct {
+			continue
+		}
+		componentField, ok := f.Type.FieldByName("Component")
+		isComponent := false
+		if ok {
+			isComponent = componentField.Type == reflect.TypeOf(Component{})
+		}
+		gwlog.Infof("Entity type %s.field %d: %s %s, isComponent=%v", entityType, i, f.Type, f.Name, isComponent)
 	}
 
 	entityPtrType := reflect.PtrTo(entityType)
@@ -242,9 +250,9 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 	entityManager.put(entity)
 	if data != nil {
 		if cause == ccCreate {
-			entity.I.LoadPersistentData(data)
+			entity.loadPersistentData(data)
 		} else {
-			entity.I.LoadMigrateData(data)
+			entity.LoadMigrateData(data)
 		}
 	} else {
 		entity.Save() // save immediately after creation
@@ -254,7 +262,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 		entity.restoreTimers(timerData)
 	}
 
-	isPersistent := entity.I.IsPersistent()
+	isPersistent := entity.IsPersistent()
 	if isPersistent { // startup the periodical timer for saving e
 		entity.setupSaveTimer()
 	}

@@ -96,12 +96,6 @@ type IEntity interface {
 	// Space Operations
 	OnEnterSpace()             // Called when entity leaves space
 	OnLeaveSpace(space *Space) // Called when entity enters space
-	// Storage: Save & Load
-	IsPersistent() bool                             // Return whether entity is persistent, override to return true for persistent entity
-	GetPersistentData() map[string]interface{}      // Convert persistent entity attributes to persistent data for storage, can override to customize entity saving
-	LoadPersistentData(data map[string]interface{}) // Initialize entity attributes with persistetn data, can override to customize entity loading
-	GetMigrateData() map[string]interface{}         // Convert entity attributes for migrating to other servers, can override to customize data migrating
-	LoadMigrateData(data map[string]interface{})    // Initialize attributes with migrating data, can override to customize data migrating
 	// Client Notifications
 	OnClientConnected()    // Called when client is connected to entity (become player)
 	OnClientDisconnected() // Called when client disconnected
@@ -154,7 +148,7 @@ func (e *Entity) IsDestroyed() bool {
 
 // Save the entity
 func (e *Entity) Save() {
-	if !e.I.IsPersistent() {
+	if !e.IsPersistent() {
 		return
 	}
 
@@ -162,7 +156,7 @@ func (e *Entity) Save() {
 		gwlog.Debugf("SAVING %s ...", e)
 	}
 
-	data := e.I.GetPersistentData()
+	data := e.getPersistentData()
 
 	storage.Save(e.TypeName, e.ID, data, nil)
 }
@@ -596,17 +590,17 @@ func (e *Entity) IsPersistent() bool {
 	return e.typeDesc.isPersistent
 }
 
-// GetPersistentData gets the persistent data
+// getPersistentData gets the persistent data
 //
 // Returns persistent attributes by default
-func (e *Entity) GetPersistentData() map[string]interface{} {
+func (e *Entity) getPersistentData() map[string]interface{} {
 	return e.Attrs.ToMapWithFilter(e.typeDesc.persistentAttrs.Contains)
 }
 
-// LoadPersistentData loads persistent data
+// loadPersistentData loads persistent data
 //
 // Load persistent data to attributes
-func (e *Entity) LoadPersistentData(data map[string]interface{}) {
+func (e *Entity) loadPersistentData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
 
@@ -1032,7 +1026,7 @@ func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Vector3, spaceLoc ui
 
 	e.destroyEntity(true) // disable the entity
 	timerData := e.dumpTimers()
-	migrateData := e.I.GetMigrateData()
+	migrateData := e.GetMigrateData()
 
 	dispatcherclient.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
 		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
