@@ -193,6 +193,11 @@ func RegisterEntity(typeName string, entityPtr IEntity, isPersistent bool, useAO
 	}
 	registeredEntityTypes[typeName] = entityTypeDesc
 
+	for i := 0; i < entityType.NumField(); i++ {
+		f := entityType.Field(i)
+		gwlog.Infof("Entity type %s.field: %s %s", entityType, f.Type, f.Name)
+	}
+
 	entityPtrType := reflect.PtrTo(entityType)
 	numMethods := entityPtrType.NumMethod()
 	for i := 0; i < numMethods; i++ {
