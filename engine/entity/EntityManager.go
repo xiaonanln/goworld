@@ -221,7 +221,7 @@ func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useA
 		var compIndexes []int
 		for fi := 0; fi < entityType.NumField(); fi++ {
 			field := entityType.Field(fi)
-			if isEntityType(field.Type) || isComponentType(field.Type) {
+			if isComponentType(field.Type) {
 				//gwlog.Infof("Field %v is a component", field.Name)
 				_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
 				if ok {

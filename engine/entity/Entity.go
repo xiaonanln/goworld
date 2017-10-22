@@ -212,6 +212,11 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 		}
 	}
 
+	method := entityPtr.MethodByName(methodName)
+	if method.IsValid() {
+		method.Call(methodIn)
+	}
+
 	if compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]; ok {
 		for _, ci := range compIndices {
 			field := entityVal.Field(ci)
@@ -223,10 +228,6 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 		gwlog.Panicf("method %s is not a compositive method", methodName)
 	}
 
-	method := entityPtr.MethodByName(methodName)
-	if method.IsValid() {
-		method.Call(nil)
-	}
 }
 
 func (e *Entity) setupSaveTimer() {

@@ -48,14 +48,6 @@ func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I
 	space.aoiCalc = newXZListAOICalculator()
-	space.callCompositiveMethod("OnSpaceInit")
-}
-
-// OnSpaceInit is called when Space is initializing
-//
-// Custom space type can override to provide custom logic
-func (space *Space) OnSpaceInit() {
-
 }
 
 // OnCreated is called when Space entity is created

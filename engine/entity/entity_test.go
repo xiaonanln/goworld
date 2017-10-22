@@ -7,9 +7,13 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-type TestEntity struct {
+type TestEntity_ struct {
 	Entity
 	TestComponent
+}
+
+type TestEntity struct {
+	TestEntity_
 }
 
 type TestComponent struct {
@@ -20,7 +24,7 @@ type TestComponent struct {
 //	gwlog.Panicf("should not goes here")
 //}
 
-func (e *TestEntity) OnInit() {
+func (e *TestEntity_) OnInit() {
 	gwlog.Infof("%s.OnInit ...", e)
 }
 
