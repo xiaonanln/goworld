@@ -187,6 +187,8 @@ var (
 		"OnLeaveSpace":         {},
 		"OnClientConnected":    {},
 		"OnClientDisconnected": {},
+		"OnEntityLeaveSpace":   {},
+		"OnEntityEnterSpace":   {},
 	}
 )
 
