@@ -191,12 +191,17 @@ var (
 )
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entityPtr interface{}, isPersistent bool, useAOI bool) *EntityTypeDesc {
+func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useAOI bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
-	entityVal := reflect.Indirect(reflect.ValueOf(entityPtr))
+
+	entityVal := reflect.ValueOf(entity)
 	entityType := entityVal.Type()
+
+	if entityType.Kind() == reflect.Ptr {
+		entityType = entityType.Elem()
+	}
 
 	// register the string of e
 	rpcDescs := rpcDescMap{}
