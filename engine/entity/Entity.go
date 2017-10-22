@@ -192,7 +192,6 @@ func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance 
 	e.Attrs = attrs
 
 	initAOI(&e.aoi)
-	//gwutils.RunPanicless(e.I.OnInit)
 	e.callCompositiveMethod("OnInit")
 }
 
