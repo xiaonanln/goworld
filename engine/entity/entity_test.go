@@ -33,7 +33,11 @@ func (e *TestEntity) OnMigrateIn() {
 }
 
 func (c *TestComponent) OnInit() {
-	gwlog.Infof("%s.OnInit ,,,", c)
+	gwlog.Infof("TestComponent.OnInit ,,,")
+}
+
+func (c *TestComponent) OnMigrateIn() {
+	gwlog.Infof("TestComponent.OnMigrateIn ...")
 }
 
 func TestRegisterEntity(t *testing.T) {
@@ -50,7 +54,6 @@ func TestEntityModule(t *testing.T) {
 	e := GetEntity(eid)
 	te := e.I.(*TestEntity)
 	t.Logf("Created entity: %s => %s", eid, te)
-
 }
 
 func TestTestComponent(t *testing.T) {

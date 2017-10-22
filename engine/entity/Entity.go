@@ -45,7 +45,7 @@ type Entity struct {
 	ID       common.EntityID
 	TypeName string
 	I        IEntity
-	IV       reflect.Value
+	V        reflect.Value
 
 	destroyed bool
 	typeDesc  *EntityTypeDesc
@@ -177,7 +177,7 @@ func (e *Entity) ToSpace() *Space {
 
 func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance reflect.Value) {
 	e.ID = entityID
-	e.IV = entityInstance
+	e.V = entityInstance
 	e.I = entityInstance.Interface().(IEntity)
 	e.TypeName = typeName
 
@@ -193,7 +193,42 @@ func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance 
 	e.Attrs = attrs
 
 	initAOI(&e.aoi)
-	gwutils.RunPanicless(e.I.OnInit)
+	//gwutils.RunPanicless(e.I.OnInit)
+	e.callCompositiveMethod("OnInit")
+}
+
+func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			gwlog.TraceError("%s call compositive method '%s' failed: %v", e, methodName, err)
+		}
+	}()
+
+	entityPtr := e.V
+	entityVal := reflect.Indirect(entityPtr)
+	var methodIn []reflect.Value
+	if len(args) > 0 {
+		methodIn = make([]reflect.Value, len(args), len(args))
+		for i := 0; i < len(args); i++ {
+			methodIn[i] = reflect.ValueOf(args[i])
+		}
+	}
+
+	if compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]; ok {
+		for _, ci := range compIndices {
+			field := entityVal.Field(ci)
+			//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
+			field.Addr().MethodByName(methodName).Call(methodIn)
+		}
+	} else {
+		// method is not a valid compositive method
+		gwlog.Panicf("method %s is not a compositive method", methodName)
+	}
+
+	method := entityPtr.MethodByName(methodName)
+	if method.IsValid() {
+		method.Call(nil)
+	}
 }
 
 func (e *Entity) setupSaveTimer() {
