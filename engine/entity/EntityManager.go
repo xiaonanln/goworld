@@ -191,7 +191,7 @@ var (
 )
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entityPtr IEntity, isPersistent bool, useAOI bool) *EntityTypeDesc {
+func RegisterEntity(typeName string, entityPtr interface{}, isPersistent bool, useAOI bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -331,12 +331,12 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 
 	gwlog.Debugf("Entity %s created, cause=%d, client=%s", entity, cause, client)
 	if cause == ccCreate {
-		gwutils.RunPanicless(entity.I.OnCreated)
+		entity.callCompositiveMethod("OnCreated")
 	} else if cause == ccMigrate {
 		entity.callCompositiveMethod("OnMigrateIn")
 	} else if cause == ccRestore {
 		// restore should be silent
-		gwutils.RunPanicless(entity.I.OnRestored)
+		entity.callCompositiveMethod("OnRestored")
 	}
 
 	if space != nil {
@@ -501,7 +501,9 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 	foundNilSpace := false
 	for _, e := range entityManager.entities {
 
-		err := gwutils.CatchPanic(e.I.OnFreeze)
+		err := gwutils.CatchPanic(func() {
+			e.callCompositiveMethod("OnFreeze")
+		})
 		if err != nil {
 			// OnFreeze failed
 			return nil, errors.Errorf("OnFreeze paniced: %v", err)

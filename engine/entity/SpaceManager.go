@@ -34,11 +34,11 @@ func (spmgr *_SpaceManager) getSpace(id common.EntityID) *Space {
 }
 
 // RegisterSpace registers the user custom space type
-func RegisterSpace(spacePtr ISpace) {
+func RegisterSpace(spacePtr interface{}) {
 	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
 	spaceType = spaceVal.Type()
 
-	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr.(IEntity), false, false).DefineAttrs(map[string][]string{
+	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr, false, false).DefineAttrs(map[string][]string{
 		_SPACE_KIND_ATTR_KEY: {"AllClients"}, // set to AllClients so that entities in space can visit space kind
 	})
 }

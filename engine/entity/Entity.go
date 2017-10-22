@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -44,7 +43,7 @@ type entityTimerInfo struct {
 type Entity struct {
 	ID       common.EntityID
 	TypeName string
-	I        IEntity
+	I        interface{}
 	V        reflect.Value
 
 	destroyed bool
@@ -81,25 +80,25 @@ const (
 	sifSyncNeighborClients
 )
 
-// IEntity declares functions can be override in Entity subclasses
-type IEntity interface {
-	// Entity Lifetime
-	OnInit()    // Called when initializing entity struct, override to initialize entity custom fields
-	OnCreated() // Called when entity is just created
-	OnDestroy() // Called when entity is destroying (just before destroy)
-	// Migration
-	OnMigrateOut() // Called just before entity is migrating out
-	OnMigrateIn()  // Called just after entity is migrating in
-	// Freeze && Restore
-	OnFreeze()   // Called when entity is freezing
-	OnRestored() // Called when entity is restored
-	// Space Operations
-	OnEnterSpace()             // Called when entity leaves space
-	OnLeaveSpace(space *Space) // Called when entity enters space
-	// Client Notifications
-	OnClientConnected()    // Called when client is connected to entity (become player)
-	OnClientDisconnected() // Called when client disconnected
-}
+//// IEntity declares functions can be override in Entity subclasses
+//type IEntity interface {
+//	// Entity Lifetime
+//	OnInit()    // Called when initializing entity struct, override to initialize entity custom fields
+//	OnCreated() // Called when entity is just created
+//	OnDestroy() // Called when entity is destroying (just before destroy)
+//	// Migration
+//	OnMigrateOut() // Called just before entity is migrating out
+//	OnMigrateIn()  // Called just after entity is migrating in
+//	// Freeze && Restore
+//	OnFreeze()   // Called when entity is freezing
+//	OnRestored() // Called when entity is restored
+//	// Space Operations
+//	OnEnterSpace()             // Called when entity leaves space
+//	OnLeaveSpace(space *Space) // Called when entity enters space
+//	// Client Notifications
+//	OnClientConnected()    // Called when client is connected to entity (become player)
+//	OnClientDisconnected() // Called when client disconnected
+//}
 
 func (e *Entity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
@@ -119,9 +118,9 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.Space.leave(e)
 
 	if !isMigrate {
-		gwutils.RunPanicless(e.I.OnDestroy)
+		e.callCompositiveMethod("OnDestroy")
 	} else {
-		gwutils.RunPanicless(e.I.OnMigrateOut)
+		e.callCompositiveMethod("OnMigrateOut")
 	}
 
 	e.clearRawTimers()
@@ -178,7 +177,7 @@ func (e *Entity) ToSpace() *Space {
 func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance reflect.Value) {
 	e.ID = entityID
 	e.V = entityInstance
-	e.I = entityInstance.Interface().(IEntity)
+	e.I = entityInstance.Interface()
 	e.TypeName = typeName
 
 	e.typeDesc = registeredEntityTypes[typeName]
@@ -486,7 +485,7 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 
 	methodType := rpcDesc.MethodType
 	in := make([]reflect.Value, rpcDesc.NumArgs+1)
-	in[0] = reflect.ValueOf(e.I) // first argument is the bind instance (self)
+	in[0] = e.V // first argument is the bind instance (self)
 
 	for i, arg := range args {
 		argType := methodType.In(i + 1)
@@ -538,7 +537,7 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 	}
 
 	in := make([]reflect.Value, rpcDesc.NumArgs+1)
-	in[0] = reflect.ValueOf(e.I) // first argument is the bind instance (self)
+	in[0] = e.V // first argument is the bind instance (self)
 
 	for i, arg := range args {
 		argType := methodType.In(i + 1)
@@ -755,9 +754,9 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	if oldClient == nil && client != nil {
 		// got net client
-		gwutils.RunPanicless(e.I.OnClientConnected)
+		e.callCompositiveMethod("OnClientConnected")
 	} else if oldClient != nil && client == nil {
-		gwutils.RunPanicless(e.I.OnClientDisconnected)
+		e.callCompositiveMethod("OnClientDisconnected")
 	}
 }
 
@@ -810,7 +809,7 @@ func (e *Entity) notifyClientDisconnected() {
 		gwlog.Panic(e.client)
 	}
 	e.client = nil
-	gwutils.RunPanicless(e.I.OnClientDisconnected)
+	e.callCompositiveMethod("OnClientDisconnected")
 }
 
 // OnClientConnected is called when client is connected
@@ -961,7 +960,7 @@ func (e *Entity) GetListAttr(key string) *ListAttr {
 func (e *Entity) EnterSpace(spaceID common.EntityID, pos Vector3) {
 	if e.isEnteringSpace() {
 		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
-		e.I.OnEnterSpace()
+		e.callCompositiveMethod("OnEnterSpace")
 		return
 	}
 

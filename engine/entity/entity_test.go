@@ -52,7 +52,7 @@ func TestGenEntityID(t *testing.T) {
 func TestEntityModule(t *testing.T) {
 	eid := createEntity("TestEntity", nil, Vector3{}, "", nil, nil, nil, ccMigrate)
 	e := GetEntity(eid)
-	te := e.I.(*TestEntity)
+	te := e.V.Interface().(*TestEntity)
 	t.Logf("Created entity: %s => %s", eid, te)
 }
 

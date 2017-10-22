@@ -28,8 +28,8 @@ type Space struct {
 
 	entities EntitySet
 	Kind     int
-	I        ISpace
-	aoiCalc  AOICalculator
+	//I        ISpace
+	aoiCalc AOICalculator
 }
 
 func init() {
@@ -46,9 +46,9 @@ func (space *Space) String() string {
 // OnInit initialize Space entity
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
-	space.I = space.Entity.I.(ISpace)
+	space.I = space.Entity.I
 	space.aoiCalc = newXZListAOICalculator()
-	gwutils.RunPanicless(space.I.OnSpaceInit)
+	space.callCompositiveMethod("OnSpaceInit")
 }
 
 // OnSpaceInit is called when Space is initializing
@@ -69,7 +69,7 @@ func (space *Space) OnCreated() {
 	if consts.DEBUG_SPACES {
 		gwlog.Debugf("%s.OnCreated", space)
 	}
-	gwutils.RunPanicless(space.I.OnSpaceCreated)
+	space.callCompositiveMethod("OnSpaceCreated")
 }
 
 // OnRestored is called when space entity is restored
@@ -103,7 +103,7 @@ func (space *Space) OnSpaceCreated() {
 
 // OnDestroy is called when Space entity is destroyed
 func (space *Space) OnDestroy() {
-	gwutils.RunPanicless(space.I.OnSpaceDestroy)
+	space.callCompositiveMethod("OnSpaceDestroy")
 	// destroy all entities
 	for e := range space.entities {
 		e.Destroy()
@@ -170,8 +170,8 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 		}
 
 		gwutils.RunPanicless(func() {
-			space.I.OnEntityEnterSpace(entity)
-			entity.I.OnEnterSpace()
+			space.callCompositiveMethod("OnEntityEnterSpace", entity)
+			entity.callCompositiveMethod("OnEnterSpace")
 		})
 	} else {
 		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
@@ -204,11 +204,8 @@ func (space *Space) leave(entity *Entity) {
 	space.entities.Del(entity)
 	entity.Space = nilSpace
 
-	gwutils.RunPanicless(func() {
-		space.I.OnEntityLeaveSpace(entity)
-	})
-
-	entity.I.OnLeaveSpace(space)
+	space.callCompositiveMethod("OnEntityLeaveSpace", entity)
+	entity.callCompositiveMethod("OnLeaveSpace", space)
 }
 
 func (space *Space) move(entity *Entity, newPos Vector3) {
