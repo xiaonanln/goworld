@@ -70,6 +70,7 @@ func (gs *GateService) run() {
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 	go gs.serveKCP(gs.listenAddr)
+	go gs.checkClientHeartbeatsRoutine()
 	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
 }
 
@@ -174,6 +175,25 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 		gwlog.Debugf("%s.ServeTCPConnection: client %s connected", gs, cp)
 	}
 	cp.serve()
+}
+
+func (gs *GateService) checkClientHeartbeatsRoutine() {
+	for {
+		time.Sleep(5 * time.Second)
+		now := time.Now().Unix()
+		gs.clientProxiesLock.RLock()
+
+		for _, cp := range gs.clientProxies { // close all connected clients when terminating
+			heatbeatTime := cp.heartbeatTime.Load()
+			if heatbeatTime < now-10 {
+				// 10 seconds no heartbeat, close it...
+				gwlog.Infof("Connection %s timeout ...", cp)
+				cp.Close()
+			}
+		}
+
+		gs.clientProxiesLock.RUnlock()
+	}
 }
 
 func (gs *GateService) onClientProxyClose(cp *ClientProxy) {

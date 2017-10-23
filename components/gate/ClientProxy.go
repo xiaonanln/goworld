@@ -6,6 +6,7 @@ import (
 
 	"os"
 
+	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -32,6 +33,7 @@ type ClientProxy struct {
 	clientid       common.ClientID
 	filterProps    map[string]string
 	clientSyncInfo clientSyncInfo
+	heartbeatTime  xnsyncutil.AtomicInt64
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
@@ -78,6 +80,8 @@ func (cp *ClientProxy) serve() {
 		//cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
+			cp.heartbeatTime.Store(time.Now().Unix())
+
 			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
 				cp.handleSyncPositionYawFromClient(pkt)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
