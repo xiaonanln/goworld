@@ -178,9 +178,9 @@ func (gwc *GoWorldConnection) SendSetClientClientID(clientid common.ClientID) er
 	return gwc.SendPacketRelease(packet)
 }
 
-func (gwc *GoWorldConnection) SendNotifyKCPConnectedFromClient() error {
+func (gwc *GoWorldConnection) SetHeartbeatFromClient() error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_NOTIFY_KCP_CONNECTED_FROM_CLIENT)
+	packet.AppendUint16(MT_HEARTBEAT_FROM_CLIENT)
 	return gwc.SendPacketRelease(packet)
 
 }

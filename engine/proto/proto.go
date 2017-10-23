@@ -104,8 +104,8 @@ const (
 	MT_SET_CLIENT_CLIENTID = 2001 + iota
 	MT_UDP_SYNC_CONN_NOTIFY_CLIENTID
 	MT_UDP_SYNC_CONN_NOTIFY_CLIENTID_ACK
-	// MT_NOTIFY_KCP_CONNECTED_FROM_CLIENT is sent by KCP client to notify the gate server, otherwise gate server won't accept the connection
-	MT_NOTIFY_KCP_CONNECTED_FROM_CLIENT
+	// MT_HEARTBEAT_FROM_CLIENT is sent by client to notify the gate server that the client is alive
+	MT_HEARTBEAT_FROM_CLIENT
 )
 
 const (

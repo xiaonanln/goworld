@@ -110,7 +110,7 @@ func (bot *ClientBot) run() {
 
 	if bot.useKCP {
 		gwlog.Infof("Notify KCP connected ...")
-		bot.conn.SendNotifyKCPConnectedFromClient()
+		bot.conn.SetHeartbeatFromClient()
 	}
 
 	go bot.recvLoop()
