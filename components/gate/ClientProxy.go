@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
-	"io"
 )
 
 type clientSyncInfo struct {
