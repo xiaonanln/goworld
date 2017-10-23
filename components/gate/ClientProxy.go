@@ -15,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"io"
 )
 
 type clientSyncInfo struct {
@@ -100,7 +101,11 @@ func (cp *ClientProxy) serve() {
 
 			pkt.Release()
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
-			panic(err)
+			if netutil.IsConnectionError(err) {
+				break
+			} else {
+				panic(err)
+			}
 		}
 	}
 }
