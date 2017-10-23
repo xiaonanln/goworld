@@ -136,6 +136,7 @@ func (gs *GateService) handleKCPConn(conn *kcp.UDPSession) {
 	conn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
 	// turn on turbo mode according to https://github.com/skywind3000/kcp/blob/master/README.en.md#protocol-configuration
 	conn.SetStreamMode(true)
+	conn.SetWriteDelay(true)
 	conn.SetNoDelay(1, 10, 2, 1)
 	gs.handleClientConnection(conn, false)
 }

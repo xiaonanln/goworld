@@ -142,6 +142,7 @@ func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, erro
 	conn.SetWriteBuffer(64 * 1024)
 	conn.SetNoDelay(1, 10, 2, 1)
 	conn.SetStreamMode(true)
+	conn.SetWriteDelay(true)
 	return conn, err
 }
 
