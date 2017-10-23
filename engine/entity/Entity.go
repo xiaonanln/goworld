@@ -193,7 +193,21 @@ func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance 
 	e.Attrs = attrs
 
 	initAOI(&e.aoi)
+	e.initComponents()
 	e.callCompositiveMethod("OnInit")
+}
+
+func (e *Entity) initComponents() {
+	entityVal := reflect.Indirect(e.V)
+	for fi := 0; fi < entityVal.NumField(); fi++ {
+		field := entityVal.Field(fi)
+		//fieldStruct := entityVal.Type().Field(fi)
+		if isComponentType(field.Type()) {
+			//gwlog.Infof("%s: Field %s %d %T is a component, initializing ...", e, fieldStruct.Name, fi, field.Interface())
+			comp := field.FieldByName("Component").Addr().Interface().(*Component)
+			comp.Entity = e
+		}
+	}
 }
 
 func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {

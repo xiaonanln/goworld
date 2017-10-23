@@ -227,9 +227,9 @@ func isEntityType(t reflect.Type) bool {
 var componentType = reflect.TypeOf(Component{})
 
 func isComponentType(t reflect.Type) bool {
-	if t == componentType {
-		return true
-	}
+	//if t == componentType {
+	//	return true
+	//}
 	if t.Kind() != reflect.Struct {
 		return false
 	}

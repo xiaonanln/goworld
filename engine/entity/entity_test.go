@@ -7,16 +7,17 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-type TestEntity_ struct {
-	Entity
-	TestComponent
-}
-
 type TestEntity struct {
-	TestEntity_
+	Entity
+	TestComponent1
+	TestComponent2
 }
 
-type TestComponent struct {
+type TestComponent1 struct {
+	Component
+}
+
+type TestComponent2 struct {
 	Component
 }
 
@@ -24,7 +25,7 @@ type TestComponent struct {
 //	gwlog.Panicf("should not goes here")
 //}
 
-func (e *TestEntity_) OnInit() {
+func (e *TestEntity) OnInit() {
 	gwlog.Infof("%s.OnInit ...", e)
 }
 
@@ -36,12 +37,12 @@ func (e *TestEntity) OnMigrateIn() {
 	gwlog.Infof("%s.OnMigrateIn ...", e)
 }
 
-func (c *TestComponent) OnInit() {
-	gwlog.Infof("TestComponent.OnInit ,,,")
+func (c *TestComponent1) OnInit() {
+	gwlog.Infof("TestComponent1.OnInit ,,,")
 }
 
-func (c *TestComponent) OnMigrateIn() {
-	gwlog.Infof("TestComponent.OnMigrateIn ...")
+func (c *TestComponent1) OnMigrateIn() {
+	gwlog.Infof("TestComponent1.OnMigrateIn ...")
 }
 
 func TestRegisterEntity(t *testing.T) {
