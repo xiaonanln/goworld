@@ -178,6 +178,13 @@ func (gwc *GoWorldConnection) SendSetClientClientID(clientid common.ClientID) er
 	return gwc.SendPacketRelease(packet)
 }
 
+func (gwc *GoWorldConnection) SendNotifyKCPConnectedFromClient() error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_NOTIFY_KCP_CONNECTED_FROM_CLIENT)
+	return gwc.SendPacketRelease(packet)
+
+}
+
 //// SendUpdateYawOnClient sends MT_UPDATE_YAW_ON_CLIENT message
 //func (gwc *GoWorldConnection) SendUpdateYawOnClient(gid uint16, clientid common.ClientID, entityID common.EntityID, yaw float32) error {
 //	packet := gwc.packetConn.NewPacket()
