@@ -430,7 +430,7 @@ func (service *DispatcherService) handleCallEntityMethod(dcp *dispatcherClientPr
 	entityDispatchInfo := service.getEntityDispatcherInfoForRead(entityID)
 	if entityDispatchInfo == nil {
 		// entity not exists ?
-		gwlog.Errorf("%s.handleCallEntityMethod: entity %s not found", service, entityID)
+		//gwlog.Errorf("%s.handleCallEntityMethod: entity %s not found", service, entityID)
 		return
 	}
 
