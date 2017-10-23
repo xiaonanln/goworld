@@ -219,6 +219,7 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 		}
 	}
 
+	reflect.Method{}
 	e.callCompositiveMethodOnValue(reflect.Indirect(e.V), methodName, methodArgs)
 
 	//method := entityPtr.MethodByName(methodName)
@@ -255,24 +256,17 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 }
 
 func (e *Entity) callCompositiveMethodOnValue(v reflect.Value, methodName string, methodArgs []reflect.Value) {
-	//vt := v.Type()
+
 	// step 1: call compositive method of super classes
 	for fi := 0; fi < v.NumField(); fi++ {
-		//fs := vt.Field(fi)
 		fv := v.Field(fi)
-		ft := fv.Type()
-		if ft == entityStructType {
+		fvt := fv.Type()
+		if fvt == entityStructType {
 			// this is the root entity, so there is no super class
 			break
-		} else if isEntityType(ft) {
-			e.callCompositiveMethodOnValue(fv, methodName, methodArgs)
 		}
 	}
-
 	// step 2: call method of own struct
-	//if method, ok := vt.MethodByName(methodName); ok {
-	//	method.Index
-	//}
 	method := v.Addr().MethodByName(methodName)
 	if method.IsValid() {
 		gwutils.RunPanicless(func() {
@@ -625,7 +619,6 @@ func (e *Entity) DeclareService(serviceName string) {
 // Can override this function in custom entity type
 func (e *Entity) OnInit() {
 	//gwlog.Warnf("%s.OnInit not implemented", e)
-	gwlog.Infof("Entity.OnInit ---")
 }
 
 // OnCreated is called when entity is created
