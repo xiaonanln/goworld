@@ -461,7 +461,7 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args [][]byte) {
 	entity := bot.entities[entityID]
 	if entity == nil {
-		//gwlog.Warnf("Entity %s is not found while calling method %s(%v)", entityID, method, args)
+		gwlog.Warnf("Entity %s is not found while calling method %s(%v)", entityID, method, args)
 		return
 	}
 

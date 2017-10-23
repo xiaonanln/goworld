@@ -445,12 +445,18 @@ func callRemote(id common.EntityID, method string, args []interface{}) {
 	dispatcherclient.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
 }
 
+var lastWarnedOnCallMethod = ""
+
 // OnCall is called by engine when method call reaches in the game
 func OnCall(id common.EntityID, method string, args [][]byte, clientID common.ClientID) {
 	e := entityManager.get(id)
 	if e == nil {
 		// entity not found, may destroyed before call
-		gwlog.Errorf("Entity %s is not found while calling %s%v", id, method, args)
+		if method != lastWarnedOnCallMethod {
+			gwlog.Warnf("OnCall: entity %s is not found while calling %s", id, method)
+			lastWarnedOnCallMethod = method
+		}
+
 		return
 	}
 
