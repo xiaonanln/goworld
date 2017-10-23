@@ -27,6 +27,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xtaci/kcp-go"
 )
 
 // GateService implements the gate service logic
@@ -68,7 +69,7 @@ func (gs *GateService) run() {
 
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
-
+	go gs.serveKCP(gs.listenAddr)
 	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
 }
 
@@ -106,6 +107,36 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 	tcpConn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
 	tcpConn.SetNoDelay(consts.CLIENT_PROXY_SET_TCP_NO_DELAY)
 
+	gs.handleClientConnection(conn, false)
+}
+
+func (gs *GateService) serveKCP(addr string) {
+	kcpListener, err := kcp.ListenWithOptions(addr, nil, 10, 3)
+	if err != nil {
+		gwlog.Panic(err)
+	}
+
+	gwlog.Infof("Listening on KCP: %s ...", addr)
+
+	gwutils.RepeatUntilPanicless(func() {
+		for {
+			conn, err := kcpListener.AcceptKCP()
+			if err != nil {
+				gwlog.Panic(err)
+			}
+			go gs.handleKCPConn(conn)
+		}
+	})
+}
+
+func (gs *GateService) handleKCPConn(conn *kcp.UDPSession) {
+	gwlog.Infof("KCP connection from %s", conn.RemoteAddr())
+
+	conn.SetReadBuffer(consts.CLIENT_PROXY_READ_BUFFER_SIZE)
+	conn.SetWriteBuffer(consts.CLIENT_PROXY_WRITE_BUFFER_SIZE)
+	// turn on turbo mode according to https://github.com/skywind3000/kcp/blob/master/README.en.md#protocol-configuration
+	conn.SetStreamMode(true)
+	conn.SetNoDelay(1, 10, 2, 1)
 	gs.handleClientConnection(conn, false)
 }
 

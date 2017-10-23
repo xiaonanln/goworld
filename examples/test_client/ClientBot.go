@@ -25,6 +25,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xtaci/kcp-go"
 	"golang.org/x/net/websocket"
 )
 
@@ -51,6 +52,7 @@ type ClientBot struct {
 	logined            bool
 	startedDoingThings bool
 	syncPosTime        time.Time
+	useKCP             bool
 	useWebSocket       bool
 	packetQueue        chan packetQueueItem
 }
@@ -60,11 +62,12 @@ type packetQueueItem struct { // packet queue from dispatcher client
 	packet  *netutil.Packet
 }
 
-func newClientBot(id int, useWebSocket bool, waiter *sync.WaitGroup) *ClientBot {
+func newClientBot(id int, useWebSocket bool, useKCP bool, waiter *sync.WaitGroup) *ClientBot {
 	return &ClientBot{
 		id:           id,
 		waiter:       waiter,
 		entities:     map[common.EntityID]*clientEntity{},
+		useKCP:       useKCP,
 		useWebSocket: useWebSocket,
 		packetQueue:  make(chan packetQueueItem),
 	}
@@ -105,41 +108,65 @@ func (bot *ClientBot) run() {
 	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{netconn}), cfg.CompressConnection, cfg.CompressFormat)
 	defer bot.conn.Close()
 
+	if bot.useKCP {
+		gwlog.Infof("Notify KCP connected ...")
+		bot.conn.SendNotifyKCPConnectedFromClient()
+	}
+
 	go bot.recvLoop()
 	bot.loop()
 }
 
 func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 	if bot.useWebSocket {
-		originProto := "http"
-		wsProto := "ws"
-		if cfg.EncryptConnection {
-			originProto = "https"
-			wsProto = "wss"
-		}
-		origin := fmt.Sprintf("%s://%s:%d/", originProto, serverAddr, cfg.HTTPPort)
-		wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverAddr, cfg.HTTPPort)
-
-		if cfg.EncryptConnection {
-			dialCfg, err := websocket.NewConfig(wsaddr, origin)
-			if err != nil {
-				return nil, err
-			}
-			dialCfg.TlsConfig = &tls.Config{
-				InsecureSkipVerify: true,
-			}
-			return websocket.DialConfig(dialCfg)
-		} else {
-			return websocket.Dial(wsaddr, "", origin)
-		}
+		return bot.connectServerByWebsocket(cfg)
+	} else if bot.useKCP {
+		return bot.connectServerByKCP(cfg)
 	}
-
-	conn, err := netutil.ConnectTCP(serverAddr, cfg.Port)
+	// just use tcp
+	conn, err := netutil.ConnectTCP(serverHost, cfg.Port)
 	if err == nil {
 		conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
 		conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
 	}
 	return conn, err
+}
+
+func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, error) {
+	serverAddr := fmt.Sprintf("%s:%d", serverHost, cfg.Port)
+	conn, err := kcp.DialWithOptions(serverAddr, nil, 10, 3)
+	if err != nil {
+		return nil, err
+	}
+	conn.SetReadBuffer(64 * 1024)
+	conn.SetWriteBuffer(64 * 1024)
+	conn.SetNoDelay(1, 10, 2, 1)
+	conn.SetStreamMode(true)
+	return conn, err
+}
+
+func (bot *ClientBot) connectServerByWebsocket(cfg *config.GateConfig) (net.Conn, error) {
+	originProto := "http"
+	wsProto := "ws"
+	if cfg.EncryptConnection {
+		originProto = "https"
+		wsProto = "wss"
+	}
+	origin := fmt.Sprintf("%s://%s:%d/", originProto, serverHost, cfg.HTTPPort)
+	wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverHost, cfg.HTTPPort)
+
+	if cfg.EncryptConnection {
+		dialCfg, err := websocket.NewConfig(wsaddr, origin)
+		if err != nil {
+			return nil, err
+		}
+		dialCfg.TlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		return websocket.DialConfig(dialCfg)
+	} else {
+		return websocket.Dial(wsaddr, "", origin)
+	}
 }
 
 func (bot *ClientBot) recvLoop() {

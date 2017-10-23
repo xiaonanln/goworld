@@ -10,6 +10,8 @@ import (
 
 	_ "net/http/pprof"
 
+	"os"
+
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -19,8 +21,9 @@ import (
 var (
 	quiet        bool
 	configFile   string
-	serverAddr   string
+	serverHost   string
 	useWebSocket bool
+	useKCP       bool
 	numClients   int
 )
 
@@ -28,8 +31,9 @@ func parseArgs() {
 	flag.BoolVar(&quiet, "quiet", false, "run client quietly with much less output")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.IntVar(&numClients, "N", 1000, "Number of clients")
-	flag.StringVar(&serverAddr, "server", "localhost", "replace server address")
+	flag.StringVar(&serverHost, "server", "localhost", "replace server address")
 	flag.BoolVar(&useWebSocket, "ws", false, "use WebSocket to connect server")
+	flag.BoolVar(&useKCP, "kcp", false, "use KCP to connect server")
 	flag.Parse()
 }
 
@@ -41,13 +45,20 @@ func main() {
 	}
 	binutil.SetupGWLog("test_client", "info", "test_client.log", true)
 	binutil.SetupHTTPServer("localhost", 18888, nil)
+	if useWebSocket && useKCP {
+		gwlog.Errorf("Can not use both websocket and KCP")
+		os.Exit(1)
+	}
+
 	if useWebSocket {
 		gwlog.Infof("Using websocket clients ...")
+	} else if useKCP {
+		gwlog.Infof("Using KCP clients ...")
 	}
 	var wait sync.WaitGroup
 	wait.Add(numClients)
 	for i := 0; i < numClients; i++ {
-		bot := newClientBot(i+1, useWebSocket, &wait)
+		bot := newClientBot(i+1, useWebSocket, useKCP, &wait)
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)

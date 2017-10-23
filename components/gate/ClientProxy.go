@@ -82,6 +82,8 @@ func (cp *ClientProxy) serve() {
 				cp.handleSyncPositionYawFromClient(pkt)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				cp.handleCallEntityMethodFromClient(pkt)
+			} else if msgtype == proto.MT_NOTIFY_KCP_CONNECTED_FROM_CLIENT {
+				// kcp connected from client, need to do nothing here
 			} else {
 				if consts.DEBUG_MODE {
 					gwlog.TraceError("unknown message type from client: %d", msgtype)
