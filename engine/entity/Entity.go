@@ -15,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -214,7 +215,9 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 
 	method := entityPtr.MethodByName(methodName)
 	if method.IsValid() {
-		method.Call(methodIn)
+		gwutils.RunPanicless(func() {
+			method.Call(methodIn)
+		})
 	}
 
 	compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
@@ -237,7 +240,9 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 	for _, ci := range compIndices {
 		field := entityVal.Field(ci)
 		//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
-		field.Addr().MethodByName(methodName).Call(methodIn)
+		gwutils.RunPanicless(func() {
+			field.Addr().MethodByName(methodName).Call(methodIn)
+		})
 	}
 }
 
