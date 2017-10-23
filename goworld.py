@@ -89,8 +89,6 @@ def main():
 			showUsage()
 			exit(1)
 
-	print >>sys.stderr, '> %s %s OK' % (sys.argv[0], ' '.join(args))
-
 def parseArguments(args):
 	cmds = []
 	i = 0
