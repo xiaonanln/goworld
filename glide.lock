@@ -1,5 +1,5 @@
-hash: c88343449979ff517bf9ec4f44ef4e3b4a015ce5b75e5579119205aed50e2f35
-updated: 2017-10-19T14:01:21.811791437Z
+hash: 867838ba9db78cc672b282426a9a02d1b5a18bbe932ba8df81b04cb847d46fca
+updated: 2017-10-23T13:46:45.163434453+08:00
 imports:
 - name: github.com/garyburd/redigo
   version: 433969511232c397de61b1442f9fd49ec06ae9ba
@@ -30,6 +30,16 @@ imports:
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/Sirupsen/logrus
   version: a3f95b5c423586578a4e099b11a46c2479628cac
+- name: github.com/templexxx/cpufeat
+  version: 3794dfbfb04749f896b521032f69383f24c3687e
+- name: github.com/templexxx/reedsolomon
+  version: 7092926d7d05c415fabb892b1464a03f8228ab80
+- name: github.com/templexxx/xor
+  version: 0af8e873c554da75f37f2049cdffda804533d44c
+- name: github.com/tjfoc/gmsm
+  version: 9d99face20b0dd300b7db50b3f69758de41c096a
+  subpackages:
+  - sm4
 - name: github.com/vmihailenco/msgpack
   version: dbdaafbd71b260b53bc925a85240e44666d30531
   repo: https://github.com/xiaonanln/msgpack.git
@@ -46,10 +56,27 @@ imports:
   version: 2ebf09cd62e91c7cab7358a259ec2d8c34a2f711
 - name: github.com/xiaonanln/typeconv
   version: 85972af42a8931e7b81576af3677bd6e0e2dcd39
+- name: github.com/xtaci/kcp-go
+  version: 44c3d76a6b5cc9e3687f829078a52f372928e776
+- name: golang.org/x/crypto
+  version: edd5e9b0879d13ee6970a50153d85b8fec9f7686
+  subpackages:
+  - blowfish
+  - cast5
+  - pbkdf2
+  - salsa20
+  - salsa20/salsa
+  - tea
+  - twofish
+  - xtea
 - name: golang.org/x/net
   version: 859d1a86bb617c0c20d154590c3c5d3fcb670b07
   subpackages:
+  - bpf
   - context
+  - internal/iana
+  - internal/socket
+  - ipv4
   - websocket
 - name: golang.org/x/sys
   version: ebfc5b4631820b793c9010c87fd8fef0f39eb082
