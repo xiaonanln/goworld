@@ -173,27 +173,6 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 	return "" // never goes here
 }
 
-var (
-	// all compositive method names
-	compositiveMethodNames = common.StringSet{
-		"OnInit":               {},
-		"OnCreated":            {},
-		"OnDestroy":            {},
-		"OnMigrateOut":         {},
-		"OnMigrateIn":          {},
-		"OnFreeze":             {},
-		"OnRestored":           {},
-		"OnEnterSpace":         {},
-		"OnLeaveSpace":         {},
-		"OnClientConnected":    {},
-		"OnClientDisconnected": {},
-		"OnEntityLeaveSpace":   {},
-		"OnEntityEnterSpace":   {},
-		"OnSpaceCreated":       {},
-		"OnSpaceDestroy":       {},
-	}
-)
-
 // RegisterEntity registers custom entity type and define entity behaviors
 func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useAOI bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
@@ -220,22 +199,6 @@ func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useA
 		compositiveMethodComponentIndices: map[string][]int{},
 	}
 	registeredEntityTypes[typeName] = entityTypeDesc
-
-	for methodName := range compositiveMethodNames {
-		var compIndexes []int
-		for fi := 0; fi < entityType.NumField(); fi++ {
-			field := entityType.Field(fi)
-			if isComponentType(field.Type) {
-				//gwlog.Infof("Field %v is a component", field.Name)
-				_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
-				if ok {
-					compIndexes = append(compIndexes, fi)
-				}
-			}
-		}
-		entityTypeDesc.compositiveMethodComponentIndices[methodName] = compIndexes
-		gwlog.Infof("Entity type %s method %s: component list is %v", typeName, methodName, compIndexes)
-	}
 
 	entityPtrType := reflect.PtrTo(entityType)
 	numMethods := entityPtrType.NumMethod()

@@ -217,17 +217,28 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 		method.Call(methodIn)
 	}
 
-	if compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]; ok {
-		for _, ci := range compIndices {
-			field := entityVal.Field(ci)
-			//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
-			field.Addr().MethodByName(methodName).Call(methodIn)
+	compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
+	if !ok {
+		entityType := entityVal.Type()
+		for fi := 0; fi < entityType.NumField(); fi++ {
+			field := entityType.Field(fi)
+			if isComponentType(field.Type) {
+				//gwlog.Infof("Field %v is a component", field.Name)
+				_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
+				if ok {
+					compIndices = append(compIndices, fi)
+				}
+			}
 		}
-	} else {
-		// method is not a valid compositive method
-		gwlog.Panicf("method %s is not a compositive method", methodName)
+
+		e.typeDesc.compositiveMethodComponentIndices[methodName] = compIndices
 	}
 
+	for _, ci := range compIndices {
+		field := entityVal.Field(ci)
+		//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
+		field.Addr().MethodByName(methodName).Call(methodIn)
+	}
 }
 
 func (e *Entity) setupSaveTimer() {
