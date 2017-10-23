@@ -143,6 +143,7 @@ func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, erro
 	conn.SetNoDelay(1, 10, 2, 1)
 	conn.SetStreamMode(true)
 	conn.SetWriteDelay(true)
+	conn.SetACKNoDelay(true)
 	return conn, err
 }
 
@@ -180,7 +181,8 @@ func (bot *ClientBot) recvLoop() {
 			bot.packetQueue <- packetQueueItem{msgtype, pkt}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			// bad error
-			gwlog.Panic(err)
+			gwlog.Errorf("Client recv packet failed: %v", err)
+			break
 		}
 	}
 }
