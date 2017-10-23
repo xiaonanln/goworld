@@ -24,6 +24,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 * **Spaces & Entities**: manage multiple spaces and entities with AOI support
 * **Distributed**: increase server capacity by using more machines
 * **Hot-Swappable**: update game logic by restarting server process
+* **Multiple Communication Protocols**: supports TCP, [KCP](https://github.com/skywind3000/kcp) and WebSocket
 * **Traffic Compression & Encryption**: traffic between clients and servers can be compressed and encrypted
 
 ## Architecture
