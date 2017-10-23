@@ -54,19 +54,20 @@ type GameConfig struct {
 
 // GateConfig defines fields of gate config
 type GateConfig struct {
-	Ip                 string
-	Port               int
-	LogFile            string
-	LogStderr          bool
-	HTTPIp             string
-	HTTPPort           int
-	LogLevel           string
-	GoMaxProcs         int
-	CompressConnection bool
-	CompressFormat     string
-	EncryptConnection  bool
-	RSAKey             string
-	RSACertificate     string
+	Ip                     string
+	Port                   int
+	LogFile                string
+	LogStderr              bool
+	HTTPIp                 string
+	HTTPPort               int
+	LogLevel               string
+	GoMaxProcs             int
+	CompressConnection     bool
+	CompressFormat         string
+	EncryptConnection      bool
+	RSAKey                 string
+	RSACertificate         string
+	HeartbeatCheckInterval int
 }
 
 // DispatcherConfig defines fields of dispatcher config
@@ -364,6 +365,8 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 			sc.RSAKey = key.MustString(sc.RSAKey)
 		} else if name == "rsa_certificate" {
 			sc.RSACertificate = key.MustString(sc.RSACertificate)
+		} else if name == "heartbeat_check_interval" {
+			sc.HeartbeatCheckInterval = key.MustInt(sc.HeartbeatCheckInterval)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}

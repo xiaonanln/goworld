@@ -70,7 +70,9 @@ func (gs *GateService) run() {
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 	go gs.serveKCP(gs.listenAddr)
-	go gs.checkClientHeartbeatsRoutine()
+	if cfg.HeartbeatCheckInterval > 0 {
+		go gs.checkClientHeartbeatsRoutine(cfg.HeartbeatCheckInterval)
+	}
 	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
 }
 
@@ -177,23 +179,27 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 	cp.serve()
 }
 
-func (gs *GateService) checkClientHeartbeatsRoutine() {
-	for {
-		time.Sleep(5 * time.Second)
-		now := time.Now().Unix()
-		gs.clientProxiesLock.RLock()
+func (gs *GateService) checkClientHeartbeatsRoutine(checkInterval int) {
+	gwutils.RepeatUntilPanicless(func() {
+		checkIntervalDuration := time.Duration(checkInterval) * time.Second
+		for {
+			time.Sleep(checkIntervalDuration)
 
-		for _, cp := range gs.clientProxies { // close all connected clients when terminating
-			heatbeatTime := cp.heartbeatTime.Load()
-			if heatbeatTime < now-10 {
-				// 10 seconds no heartbeat, close it...
-				gwlog.Infof("Connection %s timeout ...", cp)
-				cp.Close()
+			now := time.Now().Unix()
+			gs.clientProxiesLock.RLock()
+
+			for _, cp := range gs.clientProxies { // close all connected clients when terminating
+				heatbeatTime := cp.heartbeatTime.Load()
+				if heatbeatTime < now-int64(checkInterval) {
+					// 10 seconds no heartbeat, close it...
+					gwlog.Infof("Connection %s timeout ...", cp)
+					cp.Close()
+				}
 			}
-		}
 
-		gs.clientProxiesLock.RUnlock()
-	}
+			gs.clientProxiesLock.RUnlock()
+		}
+	})
 }
 
 func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
