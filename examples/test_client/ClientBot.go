@@ -140,10 +140,10 @@ func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, erro
 	}
 	conn.SetReadBuffer(64 * 1024)
 	conn.SetWriteBuffer(64 * 1024)
-	conn.SetNoDelay(1, 10, 2, 1)
-	conn.SetStreamMode(true)
-	conn.SetWriteDelay(true)
-	conn.SetACKNoDelay(true)
+	conn.SetNoDelay(consts.KCP_NO_DELAY, consts.KCP_INTERNAL_UPDATE_TIMER_INTERVAL, consts.KCP_ENABLE_FAST_RESEND, consts.KCP_DISABLE_CONGESTION_CONTROL)
+	conn.SetStreamMode(consts.KCP_SET_STREAM_MODE)
+	conn.SetWriteDelay(consts.KCP_SET_WRITE_DELAY)
+	conn.SetACKNoDelay(consts.KCP_SET_ACK_NO_DELAY)
 	return conn, err
 }
 

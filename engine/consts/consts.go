@@ -103,3 +103,15 @@ const (
 	ASYNC_JOB_QUEUE_MAXLEN  = 10000
 	MONGODB_OP_QUEUE_MAXLEN = 10000
 )
+
+// KCP Options
+const (
+	KCP_NO_DELAY                       = 1  // Whether nodelay mode is enabled, 0 is not enabled; 1 enabled
+	KCP_INTERNAL_UPDATE_TIMER_INTERVAL = 10 // Protocol internal work interval, in milliseconds, such as 10 ms or 20 ms.
+	KCP_ENABLE_FAST_RESEND             = 2  // Fast retransmission mode, 0 represents off by default, 2 can be set (2 ACK spans will result in direct retransmission)
+	KCP_DISABLE_CONGESTION_CONTROL     = 1  // Whether to turn off flow control, 0 represents “Do not turn off” by default, 1 represents “Turn off”.
+
+	KCP_SET_STREAM_MODE  = true
+	KCP_SET_WRITE_DELAY  = true
+	KCP_SET_ACK_NO_DELAY = true
+)
