@@ -18,7 +18,7 @@ func IsConnectionError(_err interface{}) bool {
 	}
 
 	err = errors.Cause(err)
-	if err == io.EOF || err == io.ErrClosedPipe {
+	if err == io.EOF {
 		return true
 	}
 
