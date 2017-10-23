@@ -27,14 +27,14 @@ var (
 
 // EntityTypeDesc is the entity type description for registering entity types
 type EntityTypeDesc struct {
-	isPersistent    bool
-	useAOI          bool
-	entityType      reflect.Type
-	rpcDescs        rpcDescMap
-	allClientAttrs  common.StringSet
-	clientAttrs     common.StringSet
-	persistentAttrs common.StringSet
-	//compositiveMethodComponentIndices map[string][]int
+	isPersistent                      bool
+	useAOI                            bool
+	entityType                        reflect.Type
+	rpcDescs                          rpcDescMap
+	allClientAttrs                    common.StringSet
+	clientAttrs                       common.StringSet
+	persistentAttrs                   common.StringSet
+	compositiveMethodComponentIndices map[string][]int
 }
 
 var _VALID_ATTR_DEFS = common.StringSet{} // all valid attribute defs
@@ -189,14 +189,14 @@ func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useA
 	// register the string of e
 	rpcDescs := rpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
-		isPersistent:    isPersistent,
-		useAOI:          useAOI,
-		entityType:      entityType,
-		rpcDescs:        rpcDescs,
-		clientAttrs:     common.StringSet{},
-		allClientAttrs:  common.StringSet{},
-		persistentAttrs: common.StringSet{},
-		//compositiveMethodComponentIndices: map[string][]int{},
+		isPersistent:                      isPersistent,
+		useAOI:                            useAOI,
+		entityType:                        entityType,
+		rpcDescs:                          rpcDescs,
+		clientAttrs:                       common.StringSet{},
+		allClientAttrs:                    common.StringSet{},
+		persistentAttrs:                   common.StringSet{},
+		compositiveMethodComponentIndices: map[string][]int{},
 	}
 	registeredEntityTypes[typeName] = entityTypeDesc
 
@@ -211,14 +211,17 @@ func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useA
 	return entityTypeDesc
 }
 
-var entityStructType = reflect.TypeOf(Entity{})
+var entityType = reflect.TypeOf(Entity{})
 
 func isEntityType(t reflect.Type) bool {
+	if t == entityType {
+		return true
+	}
 	if t.Kind() != reflect.Struct {
 		return false
 	}
 	entityField, ok := t.FieldByName("Entity")
-	return ok && entityField.Type == entityStructType
+	return ok && entityField.Type == entityType
 }
 
 var componentType = reflect.TypeOf(Component{})

@@ -211,72 +211,53 @@ func (e *Entity) initComponents() {
 }
 
 func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
-	var methodArgs []reflect.Value
+	defer func() {
+		if err := recover(); err != nil {
+			gwlog.TraceError("%s call compositive method '%s' failed: %v", e, methodName, err)
+		}
+	}()
+
+	entityPtr := e.V
+	entityVal := reflect.Indirect(entityPtr)
+	var methodIn []reflect.Value
 	if len(args) > 0 {
-		methodArgs = make([]reflect.Value, len(args), len(args))
+		methodIn = make([]reflect.Value, len(args), len(args))
 		for i := 0; i < len(args); i++ {
-			methodArgs[i] = reflect.ValueOf(args[i])
+			methodIn[i] = reflect.ValueOf(args[i])
 		}
 	}
 
-	reflect.Method{}
-	e.callCompositiveMethodOnValue(reflect.Indirect(e.V), methodName, methodArgs)
-
-	//method := entityPtr.MethodByName(methodName)
-	//if method.IsValid() {
-	//	gwutils.RunPanicless(func() {
-	//		method.Call(methodArgs)
-	//	})
-	//}
-
-	//compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
-	//if !ok {
-	//	entityType := entityVal.Type()
-	//	for fi := 0; fi < entityType.NumField(); fi++ {
-	//		field := entityType.Field(fi)
-	//		if isComponentType(field.Type) {
-	//			//gwlog.Infof("Field %v is a component", field.Name)
-	//			_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
-	//			if ok {
-	//				compIndices = append(compIndices, fi)
-	//			}
-	//		}
-	//	}
-	//
-	//	e.typeDesc.compositiveMethodComponentIndices[methodName] = compIndices
-	//}
-
-	//for _, ci := range compIndices {
-	//	field := entityVal.Field(ci)
-	//	//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
-	//	gwutils.RunPanicless(func() {
-	//		field.Addr().MethodByName(methodName).Call(methodArgs)
-	//	})
-	//}
-}
-
-func (e *Entity) callCompositiveMethodOnValue(v reflect.Value, methodName string, methodArgs []reflect.Value) {
-
-	// step 1: call compositive method of super classes
-	for fi := 0; fi < v.NumField(); fi++ {
-		fv := v.Field(fi)
-		fvt := fv.Type()
-		if fvt == entityStructType {
-			// this is the root entity, so there is no super class
-			break
-		}
-	}
-	// step 2: call method of own struct
-	method := v.Addr().MethodByName(methodName)
+	method := entityPtr.MethodByName(methodName)
 	if method.IsValid() {
 		gwutils.RunPanicless(func() {
-			method.Call(methodArgs)
+			method.Call(methodIn)
 		})
 	}
 
-	//else if isEntityType(fvt) {
-	//	e.callCompositiveMethodOnValue(fv)
-	//}
+	compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
+	if !ok {
+		entityType := entityVal.Type()
+		for fi := 0; fi < entityType.NumField(); fi++ {
+			field := entityType.Field(fi)
+			if isComponentType(field.Type) {
+				//gwlog.Infof("Field %v is a component", field.Name)
+				_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
+				if ok {
+					compIndices = append(compIndices, fi)
+				}
+			}
+		}
+
+		e.typeDesc.compositiveMethodComponentIndices[methodName] = compIndices
+	}
+
+	for _, ci := range compIndices {
+		field := entityVal.Field(ci)
+		//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
+		gwutils.RunPanicless(func() {
+			field.Addr().MethodByName(methodName).Call(methodIn)
+		})
+	}
 }
 
 func (e *Entity) setupSaveTimer() {
