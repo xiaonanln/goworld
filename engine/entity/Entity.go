@@ -205,9 +205,13 @@ func (e *Entity) initComponents() {
 		if isComponentType(field.Type()) {
 			//gwlog.Infof("%s: Field %s %d %T is a component, initializing ...", e, fieldStruct.Name, fi, field.Interface())
 			comp := field.FieldByName("Component").Addr().Interface().(*Component)
-			comp.Entity = e
+			e.initComponent(comp)
 		}
 	}
+}
+
+func (e *Entity) initComponent(comp *Component) {
+	comp.Entity = e
 }
 
 func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
