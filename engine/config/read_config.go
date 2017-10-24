@@ -72,6 +72,8 @@ type GateConfig struct {
 
 // DispatcherConfig defines fields of dispatcher config
 type DispatcherConfig struct {
+	BindIp    string
+	BindPort  int
 	Ip        string
 	Port      int
 	LogFile   string
@@ -374,6 +376,7 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 }
 
 func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
+	config.BindIp = _DEFAULT_LOCALHOST_IP
 	config.Ip = _DEFAULT_LOCALHOST_IP
 	config.LogFile = ""
 	config.LogStderr = true
@@ -384,9 +387,13 @@ func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
-			config.Ip = key.MustString(_DEFAULT_LOCALHOST_IP)
+			config.Ip = key.MustString(config.Ip)
 		} else if name == "port" {
-			config.Port = key.MustInt(0)
+			config.Port = key.MustInt(config.Port)
+		} else if name == "bind_ip" {
+			config.BindIp = key.MustString(config.BindIp)
+		} else if name == "bind_port" {
+			config.BindPort = key.MustInt(config.Port)
 		} else if name == "log_file" {
 			config.LogFile = key.MustString(config.LogFile)
 		} else if name == "log_stderr" {
