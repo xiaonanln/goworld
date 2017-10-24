@@ -114,7 +114,6 @@ func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID commo
 		info = v.(*entityDispatchInfo)
 		info.Lock()
 	}
-	return
 	//service.entityDispatchInfosLock.RLock()
 	//info = service.entityDispatchInfos[entityID] // can be nil
 	//if info != nil {
