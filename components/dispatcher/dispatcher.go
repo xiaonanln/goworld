@@ -10,8 +10,11 @@ import (
 
 	"os/signal"
 
+	"runtime/debug"
+
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -25,7 +28,12 @@ func parseArgs() {
 	flag.Parse()
 }
 
+func setupGCPercent() {
+	debug.SetGCPercent(consts.DISPATCHER_GC_PERCENT)
+}
+
 func main() {
+	setupGCPercent()
 	parseArgs()
 
 	if configFile != "" {

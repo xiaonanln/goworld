@@ -22,6 +22,8 @@ const (
 	// For Dispatcher
 	// DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL is the flush interval for client proxy. Smaller interval costs more CPU but dispatches patckets sooner
 	DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL = 5 * time.Millisecond
+	// DISPATCHER_GC_PERCENT is the GC percent for dispatcher
+	DISPATCHER_GC_PERCENT = 1000
 	// DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE is dispatcher client proxies' write buffer size
 	DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024
 	// DISPATCHER_CLIENT_PROXY_READ_BUFFER_SIZE is dispatcher client proxies' read buffer size
