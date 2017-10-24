@@ -215,12 +215,6 @@ func (e *Entity) initComponent(comp *Component) {
 }
 
 func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			gwlog.TraceError("%s call compositive method '%s' failed: %v", e, methodName, err)
-		}
-	}()
-
 	entityPtr := e.V
 	entityVal := reflect.Indirect(entityPtr)
 	var methodIn []reflect.Value
@@ -240,6 +234,7 @@ func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
 
 	compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
 	if !ok {
+		// collect compositiveMethodComponentIndices for the first time
 		entityType := entityVal.Type()
 		for fi := 0; fi < entityType.NumField(); fi++ {
 			field := entityType.Field(fi)
