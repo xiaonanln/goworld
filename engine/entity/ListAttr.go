@@ -120,43 +120,44 @@ func (a *ListAttr) _getPathFromOwner() []interface{} {
 }
 
 // Get gets item value
-func (a *ListAttr) Get(index int) interface{} {
-	val := a.items[index]
-	return val
+func (a *ListAttr) get(index int) interface{} {
+	return a.items[index]
 }
 
 // GetInt gets item value as int
 func (a *ListAttr) GetInt(index int) int64 {
-	val := a.Get(index)
-	return val.(int64)
-}
-
-// GetStr gets item value as string
-func (a *ListAttr) GetStr(index int) string {
-	val := a.Get(index)
-	return val.(string)
+	return a.get(index).(int64)
 }
 
 // GetFloat gets item value as float64
 func (a *ListAttr) GetFloat(index int) float64 {
-	val := a.Get(index)
-	return val.(float64)
+	return a.get(index).(float64)
+}
+
+// GetStr gets item value as string
+func (a *ListAttr) GetStr(index int) string {
+	return a.get(index).(string)
 }
 
 // GetBool gets item value as bool
 func (a *ListAttr) GetBool(index int) bool {
-	val := a.Get(index)
-	return val.(bool)
+	return a.get(index).(bool)
 }
 
-// GetListAttr gets item value as List Attribute
+// GetListAttr gets item value as ListAttr
 func (a *ListAttr) GetListAttr(index int) *ListAttr {
-	val := a.Get(index)
+	val := a.get(index)
 	return val.(*ListAttr)
 }
 
+// GetMapAttr gets item value as MapAttr
+func (a *ListAttr) GetMapAttr(index int) *MapAttr {
+	val := a.get(index)
+	return val.(*MapAttr)
+}
+
 // Pop removes the last item from the end
-func (a *ListAttr) Pop() interface{} {
+func (a *ListAttr) pop() interface{} {
 	size := len(a.items)
 	val := a.items[size-1]
 	a.items = a.items[:size-1]
@@ -171,14 +172,34 @@ func (a *ListAttr) Pop() interface{} {
 	return val
 }
 
-// PopListAttr removes the last item and returns as ListAttr
-func (a *ListAttr) PopListAttr() *ListAttr {
-	val := a.Pop()
-	return val.(*ListAttr)
+func (a *ListAttr) PopInt() int64 {
+	return a.pop().(int64)
 }
 
-// Append puts item to the end
-func (a *ListAttr) Append(val interface{}) {
+func (a *ListAttr) PopFloat() float64 {
+	return a.pop().(float64)
+}
+
+func (a *ListAttr) PopBool() bool {
+	return a.pop().(bool)
+}
+
+func (a *ListAttr) PopStr() string {
+	return a.pop().(string)
+}
+
+// PopListAttr removes the last item and returns as ListAttr
+func (a *ListAttr) PopListAttr() *ListAttr {
+	return a.pop().(*ListAttr)
+}
+
+// PopMapAttr removes the last item and returns as MapAttr
+func (a *ListAttr) PopMapAttr() *MapAttr {
+	return a.pop().(*MapAttr)
+}
+
+// append puts item to the end of list
+func (a *ListAttr) append(val interface{}) {
 	a.items = append(a.items, val)
 	index := len(a.items) - 1
 
@@ -206,6 +227,36 @@ func (a *ListAttr) Append(val interface{}) {
 	}
 }
 
+// AppendInt puts int value to the end of list
+func (a *ListAttr) AppendInt(v int64) {
+	a.append(v)
+}
+
+// AppendFloat puts float value to the end of list
+func (a *ListAttr) AppendFloat(v float64) {
+	a.append(v)
+}
+
+// AppendBool puts bool value to the end of list
+func (a *ListAttr) AppendBool(v bool) {
+	a.append(v)
+}
+
+// AppendStr puts string value to the end of list
+func (a *ListAttr) AppendStr(v string) {
+	a.append(v)
+}
+
+// AppendMapAttr puts MapAttr value to the end of list
+func (a *ListAttr) AppendMapAttr(attr *MapAttr) {
+	a.append(attr)
+}
+
+// AppendListAttr puts ListAttr value to the end of list
+func (a *ListAttr) AppendListAttr(attr *ListAttr) {
+	a.append(attr)
+}
+
 // ToList converts ListAttr to slice, recursively
 func (a *ListAttr) ToList() []interface{} {
 	l := make([]interface{}, len(a.items))
@@ -228,13 +279,13 @@ func (a *ListAttr) AssignList(l []interface{}) {
 		if iv, ok := v.(map[string]interface{}); ok {
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
-			a.Append(ia)
+			a.append(ia)
 		} else if iv, ok := v.([]interface{}); ok {
 			ia := NewListAttr()
 			ia.AssignList(iv)
-			a.Append(ia)
+			a.append(ia)
 		} else {
-			a.Append(v)
+			a.append(v)
 		}
 	}
 }

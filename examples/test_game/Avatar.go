@@ -62,11 +62,11 @@ func (a *Avatar) setDefaultAttrs() {
 func (a *Avatar) TestListField_Client() {
 	testListField := a.GetListAttr("testListField")
 	if testListField.Size() > 0 && rand.Float32() < 0.3333333333 {
-		testListField.Pop()
+		testListField.PopInt()
 	} else if testListField.Size() > 0 && rand.Float32() < 0.5 {
 		testListField.Set(rand.Intn(testListField.Size()), rand.Intn(100))
 	} else {
-		testListField.Append(rand.Intn(100))
+		testListField.AppendInt(int64(rand.Intn(100)))
 	}
 	a.CallClient("OnTestListField", testListField.ToList())
 }
