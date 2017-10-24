@@ -45,7 +45,7 @@ func (mbs *MsgboxService) OnInit() {
 // OnCreated is called when MsgboxService is created
 func (mbs *MsgboxService) OnCreated() {
 	mbs.DeclareService(ServiceName)
-	mbs.Attrs.SetDefault("maxMsgId", 0)
+	mbs.Attrs.SetDefaultInt("maxMsgId", 0)
 }
 
 // RegisterService registeres MsgboxService to goworld
@@ -119,7 +119,7 @@ func (mbs *MsgboxService) parseMsgKey(msgkey string) (common.EntityID, int64) {
 func (mbs *MsgboxService) getNextMsgId() int64 {
 	id := mbs.GetInt("maxMsgId")
 	id++
-	mbs.Attrs.set("maxMsgId", id)
+	mbs.Attrs.SetInt("maxMsgId", id)
 	return id
 }
 
@@ -141,5 +141,5 @@ func (mb Msgbox) getLastMsgId() int64 {
 }
 
 func (mb Msgbox) setLastMsgId(id int64) {
-	mb.entity.Attrs.set(_LastMsgboxMsgIdAttrKey, id)
+	mb.entity.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, id)
 }
