@@ -164,13 +164,14 @@ type _Something struct {
 
 var (
 	_DO_THINGS = []*_Something{
-		{"DoEnterRandomSpace", 10, time.Minute},
-		{"DoSendMail", 5, time.Minute},
-		{"DoGetMails", 10, time.Minute},
-		{"DoSayInWorldChannel", 5, time.Minute},
-		{"DoSayInProfChannel", 5, time.Minute},
-		{"DoTestListField", 10, time.Minute},
-		{"DoTestPublish", 10, time.Minute},
+		//{"DoEnterRandomSpace", 10, time.Minute},
+		//{"DoSendMail", 5, time.Minute},
+		//{"DoGetMails", 10, time.Minute},
+		//{"DoSayInWorldChannel", 5, time.Minute},
+		//{"DoSayInProfChannel", 5, time.Minute},
+		//{"DoTestListField", 10, time.Minute},
+		//{"DoTestPublish", 10, time.Minute},
+		{"DoTestMsgbox", 10, time.Minute},
 	}
 )
 
@@ -339,6 +340,10 @@ func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, 
 	if publisher == e.ID {
 		e.notifyThingDone("DoTestPublish")
 	}
+}
+
+func (e *clientEntity) DoTestMsgbox() {
+	e.CallServer("TestMsgbox")
 }
 
 func (e *clientEntity) onAccountCreated() {

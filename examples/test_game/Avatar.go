@@ -12,6 +12,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/ext/msgbox"
 	"github.com/xiaonanln/goworld/ext/pubsub"
 	"github.com/xiaonanln/typeconv"
 )
@@ -19,6 +20,7 @@ import (
 // Avatar entity which is the player itself
 type Avatar struct {
 	entity.Entity // Entity type should always inherit entity.Entity
+	msgbox.Msgbox
 }
 
 // OnCreated is called when avatar is created
@@ -229,4 +231,9 @@ func (a *Avatar) OnPublish(subject string, content string) {
 	publisher = common.EntityID(content[:common.ENTITYID_LENGTH])
 	gwlog.Debugf("OnPublish: publisher=%s, subject=%s, content=%s", publisher, subject, content)
 	a.CallClient("OnTestPublish", publisher, subject, content)
+}
+
+func (a *Avatar) TestMsgbox_Client() {
+	a.Msgbox.Send(a.ID, 1)
+	a.Msgbox.Recv()
 }

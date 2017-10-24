@@ -50,13 +50,14 @@ func (mbs *MsgboxService) OnCreated() {
 
 // RegisterService registeres MsgboxService to goworld
 func RegisterService() {
-	goworld.RegisterEntity(ServiceName, &MsgboxService{}, false, false).DefineAttrs(map[string][]string{
+	goworld.RegisterEntity(ServiceName, &MsgboxService{}, true, false).DefineAttrs(map[string][]string{
 		"maxMsgId": {"Persistent"},
 	})
 }
 
 // Send requests MsgboxService to send a message to target entity
 func (mbs *MsgboxService) Send(targetID common.EntityID, msg interface{}) {
+	gwlog.Infof("%s: Send %s => %T %v", mbs, targetID, msg, msg)
 	msgid := mbs.getNextMsgId()
 	msgkey := mbs.getMsgKey(targetID, msgid)
 	msgBytes, err := msgpacker.PackMsg(msg, nil)
@@ -68,6 +69,7 @@ func (mbs *MsgboxService) Send(targetID common.EntityID, msg interface{}) {
 		if err != nil {
 			gwlog.Panic(err)
 		}
+		gwlog.Infof("Msg is sent ok")
 	})
 }
 
@@ -95,7 +97,7 @@ func (mbs *MsgboxService) Recv(targetID common.EntityID, beginMsgId int64) {
 
 		}
 
-		mbs.Call(targetID, "OnRecvMsg", beginMsgId, endMsgId, msgs)
+		mbs.Call(targetID, "MsgboxOnRecvMsg", beginMsgId, endMsgId, msgs)
 	})
 }
 
@@ -109,7 +111,7 @@ func (mbs *MsgboxService) parseMsgKey(msgkey string) (common.EntityID, int64) {
 	}
 
 	targetID := common.EntityID(msgkey[6 : 6+common.ENTITYID_LENGTH])
-	msgid, err := strconv.Atoi(msgkey[6+common.ENTITYID_LENGTH:])
+	msgid, err := strconv.Atoi(msgkey[6+common.ENTITYID_LENGTH+1:])
 	if err != nil {
 		gwlog.Panic(err)
 	}
@@ -125,21 +127,31 @@ func (mbs *MsgboxService) getNextMsgId() int64 {
 
 // Msgbox is used to send messages among entities: e.x. Msgbox{&a.Entity}.Send(targetID, msg, callback)
 type Msgbox struct {
-	entity *entity.Entity
+	entity.Component
 }
 
-func (mb Msgbox) Send(targetID common.EntityID, msg interface{}) {
-	mb.entity.CallService(ServiceName, "Send", targetID, msg)
+func (mb *Msgbox) OnInit() {
+	gwlog.Infof("%s: initializing msgbox ...", mb.Entity)
+	mb.Attrs.SetDefaultInt(_LastMsgboxMsgIdAttrKey, 0)
 }
 
-func (mb Msgbox) Recv() {
-	mb.entity.CallService(ServiceName, "Recv", mb.entity.ID, mb.getLastMsgId()+1)
+func (mb *Msgbox) Send(targetID common.EntityID, msg interface{}) {
+	mb.CallService(ServiceName, "Send", targetID, msg)
 }
 
-func (mb Msgbox) getLastMsgId() int64 {
-	return mb.entity.Attrs.GetInt(_LastMsgboxMsgIdAttrKey)
+func (mb *Msgbox) Recv() {
+	mb.CallService(ServiceName, "Recv", mb.ID, mb.getLastMsgId()+1)
 }
 
-func (mb Msgbox) setLastMsgId(id int64) {
-	mb.entity.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, id)
+func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []interface{}) {
+	gwlog.Infof("%s: MsgBox.OnRecvMsg: %d -> %d: msgs %v", mb.Entity, beginMsgId, endMsgId, msgs)
+	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
+}
+
+func (mb *Msgbox) getLastMsgId() int64 {
+	return mb.Attrs.GetInt(_LastMsgboxMsgIdAttrKey)
+}
+
+func (mb *Msgbox) setLastMsgId(id int64) {
+	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, id)
 }
