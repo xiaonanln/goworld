@@ -32,7 +32,7 @@ func (s *MailService) OnInit() {
 // OnCreated is called when MailService is created
 func (s *MailService) OnCreated() {
 	gwlog.Infof("Registering MailService ...")
-	s.Attrs.SetDefault("lastMailID", 0)
+	s.Attrs.SetDefaultInt("lastMailID", 0)
 	s.DeclareService("MailService")
 }
 
@@ -89,7 +89,7 @@ func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 
 func (s *MailService) genMailID() int {
 	lastMailID := int(s.Attrs.GetInt("lastMailID")) + 1
-	s.Attrs.Set("lastMailID", lastMailID)
+	s.Attrs.SetInt("lastMailID", int64(lastMailID))
 	return lastMailID
 }
 

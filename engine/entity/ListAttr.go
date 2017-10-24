@@ -61,7 +61,7 @@ func (a *ListAttr) setOwner(owner *Entity, flag attrFlag) {
 }
 
 // Set sets item value
-func (a *ListAttr) Set(index int, val interface{}) {
+func (a *ListAttr) set(index int, val interface{}) {
 	a.items[index] = val
 	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
@@ -156,6 +156,36 @@ func (a *ListAttr) GetMapAttr(index int) *MapAttr {
 	return val.(*MapAttr)
 }
 
+// AppendInt puts int value to the end of list
+func (a *ListAttr) AppendInt(v int64) {
+	a.append(v)
+}
+
+// AppendFloat puts float value to the end of list
+func (a *ListAttr) AppendFloat(v float64) {
+	a.append(v)
+}
+
+// AppendBool puts bool value to the end of list
+func (a *ListAttr) AppendBool(v bool) {
+	a.append(v)
+}
+
+// AppendStr puts string value to the end of list
+func (a *ListAttr) AppendStr(v string) {
+	a.append(v)
+}
+
+// AppendMapAttr puts MapAttr value to the end of list
+func (a *ListAttr) AppendMapAttr(attr *MapAttr) {
+	a.append(attr)
+}
+
+// AppendListAttr puts ListAttr value to the end of list
+func (a *ListAttr) AppendListAttr(attr *ListAttr) {
+	a.append(attr)
+}
+
 // Pop removes the last item from the end
 func (a *ListAttr) pop() interface{} {
 	size := len(a.items)
@@ -227,34 +257,34 @@ func (a *ListAttr) append(val interface{}) {
 	}
 }
 
-// AppendInt puts int value to the end of list
-func (a *ListAttr) AppendInt(v int64) {
-	a.append(v)
+// SetInt sets int value at the index
+func (a *ListAttr) SetInt(index int, v int64) {
+	a.set(index, v)
 }
 
-// AppendFloat puts float value to the end of list
-func (a *ListAttr) AppendFloat(v float64) {
-	a.append(v)
+// SetFloat sets float value at the index
+func (a *ListAttr) SetFloat(index int, v float64) {
+	a.set(index, v)
 }
 
-// AppendBool puts bool value to the end of list
-func (a *ListAttr) AppendBool(v bool) {
-	a.append(v)
+// SetBool sets bool value at the index
+func (a *ListAttr) SetBool(index int, v bool) {
+	a.set(index, v)
 }
 
-// AppendStr puts string value to the end of list
-func (a *ListAttr) AppendStr(v string) {
-	a.append(v)
+// SetStr sets string value at the index
+func (a *ListAttr) SetStr(index int, v string) {
+	a.set(index, v)
 }
 
-// AppendMapAttr puts MapAttr value to the end of list
-func (a *ListAttr) AppendMapAttr(attr *MapAttr) {
-	a.append(attr)
+// SetMapAttr sets MapAttr value at the index
+func (a *ListAttr) SetMapAttr(index int, attr *MapAttr) {
+	a.set(index, attr)
 }
 
-// AppendListAttr puts ListAttr value to the end of list
-func (a *ListAttr) AppendListAttr(attr *ListAttr) {
-	a.append(attr)
+// SetListAttr sets ListAttr value at the index
+func (a *ListAttr) SetListAttr(index int, attr *ListAttr) {
+	a.set(index, attr)
 }
 
 // ToList converts ListAttr to slice, recursively

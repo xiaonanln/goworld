@@ -75,7 +75,7 @@ func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.En
 		return
 	}
 
-	a.Attrs.Set("loginAvatarID", avatarID)
+	a.Attrs.SetStr("loginAvatarID", string(avatarID))
 	a.EnterSpace(spaceID, entity.Vector3{})
 }
 

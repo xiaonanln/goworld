@@ -48,8 +48,12 @@ func (pss *PublishSubscribeService) OnInit() {
 // OnCreated is called when PublishSubscribeService is created
 func (pss *PublishSubscribeService) OnCreated() {
 	gwlog.Infof("Registering PublishSubscribeService ...")
-	pss.Attrs.SetDefault("subscribers", goworld.MapAttr())
-	pss.Attrs.SetDefault("wildcardSubscribers", goworld.MapAttr())
+	if !pss.Attrs.HasKey("subscribers") {
+		pss.Attrs.SetMapAttr("subscribers", goworld.MapAttr())
+	}
+	if !pss.Attrs.HasKey("wildcardSubscribers") {
+		pss.Attrs.SetMapAttr("wildcardSubscribers", goworld.MapAttr())
+	}
 	pss.DeclareService(ServiceName)
 }
 
@@ -217,14 +221,14 @@ func (pss *PublishSubscribeService) OnFreeze() {
 
 	pss.tree.ForEach(func(s string, val interface{}) {
 		subs := val.(*subscribing)
-		subscribersAttr.Set(s, goworld.MapAttr())
-		wildcardSubscribersAttr.Set(s, goworld.MapAttr())
+		subscribersAttr.SetMapAttr(s, goworld.MapAttr())
+		wildcardSubscribersAttr.SetMapAttr(s, goworld.MapAttr())
 
 		for eid := range subs.subscribers {
-			subscribersAttr.GetMapAttr(s).Set(string(eid), 1)
+			subscribersAttr.GetMapAttr(s).SetInt(string(eid), 1)
 		}
 		for eid := range subs.wildcardSubscribers {
-			wildcardSubscribersAttr.GetMapAttr(s).Set(string(eid), 1)
+			wildcardSubscribersAttr.GetMapAttr(s).SetInt(string(eid), 1)
 		}
 	})
 }

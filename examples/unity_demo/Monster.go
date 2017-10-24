@@ -26,11 +26,11 @@ func (monster *Monster) OnEnterSpace() {
 }
 
 func (monster *Monster) setDefaultAttrs() {
-	monster.Attrs.SetDefault("name", "minion")
-	monster.Attrs.SetDefault("lv", 1)
-	monster.Attrs.SetDefault("hpmax", 100)
-	monster.Attrs.SetDefault("hp", 100)
-	monster.Attrs.SetDefault("action", "idle")
+	monster.Attrs.SetDefaultStr("name", "minion")
+	monster.Attrs.SetDefaultInt("lv", 1)
+	monster.Attrs.SetDefaultInt("hpmax", 100)
+	monster.Attrs.SetDefaultInt("hp", 100)
+	monster.Attrs.SetDefaultStr("action", "idle")
 
 	monster.attackCD = time.Second
 	monster.lastAttackTime = time.Now()
@@ -105,7 +105,7 @@ func (monster *Monster) Idling() {
 
 	monster.movingToTarget = nil
 	monster.attackingTarget = nil
-	monster.Attrs.Set("action", "idle")
+	monster.Attrs.SetStr("action", "idle")
 }
 
 func (monster *Monster) MovingTo(player *entity.Entity) {
@@ -116,7 +116,7 @@ func (monster *Monster) MovingTo(player *entity.Entity) {
 
 	monster.movingToTarget = player
 	monster.attackingTarget = nil
-	monster.Attrs.Set("action", "move")
+	monster.Attrs.SetStr("action", "move")
 }
 
 func (monster *Monster) Attacking(player *entity.Entity) {
@@ -126,7 +126,7 @@ func (monster *Monster) Attacking(player *entity.Entity) {
 
 	monster.movingToTarget = nil
 	monster.attackingTarget = player
-	monster.Attrs.Set("action", "move")
+	monster.Attrs.SetStr("action", "move")
 }
 
 func (monster *Monster) attack(player *Player) {
@@ -150,10 +150,10 @@ func (monster *Monster) TakeDamage(damage int64) {
 		hp = 0
 	}
 
-	monster.Attrs.Set("hp", hp)
+	monster.Attrs.SetInt("hp", hp)
 	gwlog.Infof("%s TakeDamage %d => hp=%d", monster, damage, hp)
 	if hp <= 0 {
-		monster.Attrs.Set("action", "death")
+		monster.Attrs.SetStr("action", "death")
 		monster.Destroy()
 	}
 }

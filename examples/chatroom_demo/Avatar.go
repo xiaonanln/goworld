@@ -23,9 +23,9 @@ func (a *Avatar) OnCreated() {
 
 // setDefaultAttrs 设置玩家的一些默认属性
 func (a *Avatar) setDefaultAttrs() {
-	a.Attrs.SetDefault("name", "noname")
+	a.Attrs.SetDefaultStr("name", "noname")
 	a.SetFilterProp("chatroom", "1")
-	a.Attrs.Set("chatroom", "1")
+	a.Attrs.SetStr("chatroom", "1")
 }
 
 // GetSpaceID 获得玩家的场景ID并发给调用者
@@ -55,5 +55,5 @@ func (a *Avatar) SendChat_Client(text string) {
 func (a *Avatar) enterRoom(name string) {
 	gwlog.Debugf("%s enter room %s", a, name)
 	a.SetFilterProp("chatroom", name)
-	a.Attrs.Set("chatroom", name)
+	a.Attrs.SetStr("chatroom", name)
 }

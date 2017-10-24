@@ -119,7 +119,7 @@ func (mbs *MsgboxService) parseMsgKey(msgkey string) (common.EntityID, int64) {
 func (mbs *MsgboxService) getNextMsgId() int64 {
 	id := mbs.GetInt("maxMsgId")
 	id++
-	mbs.Attrs.Set("maxMsgId", id)
+	mbs.Attrs.set("maxMsgId", id)
 	return id
 }
 
@@ -141,5 +141,5 @@ func (mb Msgbox) getLastMsgId() int64 {
 }
 
 func (mb Msgbox) setLastMsgId(id int64) {
-	mb.entity.Attrs.Set(_LastMsgboxMsgIdAttrKey, id)
+	mb.entity.Attrs.set(_LastMsgboxMsgIdAttrKey, id)
 }

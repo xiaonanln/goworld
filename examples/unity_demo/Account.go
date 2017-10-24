@@ -26,7 +26,7 @@ func (a *Account) Register_Client(username string, password string) {
 
 			playerID := goworld.CreateEntityLocally("Player") // 创建一个Player对象然后立刻销毁，产生一次存盘
 			player := goworld.GetEntity(playerID)
-			player.Attrs.Set("name", username)
+			player.Attrs.SetStr("name", username)
 			player.Destroy()
 
 			goworld.PutKVDB("playerID$"+username, string(playerID), func(err error) {
@@ -90,7 +90,7 @@ func (a *Account) OnGetPlayerSpaceID(playerID common.EntityID, spaceID common.En
 		return
 	}
 
-	a.Attrs.Set("loginPlayerID", playerID)
+	a.Attrs.SetStr("loginPlayerID", string(playerID))
 	a.EnterSpace(spaceID, entity.Vector3{})
 }
 

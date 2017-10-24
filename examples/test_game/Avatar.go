@@ -48,14 +48,14 @@ func (a *Avatar) PerSecondTick(arg1 int, arg2 string) {
 }
 
 func (a *Avatar) setDefaultAttrs() {
-	a.Attrs.SetDefault("name", "无名")
-	a.Attrs.SetDefault("level", 1)
-	a.Attrs.SetDefault("exp", 0)
-	a.Attrs.SetDefault("prof", 1+rand.Intn(4))
-	a.Attrs.SetDefault("spaceKind", 1+rand.Intn(100))
-	a.Attrs.SetDefault("lastMailID", 0)
-	a.Attrs.SetDefault("mails", goworld.MapAttr())
-	a.Attrs.SetDefault("testListField", goworld.ListAttr())
+	a.Attrs.SetDefaultStr("name", "无名")
+	a.Attrs.SetDefaultInt("level", 1)
+	a.Attrs.SetDefaultInt("exp", 0)
+	a.Attrs.SetDefaultInt("prof", int64(1+rand.Intn(4)))
+	a.Attrs.SetDefaultInt("spaceKind", int64(1+rand.Intn(100)))
+	a.Attrs.SetDefaultInt("lastMailID", 0)
+	a.Attrs.SetDefaultMapAttr("mails", goworld.MapAttr())
+	a.Attrs.SetDefaultListAttr("testListField", goworld.ListAttr())
 }
 
 // TestListField_Client is a test RPC for client
@@ -64,7 +64,7 @@ func (a *Avatar) TestListField_Client() {
 	if testListField.Size() > 0 && rand.Float32() < 0.3333333333 {
 		testListField.PopInt()
 	} else if testListField.Size() > 0 && rand.Float32() < 0.5 {
-		testListField.Set(rand.Intn(testListField.Size()), rand.Intn(100))
+		testListField.SetInt(rand.Intn(testListField.Size()), int64(rand.Intn(100)))
 	} else {
 		testListField.AppendInt(int64(rand.Intn(100)))
 	}
@@ -187,8 +187,8 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 			continue
 		}
 		mail := typeconv.String(item[1])
-		mailsAttr.Set(strconv.Itoa(mailId), mail)
-		a.Attrs.Set("lastMailID", mailId)
+		mailsAttr.SetStr(strconv.Itoa(mailId), mail)
+		a.Attrs.SetInt("lastMailID", int64(mailId))
 	}
 
 	a.CallClient("OnGetMails", true)

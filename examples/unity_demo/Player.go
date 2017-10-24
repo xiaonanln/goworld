@@ -20,12 +20,12 @@ func (a *Player) OnCreated() {
 
 // setDefaultAttrs 设置玩家的一些默认属性
 func (a *Player) setDefaultAttrs() {
-	a.Attrs.SetDefault("spaceKind", 1)
-	a.Attrs.SetDefault("name", "noname")
-	a.Attrs.SetDefault("lv", 1)
-	a.Attrs.SetDefault("hp", 100)
-	a.Attrs.SetDefault("hpmax", 100)
-	a.Attrs.SetDefault("action", "idle")
+	a.Attrs.SetDefaultInt("spaceKind", 1)
+	a.Attrs.SetDefaultStr("name", "noname")
+	a.Attrs.SetDefaultInt("lv", 1)
+	a.Attrs.SetDefaultInt("hp", 100)
+	a.Attrs.SetDefaultInt("hpmax", 100)
+	a.Attrs.SetDefaultStr("action", "idle")
 
 	a.SetClientSyncing(true)
 }
@@ -87,7 +87,7 @@ func (a *Player) SetAction_Client(action string) {
 		return
 	}
 
-	a.Attrs.Set("action", action)
+	a.Attrs.SetStr("action", action)
 }
 
 func (a *Player) ShootMiss_Client() {
@@ -121,12 +121,11 @@ func (player *Player) TakeDamage(damage int64) {
 		hp = 0
 	}
 
-	player.Attrs.Set("hp", hp)
+	player.Attrs.SetInt("hp", hp)
 
 	if hp <= 0 {
 		// now player dead ...
-		player.Attrs.Set("action", "death")
+		player.Attrs.SetStr("action", "death")
 		player.SetClientSyncing(false)
 	}
-
 }

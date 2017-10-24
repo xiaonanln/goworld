@@ -29,7 +29,7 @@ func (a *Account) Register_Client(username string, password string) {
 		goworld.PutKVDB("password$"+username, password, func(err error) {
 			avatarID := goworld.CreateEntityLocally("Avatar") // 创建一个Avatar对象然后立刻销毁，产生一次存盘
 			avatar := goworld.GetEntity(avatarID)
-			avatar.Attrs.Set("name", username)
+			avatar.Attrs.SetStr("name", username)
 			avatar.Destroy()
 			goworld.PutKVDB("avatarID$"+username, string(avatarID), func(err error) {
 				a.CallClient("ShowInfo", "注册成功，请点击登录")
@@ -89,7 +89,7 @@ func (a *Account) OnGetAvatarSpaceID(avatarID common.EntityID, spaceID common.En
 		return
 	}
 
-	a.Attrs.Set("loginAvatarID", avatarID)
+	a.Attrs.SetStr("loginAvatarID", string(avatarID))
 	a.EnterSpace(spaceID, entity.Vector3{})
 }
 
