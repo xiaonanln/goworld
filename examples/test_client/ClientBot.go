@@ -54,6 +54,7 @@ type ClientBot struct {
 	syncPosTime        time.Time
 	useKCP             bool
 	useWebSocket       bool
+	noEntitySync       bool
 	packetQueue        chan packetQueueItem
 }
 
@@ -62,13 +63,14 @@ type packetQueueItem struct { // packet queue from dispatcher client
 	packet  *netutil.Packet
 }
 
-func newClientBot(id int, useWebSocket bool, useKCP bool, waiter *sync.WaitGroup) *ClientBot {
+func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, waiter *sync.WaitGroup) *ClientBot {
 	return &ClientBot{
 		id:           id,
 		waiter:       waiter,
 		entities:     map[common.EntityID]*clientEntity{},
 		useKCP:       useKCP,
 		useWebSocket: useWebSocket,
+		noEntitySync: noEntitySync,
 		packetQueue:  make(chan packetQueueItem),
 	}
 }
@@ -200,23 +202,25 @@ func (bot *ClientBot) loop() {
 			break
 		case <-ticker:
 			//fmt.Fprintf(os.Stderr, "|")
-			if bot.player != nil && bot.player.TypeName == "Avatar" {
-				now := time.Now()
-				if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
-					player := bot.player
-					const moveRange = 0.01
-					if rand.Float32() < 0.5 { // let the posibility of avatar moving to be 50%
-						player.pos.X += entity.Coord(-moveRange + moveRange*2*rand.Float32())
-						player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
-						//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
-						player.yaw = entity.Yaw(rand.Float32() * 3.14)
-						bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+			if !bot.noEntitySync {
+				if bot.player != nil && bot.player.TypeName == "Avatar" {
+					now := time.Now()
+					if now.Sub(bot.syncPosTime) > time.Millisecond*100 {
+						player := bot.player
+						const moveRange = 0.01
+						if rand.Float32() < 0.5 { // let the posibility of avatar moving to be 50%
+							player.pos.X += entity.Coord(-moveRange + moveRange*2*rand.Float32())
+							player.pos.Z += entity.Coord(-moveRange + moveRange*rand.Float32())
+							//gwlog.Infof("move to %f, %f", player.pos.X, player.pos.Z)
+							player.yaw = entity.Yaw(rand.Float32() * 3.14)
+							bot.conn.SendSyncPositionYawFromClient(player.ID, float32(player.pos.X), float32(player.pos.Y), float32(player.pos.Z), float32(player.yaw))
+						}
+
+						bot.syncPosTime = now
 					}
-
-					bot.syncPosTime = now
 				}
-			}
 
+			}
 			bot.conn.Flush("ClientBot")
 			post.Tick()
 			break

@@ -25,6 +25,7 @@ var (
 	useWebSocket bool
 	useKCP       bool
 	numClients   int
+	noEntitySync bool
 )
 
 func parseArgs() {
@@ -34,6 +35,7 @@ func parseArgs() {
 	flag.StringVar(&serverHost, "server", "localhost", "replace server address")
 	flag.BoolVar(&useWebSocket, "ws", false, "use WebSocket to connect server")
 	flag.BoolVar(&useKCP, "kcp", false, "use KCP to connect server")
+	flag.BoolVar(&noEntitySync, "nosync", false, "disable entity sync")
 	flag.Parse()
 }
 
@@ -58,7 +60,7 @@ func main() {
 	var wait sync.WaitGroup
 	wait.Add(numClients)
 	for i := 0; i < numClients; i++ {
-		bot := newClientBot(i+1, useWebSocket, useKCP, &wait)
+		bot := newClientBot(i+1, useWebSocket, useKCP, noEntitySync, &wait)
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)
