@@ -63,9 +63,8 @@ type DispatcherService struct {
 	gateClients       []*dispatcherClientProxy
 	chooseClientIndex int64
 
-	//entityDispatchInfosLock sync.RWMutex
-	//entityDispatchInfos     map[common.EntityID]*entityDispatchInfo
-	entityDispatchInfos sync.Map
+	entityDispatchInfosLock sync.RWMutex
+	entityDispatchInfos     map[common.EntityID]*entityDispatchInfo
 
 	servicesLock       sync.Mutex
 	registeredServices map[string]entity.EntityIDSet
@@ -87,94 +86,72 @@ func newDispatcherService() *DispatcherService {
 		gateClients:       make([]*dispatcherClientProxy, gateCount),
 		chooseClientIndex: 0,
 
-		//entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
-		registeredServices: map[string]entity.EntityIDSet{},
-		targetGameOfClient: map[common.ClientID]uint16{},
+		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
+		registeredServices:  map[string]entity.EntityIDSet{},
+		targetGameOfClient:  map[common.ClientID]uint16{},
 
 		entitySyncInfosToGame: make([][]byte, gameCount),
 	}
 }
 
 func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common.EntityID) (info *entityDispatchInfo) {
-	if v, ok := service.entityDispatchInfos.Load(entityID); ok {
-		return v.(*entityDispatchInfo)
-	} else {
-		return nil
+	service.entityDispatchInfosLock.RLock()
+	info = service.entityDispatchInfos[entityID] // can be nil
+	if info != nil {
+		info.RLock()
 	}
-	//service.entityDispatchInfosLock.RLock()
-	//info = service.entityDispatchInfos[entityID] // can be nil
-	//if info != nil {
-	//	info.RLock()
-	//}
-	//service.entityDispatchInfosLock.RUnlock()
+	service.entityDispatchInfosLock.RUnlock()
 	return
 }
 
 func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID common.EntityID) (info *entityDispatchInfo) {
-	if v, ok := service.entityDispatchInfos.Load(entityID); ok {
-		return v.(*entityDispatchInfo)
-	} else {
-		return nil
+	service.entityDispatchInfosLock.RLock()
+	info = service.entityDispatchInfos[entityID] // can be nil
+	if info != nil {
+		info.Lock()
 	}
-	//service.entityDispatchInfosLock.RLock()
-	//info = service.entityDispatchInfos[entityID] // can be nil
-	//if info != nil {
-	//	info.Lock()
-	//}
-	//service.entityDispatchInfosLock.RUnlock()
-	//return
+	service.entityDispatchInfosLock.RUnlock()
+	return
 }
 
 func (service *DispatcherService) newEntityDispatcherInfo(entityID common.EntityID) (info *entityDispatchInfo) {
 	info = newEntityDispatchInfo()
-	service.entityDispatchInfos.Store(entityID, info)
-	//service.entityDispatchInfosLock.Lock()
-	//service.entityDispatchInfos[entityID] = info
-	//service.entityDispatchInfosLock.Unlock()
+	service.entityDispatchInfosLock.Lock()
+	service.entityDispatchInfos[entityID] = info
+	service.entityDispatchInfosLock.Unlock()
 	return
 }
 
 func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID) {
-	service.entityDispatchInfos.Delete(entityID)
-	//service.entityDispatchInfosLock.Lock()
-	//delete(service.entityDispatchInfos, entityID)
-	//service.entityDispatchInfosLock.Unlock()
+	service.entityDispatchInfosLock.Lock()
+	delete(service.entityDispatchInfos, entityID)
+	service.entityDispatchInfosLock.Unlock()
 }
 
 func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID common.EntityID) (info *entityDispatchInfo) {
+	service.entityDispatchInfosLock.RLock()
+	info = service.entityDispatchInfos[entityID]
 
-	if v, ok := service.entityDispatchInfos.Load(entityID); ok {
-		return v.(*entityDispatchInfo)
-	} else {
-		info = &entityDispatchInfo{
-			pendingPacketQueue: xnsyncutil.NewSyncQueue(),
-		}
-		v, _ := service.entityDispatchInfos.LoadOrStore(entityID, info)
-		return v.(*entityDispatchInfo)
+	if info != nil {
+		info.Lock()
 	}
-	//service.entityDispatchInfosLock.RLock()
-	//info = service.entityDispatchInfos[entityID]
-	//
-	//if info != nil {
-	//	info.Lock()
-	//}
-	//
-	//service.entityDispatchInfosLock.RUnlock()
-	//
-	//if info == nil {
-	//	service.entityDispatchInfosLock.Lock()
-	//	info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
-	//	if info == nil {
-	//		info = &entityDispatchInfo{
-	//			pendingPacketQueue: xnsyncutil.NewSyncQueue(),
-	//		}
-	//		service.entityDispatchInfos[entityID] = info
-	//	}
-	//
-	//	info.Lock()
-	//
-	//	service.entityDispatchInfosLock.Unlock()
-	//}
+
+	service.entityDispatchInfosLock.RUnlock()
+
+	if info == nil {
+		service.entityDispatchInfosLock.Lock()
+		info = service.entityDispatchInfos[entityID] // need to re-retrive info after write-lock
+		if info == nil {
+			info = &entityDispatchInfo{
+				pendingPacketQueue: xnsyncutil.NewSyncQueue(),
+			}
+			service.entityDispatchInfos[entityID] = info
+		}
+
+		info.Lock()
+
+		service.entityDispatchInfosLock.Unlock()
+	}
 
 	return
 }
@@ -265,26 +242,17 @@ func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientPro
 	// freeze the game, which block all entities of that game
 	gwlog.Infof("Handling start freeze game ...")
 	gameid := dcp.gameid
-	service.entityDispatchInfos.Range(func(key, value interface{}) bool {
-		info := value.(*entityDispatchInfo)
+	service.entityDispatchInfosLock.RLock()
+
+	for _, info := range service.entityDispatchInfos {
 		info.Lock()
 		if info.gameid == gameid {
 			info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
 		}
 		info.Unlock()
-		return true
-	})
-	//service.entityDispatchInfosLock.RLock()
-	//
-	//for _, info := range service.entityDispatchInfos {
-	//	info.Lock()
-	//	if info.gameid == gameid {
-	//		info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
-	//	}
-	//	info.Unlock()
-	//}
-	//
-	//service.entityDispatchInfosLock.RUnlock()
+	}
+
+	service.entityDispatchInfosLock.RUnlock()
 
 	// tell the game to start real freeze, using the packet
 	pkt.ClearPayload()
@@ -651,39 +619,39 @@ func (service *DispatcherService) broadcastToGateClients(pkt *netutil.Packet) {
 }
 
 func (service *DispatcherService) cleanupEntitiesOfGame(targetGame uint16) {
-	//service.entityDispatchInfosLock.Lock()
-	//defer service.entityDispatchInfosLock.Unlock()
-	//
-	//service.servicesLock.Lock()
-	//defer service.servicesLock.Unlock()
-	//
-	//cleanEids := entity.EntityIDSet{} // get all clean eids
-	//for eid, dispatchInfo := range service.entityDispatchInfos {
-	//	if dispatchInfo.gameid == targetGame {
-	//		cleanEids.Add(eid)
-	//	}
-	//}
-	//
-	//// for all services whose entity is cleaned, notify all games that the service is down
-	//undeclaredServices := common.StringSet{}
-	//for serviceName, serviceEids := range service.registeredServices {
-	//	var cleanEidsOfGame []common.EntityID
-	//	for serviceEid := range serviceEids {
-	//		if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
-	//			undeclaredServices.Add(serviceName)
-	//			cleanEidsOfGame = append(cleanEidsOfGame, serviceEid)
-	//			service.handleServiceDown(serviceName, serviceEid)
-	//		}
-	//	}
-	//
-	//	for _, eid := range cleanEidsOfGame {
-	//		serviceEids.Del(eid)
-	//	}
-	//}
-	//
-	//for eid := range cleanEids {
-	//	delete(service.entityDispatchInfos, eid)
-	//}
-	//
-	//gwlog.Infof("Game %d is rebooted, %d entities cleaned, undeclare services: %s", targetGame, len(cleanEids), undeclaredServices)
+	service.entityDispatchInfosLock.Lock()
+	defer service.entityDispatchInfosLock.Unlock()
+
+	service.servicesLock.Lock()
+	defer service.servicesLock.Unlock()
+
+	cleanEids := entity.EntityIDSet{} // get all clean eids
+	for eid, dispatchInfo := range service.entityDispatchInfos {
+		if dispatchInfo.gameid == targetGame {
+			cleanEids.Add(eid)
+		}
+	}
+
+	// for all services whose entity is cleaned, notify all games that the service is down
+	undeclaredServices := common.StringSet{}
+	for serviceName, serviceEids := range service.registeredServices {
+		var cleanEidsOfGame []common.EntityID
+		for serviceEid := range serviceEids {
+			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
+				undeclaredServices.Add(serviceName)
+				cleanEidsOfGame = append(cleanEidsOfGame, serviceEid)
+				service.handleServiceDown(serviceName, serviceEid)
+			}
+		}
+
+		for _, eid := range cleanEidsOfGame {
+			serviceEids.Del(eid)
+		}
+	}
+
+	for eid := range cleanEids {
+		delete(service.entityDispatchInfos, eid)
+	}
+
+	gwlog.Infof("Game %d is rebooted, %d entities cleaned, undeclare services: %s", targetGame, len(cleanEids), undeclaredServices)
 }
