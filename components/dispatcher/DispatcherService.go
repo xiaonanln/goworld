@@ -161,7 +161,7 @@ func (service *DispatcherService) String() string {
 }
 
 func (service *DispatcherService) run() {
-	host := fmt.Sprintf("%s:%d", service.config.Ip, service.config.Port)
+	host := fmt.Sprintf("%s:%d", service.config.BindIp, service.config.BindPort)
 	netutil.ServeTCPForever(host, service)
 }
 
