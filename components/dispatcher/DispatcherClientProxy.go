@@ -39,7 +39,7 @@ func (dcp *dispatcherClientProxy) startAutoFlush() {
 		gwc := dcp.GoWorldConnection
 		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 		for !gwc.IsClosed() {
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
 			dcp.beforeFlush()
 			err := gwc.Flush("DispatcherClientProxy")
 			if err != nil {

@@ -20,6 +20,8 @@ const (
 	PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD = 512
 
 	// For Dispatcher
+	// DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL is the flush interval for client proxy. Smaller interval costs more CPU but dispatches patckets sooner
+	DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL = 10 * time.Millisecond
 	// DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE is dispatcher client proxies' write buffer size
 	DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024
 	// DISPATCHER_CLIENT_PROXY_READ_BUFFER_SIZE is dispatcher client proxies' read buffer size
