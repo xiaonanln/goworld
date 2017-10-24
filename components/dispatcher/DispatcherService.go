@@ -97,8 +97,9 @@ func newDispatcherService() *DispatcherService {
 
 func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common.EntityID) (info *entityDispatchInfo) {
 	if v, ok := service.entityDispatchInfos.Load(entityID); ok {
-		info = v.(*entityDispatchInfo)
-		info.RLock()
+		return v.(*entityDispatchInfo)
+	} else {
+		return nil
 	}
 	//service.entityDispatchInfosLock.RLock()
 	//info = service.entityDispatchInfos[entityID] // can be nil
@@ -111,8 +112,9 @@ func (service *DispatcherService) getEntityDispatcherInfoForRead(entityID common
 
 func (service *DispatcherService) getEntityDispatcherInfoForWrite(entityID common.EntityID) (info *entityDispatchInfo) {
 	if v, ok := service.entityDispatchInfos.Load(entityID); ok {
-		info = v.(*entityDispatchInfo)
-		info.Lock()
+		return v.(*entityDispatchInfo)
+	} else {
+		return nil
 	}
 	//service.entityDispatchInfosLock.RLock()
 	//info = service.entityDispatchInfos[entityID] // can be nil
@@ -142,15 +144,13 @@ func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID
 func (service *DispatcherService) setEntityDispatcherInfoForWrite(entityID common.EntityID) (info *entityDispatchInfo) {
 
 	if v, ok := service.entityDispatchInfos.Load(entityID); ok {
-		info = v.(*entityDispatchInfo)
-		info.Lock()
+		return v.(*entityDispatchInfo)
 	} else {
 		info = &entityDispatchInfo{
 			pendingPacketQueue: xnsyncutil.NewSyncQueue(),
 		}
 		v, _ := service.entityDispatchInfos.LoadOrStore(entityID, info)
-		info = v.(*entityDispatchInfo)
-		info.Lock()
+		return v.(*entityDispatchInfo)
 	}
 	//service.entityDispatchInfosLock.RLock()
 	//info = service.entityDispatchInfos[entityID]
