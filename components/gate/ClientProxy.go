@@ -73,7 +73,7 @@ func (cp *ClientProxy) serve() {
 	}()
 
 	cp.GoWorldConnection.SetAutoFlush(time.Millisecond * 50)
-	cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
+	//cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
 
 	for {
 		var msgtype proto.MsgType
