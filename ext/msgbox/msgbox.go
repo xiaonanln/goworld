@@ -29,13 +29,10 @@ var (
 	msgpacker = netutil.MessagePackMsgPacker{}
 )
 
+type Msg map[string]interface{}
+
 type MsgboxService struct {
 	entity.Entity
-}
-
-type Msg struct {
-	Id  int64
-	Msg interface{}
 }
 
 // OnInit initialize MsgboxService fields
@@ -56,7 +53,7 @@ func RegisterService() {
 }
 
 // Send requests MsgboxService to send a message to target entity
-func (mbs *MsgboxService) Send(targetID common.EntityID, msg interface{}) {
+func (mbs *MsgboxService) Send(targetID common.EntityID, msg Msg) {
 	gwlog.Infof("%s: Send %s => %T %v", mbs, targetID, msg, msg)
 	msgid := mbs.getNextMsgId()
 	msgkey := mbs.getMsgKey(targetID, msgid)
@@ -81,14 +78,14 @@ func (mbs *MsgboxService) Recv(targetID common.EntityID, beginMsgId int64) {
 			gwlog.Panic(err)
 		}
 
-		var msgs []interface{}
+		var msgs []Msg
 		var endMsgId int64
 		for _, item := range items {
 			_, msgid := mbs.parseMsgKey(item.Key)
 			endMsgId = msgid
 
 			msgBytes := []byte(item.Val)
-			var msg interface{}
+			var msg Msg
 			err := msgpacker.UnpackMsg(msgBytes, &msg)
 			if err != nil {
 				gwlog.Panic(err)
@@ -128,6 +125,7 @@ func (mbs *MsgboxService) getNextMsgId() int64 {
 // Msgbox is used to send messages among entities: e.x. Msgbox{&a.Entity}.Send(targetID, msg, callback)
 type Msgbox struct {
 	entity.Component
+	msghandler func(msg Msg)
 }
 
 func (mb *Msgbox) OnInit() {
@@ -135,7 +133,7 @@ func (mb *Msgbox) OnInit() {
 	mb.Attrs.SetDefaultInt(_LastMsgboxMsgIdAttrKey, 0)
 }
 
-func (mb *Msgbox) Send(targetID common.EntityID, msg interface{}) {
+func (mb *Msgbox) Send(targetID common.EntityID, msg Msg) {
 	mb.CallService(ServiceName, "Send", targetID, msg)
 }
 
@@ -143,9 +141,13 @@ func (mb *Msgbox) Recv() {
 	mb.CallService(ServiceName, "Recv", mb.ID, mb.getLastMsgId()+1)
 }
 
-func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []interface{}) {
+func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []Msg) {
 	gwlog.Infof("%s: MsgBox.OnRecvMsg: %d -> %d: msgs %v", mb.Entity, beginMsgId, endMsgId, msgs)
 	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
+}
+
+func (mb *Msgbox) SetMsgHandler(handler func(msg Msg)) {
+	mb.msghandler = handler
 }
 
 func (mb *Msgbox) getLastMsgId() int64 {

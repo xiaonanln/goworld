@@ -302,6 +302,8 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 	}
 
 	gwlog.Debugf("Entity %s created, cause=%d, client=%s", entity, cause, client)
+	entity.callCompositiveMethod("OnAttrsReady")
+
 	if cause == ccCreate {
 		entity.callCompositiveMethod("OnCreated")
 	} else if cause == ccMigrate {
