@@ -41,10 +41,6 @@ var (
 	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
 )
 
-func init() {
-	parseArgs()
-}
-
 func parseArgs() {
 	var gameidArg int
 	flag.IntVar(&gameidArg, "gid", 0, "set gameid")
@@ -60,6 +56,7 @@ func parseArgs() {
 // This is the main game server loop
 func Run(delegate IGameDelegate) {
 	rand.Seed(time.Now().UnixNano())
+	parseArgs()
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)
