@@ -15,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/post"
+	"github.com/xiaonanln/goworld/ext/msgbox"
 	"github.com/xiaonanln/typeconv"
 )
 
@@ -344,6 +345,10 @@ func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, 
 
 func (e *clientEntity) DoTestMsgbox() {
 	e.CallServer("TestMsgbox")
+}
+
+func (e *clientEntity) OnRecvMsgboxMsg(msg msgbox.Msg) {
+	e.notifyThingDone("DoTestMsgbox")
 }
 
 func (e *clientEntity) onAccountCreated() {

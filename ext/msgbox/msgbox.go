@@ -9,6 +9,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -144,6 +145,11 @@ func (mb *Msgbox) Recv() {
 func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []Msg) {
 	gwlog.Infof("%s: MsgBox.OnRecvMsg: %d -> %d: msgs %v", mb.Entity, beginMsgId, endMsgId, msgs)
 	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
+	for _, msg := range msgs {
+		gwutils.RunPanicless(func() {
+			mb.msghandler(msg)
+		})
+	}
 }
 
 func (mb *Msgbox) SetMsgHandler(handler func(msg Msg)) {

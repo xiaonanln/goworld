@@ -23,13 +23,14 @@ type Avatar struct {
 	msgbox.Msgbox
 }
 
+func (a *Avatar) OnAttrsReady() {
+	gwlog.Infof("Avatar %s is ready: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
+	a.setDefaultAttrs()
+	a.Msgbox.SetMsgHandler(a.handleMsgboxMsg)
+}
+
 // OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
-	a.Entity.OnCreated()
-
-	a.setDefaultAttrs()
-
-	gwlog.Infof("Avatar %s on created: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
 
 	a.SetFilterProp("spaceKind", strconv.Itoa(int(a.GetInt("spaceKind"))))
 	a.SetFilterProp("level", strconv.Itoa(int(a.GetInt("level"))))
@@ -234,6 +235,13 @@ func (a *Avatar) OnPublish(subject string, content string) {
 }
 
 func (a *Avatar) TestMsgbox_Client() {
-	a.Msgbox.Send(a.ID, 1)
+	a.Msgbox.Send(a.ID, msgbox.Msg{
+		"sender":  a.ID,
+		"content": "hello",
+	})
 	a.Msgbox.Recv()
+}
+
+func (a *Avatar) handleMsgboxMsg(msg msgbox.Msg) {
+	a.CallClient("OnRecvMsgboxMsg", msg)
 }
