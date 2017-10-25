@@ -41,8 +41,7 @@ var (
 type ClientBot struct {
 	sync.Mutex
 
-	id       int
-	clientid common.ClientID
+	id int
 
 	waiter             *sync.WaitGroup
 	conn               *proto.GoWorldConnection
@@ -363,20 +362,15 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 			bot.updateEntityPosition(entityID, entity.Vector3{x, y, z})
 			bot.updateEntityYaw(entityID, yaw)
 		}
-	} else if msgtype == proto.MT_SET_CLIENT_CLIENTID {
-		clientid := packet.ReadClientID()
-		bot.setClientID(clientid)
+		//} else if msgtype == proto.MT_SET_CLIENT_CLIENTID {
+		//	clientid := packet.ReadClientID()
+		//	bot.setClientID(clientid)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
 		if consts.DEBUG_MODE {
 			os.Exit(2)
 		}
 	}
-}
-
-func (bot *ClientBot) setClientID(clientid common.ClientID) {
-	gwlog.Infof("%s set client id = %s", bot, clientid)
-	bot.clientid = clientid
 }
 
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Vector3) {
