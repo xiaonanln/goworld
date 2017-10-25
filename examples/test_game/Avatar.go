@@ -24,8 +24,8 @@ type Avatar struct {
 }
 
 func (a *Avatar) OnAttrsReady() {
-	gwlog.Debugf("Avatar %s is ready: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
 	a.setDefaultAttrs()
+	gwlog.Debugf("Avatar %s is ready: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
 	a.Msgbox.SetMsgHandler(a.handleMsgboxMsg)
 }
 
