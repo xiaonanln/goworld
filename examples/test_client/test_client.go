@@ -19,19 +19,21 @@ import (
 )
 
 var (
-	quiet        bool
-	configFile   string
-	serverHost   string
-	useWebSocket bool
-	useKCP       bool
-	numClients   int
-	noEntitySync bool
+	quiet         bool
+	configFile    string
+	serverHost    string
+	useWebSocket  bool
+	useKCP        bool
+	numClients    int
+	startClientId int
+	noEntitySync  bool
 )
 
 func parseArgs() {
 	flag.BoolVar(&quiet, "quiet", false, "run client quietly with much less output")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.IntVar(&numClients, "N", 1000, "Number of clients")
+	flag.IntVar(&startClientId, "S", 1, "Start ID of clients")
 	flag.StringVar(&serverHost, "server", "localhost", "replace server address")
 	flag.BoolVar(&useWebSocket, "ws", false, "use WebSocket to connect server")
 	flag.BoolVar(&useKCP, "kcp", false, "use KCP to connect server")
@@ -60,7 +62,7 @@ func main() {
 	var wait sync.WaitGroup
 	wait.Add(numClients)
 	for i := 0; i < numClients; i++ {
-		bot := newClientBot(i+1, useWebSocket, useKCP, noEntitySync, &wait)
+		bot := newClientBot(startClientId+i, useWebSocket, useKCP, noEntitySync, &wait)
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)
