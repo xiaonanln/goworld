@@ -55,7 +55,7 @@ func RegisterService() {
 
 // Send requests MsgboxService to send a message to target entity
 func (mbs *MsgboxService) Send(targetID common.EntityID, msg Msg) {
-	gwlog.Infof("%s: Send %s => %T %v", mbs, targetID, msg, msg)
+	gwlog.Debugf("%s: Send %s => %T %v", mbs, targetID, msg, msg)
 	msgid := mbs.getNextMsgId()
 	msgkey := mbs.getMsgKey(targetID, msgid)
 	msgBytes, err := msgpacker.PackMsg(msg, nil)
@@ -67,7 +67,7 @@ func (mbs *MsgboxService) Send(targetID common.EntityID, msg Msg) {
 		if err != nil {
 			gwlog.Panic(err)
 		}
-		gwlog.Infof("Msg is sent ok")
+		gwlog.Debugf("Msg is sent ok")
 	})
 }
 
@@ -130,7 +130,7 @@ type Msgbox struct {
 }
 
 func (mb *Msgbox) OnInit() {
-	gwlog.Infof("%s: initializing msgbox ...", mb.Entity)
+	gwlog.Debugf("%s: initializing msgbox ...", mb.Entity)
 	mb.Attrs.SetDefaultInt(_LastMsgboxMsgIdAttrKey, 0)
 }
 
@@ -143,7 +143,7 @@ func (mb *Msgbox) Recv() {
 }
 
 func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []Msg) {
-	gwlog.Infof("%s: MsgBox.OnRecvMsg: %d -> %d: msgs %v", mb.Entity, beginMsgId, endMsgId, msgs)
+	gwlog.Debugf("%s: MsgBox.OnRecvMsg: %d -> %d: msgs %v", mb.Entity, beginMsgId, endMsgId, msgs)
 	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
 	for _, msg := range msgs {
 		gwutils.RunPanicless(func() {
