@@ -158,12 +158,12 @@ func (gwc *GoWorldConnection) SendSyncPositionYawFromClient(entityID common.Enti
 	return gwc.SendPacketRelease(packet)
 }
 
-func (gwc *GoWorldConnection) SendSetClientClientID(clientid common.ClientID) error {
-	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_SET_CLIENT_CLIENTID)
-	packet.AppendClientID(clientid)
-	return gwc.SendPacketRelease(packet)
-}
+//func (gwc *GoWorldConnection) SendSetClientClientID(clientid common.ClientID) error {
+//	packet := gwc.packetConn.NewPacket()
+//	packet.AppendUint16(MT_SET_CLIENT_CLIENTID)
+//	packet.AppendClientID(clientid)
+//	return gwc.SendPacketRelease(packet)
+//}
 
 func (gwc *GoWorldConnection) SetHeartbeatFromClient() error {
 	packet := gwc.packetConn.NewPacket()
