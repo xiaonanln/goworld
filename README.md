@@ -52,15 +52,14 @@ $ go get github.com/xiaonanln/goworld
 
 ### Install dependencies
 
-GoWorld uses [Glide](http://glide.sh/) to manage packages. 
-[![Glide](http://glide.sh/assets/logo-small.png)](http://glide.sh/)
+GoWorld uses [Dep](https://github.com/golang/dep) to manage packages. 
 
 **Windows**:
-1. get `glide.exe` from [https://github.com/Masterminds/glide/releases](https://github.com/Masterminds/glide/releases) and put it to `$GOPATH/bin`
+1. Install [Dep](https://github.com/golang/dep#setup)
 2. run `install-deps-win.bat`
 
 **Linux**: 
-1. Install [Glide](http://glide.sh/): `$ curl https://glide.sh/get | sh`
+1. Install [Dep](https://github.com/golang/dep#setup)
 2. `$ make install-deps`
 
 **For Chinese only:** 
