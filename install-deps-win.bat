@@ -1,4 +1,4 @@
 pip install psutil
-glide install
+dep ensure
 @echo All dependencies are installed successfully!
 @pause

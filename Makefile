@@ -43,4 +43,4 @@ covertest:
 
 install-deps:
 	pip install psutil
-	glide install
+	dep ensure

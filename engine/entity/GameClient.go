@@ -118,22 +118,3 @@ func (client *GameClient) sendNotifyListAttrAppend(entityID common.EntityID, pat
 	}
 	dispatcherclient.GetDispatcherClientForSend().SendNotifyListAttrAppendOnClient(client.gateid, client.clientid, entityID, path, val)
 }
-
-// syncPositionYawOnClient synchronizes position and yaw to entity on client
-func (client *GameClient) syncPositionYawOnClient(entityID common.EntityID, position Vector3, yaw Yaw) {
-	if client == nil {
-		return
-	}
-
-	dispatcherclient.GetDispatcherClientForSend().SendSyncPositionOnClient(client.gateid, client.clientid, entityID,
-		float32(position.X), float32(position.Y), float32(position.Z))
-}
-
-//// updateYawOnClient updates entity yaw on client
-//func (client *GameClient) updateYawOnClient(entityID common.EntityID, yaw Yaw) {
-//	if client == nil {
-//		return
-//	}
-//
-//	dispatcherclient.GetDispatcherClientForSend().SendUpdateYawOnClient(client.gateid, client.clientid, entityID, float32(yaw))
-//}

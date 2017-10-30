@@ -342,16 +342,6 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		}
 
 		bot.callEntityMethod(bot.player.ID, method, args)
-	} else if msgtype == proto.MT_UPDATE_POSITION_ON_CLIENT {
-		entityID := packet.ReadEntityID()
-		x := entity.Coord(packet.ReadFloat32())
-		y := entity.Coord(packet.ReadFloat32())
-		z := entity.Coord(packet.ReadFloat32())
-		bot.updateEntityPosition(entityID, entity.Vector3{x, y, z})
-	} else if msgtype == proto.MT_UPDATE_YAW_ON_CLIENT { // todo: this msgtype useful ?
-		entityID := packet.ReadEntityID()
-		yaw := entity.Yaw(packet.ReadFloat32())
-		bot.updateEntityYaw(entityID, yaw)
 	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
 		for packet.HasUnreadPayload() {
 			entityID := packet.ReadEntityID()
