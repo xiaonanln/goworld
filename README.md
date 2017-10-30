@@ -54,13 +54,16 @@ $ go get github.com/xiaonanln/goworld
 
 GoWorld uses [Dep](https://github.com/golang/dep) to manage packages. 
 
-**Windows**:
-1. Install [Dep](https://github.com/golang/dep#setup)
-2. run `install-deps-win.bat`
+Install Go [Dep](https://github.com/golang/dep#setup):
+```bash
+go get -u github.com/golang/dep/cmd/dep
+```
+Install Dependencies: 
 
-**Linux**: 
-1. Install [Dep](https://github.com/golang/dep#setup)
-2. `$ make install-deps`
+**Windows**:
+run `install-deps-win.bat`
+
+**Linux**: `$ make install-deps`
 
 **For Chinese only:** 
 中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.zip](http://goworldgs.com/goworld_files/vendor.zip)，并将其解压到goworld根目录下。
