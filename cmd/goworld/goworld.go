@@ -21,6 +21,7 @@ func main() {
 	showMsg("arguments: %s", strings.Join(args, " "))
 
 	detectGoWorldPath()
+
 	if len(args) == 0 {
 		showMsg("no command to execute")
 		flag.Usage()
@@ -29,8 +30,9 @@ func main() {
 
 	cmd := args[0]
 	if cmd == "build" {
-		for _, arg := range args[1:] {
-			build(arg)
+		for _, serverId := range args[1:] {
+			build(serverId)
 		}
+	} else if cmd == "start" {
 	}
 }
