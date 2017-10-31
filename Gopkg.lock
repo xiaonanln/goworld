@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/StackExchange/wmi"
+  packages = ["."]
+  revision = "ea383cf3ba6ec950874b8486cd72356d007c768f"
+
+[[projects]]
+  branch = "master"
   name = "github.com/bmizerany/assert"
   packages = ["."]
   revision = "b7ed37b82869576c289d7d97fb2bbd8b64a0cb28"
@@ -24,6 +30,12 @@
   packages = ["."]
   revision = "20b96f641a5ea98f2f8619ff4f3e061cff4833bd"
   version = "v1.28.2"
+
+[[projects]]
+  name = "github.com/go-ole/go-ole"
+  packages = [".","oleutil"]
+  revision = "0e87ea779d9deb219633b828a023b32e1244dd57"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -92,9 +104,15 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["."]
+  packages = ["cpu","host","internal/common","mem","net","process"]
   revision = "6e221c482653ef05c9f6a7bf71ddceea0e40bac5"
   version = "v2.17.09"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   branch = "master"
@@ -163,7 +181,7 @@
 
 [[projects]]
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = ["unix","windows"]
   revision = "ebfc5b4631820b793c9010c87fd8fef0f39eb082"
 
 [[projects]]
@@ -186,6 +204,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "83e6afa509e1b69a0ae947a9b30170bd61b291df7df09e5c535e3d06fb76a0d7"
+  inputs-digest = "b86dc4dfa0a9841d4abd6aacbe2439cce51e3b3dc75f8c85fa589a27a436a820"
   solver-name = "gps-cdcl"
   solver-version = 1
