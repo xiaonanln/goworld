@@ -45,12 +45,17 @@ func main() {
 		if len(args) != 2 {
 			showMsgAndQuit("should specify one server id")
 		}
+		if IsWindows {
+			showMsgAndQuit("stop does not work on Windows, use kill instead (will lose player data)")
+		}
+
 		stop(ServerID(args[1]))
 	} else if cmd == "reload" {
 
 	} else if cmd == "kill" {
-
+		kill(ServerID(args[1]))
 	} else if cmd == "status" {
+		status()
 	} else {
 		showMsgAndQuit("unknown command: %s", cmd)
 	}

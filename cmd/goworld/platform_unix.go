@@ -2,7 +2,10 @@
 
 package main
 
+import "syscall"
+
 const (
 	IsWindows    = false
 	ExecutiveExt = ""
+	StopSignal   = syscall.SIGTERM
 )
