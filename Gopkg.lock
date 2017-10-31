@@ -9,12 +9,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/StackExchange/wmi"
-  packages = ["."]
-  revision = "ea383cf3ba6ec950874b8486cd72356d007c768f"
-
-[[projects]]
-  branch = "master"
   name = "github.com/bmizerany/assert"
   packages = ["."]
   revision = "b7ed37b82869576c289d7d97fb2bbd8b64a0cb28"
@@ -33,7 +27,7 @@
 
 [[projects]]
   name = "github.com/go-ole/go-ole"
-  packages = [".","oleutil"]
+  packages = ["."]
   revision = "2ecd927eaf828c4fc088fae349b28eed1480ff56"
   version = "v0.0.1"
 
@@ -60,6 +54,12 @@
   name = "github.com/google/btree"
   packages = ["."]
   revision = "316fb6d3f031ae8f4d457c6c5186b9e3ded70435"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/keybase/go-ps"
+  packages = [".","darwincgo"]
+  revision = "668c8856d9992f97248b3177d45743d2cc1068db"
 
 [[projects]]
   branch = "master"
@@ -102,18 +102,6 @@
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
-
-[[projects]]
-  name = "github.com/shirou/gopsutil"
-  packages = ["cpu","host","internal/common","mem","net","process"]
-  revision = "6e221c482653ef05c9f6a7bf71ddceea0e40bac5"
-  version = "v2.17.09"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   branch = "master"
@@ -209,6 +197,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4a58ee9f316561535ed80c847059fbd80f33da3159c159391ff052cce280dc03"
+  inputs-digest = "ce7b5dc3418eab70021dfc82ee55d5ee3cea66fb30498db2270ea1d372b161c4"
   solver-name = "gps-cdcl"
   solver-version = 1

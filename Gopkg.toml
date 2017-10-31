@@ -87,3 +87,7 @@
 
 [[constraint]]
   name = "gopkg.in/mgo.v2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/keybase/go-ps"
