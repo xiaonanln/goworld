@@ -5,6 +5,8 @@ import (
 
 	"syscall"
 
+	"time"
+
 	"github.com/keybase/go-ps"
 )
 
@@ -71,11 +73,22 @@ func stopProc(proc ps.Process, signal syscall.Signal) {
 	checkErrorOrQuit(err, "stop process failed")
 
 	osproc.Signal(signal)
-	state, err := osproc.Wait()
-	checkErrorOrQuit(err, "wait process exit failed")
-	if signal != syscall.SIGKILL {
-		if !state.Exited() || !state.Success() {
-			showMsgAndQuit("%s", state.String())
+	for {
+		time.Sleep(time.Millisecond * 100)
+		if !checkProcessRunning(proc) {
+			break
 		}
 	}
+}
+
+func checkProcessRunning(proc ps.Process) bool {
+	pid := proc.Pid()
+	procs, err := ps.Processes()
+	checkErrorOrQuit(err, "list processes failed")
+	for _, _proc := range procs {
+		if _proc.Pid() == pid {
+			return true
+		}
+	}
+	return false
 }
