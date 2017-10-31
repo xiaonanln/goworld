@@ -3,6 +3,10 @@ package main
 import (
 	"os"
 	"os/exec"
+
+	"strconv"
+
+	"github.com/xiaonanln/goworld/engine/config"
 )
 
 func start(serverId string) {
@@ -16,6 +20,7 @@ func start(serverId string) {
 	checkErrorOrQuit(err, "chdir failed")
 
 	startDispatcher()
+	startGames()
 	startGates()
 }
 
@@ -28,5 +33,17 @@ func startDispatcher() {
 
 func startGates() {
 	showMsg("start gates ...")
+	gateIds := config.GetGateIDs()
+	showMsg("gate ids: %v", gateIds)
+	for _, gateid := range gateIds {
+		startGate(gateid)
+	}
+}
 
+func startGate(gateid uint16) {
+	showMsg("start gate %d ...", gateid)
+
+	cmd := exec.Command(env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
+	err := cmd.Start()
+	checkErrorOrQuit(err, "start gate failed")
 }

@@ -73,6 +73,7 @@ func (gs *GateService) run() {
 	if cfg.HeartbeatCheckInterval > 0 {
 		go gs.checkClientHeartbeatsRoutine(cfg.HeartbeatCheckInterval)
 	}
+	fmt.Fprintf(os.Stderr, "%s\n", consts.GATE_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
 }
 

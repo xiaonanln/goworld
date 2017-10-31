@@ -25,7 +25,7 @@ func (env *_Env) GetDispatcherExecutive() string {
 }
 
 func (env *_Env) GetGateExecutive() string {
-	return filepath.Join(env.GetDispatcherDir(), "gate"+ExecutiveExt)
+	return filepath.Join(env.GetGateDir(), "gate"+ExecutiveExt)
 }
 
 var env _Env

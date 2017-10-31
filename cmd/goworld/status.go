@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/keybase/go-ps"
+	"github.com/xiaonanln/goworld/engine/config"
 )
 
 type ServerStatus struct {
@@ -43,5 +44,7 @@ func detectServerStatus() *ServerStatus {
 
 func status() {
 	ss := detectServerStatus()
-	showMsg("%d dispatcher running, %d gates running, %d games running", ss.NumDispatcherRunning, ss.NumGatesRunning, ss.NumGamesRunning)
+	showMsg("%d dispatcher running, %d/%d gates running, %d/%d games running", ss.NumDispatcherRunning,
+		ss.NumGatesRunning, len(config.GetGateIDs()),
+		ss.NumGamesRunning, len(config.GetGameIDs()))
 }
