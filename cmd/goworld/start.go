@@ -12,23 +12,25 @@ import (
 
 	"strings"
 
+	"path/filepath"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 )
 
-func start(serverId string) {
+func start(serverId ServerID) {
+	err := os.Chdir(env.GoWorldRoot)
+	checkErrorOrQuit(err, "chdir to goworld directory failed")
+
 	ss := detectServerStatus()
 	if ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 {
 		status()
 		showMsgAndQuit("server is already running, can not start multiple servers")
 	}
 
-	err := os.Chdir(env.GoWorldRoot)
-	checkErrorOrQuit(err, "chdir failed")
-
 	startDispatcher()
-	//startGames()
+	startGames(serverId)
 	startGates()
 }
 
@@ -36,8 +38,26 @@ func startDispatcher() {
 	showMsg("start dispatcher ...")
 	cmd := exec.Command(env.GetDispatcherExecutive())
 	err := runCmdUntilTag(cmd, consts.DISPATCHER_STARTED_TAG, time.Second*5)
-	checkErrorOrQuit(err, "start dispatcher failed")
+	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 
+}
+
+func startGames(serverId ServerID) {
+	showMsg("start games ...")
+	gameIds := config.GetGameIDs()
+	showMsg("game ids: %v", gameIds)
+	for _, gameid := range gameIds {
+		startGame(serverId, gameid)
+	}
+}
+
+func startGame(serverId ServerID, gameid uint16) {
+	showMsg("start game %d ...", gameid)
+
+	gameExePath := filepath.Join(serverId.Path(), serverId.Name()+ExecutiveExt)
+	cmd := exec.Command(gameExePath, "-gid", strconv.Itoa(int(gameid)))
+	err := runCmdUntilTag(cmd, consts.GAME_STARTED_TAG, time.Second*5)
+	checkErrorOrQuit(err, "start game failed, see game.log for error")
 }
 
 func startGates() {
@@ -54,7 +74,7 @@ func startGate(gateid uint16) {
 
 	cmd := exec.Command(env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
 	err := runCmdUntilTag(cmd, consts.GATE_STARTED_TAG, time.Second*5)
-	checkErrorOrQuit(err, "start gate failed")
+	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }
 
 func runCmdUntilTag(cmd *exec.Cmd, tag string, timeout time.Duration) (err error) {

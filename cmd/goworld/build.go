@@ -4,10 +4,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
-func build(serverId string) {
+func build(serverId ServerID) {
 	showMsg("building server %s ...", serverId)
 
 	buildServer(serverId)
@@ -15,8 +14,8 @@ func build(serverId string) {
 	buildGate()
 }
 
-func buildServer(serverId string) {
-	serverPath := getServerPath(serverId)
+func buildServer(serverId ServerID) {
+	serverPath := serverId.Path()
 	showMsg("server directory is %s ...", serverPath)
 	if !isdir(serverPath) {
 		showMsgAndQuit("wrong server id: %s, using '\\' instead of '/'?", serverId)
@@ -24,12 +23,6 @@ func buildServer(serverId string) {
 
 	showMsg("go build %s ...", serverId)
 	buildDirectory(serverPath)
-}
-
-func getServerPath(serverId string) string {
-	serverPath := strings.Split(serverId, "/")
-	serverPath = append([]string{env.GoWorldRoot}, serverPath...)
-	return filepath.Join(serverPath...)
 }
 
 func buildDispatcher() {

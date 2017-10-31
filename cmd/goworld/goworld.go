@@ -34,18 +34,18 @@ func main() {
 			showMsgAndQuit("should specify one server id")
 		}
 
-		build(args[1])
+		build(ServerID(args[1]))
 	} else if cmd == "start" {
 		if len(args) != 2 {
 			showMsgAndQuit("should specify one server id")
 		}
 
-		start(args[1])
+		start(ServerID(args[1]))
 	} else if cmd == "stop" {
 		if len(args) != 2 {
 			showMsgAndQuit("should specify one server id")
 		}
-
+		stop(ServerID(args[1]))
 	} else if cmd == "reload" {
 
 	} else if cmd == "kill" {
