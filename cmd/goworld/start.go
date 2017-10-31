@@ -6,7 +6,15 @@ import (
 
 	"strconv"
 
+	"bytes"
+
+	"time"
+
+	"strings"
+
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/consts"
 )
 
 func start(serverId string) {
@@ -20,15 +28,16 @@ func start(serverId string) {
 	checkErrorOrQuit(err, "chdir failed")
 
 	startDispatcher()
-	startGames()
+	//startGames()
 	startGates()
 }
 
 func startDispatcher() {
 	showMsg("start dispatcher ...")
 	cmd := exec.Command(env.GetDispatcherExecutive())
-	err := cmd.Start()
+	err := runCmdUntilTag(cmd, consts.DISPATCHER_STARTED_TAG, time.Second*5)
 	checkErrorOrQuit(err, "start dispatcher failed")
+
 }
 
 func startGates() {
@@ -44,6 +53,29 @@ func startGate(gateid uint16) {
 	showMsg("start gate %d ...", gateid)
 
 	cmd := exec.Command(env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
-	err := cmd.Start()
+	err := runCmdUntilTag(cmd, consts.GATE_STARTED_TAG, time.Second*5)
 	checkErrorOrQuit(err, "start gate failed")
+}
+
+func runCmdUntilTag(cmd *exec.Cmd, tag string, timeout time.Duration) (err error) {
+	out := bytes.NewBuffer(nil)
+	cmd.Stderr = out
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+	timeoutTime := time.Now().Add(timeout)
+	for time.Now().Before(timeoutTime) {
+		if strings.Contains(string(out.Bytes()), "\n") {
+			line, _ := out.ReadString('\n')
+			//fmt.Fprintf(os.Stderr, "%s", line)
+			if strings.Contains(line, tag) {
+				return nil // tag received
+			}
+			continue
+		}
+		time.Sleep(time.Second)
+	}
+
+	return errors.Errorf("wait started tag timeout")
 }

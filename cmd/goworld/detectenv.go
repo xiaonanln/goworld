@@ -63,5 +63,5 @@ func detectGoWorldPath() {
 	showMsg("goworld directory found: %s", env.GoWorldRoot)
 	configFile := filepath.Join(env.GoWorldRoot, "goworld.ini")
 	config.SetConfigFile(configFile)
-	config.Get()
+	//config.Get()
 }
