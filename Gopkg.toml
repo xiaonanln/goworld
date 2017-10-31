@@ -87,15 +87,3 @@
 
 [[constraint]]
   name = "gopkg.in/mgo.v2"
-
-[[constraint]]
-  name = "github.com/shirou/gopsutil"
-  version = "2.17.9"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/StackExchange/wmi"
-
-[[constraint]]
-  name = "github.com/go-ole/go-ole"
-  branch = "master"
