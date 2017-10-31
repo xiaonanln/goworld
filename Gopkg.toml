@@ -95,4 +95,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/StackExchange/wmi"
-  source = "github.com/xiaonanln/wmi"
+
+[[constraint]]
+  name = "github.com/go-ole/go-ole"
+  branch = "master"

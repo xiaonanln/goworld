@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
-  revision = "a3f95b5c423586578a4e099b11a46c2479628cac"
-  version = "1.0.2"
+  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
+  version = "v1.0.3"
 
 [[projects]]
   branch = "master"
@@ -22,20 +22,20 @@
 [[projects]]
   name = "github.com/garyburd/redigo"
   packages = ["internal","redis"]
-  revision = "433969511232c397de61b1442f9fd49ec06ae9ba"
-  version = "v1.1.0"
+  revision = "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "20b96f641a5ea98f2f8619ff4f3e061cff4833bd"
-  version = "v1.28.2"
+  revision = "f280b3ba517bf5fc98922624f21fb0e7a92adaec"
+  version = "v1.30.3"
 
 [[projects]]
   name = "github.com/go-ole/go-ole"
   packages = [".","oleutil"]
-  revision = "0e87ea779d9deb219633b828a023b32e1244dd57"
-  version = "v1.2.0"
+  revision = "2ecd927eaf828c4fc088fae349b28eed1480ff56"
+  version = "v0.0.1"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -44,9 +44,10 @@
   version = "v1.3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "130e6b02ab059e7b717a096f397c5b60111cae74"
+  revision = "1643683e1b54a9e88ad26d98f81400c8c9d9f4f9"
 
 [[projects]]
   branch = "master"
@@ -91,10 +92,10 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/pierrec/xxHash"
   packages = ["xxHash32"]
-  revision = "a0006b13c722f7f12368c00a3d3c2ae8a999a0c6"
+  revision = "f051bb7f1d1aaf1b5a665d74fb6b0217712c69f7"
+  version = "v0.1.1"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -121,10 +122,10 @@
   revision = "3794dfbfb04749f896b521032f69383f24c3687e"
 
 [[projects]]
-  branch = "master"
   name = "github.com/templexxx/reedsolomon"
   packages = ["."]
-  revision = "7092926d7d05c415fabb892b1464a03f8228ab80"
+  revision = "5e06b81a1c7628d9c8d4fb7c3c4e401e37db39b4"
+  version = "0.1.1"
 
 [[projects]]
   name = "github.com/templexxx/xor"
@@ -170,24 +171,28 @@
   version = "v3.19"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","tea","twofish","xtea"]
-  revision = "edd5e9b0879d13ee6970a50153d85b8fec9f7686"
+  packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","ssh/terminal","tea","twofish","xtea"]
+  revision = "2509b142fb2b797aa7587dad548f113b2c0f20ce"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "859d1a86bb617c0c20d154590c3c5d3fcb670b07"
+  revision = "c73622c77280266305273cb545f54516ced95b93"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "ebfc5b4631820b793c9010c87fd8fef0f39eb082"
+  revision = "661970f62f5897bc0cd5fdca7e087ba8a98a8fa1"
 
 [[projects]]
   name = "google.golang.org/appengine"
   packages = [".","datastore","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api"]
-  revision = "07f075729064fd38e1360517947f0f6e03500651"
+  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
+  version = "v1.0.0"
 
 [[projects]]
   name = "gopkg.in/eapache/queue.v1"
@@ -204,6 +209,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b86dc4dfa0a9841d4abd6aacbe2439cce51e3b3dc75f8c85fa589a27a436a820"
+  inputs-digest = "4a58ee9f316561535ed80c847059fbd80f33da3159c159391ff052cce280dc03"
   solver-name = "gps-cdcl"
   solver-version = 1
