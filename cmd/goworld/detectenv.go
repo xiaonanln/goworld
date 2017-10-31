@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/xiaonanln/goworld/engine/config"
 )
 
 type _Env struct {
@@ -16,6 +18,14 @@ func (env *_Env) GetDispatcherDir() string {
 
 func (env *_Env) GetGateDir() string {
 	return filepath.Join(env.GoWorldRoot, "components", "gate")
+}
+
+func (env *_Env) GetDispatcherExecutive() string {
+	return filepath.Join(env.GetDispatcherDir(), "dispatcher"+ExecutiveExt)
+}
+
+func (env *_Env) GetGateExecutive() string {
+	return filepath.Join(env.GetDispatcherDir(), "gate"+ExecutiveExt)
 }
 
 var env _Env
@@ -51,4 +61,7 @@ func detectGoWorldPath() {
 	}
 
 	showMsg("goworld directory found: %s", env.GoWorldRoot)
+	configFile := filepath.Join(env.GoWorldRoot, "goworld.ini")
+	config.SetConfigFile(configFile)
+	config.Get()
 }

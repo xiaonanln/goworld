@@ -30,9 +30,28 @@ func main() {
 
 	cmd := args[0]
 	if cmd == "build" {
-		for _, serverId := range args[1:] {
-			build(serverId)
+		if len(args) != 2 {
+			showMsgAndQuit("should specify one server id")
 		}
+
+		build(args[1])
 	} else if cmd == "start" {
+		if len(args) != 2 {
+			showMsgAndQuit("should specify one server id")
+		}
+
+		start(args[1])
+	} else if cmd == "stop" {
+		if len(args) != 2 {
+			showMsgAndQuit("should specify one server id")
+		}
+
+	} else if cmd == "reload" {
+
+	} else if cmd == "kill" {
+
+	} else if cmd == "status" {
+	} else {
+		showMsgAndQuit("unknown command: %s", cmd)
 	}
 }
