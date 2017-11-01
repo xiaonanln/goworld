@@ -20,11 +20,13 @@ import (
 
 var (
 	configFile = ""
+	logLevel   string
 	sigChan    = make(chan os.Signal, 1)
 )
 
 func parseArgs() {
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
+	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
 	flag.Parse()
 }
 
@@ -41,7 +43,11 @@ func main() {
 	}
 
 	dispatcherConfig := config.GetDispatcher()
-	binutil.SetupGWLog("dispatcher", dispatcherConfig.LogLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
+
+	if logLevel == "" {
+		logLevel = dispatcherConfig.LogLevel
+	}
+	binutil.SetupGWLog("dispatcher", logLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
 	setupSignals()
 	binutil.SetupHTTPServer(dispatcherConfig.HTTPIp, dispatcherConfig.HTTPPort, nil)
 

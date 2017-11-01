@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -25,26 +26,23 @@ func main() {
 	if len(args) == 0 {
 		showMsg("no command to execute")
 		flag.Usage()
+		fmt.Fprintf(os.Stderr, "\tgoworld <build|start|stop|kill|reload|status> [server-id] ")
 		os.Exit(1)
 	}
 
 	cmd := args[0]
-	if cmd == "build" {
-		if len(args) != 2 {
-			showMsgAndQuit("should specify one server id")
-		}
 
+	if cmd == "build" || cmd == "start" || cmd == "stop" || cmd == "reload" || cmd == "kill" {
+		if len(args) != 2 {
+			showMsgAndQuit("server id is not given")
+		}
+	}
+
+	if cmd == "build" {
 		build(ServerID(args[1]))
 	} else if cmd == "start" {
-		if len(args) != 2 {
-			showMsgAndQuit("should specify one server id")
-		}
-
 		start(ServerID(args[1]))
 	} else if cmd == "stop" {
-		if len(args) != 2 {
-			showMsgAndQuit("should specify one server id")
-		}
 		if IsWindows {
 			showMsgAndQuit("stop does not work on Windows, use kill instead (will lose player data)")
 		}
