@@ -12,4 +12,5 @@ const (
 	IsWindows    = true
 	ExecutiveExt = ".exe"
 	StopSignal   = syscall.SIGKILL
+	FreezeSignal = syscall.SIGINT
 )

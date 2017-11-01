@@ -51,7 +51,7 @@ func main() {
 
 		stop(ServerID(args[1]))
 	} else if cmd == "reload" {
-
+		reload(ServerID(args[1]))
 	} else if cmd == "kill" {
 		kill(ServerID(args[1]))
 	} else if cmd == "status" {
