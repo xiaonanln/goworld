@@ -1,6 +1,10 @@
 package main
 
-import "os"
+import (
+	"os"
+
+	"github.com/xiaonanln/goworld/engine/config"
+)
 
 func reload(serverId ServerID) {
 	err := os.Chdir(env.GoWorldRoot)
@@ -19,8 +23,10 @@ func reload(serverId ServerID) {
 
 	if ss.NumGamesRunning == 0 {
 		showMsgAndQuit("no game is running")
+	} else if ss.NumGamesRunning != len(config.GetGameIDs()) {
+		showMsgAndQuit("found %d games, but should have %d", ss.NumGamesRunning, len(config.GetGameIDs()))
 	}
 
 	stopGames(ss, FreezeSignal)
-
+	startGames(serverId, true)
 }

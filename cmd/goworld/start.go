@@ -30,7 +30,7 @@ func start(serverId ServerID) {
 	}
 
 	startDispatcher()
-	startGames(serverId)
+	startGames(serverId, false)
 	startGates()
 }
 
@@ -42,20 +42,24 @@ func startDispatcher() {
 
 }
 
-func startGames(serverId ServerID) {
+func startGames(serverId ServerID, isRestore bool) {
 	showMsg("start games ...")
 	gameIds := config.GetGameIDs()
 	showMsg("game ids: %v", gameIds)
 	for _, gameid := range gameIds {
-		startGame(serverId, gameid)
+		startGame(serverId, gameid, isRestore)
 	}
 }
 
-func startGame(serverId ServerID, gameid uint16) {
+func startGame(serverId ServerID, gameid uint16, isRestore bool) {
 	showMsg("start game %d ...", gameid)
 
 	gameExePath := filepath.Join(serverId.Path(), serverId.Name()+ExecutiveExt)
-	cmd := exec.Command(gameExePath, "-gid", strconv.Itoa(int(gameid)))
+	args := []string{"-gid", strconv.Itoa(int(gameid))}
+	if isRestore {
+		args = append(args, "-restore")
+	}
+	cmd := exec.Command(gameExePath, args...)
 	err := runCmdUntilTag(cmd, config.GetGame(gameid).LogFile, consts.GAME_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start game failed, see game.log for error")
 }
