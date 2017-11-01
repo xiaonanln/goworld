@@ -67,6 +67,7 @@ func SetupGWLog(component string, logLevel string, logFile string, logStderr boo
 			MaxBackups: 100,
 			MaxAge:     30, //days
 			Compress:   true,
+			LocalTime:  true,
 		}
 
 		logFileWriter.(*lumberjack.Logger).Rotate() // rotate immediately

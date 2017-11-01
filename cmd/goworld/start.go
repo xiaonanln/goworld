@@ -36,7 +36,7 @@ func start(serverId ServerID) {
 
 func startDispatcher() {
 	showMsg("start dispatcher ...")
-	cmd := exec.Command(env.GetDispatcherExecutive(), "~")
+	cmd := exec.Command(env.GetDispatcherExecutive())
 	err := runCmdUntilTag(cmd, config.GetDispatcher().LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 
