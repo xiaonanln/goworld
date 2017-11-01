@@ -26,7 +26,7 @@ func main() {
 	if len(args) == 0 {
 		showMsg("no command to execute")
 		flag.Usage()
-		fmt.Fprintf(os.Stderr, "\tgoworld <build|start|stop|kill|reload|status> [server-id] ")
+		fmt.Fprintf(os.Stderr, "\tgoworld <build|start|stop|kill|reload|status> [server-id]\n")
 		os.Exit(1)
 	}
 
