@@ -66,7 +66,7 @@ func SetupGWLog(component string, logLevel string, logFile string, logStderr boo
 			MaxSize:    100, // megabytes
 			MaxBackups: 100,
 			MaxAge:     30, //days
-			Compress:   true,
+			Compress:   false,
 			LocalTime:  true,
 		}
 
