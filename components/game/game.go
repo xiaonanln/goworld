@@ -96,7 +96,7 @@ func Run(delegate IGameDelegate) {
 
 func setupSignals() {
 	gwlog.Infof("Setup signals ...")
-	signal.Ignore(syscall.Signal(12))
+	signal.Ignore(syscall.Signal(12), syscall.SIGPIPE)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.Signal(10))
 
 	go func() {
