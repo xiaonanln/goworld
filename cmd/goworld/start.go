@@ -37,7 +37,7 @@ func start(serverId ServerID) {
 
 func startDispatcher() {
 	showMsg("start dispatcher ...")
-	cmd := exec.Command("nohup", env.GetDispatcherExecutive(), "~")
+	cmd := exec.Command(env.GetDispatcherExecutive(), "~")
 	err := runCmdUntilTag(cmd, consts.DISPATCHER_STARTED_TAG, time.Second*5)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 
@@ -56,7 +56,7 @@ func startGame(serverId ServerID, gameid uint16) {
 	showMsg("start game %d ...", gameid)
 
 	gameExePath := filepath.Join(serverId.Path(), serverId.Name()+ExecutiveExt)
-	cmd := exec.Command("nohup", gameExePath, "-gid", strconv.Itoa(int(gameid)))
+	cmd := exec.Command(gameExePath, "-gid", strconv.Itoa(int(gameid)))
 	err := runCmdUntilTag(cmd, consts.GAME_STARTED_TAG, time.Second*5)
 	checkErrorOrQuit(err, "start game failed, see game.log for error")
 }
@@ -73,7 +73,7 @@ func startGates() {
 func startGate(gateid uint16) {
 	showMsg("start gate %d ...", gateid)
 
-	cmd := exec.Command("nohup", env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
+	cmd := exec.Command(env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
 	err := runCmdUntilTag(cmd, consts.GATE_STARTED_TAG, time.Second*5)
 	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }
