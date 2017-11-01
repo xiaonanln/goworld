@@ -9,7 +9,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
   * [Architecture](#architecture)
   * [Introduction](#introduction)
   * [Get GoWorld](#get-goworld)
-  * [Manage GoWorld using goworld.py](#manage-goworld-using-goworldpy)
+  * [Manage GoWorld Servers](#manage-goworld-servers)
   * [Demos](#demos)
     * [Chatroom Demo](#chatroom-demo)
     * [Unity Demo](#unity-demo)
@@ -47,7 +47,7 @@ back to work but with the latest executable image. This feature enables updating
 
 ## Get GoWorld
 ```bash
-$ go get github.com/xiaonanln/goworld
+go get github.com/xiaonanln/goworld/cmd/...
 ```
 
 ### Install dependencies
@@ -59,49 +59,35 @@ Install Go [Dep](https://github.com/golang/dep#setup):
 go get -u github.com/golang/dep/cmd/dep
 ```
 Install Dependencies: 
-
-**Windows**:
-run `install-deps-win.bat`
-
-**Linux**: `$ make install-deps`
+```go
+dep ensure
+```
 
 **For Chinese only:** 
 中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.zip](http://goworldgs.com/goworld_files/vendor.zip)，并将其解压到goworld根目录下。
 不过vendor.zip里的内容有可能不是最新的。
 
-## Manage GoWorld using goworld.py
-
-goworld.py is a script for managing goworld server easily. Running goworld.py requires python 2.7.x and psutil module.
-We can use goworld.py to build, start, stop and reload game servers. 
-
-```bash
-$ pip install psutil
-```
-
-**Build Dispatcher & Gate:**
-
-```bash
-$ python goworld.py build dispatcher gate
-```
+## Manage GoWorld Servers
+Use command `goworld` to build, start, stop and reload game servers. 
 
 **Build Example Chatroom Server:**
 ```bash
-$ python goworld.py build examples/chatroom_demo
+goworld build examples/chatroom_demo
 ```
 
 **Start Example Chatroom Server: (dispatcher -> game -> gate)**
 ```bash
-$ python goworld.py start examples/chatroom_demo
+goworld start examples/chatroom_demo
 ``` 
 
 **Stop Game Server (gate -> game -> dispatcher):**
 ```bash
-$ python goworld.py stop
+goworld stop examples/chatroom_demo
 ```
 
 **Reload Game Servers:**
 ```bash
-$ python goworld.py reload
+goworld reload examples/chatroom_demo
 ```
 Reload will reboot game processes with the current executable while preserving all game server states. 
 **However, it is not workable on Windows.**  
@@ -120,11 +106,11 @@ The chatroom demo provides following features:
 
 **Build Server:**
 ```bash
-$ python goworld.py build dispatcher gate chatroom_demo
+goworld build examples/chatroom_demo
 ```
 **Run Server:**
 ```bash
-$ python goworld.py start chatroom_demo
+goworld start examples/chatroom_demo
 ```
 
 **Chatroom Demo Client:**
@@ -150,11 +136,11 @@ Developing features:
 
 **Build Server:**
 ```bash
-$ python goworld.py build dispatcher gate unity_demo
+goworld build examples/unity_demo
 ```
 **Run Server:**
 ```bash
-$ python goworld.py start unity_demo
+goworld start examples/unity_demo
 ```
 
 **Unity Demo Client:**
