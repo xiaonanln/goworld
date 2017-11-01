@@ -87,6 +87,7 @@ func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Dura
 	for time.Now().Before(timeoutTime) {
 		time.Sleep(time.Millisecond * 200)
 		if isTagInFile(logFile, tag) {
+			cmd.Process.Release()
 			return
 		}
 	}
