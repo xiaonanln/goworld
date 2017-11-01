@@ -22,8 +22,8 @@ before_install:
   - mysql -e 'CREATE DATABASE goworld;'
 
 install:
-  - pip install --user psutil
   - dep ensure
+  - go install ./cmd/goworld
 
 script:
   - cp goworld.ini.sample goworld.ini

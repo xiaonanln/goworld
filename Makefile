@@ -42,5 +42,4 @@ covertest:
 	go test -v -covermode=count `go list ./... | grep -v "/vendor/"`
 
 install-deps:
-	pip install psutil
 	dep ensure
