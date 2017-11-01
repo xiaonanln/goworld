@@ -23,11 +23,10 @@ before_install:
 
 install:
   - dep ensure
-  - go install ./cmd/goworld
+  - make
 
 script:
   - cp goworld.ini.sample goworld.ini
-  - make
   - make test
   - bash covertest.sh
   - goworld build examples/test_game

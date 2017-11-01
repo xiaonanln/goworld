@@ -1,7 +1,10 @@
 .PHONY: dispatcher test_game test_client gate chatroom_demo unity_demo
 .PHONY: runtestserver killtestserver test covertest install-deps
 
-all: dispatcher test_game test_client gate chatroom_demo unity_demo
+all: install dispatcher test_game test_client gate chatroom_demo unity_demo
+
+install:
+	go install ./cmd/...
 
 dispatcher:
 	cd components/dispatcher && go build
