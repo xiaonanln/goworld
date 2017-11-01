@@ -51,7 +51,7 @@ func detectServerStatus() *ServerStatus {
 				dir = dir[:len(dir)-1]
 			}
 			serverid := ServerID(strings.Join(strings.Split(dir, string(filepath.Separator)), "/"))
-			if strings.HasPrefix(string(serverid), "cmd/") || strings.HasPrefix(string(serverid), "components/") {
+			if strings.HasPrefix(string(serverid), "cmd/") || strings.HasPrefix(string(serverid), "components/") || string(serverid) == "examples/test_client" {
 				// this is a cmd or a component, not a game
 				continue
 			}
