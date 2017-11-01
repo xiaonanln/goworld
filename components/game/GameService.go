@@ -78,7 +78,7 @@ func (gs *_GameService) run(restore bool) {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "%s\n", consts.GAME_STARTED_TAG)
+	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.GAME_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.serveRoutine)
 }
 

@@ -11,8 +11,6 @@ import (
 
 	"sync/atomic"
 
-	"os"
-
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -164,7 +162,7 @@ func (service *DispatcherService) String() string {
 
 func (service *DispatcherService) run() {
 	host := fmt.Sprintf("%s:%d", service.config.BindIp, service.config.BindPort)
-	fmt.Fprintf(os.Stderr, "%s\n", consts.DISPATCHER_STARTED_TAG)
+	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.DISPATCHER_STARTED_TAG)
 	netutil.ServeTCPForever(host, service)
 }
 

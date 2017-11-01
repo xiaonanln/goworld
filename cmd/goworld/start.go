@@ -1,19 +1,18 @@
 package main
 
 import (
-	"io"
 	"os"
 	"os/exec"
 
 	"strconv"
 
-	"bytes"
-
 	"time"
 
-	"strings"
-
 	"path/filepath"
+
+	"io/ioutil"
+
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -38,7 +37,7 @@ func start(serverId ServerID) {
 func startDispatcher() {
 	showMsg("start dispatcher ...")
 	cmd := exec.Command(env.GetDispatcherExecutive(), "~")
-	err := runCmdUntilTag(cmd, consts.DISPATCHER_STARTED_TAG, time.Second*5)
+	err := runCmdUntilTag(cmd, config.GetDispatcher().LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 
 }
@@ -57,7 +56,7 @@ func startGame(serverId ServerID, gameid uint16) {
 
 	gameExePath := filepath.Join(serverId.Path(), serverId.Name()+ExecutiveExt)
 	cmd := exec.Command(gameExePath, "-gid", strconv.Itoa(int(gameid)))
-	err := runCmdUntilTag(cmd, consts.GAME_STARTED_TAG, time.Second*5)
+	err := runCmdUntilTag(cmd, config.GetGame(gameid).LogFile, consts.GAME_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start game failed, see game.log for error")
 }
 
@@ -74,32 +73,30 @@ func startGate(gateid uint16) {
 	showMsg("start gate %d ...", gateid)
 
 	cmd := exec.Command(env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
-	err := runCmdUntilTag(cmd, consts.GATE_STARTED_TAG, time.Second*5)
+	err := runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }
 
-func runCmdUntilTag(cmd *exec.Cmd, tag string, timeout time.Duration) (err error) {
-	out := bytes.NewBuffer(nil)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = io.MultiWriter(os.Stderr, out)
+func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Duration) (err error) {
 	err = cmd.Start()
 	if err != nil {
 		return
 	}
+
 	timeoutTime := time.Now().Add(timeout)
 	for time.Now().Before(timeoutTime) {
-		if strings.Contains(string(out.Bytes()), "\n") {
-			line, _ := out.ReadString('\n')
-			//fmt.Fprintf(os.Stderr, "%s", line)
-			if strings.Contains(line, tag) {
-				cmd.Process.Release()
-				return nil // tag received
-			}
-			continue
+		time.Sleep(time.Millisecond * 200)
+		if isTagInFile(logFile, tag) {
+			return
 		}
-		time.Sleep(time.Second)
 	}
 
-	cmd.Process.Release()
-	return errors.Errorf("wait started tag timeout")
+	err = errors.Errorf("wait started tag timeout")
+	return
+}
+
+func isTagInFile(filename string, tag string) bool {
+	data, err := ioutil.ReadFile(filename)
+	checkErrorOrQuit(err, "read file error")
+	return strings.Contains(string(data), tag)
 }

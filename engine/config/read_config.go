@@ -378,7 +378,7 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	config.BindIp = _DEFAULT_LOCALHOST_IP
 	config.Ip = _DEFAULT_LOCALHOST_IP
-	config.LogFile = ""
+	config.LogFile = "dispatcher.log"
 	config.LogStderr = true
 	config.LogLevel = _DEFAULT_LOG_LEVEL
 	config.HTTPIp = _DEFAULT_HTTP_IP
