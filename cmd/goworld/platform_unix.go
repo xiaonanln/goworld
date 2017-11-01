@@ -2,14 +2,11 @@
 
 package main
 
-import (
-	"os"
-	"syscall"
-)
+import "syscall"
 
 const (
 	IsWindows    = false
 	ExecutiveExt = ""
 	StopSignal   = syscall.SIGTERM
-	FreezeSignal = os.Interrupt
+	FreezeSignal = syscall.SIGINT
 )

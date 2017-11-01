@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 
 	"strings"
@@ -30,7 +31,15 @@ func detectServerStatus() *ServerStatus {
 	for _, proc := range procs {
 		path, err := proc.Path()
 		if err != nil {
-			continue
+			if pathErr, ok := err.(*os.PathError); ok {
+				path = pathErr.Path
+				if strings.HasSuffix(path, " (deleted)") {
+					path = path[:len(path)-10]
+				}
+				err = nil
+			} else {
+				continue
+			}
 		}
 
 		relpath, err := filepath.Rel(env.GoWorldRoot, path)
