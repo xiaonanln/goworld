@@ -96,6 +96,7 @@ func Daemonize() *daemon.Context {
 	}
 
 	if child != nil {
+		gwlog.Infof("run in daemon mode")
 		os.Exit(0)
 		return nil
 	} else {

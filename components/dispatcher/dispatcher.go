@@ -37,13 +37,13 @@ func setupGCPercent() {
 }
 
 func main() {
+	parseArgs()
 	if runInDaemonMode {
 		daemoncontext := binutil.Daemonize()
 		defer daemoncontext.Release()
 	}
 
 	setupGCPercent()
-	parseArgs()
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)

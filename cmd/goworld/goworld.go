@@ -7,12 +7,13 @@ import (
 	"strings"
 )
 
-var args struct {
+var arguments struct {
+	runInDaemonMode bool
 }
 
 func parseArgs() {
-	//flag.StringVar(&args.configFile, "configfile", "", "set config file path")
-
+	//flag.StringVar(&arguments.configFile, "configfile", "", "set config file path")
+	flag.BoolVar(&arguments.runInDaemonMode, "d", false, "run in daemon mode")
 	flag.Parse()
 }
 

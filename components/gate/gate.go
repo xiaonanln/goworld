@@ -29,34 +29,47 @@ import (
 )
 
 var (
-	gateid      uint16
-	configFile  string
-	logLevel    string
-	gateService *GateService
-	signalChan  = make(chan os.Signal, 1)
+	gateid          uint16
+	configFile      string
+	logLevel        string
+	runInDaemonMode bool
+	gateService     *GateService
+	signalChan      = make(chan os.Signal, 1)
 )
-
-func init() {
-	parseArgs()
-}
 
 func parseArgs() {
 	var gateIdArg int
 	flag.IntVar(&gateIdArg, "gid", 0, "set gateid")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
+	flag.BoolVar(&runInDaemonMode, "d", false, "run in daemon mode")
 	flag.Parse()
 	gateid = uint16(gateIdArg)
 }
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	parseArgs()
+
+	if runInDaemonMode {
+		daemoncontext := binutil.Daemonize()
+		defer daemoncontext.Release()
+	}
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
 
+	if gateid <= 0 {
+		gwlog.Errorf("gateid %d is not valid, should be positive", gateid)
+		os.Exit(1)
+	}
+
 	gateConfig := config.GetGate(gateid)
+	if gateConfig == nil {
+		gwlog.Errorf("gate %d's config is not found", gateid)
+		os.Exit(1)
+	}
 	if gateConfig.GoMaxProcs > 0 {
 		gwlog.Infof("SET GOMAXPROCS = %d", gateConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gateConfig.GoMaxProcs)

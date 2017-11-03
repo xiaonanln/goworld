@@ -36,7 +36,11 @@ func start(serverId ServerID) {
 
 func startDispatcher() {
 	showMsg("start dispatcher ...")
-	cmd := exec.Command(env.GetDispatcherExecutive())
+	args := []string{}
+	if arguments.runInDaemonMode {
+		args = append(args, "-d")
+	}
+	cmd := exec.Command(env.GetDispatcherExecutive(), args...)
 	err := runCmdUntilTag(cmd, config.GetDispatcher().LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 
@@ -59,6 +63,9 @@ func startGame(serverId ServerID, gameid uint16, isRestore bool) {
 	if isRestore {
 		args = append(args, "-restore")
 	}
+	if arguments.runInDaemonMode {
+		args = append(args, "-d")
+	}
 	cmd := exec.Command(gameExePath, args...)
 	err := runCmdUntilTag(cmd, config.GetGame(gameid).LogFile, consts.GAME_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start game failed, see game.log for error")
@@ -76,7 +83,11 @@ func startGates() {
 func startGate(gateid uint16) {
 	showMsg("start gate %d ...", gateid)
 
-	cmd := exec.Command(env.GetGateExecutive(), "-gid", strconv.Itoa(int(gateid)))
+	args := []string{"-gid", strconv.Itoa(int(gateid))}
+	if arguments.runInDaemonMode {
+		args = append(args, "-d")
+	}
+	cmd := exec.Command(env.GetGateExecutive(), args...)
 	err := runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }
