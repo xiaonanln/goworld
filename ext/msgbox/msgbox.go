@@ -79,8 +79,13 @@ func (mbs *MsgboxService) Recv(targetID common.EntityID, beginMsgId int64) {
 			gwlog.Panic(err)
 		}
 
+		if len(items) == 0 {
+			gwlog.Debugf("found no msg")
+			return
+		}
+
 		var msgs []Msg
-		var endMsgId int64
+		var endMsgId int64 = beginMsgId - 1
 		for _, item := range items {
 			_, msgid := mbs.parseMsgKey(item.Key)
 			endMsgId = msgid
