@@ -49,41 +49,44 @@ func init() {
 //
 // Valid attribute properties includes Client, AllClient, Persistent
 func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
-
 	for attr, defs := range attrDefs {
-		isAllClient, isClient, isPersistent := false, false, false
+		desc.defineAttr(attr, defs)
+	}
+}
 
-		for _, def := range defs {
-			def := strings.ToLower(def)
+func (desc *EntityTypeDesc) defineAttr(attr string, defs []string) {
+	isAllClient, isClient, isPersistent := false, false, false
 
-			if !_VALID_ATTR_DEFS.Contains(def) {
-				// not a valid def
-				gwlog.Panicf("attribute %s: invalid property: %s; all valid properties: %v", attr, def, _VALID_ATTR_DEFS.ToList())
+	for _, def := range defs {
+		def := strings.ToLower(def)
+
+		if !_VALID_ATTR_DEFS.Contains(def) {
+			// not a valid def
+			gwlog.Panicf("attribute %s: invalid property: %s; all valid properties: %v", attr, def, _VALID_ATTR_DEFS.ToList())
+		}
+
+		if def == "allclients" {
+			isAllClient = true
+			isClient = true
+		} else if def == "client" {
+			isClient = true
+		} else if def == "persistent" {
+			isPersistent = true
+			// make sure non-persistent entity has no persistent attributes
+			if !desc.isPersistent {
+				gwlog.Fatalf("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
 			}
+		}
+	}
 
-			if def == "allclients" {
-				isAllClient = true
-				isClient = true
-			} else if def == "client" {
-				isClient = true
-			} else if def == "persistent" {
-				isPersistent = true
-				// make sure non-persistent entity has no persistent attributes
-				if !desc.isPersistent {
-					gwlog.Fatalf("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
-				}
-			}
-		}
-
-		if isAllClient {
-			desc.allClientAttrs.Add(attr)
-		}
-		if isClient {
-			desc.clientAttrs.Add(attr)
-		}
-		if isPersistent {
-			desc.persistentAttrs.Add(attr)
-		}
+	if isAllClient {
+		desc.allClientAttrs.Add(attr)
+	}
+	if isClient {
+		desc.clientAttrs.Add(attr)
+	}
+	if isPersistent {
+		desc.persistentAttrs.Add(attr)
 	}
 }
 
