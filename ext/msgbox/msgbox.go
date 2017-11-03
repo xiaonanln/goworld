@@ -67,7 +67,7 @@ func (mbs *MsgboxService) Send(targetID common.EntityID, msg Msg) {
 		if err != nil {
 			gwlog.Panic(err)
 		}
-		gwlog.Debugf("Msg is sent ok")
+		gwlog.Debugf("Msg %s is sent ok", msgkey)
 	})
 }
 
@@ -80,7 +80,7 @@ func (mbs *MsgboxService) Recv(targetID common.EntityID, beginMsgId int64) {
 		}
 
 		if len(items) == 0 {
-			gwlog.Debugf("found no msg")
+			gwlog.Debugf("found no msg from %s ~ %s", beginKey, endKey)
 			return
 		}
 
@@ -99,7 +99,11 @@ func (mbs *MsgboxService) Recv(targetID common.EntityID, beginMsgId int64) {
 			msgs = append(msgs, msg)
 
 		}
-
+		if endMsgId > mbs.Attrs.GetInt("maxMsgId") {
+			// message saved in kvdb has larger id than maxMsgId, something goes wrong
+			gwlog.Errorf("%s.Recv: max msg id is %d, but received msg id %d, fixing ...", mbs, mbs.GetInt("maxMsgId"), endMsgId)
+			mbs.Attrs.SetInt("maxMsgId", endMsgId+10000)
+		}
 		mbs.Call(targetID, "MsgboxOnRecvMsg", beginMsgId, endMsgId, msgs)
 	})
 }
@@ -148,7 +152,7 @@ func (mb *Msgbox) Recv() {
 }
 
 func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []Msg) {
-	gwlog.Debugf("%s: MsgBox.OnRecvMsg: %d -> %d: msgs %v", mb.Entity, beginMsgId, endMsgId, msgs)
+	gwlog.Debugf("%s: MsgBox.OnRecvMsg: %d -> %d: %d msgs", mb.Entity, beginMsgId, endMsgId, len(msgs))
 	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
 	for _, msg := range msgs {
 		gwutils.RunPanicless(func() {
