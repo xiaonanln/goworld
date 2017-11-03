@@ -36,6 +36,7 @@ var (
 	configFile                   string
 	logLevel                     string
 	restore                      bool
+	runInDaemonMode              bool
 	gameService                  *_GameService
 	signalChan                   = make(chan os.Signal, 1)
 	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
@@ -47,6 +48,7 @@ func parseArgs() {
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
 	flag.BoolVar(&restore, "restore", false, "restore from freezed state")
+	flag.BoolVar(&runInDaemonMode, "d", false, "run in daemon mode")
 	flag.Parse()
 	gameid = uint16(gameidArg)
 }
@@ -58,8 +60,18 @@ func Run(delegate IGameDelegate) {
 	rand.Seed(time.Now().UnixNano())
 	parseArgs()
 
+	if runInDaemonMode {
+		daemoncontext := binutil.Daemonize()
+		defer daemoncontext.Release()
+	}
+
 	if configFile != "" {
 		config.SetConfigFile(configFile)
+	}
+
+	if gameid <= 0 {
+		gwlog.Errorf("gameid %d is not valid, should be positive", gameid)
+		os.Exit(1)
 	}
 
 	gameConfig := config.GetGame(gameid)
