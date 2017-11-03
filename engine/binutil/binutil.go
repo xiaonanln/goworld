@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/natefinch/lumberjack"
+	"github.com/sevlyar/go-daemon"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"golang.org/x/net/websocket"
 )
@@ -82,5 +83,22 @@ func SetupGWLog(component string, logLevel string, logFile string, logStderr boo
 		gwlog.SetOutput(outputWriters[0])
 	} else {
 		gwlog.SetOutput(io.MultiWriter(outputWriters...))
+	}
+}
+
+func Daemonize() *daemon.Context {
+	context := new(daemon.Context)
+	child, err := context.Reborn()
+
+	if err != nil {
+		// daemonize failed
+		gwlog.Panicf("daemonize failed: %v", err)
+	}
+
+	if child != nil {
+		os.Exit(0)
+		return nil
+	} else {
+		return context
 	}
 }

@@ -19,14 +19,16 @@ import (
 )
 
 var (
-	configFile = ""
-	logLevel   string
-	sigChan    = make(chan os.Signal, 1)
+	configFile      = ""
+	logLevel        string
+	runInDaemonMode bool
+	sigChan         = make(chan os.Signal, 1)
 )
 
 func parseArgs() {
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
+	flag.BoolVar(&runInDaemonMode, "d", false, "run in daemon mode")
 	flag.Parse()
 }
 
@@ -35,6 +37,11 @@ func setupGCPercent() {
 }
 
 func main() {
+	if runInDaemonMode {
+		daemoncontext := binutil.Daemonize()
+		defer daemoncontext.Release()
+	}
+
 	setupGCPercent()
 	parseArgs()
 
