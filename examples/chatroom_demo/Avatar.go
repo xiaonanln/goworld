@@ -15,6 +15,11 @@ type Avatar struct {
 	entity.Entity
 }
 
+func (a *Avatar) DefineAttrs(desc *entity.EntityTypeDesc) {
+	desc.DefineAttr("name", "Client", "Persistent")
+	desc.DefineAttr("chatroom", "Client")
+}
+
 // OnCreated 在Avatar对象创建后被调用
 func (a *Avatar) OnCreated() {
 	a.Entity.OnCreated()

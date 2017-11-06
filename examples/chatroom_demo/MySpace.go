@@ -9,8 +9,3 @@ type MySpace struct {
 	entity.Space // 自定义的场景类型必须继承一个引擎所提供的entity.Space类型
 }
 
-func (space *MySpace) DefineAttrs(desc *entity.EntityTypeDesc) {
-	space.Space.DefineAttrs(desc)
-	desc.DefineAttr("name", "Client", "Persistent")
-	desc.DefineAttr("chatroom", "Client")
-}

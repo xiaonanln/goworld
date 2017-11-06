@@ -1,4 +1,5 @@
 // +build windows
+
 package binutil
 
 import "github.com/xiaonanln/goworld/engine/gwlog"

@@ -57,6 +57,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/kardianos/osext"
+  packages = ["."]
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
+
+[[projects]]
+  branch = "master"
   name = "github.com/keybase/go-ps"
   packages = [".","darwincgo"]
   revision = "668c8856d9992f97248b3177d45743d2cc1068db"
@@ -102,6 +108,12 @@
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  name = "github.com/sevlyar/go-daemon"
+  packages = ["."]
+  revision = "1ae26ef5036ad04968706917222a23c535673d8c"
+  version = "v0.1.1"
 
 [[projects]]
   branch = "master"
@@ -197,6 +209,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ce7b5dc3418eab70021dfc82ee55d5ee3cea66fb30498db2270ea1d372b161c4"
+  inputs-digest = "d9fc1c180964199d0f0164f846c91e17f3cb1d28faae963ac060ce1d9784324a"
   solver-name = "gps-cdcl"
   solver-version = 1
