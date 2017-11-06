@@ -18,6 +18,14 @@ type Monster struct {
 	lastAttackTime time.Time
 }
 
+func (monster *Monster) DefineAttrs(desc *entity.EntityTypeDesc) {
+	desc.DefineAttr("name", "AllClients")
+	desc.DefineAttr("lv", "AllClients")
+	desc.DefineAttr("hp", "AllClients")
+	desc.DefineAttr("hpmax", "AllClients")
+	desc.DefineAttr("action", "AllClients")
+}
+
 func (monster *Monster) OnEnterSpace() {
 	monster.setDefaultAttrs()
 	monster.AddTimer(time.Millisecond*100, "AI")

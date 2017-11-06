@@ -39,6 +39,10 @@ type PublishSubscribeService struct {
 	avatarWildcardSubscribings map[common.EntityID]common.StringSet
 }
 
+func (pss *PublishSubscribeService) DefineAttrs(desc *entity.EntityTypeDesc) {
+
+}
+
 // OnInit initialize PublishSubscribeService fields
 func (pss *PublishSubscribeService) OnInit() {
 	pss.avatarSubscribings = map[common.EntityID]common.StringSet{}

@@ -35,6 +35,7 @@ type EntityTypeDesc struct {
 	clientAttrs                       common.StringSet
 	persistentAttrs                   common.StringSet
 	compositiveMethodComponentIndices map[string][]int
+	//definedAttrs                      bool
 }
 
 var _VALID_ATTR_DEFS = common.StringSet{} // all valid attribute defs
@@ -45,16 +46,8 @@ func init() {
 	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
 }
 
-// DefineAttrs defines properties of entity attributes
-//
-// Valid attribute properties includes Client, AllClient, Persistent
-func (desc *EntityTypeDesc) DefineAttrs(attrDefs map[string][]string) {
-	for attr, defs := range attrDefs {
-		desc.defineAttr(attr, defs)
-	}
-}
-
-func (desc *EntityTypeDesc) defineAttr(attr string, defs []string) {
+func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) {
+	gwlog.Infof("        Attr %s = %v", attr, defs)
 	isAllClient, isClient, isPersistent := false, false, false
 
 	for _, def := range defs {
@@ -177,7 +170,7 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 }
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useAOI bool) *EntityTypeDesc {
+func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI bool) {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -211,7 +204,11 @@ func RegisterEntity(typeName string, entity interface{}, isPersistent bool, useA
 	}
 
 	gwlog.Debugf(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
-	return entityTypeDesc
+	//// define entity attrs
+	var e *Entity = reflect.Indirect(entityVal).FieldByName("Entity").Addr().Interface().(*Entity)
+	e.V = entityVal // set necessary values for callCompositiveMethod not to panic
+	e.typeDesc = entityTypeDesc
+	e.callCompositiveMethod("DefineAttrs", entityTypeDesc)
 }
 
 var entityType = reflect.TypeOf(Entity{})

@@ -32,15 +32,15 @@ type Space struct {
 	aoiCalc AOICalculator
 }
 
-func init() {
-
-}
-
 func (space *Space) String() string {
 	if space.Kind != 0 {
 		return fmt.Sprintf("Space<%d|%s>", space.Kind, space.ID)
 	}
 	return "Space<nil>"
+}
+
+func (space *Space) DefineAttrs(desc *EntityTypeDesc) {
+	desc.DefineAttr(_SPACE_KIND_ATTR_KEY, "AllClients")
 }
 
 // OnInit initialize Space entity

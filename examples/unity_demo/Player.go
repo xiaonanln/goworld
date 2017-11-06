@@ -12,6 +12,15 @@ type Player struct {
 	entity.Entity
 }
 
+func (a *Player) DefineAttrs(desc *entity.EntityTypeDesc) {
+	desc.DefineAttr("name", "AllClients", "Persistent")
+	desc.DefineAttr("lv", "AllClients", "Persistent")
+	desc.DefineAttr("hp", "AllClients")
+	desc.DefineAttr("hpmax", "AllClients")
+	desc.DefineAttr("action", "AllClients")
+	desc.DefineAttr("spaceKind", "Persistent")
+}
+
 // OnCreated 在Player对象创建后被调用
 func (a *Player) OnCreated() {
 	a.Entity.OnCreated()

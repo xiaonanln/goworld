@@ -23,6 +23,21 @@ type Avatar struct {
 	msgbox.Msgbox
 }
 
+func (a *Avatar) DefineAttrs(desc *entity.EntityTypeDesc) {
+	desc.DefineAttr("name", "AllClients", "Persistent")
+	desc.DefineAttr("level", "AllClients", "Persistent")
+	desc.DefineAttr("prof", "AllClients", "Persistent")
+	desc.DefineAttr("exp", "Client", "Persistent")
+	desc.DefineAttr("mails", "Client", "Persistent")
+	desc.DefineAttr("spaceKind", "Persistent")
+	desc.DefineAttr("lastMailID", "Persistent")
+	desc.DefineAttr("testListField", "AllClients")
+}
+
+func (a *Avatar) OnInit() {
+
+}
+
 func (a *Avatar) OnAttrsReady() {
 	a.setDefaultAttrs()
 	gwlog.Debugf("Avatar %s is ready: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())

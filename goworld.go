@@ -21,8 +21,8 @@ func Run(delegate game.IGameDelegate) {
 //
 // returns the entity type description object which can be used to define more properties
 // of entity type
-func RegisterEntity(typeName string, entityPtr interface{}, isPersistent, useAOI bool) *entity.EntityTypeDesc {
-	return entity.RegisterEntity(typeName, entityPtr, isPersistent, useAOI)
+func RegisterEntity(typeName string, entityPtr entity.IEntity, isPersistent, useAOI bool) {
+	entity.RegisterEntity(typeName, entityPtr, isPersistent, useAOI)
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
@@ -99,7 +99,7 @@ func ListAttr() *entity.ListAttr {
 // RegisterSpace registers the space entity type.
 //
 // All spaces will be created as an instance of this type
-func RegisterSpace(spacePtr interface{}) {
+func RegisterSpace(spacePtr entity.IEntity) {
 	entity.RegisterSpace(spacePtr)
 }
 

@@ -16,10 +16,7 @@ func main() {
 	// 注册Account类型
 	goworld.RegisterEntity("Account", &Account{}, false, false)
 	// 注册Avatar类型，并定义属性
-	goworld.RegisterEntity("Avatar", &Avatar{}, true, true).DefineAttrs(map[string][]string{
-		"name":     {"Client", "Persistent"},
-		"chatroom": {"Client"},
-	})
+	goworld.RegisterEntity("Avatar", &Avatar{}, true, true)
 
 	// 运行游戏服务器
 	goworld.Run(&serverDelegate{})

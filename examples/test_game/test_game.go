@@ -37,27 +37,14 @@ func main() {
 	goworld.RegisterEntity("Account", &Account{}, false, false)
 	goworld.RegisterEntity("OnlineService", &OnlineService{}, false, false)
 	goworld.RegisterEntity("SpaceService", &SpaceService{}, false, false)
-	goworld.RegisterEntity("MailService", &MailService{}, true, false).DefineAttrs(map[string][]string{
-		"lastMailID": {"Persistent"},
-	})
+	goworld.RegisterEntity("MailService", &MailService{}, true, false)
 	pubsub.RegisterService()
 	msgbox.RegisterService()
 
 	// Register Monster type and define attributes
-	goworld.RegisterEntity("Monster", &Monster{}, false, true).DefineAttrs(map[string][]string{
-		"name": {"AllClients"},
-	})
+	goworld.RegisterEntity("Monster", &Monster{}, false, true)
 	// Register Avatar type and define attributes
-	goworld.RegisterEntity("Avatar", &Avatar{}, true, true).DefineAttrs(map[string][]string{
-		"name":          {"AllClients", "Persistent"},
-		"level":         {"AllClients", "Persistent"},
-		"prof":          {"AllClients", "Persistent"},
-		"exp":           {"Client", "Persistent"},
-		"spaceKind":     {"Persistent"},
-		"lastMailID":    {"Persistent"},
-		"mails":         {"Client", "Persistent"},
-		"testListField": {"AllClients"},
-	})
+	goworld.RegisterEntity("Avatar", &Avatar{}, true, true)
 
 	// Run the game server
 	goworld.Run(&serverDelegate{})

@@ -30,23 +30,9 @@ func main() {
 	// 注册Account类型
 	goworld.RegisterEntity("Account", &Account{}, false, false)
 	// 注册Monster类型
-	goworld.RegisterEntity("Monster", &Monster{}, false, true).DefineAttrs(map[string][]string{
-		"name":   {"AllClients"},
-		"lv":     {"AllClients"},
-		"hp":     {"AllClients"},
-		"hpmax":  {"AllClients"},
-		"action": {"AllClients"},
-	})
+	goworld.RegisterEntity("Monster", &Monster{}, false, true)
 	// 注册Avatar类型，并定义属性
-	goworld.RegisterEntity("Player", &Player{}, true, true).DefineAttrs(map[string][]string{
-		"name":      {"AllClients", "Persistent"},
-		"lv":        {"AllClients", "Persistent"},
-		"hp":        {"AllClients"},
-		"hpmax":     {"AllClients"},
-		"action":    {"AllClients"},
-		"spaceKind": {"Persistent"},
-	})
-
+	goworld.RegisterEntity("Player", &Player{}, true, true)
 	// 运行游戏服务器
 	goworld.Run(&serverDelegate{})
 }

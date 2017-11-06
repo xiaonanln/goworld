@@ -24,6 +24,10 @@ type MailService struct {
 	mailPacker    netutil.MsgPacker
 }
 
+func (s *MailService) DefineAttrs(desc *entity.EntityTypeDesc) {
+	desc.DefineAttr("lastMailID", "Persistent")
+}
+
 // OnInit is called when initializing MailService
 func (s *MailService) OnInit() {
 	s.mailPacker = netutil.MessagePackMsgPacker{}

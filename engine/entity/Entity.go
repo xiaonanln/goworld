@@ -44,7 +44,7 @@ type entityTimerInfo struct {
 type Entity struct {
 	ID       common.EntityID
 	TypeName string
-	I        interface{}
+	I        IEntity
 	V        reflect.Value
 
 	destroyed bool
@@ -81,25 +81,28 @@ const (
 	sifSyncNeighborClients
 )
 
-//// IEntity declares functions can be override in Entity subclasses
-//type IEntity interface {
-//	// Entity Lifetime
-//	OnInit()    // Called when initializing entity struct, override to initialize entity custom fields
-//	OnCreated() // Called when entity is just created
-//	OnDestroy() // Called when entity is destroying (just before destroy)
-//	// Migration
-//	OnMigrateOut() // Called just before entity is migrating out
-//	OnMigrateIn()  // Called just after entity is migrating in
-//	// Freeze && Restore
-//	OnFreeze()   // Called when entity is freezing
-//	OnRestored() // Called when entity is restored
-//	// Space Operations
-//	OnEnterSpace()             // Called when entity leaves space
-//	OnLeaveSpace(space *Space) // Called when entity enters space
-//	// Client Notifications
-//	OnClientConnected()    // Called when client is connected to entity (become player)
-//	OnClientDisconnected() // Called when client disconnected
-//}
+// IEntity declares functions that is defined in Entity
+// These functions are mostly component functions
+type IEntity interface {
+	// Entity Lifetime
+	OnInit()    // Called when initializing entity struct, override to initialize entity custom fields
+	OnCreated() // Called when entity is just created
+	OnDestroy() // Called when entity is destroying (just before destroy)
+	// Migration
+	OnMigrateOut() // Called just before entity is migrating out
+	OnMigrateIn()  // Called just after entity is migrating in
+	// Freeze && Restore
+	OnFreeze()   // Called when entity is freezing
+	OnRestored() // Called when entity is restored
+	// Space Operations
+	OnEnterSpace()             // Called when entity leaves space
+	OnLeaveSpace(space *Space) // Called when entity enters space
+	// Client Notifications
+	OnClientConnected()    // Called when client is connected to entity (become player)
+	OnClientDisconnected() // Called when client disconnected
+
+	DefineAttrs(desc *EntityTypeDesc)
+}
 
 func (e *Entity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
@@ -178,10 +181,15 @@ func (e *Entity) ToSpace() *Space {
 func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance reflect.Value) {
 	e.ID = entityID
 	e.V = entityInstance
-	e.I = entityInstance.Interface()
+	e.I = entityInstance.Interface().(IEntity)
 	e.TypeName = typeName
 
 	e.typeDesc = registeredEntityTypes[typeName]
+
+	//if !e.typeDesc.definedAttrs {
+	//	// first time entity of this type is created, define attrs now
+	//	e.callCompositiveMethod("DefineAttrs", e.typeDesc)
+	//}
 
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
@@ -194,6 +202,7 @@ func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance 
 
 	initAOI(&e.aoi)
 	e.initComponents()
+
 	e.callCompositiveMethod("OnInit")
 }
 

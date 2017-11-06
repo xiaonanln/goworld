@@ -17,6 +17,9 @@ type Account struct {
 	logining      bool
 }
 
+func (a *Account) DefineAttrs(desc *entity.EntityTypeDesc) {
+}
+
 func (a *Account) getAvatarID(username string, callback func(entityID common.EntityID, err error)) {
 	goworld.GetKVDB(username, func(val string, err error) {
 		if a.IsDestroyed() {
