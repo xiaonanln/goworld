@@ -10,7 +10,7 @@ import (
 // Account 是账号对象类型，用于处理注册、登录逻辑
 type Account struct {
 	entity.Entity // 自定义对象类型必须继承entity.Entity
-	logining      bool
+	logIn         bool
 }
 
 func (a *Account) DefineAttrs(desc *entity.EntityTypeDesc) {
@@ -22,7 +22,7 @@ func (a *Account) Register_Client(username string, password string) {
 	gwlog.Debugf("Register %s %s", username, password)
 	goworld.GetOrPutKVDB("password$"+username, password, func(oldVal string, err error) {
 		if err != nil {
-			a.CallClient("ShowError", "服务器错误："+err.Error())
+			a.CallClient("ShowError", "Server Error： "+err.Error()) // 服务器错误
 			return
 		}
 
@@ -34,10 +34,10 @@ func (a *Account) Register_Client(username string, password string) {
 			player.Destroy()
 
 			goworld.PutKVDB("playerID$"+username, string(playerID), func(err error) {
-				a.CallClient("ShowInfo", "注册成功，请点击登录")
+				a.CallClient("ShowInfo", "Registered Successfully, please click login.") // 注册成功，请点击登录
 			})
 		} else {
-			a.CallClient("ShowError", "抱歉，这个账号已经存在")
+			a.CallClient("ShowError", "Sorry, this account aready exists.") // 抱歉，这个账号已经存在
 		}
 	})
 }
@@ -45,37 +45,37 @@ func (a *Account) Register_Client(username string, password string) {
 // Login_Client 是处理玩家登录请求的RPC函数
 func (a *Account) Login_Client(username string, password string) {
 	gwlog.Debugf("%s.Login: username=%s, password=%s", a, username, password)
-	if a.logining {
+	if a.logIn {
 		// logining
-		gwlog.Errorf("%s is already logining", a)
+		gwlog.Errorf("%s has already started to log in.", a)
 		return
 	}
 
-	gwlog.Infof("%s logining with username %s password %s ...", a, username, password)
-	a.logining = true
+	gwlog.Infof("%s started log in with username %s password %s ...", a, username, password)
+	a.logIn = true
 	goworld.GetKVDB("password$"+username, func(correctPassword string, err error) {
 		if err != nil {
-			a.logining = false
-			a.CallClient("ShowError", "服务器错误："+err.Error())
+			a.logIn = false
+			a.CallClient("ShowError", "Server Error： "+err.Error()) // 服务器错误
 			return
 		}
 
 		if correctPassword == "" {
-			a.logining = false
-			a.CallClient("ShowError", "账号不存在")
+			a.logIn = false
+			a.CallClient("ShowError", "Account does not exist.") // 账号不存在
 			return
 		}
 
 		if password != correctPassword {
-			a.logining = false
-			a.CallClient("ShowError", "密码错误")
+			a.logIn = false
+			a.CallClient("ShowError", "Invalid password or username") // 密码错误
 			return
 		}
 
 		goworld.GetKVDB("playerID$"+username, func(_playerID string, err error) {
 			if err != nil {
-				a.logining = false
-				a.CallClient("ShowError", "服务器错误："+err.Error())
+				a.logIn = false
+				a.CallClient("ShowError", "Server Error："+err.Error()) // 服务器错误
 				return
 			}
 			playerID := common.EntityID(_playerID)
@@ -100,7 +100,7 @@ func (a *Account) OnGetPlayerSpaceID(playerID common.EntityID, spaceID common.En
 
 func (a *Account) onPlayerEntityFound(player *entity.Entity) {
 	gwlog.Infof("Player %s is found, giving client to ...", player)
-	a.logining = false
+	a.logIn = false
 	a.GiveClientTo(player) // 将Account的客户端移交给Player
 }
 
@@ -121,6 +121,6 @@ func (a *Account) OnMigrateIn() {
 	} else {
 		// failed
 		a.CallClient("ShowError", "登录失败，请重试")
-		a.logining = false
+		a.logIn = false
 	}
 }
