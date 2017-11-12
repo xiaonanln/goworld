@@ -6,7 +6,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 )
 
-func reload(serverId ServerID) {
+func reload(sid ServerID) {
 	err := os.Chdir(env.GoWorldRoot)
 	checkErrorOrQuit(err, "chdir to goworld directory failed")
 
@@ -17,7 +17,7 @@ func reload(serverId ServerID) {
 		showMsgAndQuit("no server is running currently")
 	}
 
-	if ss.ServerID != "" && ss.ServerID != serverId {
+	if ss.ServerID != "" && ss.ServerID != sid {
 		showMsgAndQuit("another server is running: %s", ss.ServerID)
 	}
 
@@ -28,5 +28,5 @@ func reload(serverId ServerID) {
 	}
 
 	stopGames(ss, FreezeSignal)
-	startGames(serverId, true)
+	startGames(sid, true)
 }

@@ -6,22 +6,22 @@ import (
 	"path/filepath"
 )
 
-func build(serverId ServerID) {
-	showMsg("building server %s ...", serverId)
+func build(sid ServerID) {
+	showMsg("building server %s ...", sid)
 
-	buildServer(serverId)
+	buildServer(sid)
 	buildDispatcher()
 	buildGate()
 }
 
-func buildServer(serverId ServerID) {
-	serverPath := serverId.Path()
+func buildServer(sid ServerID) {
+	serverPath := sid.Path()
 	showMsg("server directory is %s ...", serverPath)
 	if !isdir(serverPath) {
-		showMsgAndQuit("wrong server id: %s, using '\\' instead of '/'?", serverId)
+		showMsgAndQuit("wrong server id: %s, using '\\' instead of '/'?", sid)
 	}
 
-	showMsg("go build %s ...", serverId)
+	showMsg("go build %s ...", sid)
 	buildDirectory(serverPath)
 }
 
@@ -48,8 +48,8 @@ func buildDirectory(dir string) {
 
 	cmd := exec.Command("go", "build", ".")
 	cmd.Stderr = os.Stderr
-	cmd.Stdout = cmd.Stdout
-	cmd.Stdin = cmd.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
 	err = cmd.Run()
 	checkErrorOrQuit(err, "")
 	return

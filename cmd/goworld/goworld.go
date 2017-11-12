@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -44,7 +45,7 @@ func main() {
 	} else if cmd == "start" {
 		start(ServerID(args[1]))
 	} else if cmd == "stop" {
-		if IsWindows {
+		if runtime.GOOS == "windows" {
 			showMsgAndQuit("stop does not work on Windows, use kill instead (will lose player data)")
 		}
 

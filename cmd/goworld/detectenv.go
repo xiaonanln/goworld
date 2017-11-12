@@ -8,27 +8,32 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 )
 
-type _Env struct {
+// Env represents environment variables
+type Env struct {
 	GoWorldRoot string
 }
 
-func (env *_Env) GetDispatcherDir() string {
+// GetDispatcherDir returns the path to the dispatcher
+func (env *Env) GetDispatcherDir() string {
 	return filepath.Join(env.GoWorldRoot, "components", "dispatcher")
 }
 
-func (env *_Env) GetGateDir() string {
+// GetGateDir returns the path to the gate
+func (env *Env) GetGateDir() string {
 	return filepath.Join(env.GoWorldRoot, "components", "gate")
 }
 
-func (env *_Env) GetDispatcherExecutive() string {
-	return filepath.Join(env.GetDispatcherDir(), "dispatcher"+ExecutiveExt)
+// GetDispatcherBinary returns the path to the dispatcher binary
+func (env *Env) GetDispatcherBinary() string {
+	return filepath.Join(env.GetDispatcherDir(), "dispatcher"+BinaryExtension)
 }
 
-func (env *_Env) GetGateExecutive() string {
-	return filepath.Join(env.GetGateDir(), "gate"+ExecutiveExt)
+// GetGateBinary returns the path to the gate binary
+func (env *Env) GetGateBinary() string {
+	return filepath.Join(env.GetGateDir(), "gate"+BinaryExtension)
 }
 
-var env _Env
+var env Env
 
 func getGoSearchPaths() []string {
 	var paths []string
