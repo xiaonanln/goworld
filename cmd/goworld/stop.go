@@ -2,19 +2,17 @@ package main
 
 import (
 	"os"
-
 	"syscall"
-
 	"time"
 
 	"github.com/keybase/go-ps"
 )
 
-func stop(serverId ServerID) {
-	stopWithSignal(serverId, StopSignal)
+func stop(sid ServerID) {
+	stopWithSignal(sid, StopSignal)
 }
 
-func stopWithSignal(serverId ServerID, signal syscall.Signal) {
+func stopWithSignal(sid ServerID, signal syscall.Signal) {
 	err := os.Chdir(env.GoWorldRoot)
 	checkErrorOrQuit(err, "chdir to goworld directory failed")
 
@@ -25,7 +23,7 @@ func stopWithSignal(serverId ServerID, signal syscall.Signal) {
 		showMsgAndQuit("no server is running currently")
 	}
 
-	if ss.ServerID != "" && ss.ServerID != serverId {
+	if ss.ServerID != "" && ss.ServerID != sid {
 		showMsgAndQuit("another server is running: %s", ss.ServerID)
 	}
 

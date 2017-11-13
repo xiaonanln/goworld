@@ -7,9 +7,9 @@ func isfile(path string) bool {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
-		} else {
-			panic(err)
 		}
+
+		panic(err)
 	}
 
 	return !fi.IsDir()
@@ -20,9 +20,9 @@ func isdir(path string) bool {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
-		} else {
-			panic(err)
 		}
+
+		panic(err)
 	}
 
 	return fi.IsDir()
@@ -33,9 +33,9 @@ func isexists(path string) bool {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
-		} else {
-			panic(err)
 		}
+
+		panic(err)
 	}
 	return true
 }
