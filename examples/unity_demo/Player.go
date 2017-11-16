@@ -89,6 +89,7 @@ func (a *Player) DoEnterSpace(kind int, spaceID common.EntityID) {
 // OnEnterSpace is called when avatar enters a space
 func (a *Player) OnEnterSpace() {
 	gwlog.Infof("%s ENTER SPACE %s", a, a.Space)
+	a.SetClientSyncing(true)
 }
 
 func (a *Player) SetAction_Client(action string) {
