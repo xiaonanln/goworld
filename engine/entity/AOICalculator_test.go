@@ -3,6 +3,8 @@ package entity
 import (
 	"math"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 	"testing"
 	"time"
 )
@@ -163,5 +165,91 @@ func checkList(t *testing.T, list *xAOIList, N int) {
 
 	if p != nil {
 		t.Errorf("unexpected not nil ")
+	}
+}
+
+func TestXZListAOICalculatorPerformance(t *testing.T) {
+	if os.Getenv("TRAVIS") != "" {
+		t.Skip()
+	}
+	aoicalc := newXZListAOICalculator()
+	R := 700
+	N := 4000
+	aois := []*aoi{}
+	for i := 0; i < N; i++ {
+		e := Entity{}
+		aoi := &e.aoi
+		initAOI(aoi)
+		aois = append(aois, aoi)
+
+		aoicalc.Enter(aoi, Vector3{Coord(-R + rand.Intn(R*2)), 0, Coord(-R + rand.Intn(R*2))})
+	}
+	//b.ResetTimer()
+	fd, err := os.OpenFile("AOI.pprof", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0777)
+	if err != nil {
+		panic(err)
+	}
+	defer fd.Close()
+	pprof.StartCPUProfile(fd)
+	for i := 0; i < 1; i++ {
+		for _, aoi := range aois {
+			newpos := aoi.pos
+			newpos.X += Coord(-R/10 + rand.Intn(R/5))
+			newpos.Z += Coord(-R/10 + rand.Intn(R/5))
+			//fmt.Printf("move to %v\n", newpos)
+			aoicalc.Move(aoi, newpos)
+
+			enter, leave := aoicalc.Adjust(aoi)
+			for _, other := range enter {
+				aoi.neighbors.Add(other.getEntity())
+				other.neighbors.Add(aoi.getEntity())
+			}
+			for _, other := range leave {
+				aoi.neighbors.Del(other.getEntity())
+				other.neighbors.Del(aoi.getEntity())
+			}
+			//println(len(enter), len(leave), len(aoi.neighbors))
+		}
+	}
+	pprof.StopCPUProfile()
+}
+
+func BenchmarkXZListAOICalculator(b *testing.B) {
+	if os.Getenv("TRAVIS") != "" {
+		b.Skip()
+	}
+
+	aoicalc := newXZListAOICalculator()
+	R := 700
+	N := 4000
+	aois := []*aoi{}
+	for i := 0; i < N; i++ {
+		e := Entity{}
+		aoi := &e.aoi
+		initAOI(aoi)
+		aois = append(aois, aoi)
+
+		aoicalc.Enter(aoi, Vector3{Coord(-R + rand.Intn(R*2)), 0, Coord(-R + rand.Intn(R*2))})
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, aoi := range aois {
+			newpos := aoi.pos
+			newpos.X += Coord(-R/10 + rand.Intn(R/5))
+			newpos.Z += Coord(-R/10 + rand.Intn(R/5))
+			//fmt.Printf("move to %v\n", newpos)
+			aoicalc.Move(aoi, newpos)
+
+			enter, leave := aoicalc.Adjust(aoi)
+			for _, other := range enter {
+				aoi.neighbors.Add(other.getEntity())
+				other.neighbors.Add(aoi.getEntity())
+			}
+			for _, other := range leave {
+				aoi.neighbors.Del(other.getEntity())
+				other.neighbors.Del(aoi.getEntity())
+			}
+			//println(len(enter), len(leave), len(aoi.neighbors))
+		}
 	}
 }
