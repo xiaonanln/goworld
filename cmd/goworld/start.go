@@ -1,25 +1,20 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"os/exec"
-
-	"strconv"
-
-	"time"
-
 	"path/filepath"
-
-	"io/ioutil"
-
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 )
 
-func start(serverId ServerID) {
+func start(sid ServerID) {
 	err := os.Chdir(env.GoWorldRoot)
 	checkErrorOrQuit(err, "chdir to goworld directory failed")
 
@@ -30,7 +25,7 @@ func start(serverId ServerID) {
 	}
 
 	startDispatcher()
-	startGames(serverId, false)
+	startGames(sid, false)
 	startGates()
 }
 
@@ -40,25 +35,25 @@ func startDispatcher() {
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
-	cmd := exec.Command(env.GetDispatcherExecutive(), args...)
+	cmd := exec.Command(env.GetDispatcherBinary(), args...)
 	err := runCmdUntilTag(cmd, config.GetDispatcher().LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 
 }
 
-func startGames(serverId ServerID, isRestore bool) {
+func startGames(sid ServerID, isRestore bool) {
 	showMsg("start games ...")
 	gameIds := config.GetGameIDs()
 	showMsg("game ids: %v", gameIds)
 	for _, gameid := range gameIds {
-		startGame(serverId, gameid, isRestore)
+		startGame(sid, gameid, isRestore)
 	}
 }
 
-func startGame(serverId ServerID, gameid uint16, isRestore bool) {
+func startGame(sid ServerID, gameid uint16, isRestore bool) {
 	showMsg("start game %d ...", gameid)
 
-	gameExePath := filepath.Join(serverId.Path(), serverId.Name()+ExecutiveExt)
+	gameExePath := filepath.Join(sid.Path(), sid.Name()+BinaryExtension)
 	args := []string{"-gid", strconv.Itoa(int(gameid))}
 	if isRestore {
 		args = append(args, "-restore")
@@ -87,7 +82,7 @@ func startGate(gateid uint16) {
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
-	cmd := exec.Command(env.GetGateExecutive(), args...)
+	cmd := exec.Command(env.GetGateBinary(), args...)
 	err := runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }

@@ -3,13 +3,13 @@ package main
 import (
 	"os"
 	"path/filepath"
-
 	"strings"
 
 	"github.com/keybase/go-ps"
 	"github.com/xiaonanln/goworld/engine/config"
 )
 
+// ServerStatus represents the status of a server
 type ServerStatus struct {
 	NumDispatcherRunning int
 	NumGatesRunning      int
@@ -20,6 +20,7 @@ type ServerStatus struct {
 	ServerID             ServerID
 }
 
+// IsRunning returns if a server is running
 func (ss *ServerStatus) IsRunning() bool {
 	return ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 || ss.NumGamesRunning > 0
 }
@@ -36,7 +37,6 @@ func detectServerStatus() *ServerStatus {
 				if strings.HasSuffix(path, " (deleted)") {
 					path = path[:len(path)-10]
 				}
-				err = nil
 			} else {
 				continue
 			}
@@ -49,11 +49,11 @@ func detectServerStatus() *ServerStatus {
 
 		dir, file := filepath.Split(relpath)
 
-		if file == "dispatcher"+ExecutiveExt {
-			ss.NumDispatcherRunning += 1
+		if file == "dispatcher"+BinaryExtension {
+			ss.NumDispatcherRunning++
 			ss.DispatcherProcs = append(ss.DispatcherProcs, proc)
-		} else if file == "gate"+ExecutiveExt {
-			ss.NumGatesRunning += 1
+		} else if file == "gate"+BinaryExtension {
+			ss.NumGatesRunning++
 			ss.GateProcs = append(ss.GateProcs, proc)
 		} else {
 			if strings.HasSuffix(dir, string(filepath.Separator)) {
@@ -64,7 +64,7 @@ func detectServerStatus() *ServerStatus {
 				// this is a cmd or a component, not a game
 				continue
 			}
-			ss.NumGamesRunning += 1
+			ss.NumGamesRunning++
 			ss.GameProcs = append(ss.GameProcs, proc)
 			if ss.ServerID == "" {
 				ss.ServerID = serverid

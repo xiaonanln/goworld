@@ -486,7 +486,7 @@ func (e *Entity) CallService(serviceName string, method string, args ...interfac
 }
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
-	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v", e, x, y, z, yaw)
+	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v, syncing %v", e, x, y, z, yaw, e.syncingFromClient)
 	if e.syncingFromClient {
 		e.setPositionYaw(Vector3{x, y, z}, yaw, true)
 	}

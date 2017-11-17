@@ -28,7 +28,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 * **Traffic Compression & Encryption**: traffic between clients and servers can be compressed and encrypted
 
 ## Architecture
-![GoWorld Architecture](http://goworldgs.com/static/goworld_arch.png "GoWorld Architecture")
+![GoWorld Architecture](http://goworldgs.com/public/img/goworld_arch.png "GoWorld Architecture")
 
 ## Introduction
 GoWorld server adopts an entity framework, in which entities represent all players, monsters, NPCs.
