@@ -22,6 +22,8 @@ type MySpace struct {
 // OnSpaceCreated is called when the space is created
 func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
+	space.UseTowerAOI(-1000, 1000, -1000, 1000, 10)
+
 	space.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 
 	M := 10
