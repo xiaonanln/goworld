@@ -91,3 +91,8 @@
 [[constraint]]
   branch = "master"
   name = "github.com/keybase/go-ps"
+
+
+[[constraint]]
+  name = "github.com/xiaonanln/go-aoi"
+  version = "0.0.2"
