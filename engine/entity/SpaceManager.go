@@ -34,7 +34,7 @@ func (spmgr *_SpaceManager) getSpace(id common.EntityID) *Space {
 }
 
 // RegisterSpace registers the user custom space type
-func RegisterSpace(spacePtr IEntity) {
+func RegisterSpace(spacePtr ISpace) {
 	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
 	spaceType = spaceVal.Type()
 

@@ -99,7 +99,7 @@ func ListAttr() *entity.ListAttr {
 // RegisterSpace registers the space entity type.
 //
 // All spaces will be created as an instance of this type
-func RegisterSpace(spacePtr entity.IEntity) {
+func RegisterSpace(spacePtr entity.ISpace) {
 	entity.RegisterSpace(spacePtr)
 }
 

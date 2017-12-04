@@ -46,7 +46,7 @@ func (monster *Monster) setDefaultAttrs() {
 
 func (monster *Monster) AI() {
 	var nearestPlayer *entity.Entity
-	for entity := range monster.Neighbors() {
+	for entity := range monster.Neighbors {
 
 		if entity.TypeName != "Player" {
 			continue

@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 
+	"github.com/xiaonanln/go-aoi"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -28,8 +29,9 @@ type Space struct {
 
 	entities EntitySet
 	Kind     int
-	//I        ISpace
-	aoiCalc AOICalculator
+	I        ISpace
+
+	aoiMgr aoi.AOIManager
 }
 
 func (space *Space) String() string {
@@ -43,11 +45,25 @@ func (space *Space) DefineAttrs(desc *EntityTypeDesc) {
 	desc.DefineAttr(_SPACE_KIND_ATTR_KEY, "AllClients")
 }
 
+func (space *Space) GetSpaceRange() (minX, minY, maxX, maxY Coord) {
+	return -1000, -1000, 1000, 1000
+}
+
+func (space *Space) GetTowerRange() (minX, minY, maxX, maxY Coord) {
+	return -1000, -1000, 1000, 1000
+}
+
 // OnInit initialize Space entity
 func (space *Space) OnInit() {
 	space.entities = EntitySet{}
-	space.I = space.Entity.I
-	space.aoiCalc = newXZListAOICalculator()
+	space.I = space.Entity.I.(ISpace)
+
+	space.callCompositiveMethod("OnSpaceInit")
+}
+
+// OnSpaceInit is a compositive method for initializing space fields
+func (space *Space) OnSpaceInit() {
+
 }
 
 // OnCreated is called when Space entity is created
@@ -62,6 +78,14 @@ func (space *Space) OnCreated() {
 		gwlog.Debugf("%s.OnCreated", space)
 	}
 	space.callCompositiveMethod("OnSpaceCreated")
+}
+
+func (space *Space) UseTowerAOI(minX, maxX, minY, maxY Coord, towerRange Coord) {
+	if space.aoiMgr != nil || len(space.entities) > 0 {
+		gwlog.Panicf("%s is already using AOI", space)
+	}
+
+	space.aoiMgr = aoi.NewTowerAOIManager(aoi.Coord(minX), aoi.Coord(maxX), aoi.Coord(minY), aoi.Coord(maxY), aoi.Coord(towerRange))
 }
 
 // OnRestored is called when space entity is restored
@@ -146,34 +170,27 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	entity.Space = space
 	space.entities.Add(entity)
 
-	space.aoiCalc.Enter(&entity.aoi, pos)
 	entity.syncInfoFlag |= sifSyncOwnClient | sifSyncNeighborClients
+	if space.aoiMgr == nil {
+		return
+	}
 
 	if !isRestore {
 		entity.client.sendCreateEntity(&space.Entity, false) // create Space entity before every other entities
 
-		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
-		// gwlog.Infof("Entity %s entering at pos %v: %v: enter %d neighbors", entity, pos, entity.GetPosition(), len(enter))
-
-		for _, naoi := range enter {
-			neighbor := naoi.getEntity()
-			entity.interest(neighbor)
-			neighbor.interest(entity)
-		}
+		space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
 
 		gwutils.RunPanicless(func() {
 			space.callCompositiveMethod("OnEntityEnterSpace", entity)
 			entity.callCompositiveMethod("OnEnterSpace")
 		})
 	} else {
-		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
-		for _, naoi := range enter {
-			neighbor := naoi.getEntity()
-			entity.aoi.interest(neighbor)
-			neighbor.aoi.interest(entity)
-		}
+		// restoring ...
+		client := entity.client
+		entity.client = nil
+		space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
+		entity.client = client
 	}
-
 	//space.verifyAOICorrectness(entity)
 }
 
@@ -182,15 +199,11 @@ func (space *Space) leave(entity *Entity) {
 		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
 	}
 
-	if space.IsNil() { // leave from nil space do nothing
+	if space.aoiMgr == nil {
 		return
 	}
 
-	for neighbor := range entity.aoi.neighbors {
-		entity.uninterest(neighbor)
-		neighbor.uninterest(entity)
-	}
-	space.aoiCalc.Leave(&entity.aoi)
+	space.aoiMgr.Leave(&entity.aoi)
 	entity.client.sendDestroyEntity(&space.Entity)
 	// remove from Space entities
 	space.entities.Del(entity)
@@ -201,25 +214,12 @@ func (space *Space) leave(entity *Entity) {
 }
 
 func (space *Space) move(entity *Entity, newPos Vector3) {
-	if space.IsNil() {
-		return // never move in nil space
+	if space.aoiMgr == nil {
+		return
 	}
 
-	space.aoiCalc.Move(&entity.aoi, newPos)
-	enter, leave := space.aoiCalc.Adjust(&entity.aoi)
-
-	for _, naoi := range leave {
-		neighbor := naoi.getEntity()
-		entity.uninterest(neighbor)
-		neighbor.uninterest(entity)
-	}
-
-	for _, naoi := range enter {
-		neighbor := naoi.getEntity()
-		entity.interest(neighbor)
-		neighbor.interest(entity)
-	}
-
+	entity.Position = newPos
+	space.aoiMgr.Moved(&entity.aoi, aoi.Coord(newPos.X), aoi.Coord(newPos.Z))
 	//space.verifyAOICorrectness(entity)
 	//opmon.Finish(time.Millisecond * 10)
 }

@@ -10,6 +10,7 @@ import (
 
 	"unsafe"
 
+	"github.com/xiaonanln/go-aoi"
 	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -50,7 +51,9 @@ type Entity struct {
 	destroyed bool
 	typeDesc  *EntityTypeDesc
 	Space     *Space
-	aoi       aoi
+	Position  Vector3
+	Neighbors EntitySet
+	aoi       aoi.AOI
 	yaw       Yaw
 
 	rawTimers   map[*timer.Timer]struct{}
@@ -200,7 +203,8 @@ func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance 
 	attrs.owner = e
 	e.Attrs = attrs
 
-	initAOI(&e.aoi)
+	e.Neighbors = EntitySet{}
+	aoi.InitAOI(&e.aoi, _DEFAULT_AOI_DISTANCE, e, e)
 	e.initComponents()
 
 	e.callCompositiveMethod("OnInit")
@@ -280,31 +284,33 @@ func SetSaveInterval(duration time.Duration) {
 
 // Space Operations related to aoi
 
+func (e *Entity) OnEnterAOI(otherAoi *aoi.AOI) {
+	e.interest(otherAoi.Data.(*Entity))
+}
+
+func (e *Entity) OnLeaveAOI(otherAoi *aoi.AOI) {
+	e.uninterest(otherAoi.Data.(*Entity))
+}
+
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
-	e.aoi.interest(other)
+	e.Neighbors.Add(other)
 	e.client.sendCreateEntity(other, false)
 }
 
 func (e *Entity) uninterest(other *Entity) {
-	e.aoi.uninterest(other)
+	e.Neighbors.Del(other)
 	e.client.sendDestroyEntity(other)
 }
 
-// Neighbors get all neighbors in an EntitySet
-//
-// Never modify the return value !
-func (e *Entity) Neighbors() EntitySet {
-	return e.aoi.neighbors
-}
-
+// IsNeighbor checks if other entity is a neighbor
 func (e *Entity) IsNeighbor(other *Entity) bool {
-	return e.aoi.neighbors.Contains(other)
+	return e.Neighbors.Contains(other)
 }
 
 // DistanceTo calculates the distance between two entities
 func (e *Entity) DistanceTo(other *Entity) Coord {
-	return e.aoi.pos.DistanceTo(other.aoi.pos)
+	return e.Position.DistanceTo(other.Position)
 }
 
 // Timer & Callback Management
@@ -721,7 +727,7 @@ func (e *Entity) GetFreezeData() *entityFreezeData {
 		Type:      e.TypeName,
 		TimerData: e.dumpTimers(),
 		Attrs:     e.Attrs.ToMap(),
-		Pos:       e.aoi.pos,
+		Pos:       e.Position,
 		Yaw:       e.yaw,
 		SpaceID:   e.Space.ID,
 	}
@@ -767,7 +773,7 @@ func (e *Entity) SetClient(client *GameClient) {
 		entityManager.onEntityLoseClient(oldClient.clientid)
 		dispatcherclient.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
-		for neighbor := range e.Neighbors() {
+		for neighbor := range e.Neighbors {
 			oldClient.sendDestroyEntity(neighbor)
 		}
 
@@ -780,7 +786,7 @@ func (e *Entity) SetClient(client *GameClient) {
 
 		client.sendCreateEntity(e, true)
 
-		for neighbor := range e.Neighbors() {
+		for neighbor := range e.Neighbors {
 			client.sendCreateEntity(neighbor, false)
 		}
 
@@ -807,7 +813,7 @@ func (e *Entity) CallClient(method string, args ...interface{}) {
 func (e *Entity) CallAllClients(method string, args ...interface{}) {
 	e.client.call(e.ID, method, args)
 
-	for neighbor := range e.Neighbors() {
+	for neighbor := range e.Neighbors {
 		neighbor.client.call(e.ID, method, args)
 	}
 }
@@ -834,7 +840,7 @@ func (e *Entity) ForAllClients(f func(client *GameClient)) {
 		f(e.client)
 	}
 
-	for neighbor := range e.Neighbors() {
+	for neighbor := range e.Neighbors {
 		if neighbor.client != nil {
 			f(neighbor.client)
 		}
@@ -855,7 +861,7 @@ func (e *Entity) notifyClientDisconnected() {
 // Can override this function in custom entity type
 func (e *Entity) OnClientConnected() {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors()))
+		gwlog.Debugf("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors))
 	}
 }
 
@@ -890,7 +896,7 @@ func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interfa
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
 		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
-		for neighbor := range e.aoi.neighbors {
+		for neighbor := range e.Neighbors {
 			neighbor.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		}
 	} else if flag&afClient != 0 {
@@ -911,7 +917,7 @@ func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
 		e.client.sendNotifyMapAttrDel(e.ID, path, key)
-		for neighbor := range e.aoi.neighbors {
+		for neighbor := range e.Neighbors {
 			neighbor.client.sendNotifyMapAttrDel(e.ID, path, key)
 		}
 	} else if flag&afClient != 0 {
@@ -926,7 +932,7 @@ func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interf
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
-		for neighbor := range e.aoi.neighbors {
+		for neighbor := range e.Neighbors {
 			neighbor.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		}
 	} else if flag&afClient != 0 {
@@ -940,7 +946,7 @@ func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrPop(e.ID, path)
-		for neighbor := range e.aoi.neighbors {
+		for neighbor := range e.Neighbors {
 			neighbor.client.sendNotifyListAttrPop(e.ID, path)
 		}
 	} else if flag&afClient != 0 {
@@ -954,7 +960,7 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrAppend(e.ID, path, val)
-		for neighbor := range e.aoi.neighbors {
+		for neighbor := range e.Neighbors {
 			neighbor.client.sendNotifyListAttrAppend(e.ID, path, val)
 		}
 	} else if flag&afClient != 0 {
@@ -1175,7 +1181,7 @@ func (e *Entity) IsUseAOI() bool {
 
 // GetPosition returns the entity position
 func (e *Entity) GetPosition() Vector3 {
-	return e.aoi.pos
+	return e.Position
 }
 
 // SetPosition sets the entity position
@@ -1232,7 +1238,7 @@ func CollectEntitySyncInfos() {
 			packet.AppendFloat32(syncInfo.Yaw)
 		}
 		if syncInfoFlag&sifSyncNeighborClients != 0 {
-			for neighbor := range e.aoi.neighbors {
+			for neighbor := range e.Neighbors {
 				client := neighbor.client
 				if client != nil {
 					gateid := client.gateid
@@ -1262,9 +1268,9 @@ func CollectEntitySyncInfos() {
 
 func (e *Entity) getSyncInfo() proto.EntitySyncInfo {
 	return proto.EntitySyncInfo{
-		float32(e.aoi.pos.X),
-		float32(e.aoi.pos.Y),
-		float32(e.aoi.pos.Z),
+		float32(e.Position.X),
+		float32(e.Position.Y),
+		float32(e.Position.Z),
 		float32(e.yaw),
 	}
 }
@@ -1285,13 +1291,13 @@ func (e *Entity) SetYaw(yaw Yaw) {
 
 // FaceTo let entity face to another entity by setting yaw accordingly
 func (e *Entity) FaceTo(other *Entity) {
-	e.FaceToPos(other.aoi.pos)
+	e.FaceToPos(other.Position)
 }
 
 // FaceTo let entity face to a specified position, setting yaw accordingly
 
 func (e *Entity) FaceToPos(pos Vector3) {
-	dir := pos.Sub(e.aoi.pos)
+	dir := pos.Sub(e.Position)
 	dir.Y = 0
 
 	e.SetYaw(dir.DirToYaw())
