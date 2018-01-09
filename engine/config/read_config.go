@@ -124,6 +124,11 @@ func GetConfigDir() string {
 	return dir
 }
 
+// GetConfigFilePath returns the config file path
+func GetConfigFilePath() string {
+	return configFilePath
+}
+
 // Get returns the total GoWorld config
 func Get() *GoWorldConfig {
 	configLock.Lock()
