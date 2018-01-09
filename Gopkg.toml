@@ -65,18 +65,19 @@
 
 [[constraint]]
   name = "github.com/xiaonanln/go-trie-tst"
+  version = "^0.4"
 
 [[constraint]]
   name = "github.com/xiaonanln/go-xnsyncutil"
-  version = "0.0.2"
+  version = "^0.0.2"
 
 [[constraint]]
   name = "github.com/xiaonanln/goTimer"
-  version = "0.0.2"
+  version = "^0.0.2"
 
 [[constraint]]
   name = "github.com/xiaonanln/typeconv"
-  version = "0.0.2"
+  version = "^0.0.2"
 
 [[constraint]]
   name = "github.com/xtaci/kcp-go"
@@ -95,4 +96,4 @@
 
 [[constraint]]
   name = "github.com/xiaonanln/go-aoi"
-  version = "0.0.2"
+  version = "^0.0.2"
