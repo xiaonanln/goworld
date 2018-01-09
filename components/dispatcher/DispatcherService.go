@@ -270,6 +270,16 @@ func (service *DispatcherService) isAllGameClientsConnected() bool {
 	return true
 }
 
+func (service *DispatcherService) connectedGameClientsNum() int {
+	num := 0
+	for _, client := range service.gameClients {
+		if client != nil {
+			num += 1
+		}
+	}
+	return num
+}
+
 func (service *DispatcherService) dispatcherClientOfGame(gameid uint16) *dispatcherClientProxy {
 	return service.gameClients[gameid-1]
 }

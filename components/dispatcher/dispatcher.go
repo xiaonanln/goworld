@@ -19,10 +19,11 @@ import (
 )
 
 var (
-	configFile      = ""
-	logLevel        string
-	runInDaemonMode bool
-	sigChan         = make(chan os.Signal, 1)
+	configFile        = ""
+	logLevel          string
+	runInDaemonMode   bool
+	sigChan           = make(chan os.Signal, 1)
+	dispatcherService *DispatcherService
 )
 
 func parseArgs() {
@@ -54,16 +55,16 @@ func main() {
 	if logLevel == "" {
 		logLevel = dispatcherConfig.LogLevel
 	}
-	binutil.SetupGWLog("dispatcher", logLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
+	binutil.SetupGWLog("dispatcherService", logLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
 	setupSignals()
 	binutil.SetupHTTPServer(dispatcherConfig.HTTPIp, dispatcherConfig.HTTPPort, nil)
 
-	dispatcher := newDispatcherService()
-	dispatcher.run()
+	dispatcherService = newDispatcherService()
+	dispatcherService.run()
 }
 
 func setupSignals() {
-	signal.Ignore(syscall.Signal(10), syscall.Signal(12), syscall.SIGPIPE)
+	signal.Ignore(syscall.Signal(10), syscall.Signal(12), syscall.SIGPIPE, syscall.SIGHUP)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for {
@@ -71,11 +72,21 @@ func setupSignals() {
 
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// interrupting, quit dispatcher
-				gwlog.Infof("Dispatcher quited.")
-				os.Exit(0)
+				tryExit(sig)
 			} else {
 				gwlog.Infof("unexcepted signal: %s", sig)
 			}
 		}
 	}()
+}
+
+func tryExit(sig os.Signal) {
+	gamesNum := dispatcherService.connectedGameClientsNum()
+	if gamesNum > 0 {
+		gwlog.Warnf("%s: %d games is connected to dispatcher, can not quit!", sig, gamesNum)
+		return
+	}
+
+	gwlog.Infof("Dispatcher terminated gracefully.")
+	os.Exit(0)
 }
