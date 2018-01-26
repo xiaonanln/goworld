@@ -9,8 +9,6 @@ import (
 
 	"time"
 
-	"sync/atomic"
-
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -61,7 +59,7 @@ type DispatcherService struct {
 	config            *config.DispatcherConfig
 	gameClients       []*dispatcherClientProxy
 	gateClients       []*dispatcherClientProxy
-	chooseClientIndex int64
+	chooseClientIndex xnsyncutil.AtomicInt
 
 	entityDispatchInfosLock sync.RWMutex
 	entityDispatchInfos     map[common.EntityID]*entityDispatchInfo
@@ -290,9 +288,9 @@ func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *dispatc
 
 // Choose a dispatcher client for sending Anywhere packets
 func (service *DispatcherService) chooseGameDispatcherClient() *dispatcherClientProxy {
-	index := atomic.LoadInt64(&service.chooseClientIndex)
+	index := service.chooseClientIndex.Load()
 	client := service.gameClients[index]
-	atomic.StoreInt64(&service.chooseClientIndex, int64((int(index)+1)%len(service.gameClients)))
+	service.chooseClientIndex.Store((index + 1) % len(service.gameClients))
 	return client
 }
 
