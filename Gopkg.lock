@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
-  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
-  version = "v1.0.3"
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   branch = "master"
@@ -16,8 +16,8 @@
 [[projects]]
   name = "github.com/garyburd/redigo"
   packages = ["internal","redis"]
-  revision = "47dc60e71eed504e3ef8e77ee3c6fe720f3be57f"
-  version = "v1.3.0"
+  revision = "d1ed5c67e5794de818ea85e6b522fda02623a484"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -41,7 +41,7 @@
   branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
 
 [[projects]]
   branch = "master"
@@ -53,7 +53,7 @@
   branch = "master"
   name = "github.com/google/btree"
   packages = ["."]
-  revision = "316fb6d3f031ae8f4d457c6c5186b9e3ded70435"
+  revision = "e89373fe6b4a7413d7acd6da1725b83ef713e6e4"
 
 [[projects]]
   branch = "master"
@@ -106,8 +106,8 @@
 [[projects]]
   name = "github.com/pierrec/lz4"
   packages = ["."]
-  revision = "08c27939df1bd95e881e2c2367a749964ad1fceb"
-  version = "v1.0.1"
+  revision = "2fcda4cb7018ce05a25959d2fe08c83e3329f169"
+  version = "v1.1"
 
 [[projects]]
   name = "github.com/pierrec/xxHash"
@@ -124,8 +124,8 @@
 [[projects]]
   name = "github.com/sevlyar/go-daemon"
   packages = ["."]
-  revision = "1ae26ef5036ad04968706917222a23c535673d8c"
-  version = "v0.1.1"
+  revision = "e49ef56654f54139c4dc0285f973f74e9649e729"
+  version = "v0.1.2"
 
 [[projects]]
   branch = "master"
@@ -167,8 +167,8 @@
 [[projects]]
   name = "github.com/xiaonanln/go-xnsyncutil"
   packages = ["xnsyncutil"]
-  revision = "651cde360bed712f9daa3836f65101410e30a2fd"
-  version = "v0.0.3"
+  revision = "a141ba34d327c576ad8d8eb90322bb0e967f2db8"
+  version = "v0.0.4"
 
 [[projects]]
   name = "github.com/xiaonanln/goTimer"
@@ -185,26 +185,26 @@
 [[projects]]
   name = "github.com/xtaci/kcp-go"
   packages = ["."]
-  revision = "0dc7be275bda3ba07791a211981b80f2af5d9361"
-  version = "v3.22"
+  revision = "86eebd5cadb519b7c9306082c7eb3bcee2c49a7b"
+  version = "v3.23"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","ssh/terminal","tea","twofish","xtea"]
-  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+  revision = "0efb9460aaf800c6376acf625be2853bceac2e06"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "a8b9294777976932365dabb6640cf1468d95c70f"
+  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "8b4580aae2a0dd0c231a45d3ccb8434ff533b840"
+  revision = "03467258950d845cd1877eab69461b98e8c09219"
 
 [[projects]]
   name = "google.golang.org/appengine"
