@@ -19,10 +19,11 @@ import (
 
 	"fmt"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
@@ -39,7 +40,7 @@ var (
 	runInDaemonMode              bool
 	gameService                  *_GameService
 	signalChan                   = make(chan os.Signal, 1)
-	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
+	gameDispatcherClientDelegate = &dispatcherClusterDelegate{}
 )
 
 func parseArgs() {
@@ -99,6 +100,7 @@ func Run(delegate IGameDelegate) {
 
 	gameService = newGameService(gameid, delegate)
 
+	dispatchercluster.Initialize()
 	dispatcherclient.Initialize(gameDispatcherClientDelegate, false)
 
 	setupSignals()
@@ -183,44 +185,34 @@ func waitEntityStorageFinish() {
 	gwlog.Infof("*** DB OK ***")
 }
 
-type dispatcherClientDelegate struct {
+type dispatcherClusterDelegate struct {
 	lastCollectEntitySyncInfosTime time.Time
 }
 
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcherclient.DispatcherClient, isReconnect bool) {
+func (delegate *dispatcherClusterDelegate) OnDispatcherClusterConnected(isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
 	var isRestore bool
 	if !isReconnect {
 		isRestore = restore
 	}
 
-	//go func() {
-	//	for !dispatcherClient.IsClosed() {
-	//		time.Sleep(time.Millisecond * 10)
-	//		err := dispatcherClient.Flush()
-	//		if err != nil {
-	//			break
-	//		}
-	//	}
-	//}()
-
-	dispatcherClient.SendSetGameID(gameid, isReconnect, isRestore)
+	dispatchercluster.SendSetGameID(gameid, isReconnect, isRestore)
 }
 
 var lastWarnGateServiceQueueLen = 0
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
+func (delegate *dispatcherClusterDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
 		msgtype: msgtype,
 		packet:  packet,
 	}
 }
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
+func (delegate *dispatcherClusterDelegate) HandleDispatcherClientDisconnect() {
 	gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
 }
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
+func (delegate *dispatcherClusterDelegate) HandleDispatcherClientBeforeFlush() {
 	// collect all sync infos from entities and group them by target gates
 	now := time.Now()
 	if now.Sub(delegate.lastCollectEntitySyncInfosTime) >= time.Millisecond*100 {

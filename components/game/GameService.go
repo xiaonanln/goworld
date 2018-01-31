@@ -10,11 +10,11 @@ import (
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goTimer"
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/async"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"

@@ -20,9 +20,9 @@ import (
 
 	"path"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"

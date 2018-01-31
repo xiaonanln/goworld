@@ -3,9 +3,9 @@ package entity
 import (
 	"fmt"
 
-	"github.com/xiaonanln/goworld/components/dispatcher/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 

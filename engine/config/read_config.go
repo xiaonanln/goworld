@@ -85,13 +85,14 @@ type DispatcherConfig struct {
 
 // GoWorldConfig defines the total GoWorld config file structure
 type GoWorldConfig struct {
-	Dispatcher DispatcherConfig
-	GameCommon GameConfig
-	GateCommon GateConfig
-	Games      map[int]*GameConfig
-	Gates      map[int]*GateConfig
-	Storage    StorageConfig
-	KVDB       KVDBConfig
+	DispatcherCommon DispatcherConfig
+	GameCommon       GameConfig
+	GateCommon       GateConfig
+	Dispatchers      map[int]*DispatcherConfig
+	Games            map[int]*GameConfig
+	Gates            map[int]*GateConfig
+	Storage          StorageConfig
+	KVDB             KVDBConfig
 }
 
 // StorageConfig defines fields of storage config
@@ -191,8 +192,8 @@ func GetGateIDs() []uint16 {
 }
 
 // GetDispatcher returns the dispatcher config
-func GetDispatcher() *DispatcherConfig {
-	return &Get().Dispatcher
+func GetDispatcher(dispid int16) *DispatcherConfig {
+	return Get().Dispatchers[int(dispid)]
 }
 
 // GetStorage returns the storage config
@@ -226,6 +227,8 @@ func readGoWorldConfig() *GoWorldConfig {
 	readGameCommonConfig(gameCommonSec, &config.GameCommon)
 	gateCommonSec := iniFile.Section("gate_common")
 	readGateCommonConfig(gateCommonSec, &config.GateCommon)
+	dispatcherCommonSec := iniFile.Section("dispatcher_common")
+	readDispatcherCommonConfig(dispatcherCommonSec, &config.DispatcherCommon)
 
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()
@@ -235,9 +238,11 @@ func readGoWorldConfig() *GoWorldConfig {
 
 		//gwlog.Infof("Section %s", sec.Name())
 		secName = strings.ToLower(secName)
-		if secName == "dispatcher" {
+		if len(secName) > 10 && secName[:10] == "dispatcher" {
 			// dispatcher config
-			readDispatcherConfig(sec, &config.Dispatcher)
+			id, err := strconv.Atoi(secName[10:])
+			checkConfigError(err, fmt.Sprintf("invalid dispatcher name: %s", secName))
+			config.Dispatchers[id] = readDispatcherConfig(sec, &config.DispatcherCommon)
 		} else if secName == "game_common" || secName == "gate_common" {
 			// ignore common section here
 		} else if len(secName) > 4 && secName[:4] == "game" {
@@ -380,15 +385,26 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 	}
 }
 
-func readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
-	config.BindIp = _DEFAULT_LOCALHOST_IP
-	config.Ip = _DEFAULT_LOCALHOST_IP
-	config.LogFile = "dispatcher.log"
-	config.LogStderr = true
-	config.LogLevel = _DEFAULT_LOG_LEVEL
-	config.HTTPIp = _DEFAULT_HTTP_IP
-	config.HTTPPort = 0
+func readDispatcherCommonConfig(section *ini.Section, dc *DispatcherConfig) {
+	dc.BindIp = _DEFAULT_LOCALHOST_IP
+	dc.Ip = _DEFAULT_LOCALHOST_IP
+	dc.LogFile = "dispatcher.log"
+	dc.LogStderr = true
+	dc.LogLevel = _DEFAULT_LOG_LEVEL
+	dc.HTTPIp = _DEFAULT_HTTP_IP
+	dc.HTTPPort = 0
 
+	_readDispatcherConfig(section, dc)
+}
+
+func readDispatcherConfig(sec *ini.Section, dispatcherCommonConfig *DispatcherConfig) *DispatcherConfig {
+	dc := *dispatcherCommonConfig // copy from game_common
+	_readDispatcherConfig(sec, &dc)
+	// validate dispatcher config
+	return &dc
+}
+
+func _readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {

@@ -1,0 +1,5 @@
+package dispatchercluster
+
+func Initialize() {
+
+}
