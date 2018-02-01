@@ -14,27 +14,29 @@ type DispatcherClient struct {
 	*proto.GoWorldConnection
 }
 
-func newDispatcherClient(conn net.Conn, autoFlush bool) *DispatcherClient {
+func newDispatcherClient(conn net.Conn) *DispatcherClient {
 	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{conn}), false, "")
 
 	dc := &DispatcherClient{
 		GoWorldConnection: gwc,
 	}
-	if autoFlush {
-		go func() {
-			//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
-			for !gwc.IsClosed() {
-				time.Sleep(time.Millisecond * 10)
-				dispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
-
-				err := gwc.Flush("DispatcherClient")
-				if err != nil {
-					break
-				}
-			}
-		}()
-	}
 	return dc
+}
+
+func (dc *DispatcherClient) StartAutoFlush(beforeFlushCallback func()) {
+	gwc := dc.GoWorldConnection
+	go func() {
+		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
+		for !gwc.IsClosed() {
+			time.Sleep(time.Millisecond * 10)
+			beforeFlushCallback()
+
+			err := gwc.Flush("DispatcherClient")
+			if err != nil {
+				break
+			}
+		}
+	}()
 }
 
 // Close the dispatcher client

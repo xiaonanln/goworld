@@ -159,6 +159,22 @@ func GetGate(gateid uint16) *GateConfig {
 	return Get().Gates[int(gateid)]
 }
 
+// GetDispatcherIDs returns all dispatcher IDs
+func GetDispatcherIDs() []uint16 {
+	cfg := Get()
+	dispIDs := make([]int, 0, len(cfg.Dispatchers))
+	for id := range cfg.Dispatchers {
+		dispIDs = append(dispIDs, id)
+	}
+	sort.Ints(dispIDs)
+
+	res := make([]uint16, len(dispIDs))
+	for i, id := range dispIDs {
+		res[i] = uint16(id)
+	}
+	return res
+}
+
 // GetGameIDs returns all game IDs
 func GetGameIDs() []uint16 {
 	cfg := Get()
@@ -192,7 +208,7 @@ func GetGateIDs() []uint16 {
 }
 
 // GetDispatcher returns the dispatcher config
-func GetDispatcher(dispid int16) *DispatcherConfig {
+func GetDispatcher(dispid uint16) *DispatcherConfig {
 	return Get().Dispatchers[int(dispid)]
 }
 
