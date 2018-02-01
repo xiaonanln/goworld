@@ -233,8 +233,9 @@ func DumpPretty(cfg interface{}) string {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		Games: map[int]*GameConfig{},
-		Gates: map[int]*GateConfig{},
+		Dispatchers: map[int]*DispatcherConfig{},
+		Games:       map[int]*GameConfig{},
+		Gates:       map[int]*GateConfig{},
 	}
 	gwlog.Infof("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
@@ -254,13 +255,13 @@ func readGoWorldConfig() *GoWorldConfig {
 
 		//gwlog.Infof("Section %s", sec.Name())
 		secName = strings.ToLower(secName)
-		if len(secName) > 10 && secName[:10] == "dispatcher" {
+		if secName == "game_common" || secName == "gate_common" || secName == "dispatcher_common" {
+			// ignore common section here
+		} else if len(secName) > 10 && secName[:10] == "dispatcher" {
 			// dispatcher config
 			id, err := strconv.Atoi(secName[10:])
 			checkConfigError(err, fmt.Sprintf("invalid dispatcher name: %s", secName))
 			config.Dispatchers[id] = readDispatcherConfig(sec, &config.DispatcherCommon)
-		} else if secName == "game_common" || secName == "gate_common" {
-			// ignore common section here
 		} else if len(secName) > 4 && secName[:4] == "game" {
 			// game config
 			id, err := strconv.Atoi(secName[4:])
@@ -281,6 +282,8 @@ func readGoWorldConfig() *GoWorldConfig {
 		}
 
 	}
+
+	validateConfig(&config)
 	return &config
 }
 
@@ -585,6 +588,42 @@ func validateStorageConfig(config *StorageConfig) {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
 		if consts.DEBUG_MODE {
 			os.Exit(2)
+		}
+	}
+}
+
+func validateConfig(config *GoWorldConfig) {
+
+	dispatchersNum := len(config.Dispatchers)
+	if dispatchersNum <= 0 {
+		gwlog.Panicf("dispatcher not found in config file, must has at least 1 dispatcher")
+	}
+
+	for dispatcherid := 1; dispatcherid <= dispatchersNum; dispatcherid++ {
+		if _, ok := config.Dispatchers[dispatcherid]; !ok {
+			gwlog.Panicf("found %d dispatchers in config file, but dispatcher%d is not found. dispatcherid must be 1~%d", dispatchersNum, dispatcherid, dispatchersNum)
+		}
+	}
+
+	gamesNum := len(config.Games)
+	if gamesNum <= 0 {
+		gwlog.Panicf("game not found in config file, must has at least 1 game")
+	}
+
+	for gameid := 1; gameid <= gamesNum; gameid++ {
+		if _, ok := config.Games[gameid]; !ok {
+			gwlog.Panicf("found %d games in config file, but game%d is not found. gameid must be 1~%d", gamesNum, gameid, gamesNum)
+		}
+	}
+
+	gatesNum := len(config.Gates)
+	if gatesNum <= 0 {
+		gwlog.Panicf("gate not found in config file, must has at least 1 gate")
+	}
+
+	for gateid := 1; gateid <= gatesNum; gateid++ {
+		if _, ok := config.Gates[gateid]; !ok {
+			gwlog.Panicf("found %d gates in config file, but gate%d is not found. gateid must be 1~%d", gatesNum, gateid, gatesNum)
 		}
 	}
 }

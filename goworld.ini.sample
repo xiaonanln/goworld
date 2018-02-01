@@ -22,7 +22,7 @@ collection=__kv__
 ;url=root:testmysql@tcp(127.0.0.1:3306)/goworld
 
 
-[dispatcher]
+[dispatcher1]
 bind_ip=127.0.0.1
 bind_port=13000
 ip=127.0.0.1
@@ -44,9 +44,8 @@ log_level=debug
 
 [game1]
 http_port=14001
-
 [game2]
-http_port=14002
+http_port=14001
 
 [gate_common]
 ; gomaxprocs=0

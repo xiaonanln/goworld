@@ -23,11 +23,13 @@ func TestLoad(t *testing.T) {
 	if config == nil {
 		t.FailNow()
 	}
-	if config.Dispatcher.Ip == "" {
-		t.Errorf("dispatch ip not found")
-	}
-	if config.Dispatcher.Port == 0 {
-		t.Errorf("dispatcher port not found")
+	for dispid, dispatcherConfig := range config.Dispatchers {
+		if dispatcherConfig.Ip == "" {
+			t.Errorf("dispatch %d: ip not found", dispid)
+		}
+		if dispatcherConfig.Port == 0 {
+			t.Errorf("dispatcher %d: port not found", dispid)
+		}
 	}
 	for gateid, gateConfig := range config.Gates {
 		if gateConfig.Ip == "" {
@@ -48,7 +50,7 @@ func TestReload(t *testing.T) {
 }
 
 func TestGetDispatcher(t *testing.T) {
-	cfg := GetDispatcher()
+	cfg := GetDispatcher(1)
 	cfgStr, _ := json.Marshal(cfg)
 	fmt.Printf("dispatcher config: %s", string(cfgStr))
 }
@@ -78,7 +80,8 @@ func TestGetKVDB(t *testing.T) {
 }
 
 func TestGetGameIDs(t *testing.T) {
-	GetGameIDs()
+	gameIds := GetGameIDs()
+	t.Logf("game ids: %v", gameIds)
 }
 
 func TestGetGate(t *testing.T) {
@@ -86,7 +89,8 @@ func TestGetGate(t *testing.T) {
 }
 
 func TestGetGateIDs(t *testing.T) {
-	GetGateIDs()
+	ids := GetGateIDs()
+	t.Logf("gate ids: %v", ids)
 	//assert.Equal(t, len(gids), 1, "gate num is wrong")
 	//assert.Equal(t, gids[0], uint16(1), "gate id is not 1")
 }

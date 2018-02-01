@@ -14,6 +14,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
@@ -118,6 +119,7 @@ func (e *Entity) Destroy() {
 	}
 	gwlog.Debugf("%s.Destroy ...", e)
 	e.destroyEntity(false)
+	dispatchercluster.SendNotifyDestroyEntity(e.ID)
 	dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
 }
 

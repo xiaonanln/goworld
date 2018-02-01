@@ -119,7 +119,7 @@ func setupSignals() {
 type dispatcherClientDelegate struct {
 }
 
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(dispatcherClient *dispatcherclient.DispatcherClient, isReconnect bool) {
+func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(isReconnect bool) {
 	// called when connected / reconnected to dispatcher (not in main routine)
 	dispatcherClient.SendSetGateID(gateid)
 }

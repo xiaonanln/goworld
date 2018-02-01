@@ -64,7 +64,7 @@ func (dcm *DispatcherConnMgr) assureConnectedDispatcherClient() {
 			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
-		dcm.dispatcherClientDelegate.OnDispatcherClientConnect(dcm.dispatcherClient, dcm.isReconnect)
+		dcm.dispatcherClientDelegate.OnDispatcherClientConnect(dcm.isReconnect)
 		dcm.isReconnect = true
 
 		gwlog.Infof("dispatcher_client: connected to dispatcher: %s", dcm.dispatcherClient)
@@ -89,7 +89,7 @@ func (dcm *DispatcherConnMgr) connectDispatchClient() error {
 
 // IDispatcherClientDelegate defines functions that should be implemented by dispatcher clients
 type IDispatcherClientDelegate interface {
-	OnDispatcherClientConnect(dispatcherClient *DispatcherClient, isReconnect bool)
+	OnDispatcherClientConnect(isReconnect bool)
 	HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet)
 	HandleDispatcherClientDisconnect()
 	HandleDispatcherClientBeforeFlush()
@@ -130,7 +130,7 @@ func (dcm *DispatcherConnMgr) serveDispatcherClient() {
 		}
 
 		if consts.DEBUG_PACKETS {
-			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dispatcherClient, msgtype, pkt.Payload())
+			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dcm.dispatcherClient, msgtype, pkt.Payload())
 		}
 		dcm.dispatcherClientDelegate.HandleDispatcherClientPacket(msgtype, pkt)
 	}
