@@ -10,7 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -116,5 +116,5 @@ func (cp *ClientProxy) handleSyncPositionYawFromClient(pkt *netutil.Packet) {
 
 func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
 	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	dispatcherclient.GetDispatcherClientForSend().SendPacket(pkt)
+	dispatchercluster.SelectByGateID(gateid).SendPacket(pkt)
 }

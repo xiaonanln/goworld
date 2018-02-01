@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -120,7 +119,6 @@ func (e *Entity) Destroy() {
 	gwlog.Debugf("%s.Destroy ...", e)
 	e.destroyEntity(false)
 	dispatchercluster.SendNotifyDestroyEntity(e.ID)
-	dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(e.ID)
 }
 
 func (e *Entity) destroyEntity(isMigrate bool) {
@@ -608,7 +606,8 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 // DeclareService declares global service for service entity
 func (e *Entity) DeclareService(serviceName string) {
 	e.declaredServices.Add(serviceName)
-	dispatcherclient.GetDispatcherClientForSend().SendDeclareService(e.ID, serviceName)
+
+	dispatchercluster.SendDeclareService(e.ID, serviceName)
 }
 
 // OnInit is called when entity is initializing
@@ -773,7 +772,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	if oldClient != nil {
 		// send destroy entity to client
 		entityManager.onEntityLoseClient(oldClient.clientid)
-		dispatcherclient.GetDispatcherClientForSend().SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
+		dispatchercluster.SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors {
 			oldClient.sendDestroyEntity(neighbor)
@@ -794,7 +793,8 @@ func (e *Entity) SetClient(client *GameClient) {
 
 		// set all filter properties to client
 		for key, val := range e.filterProps {
-			dispatcherclient.GetDispatcherClientForSend().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
+
+			dispatchercluster.SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 		}
 	}
 
@@ -1058,7 +1058,7 @@ func (e *Entity) requestMigrateTo(spaceID common.EntityID, pos Vector3) {
 	e.enteringSpaceRequest.EnterPos = pos
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
 
-	dispatcherclient.GetDispatcherClientForSend().SendMigrateRequest(spaceID, e.ID)
+	dispatchercluster.SendMigrateRequest(spaceID, e.ID)
 }
 
 func (e *Entity) clearEnteringSpaceRequest() {
@@ -1108,7 +1108,7 @@ func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Vector3, spaceLoc ui
 	timerData := e.dumpTimers()
 	migrateData := e.GetMigrateData()
 
-	dispatcherclient.GetDispatcherClientForSend().SendRealMigrate(e.ID, spaceLoc, spaceID,
+	dispatchercluster.SendRealMigrate(e.ID, spaceLoc, spaceID,
 		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
 }
 
@@ -1163,7 +1163,7 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	e.filterProps[key] = val
 	// send filter property to client
 	if e.client != nil {
-		dispatcherclient.GetDispatcherClientForSend().SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
+		dispatchercluster.SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 	}
 }
 
@@ -1171,7 +1171,7 @@ func (e *Entity) SetFilterProp(key string, val string) {
 //
 // The message is broadcast to filtered clientproxies directly without going through entities
 func (e *Entity) CallFitleredClients(key string, val string, method string, args ...interface{}) {
-	dispatcherclient.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
+	dispatchercluster.SendCallFilterClientProxies(key, val, method, args)
 }
 
 // IsUseAOI returns if entity type is using aoi
@@ -1257,11 +1257,12 @@ func CollectEntitySyncInfos() {
 	}
 
 	// send to dispatcher, one gate by one gate
-	for _, packet := range entitySyncInfosToGate {
+	for gateid_1, packet := range entitySyncInfosToGate {
 		//gwlog.Infof("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
 
 		if packet.GetPayloadLen() > 4 {
-			dispatcherclient.GetDispatcherClientForSend().SendPacket(packet)
+			gateid := uint16(gateid_1 + 1)
+			dispatchercluster.SelectByGateID(gateid).SendPacket(packet)
 		}
 
 		packet.Release()

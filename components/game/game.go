@@ -23,7 +23,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
@@ -101,7 +100,6 @@ func Run(delegate IGameDelegate) {
 	gameService = newGameService(gameid, delegate)
 
 	dispatchercluster.Initialize()
-	dispatcherclient.Initialize(gameDispatcherClientDelegate, false)
 
 	setupSignals()
 

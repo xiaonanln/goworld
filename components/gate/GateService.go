@@ -21,7 +21,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -175,7 +175,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 	gs.clientProxies[cp.clientid] = cp
 	gs.clientProxiesLock.Unlock()
 
-	dispatcherclient.GetDispatcherClientForSend().SendNotifyClientConnected(cp.clientid)
+	dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.ServeTCPConnection: client %s connected", gs, cp)
 	}
@@ -222,7 +222,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 	}
 	gs.filterTreesLock.Unlock()
 
-	dispatcherclient.GetDispatcherClientForSend().SendNotifyClientDisconnected(cp.clientid)
+	dispatchercluster.SelectByGateID(gateid).SendNotifyClientDisconnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.onClientProxyClose: client %s disconnected", gs, cp)
 	}
@@ -253,7 +253,7 @@ func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType, packe
 			}
 		} else {
 			// client already disconnected, but the game service seems not knowing it, so tell it
-			dispatcherclient.GetDispatcherClientForSend().SendNotifyClientDisconnected(clientid)
+			dispatchercluster.SelectByGateID(gateid).SendNotifyClientDisconnected(clientid)
 		}
 	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
 		gs.handleSyncPositionYawOnClients(packet)
@@ -402,7 +402,7 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 		packet.AppendBytes(syncPkt.UnreadPayload())
 		syncPkt.Release()
 	}
-	dispatcherclient.GetDispatcherClientForSend().SendPacket(packet)
+	dispatchercluster.SelectByGateID(gateid).SendPacket(packet)
 	packet.Release()
 }
 

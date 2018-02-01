@@ -346,8 +346,8 @@ func (gs *_GameService) HandleCallEntityMethod(entityID common.EntityID, method 
 	entity.OnCall(entityID, method, args, clientid)
 }
 
-func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, gid uint16) {
-	client := entity.MakeGameClient(clientid, gid)
+func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, gateid uint16) {
+	client := entity.MakeGameClient(clientid, gateid)
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleNotifyClientConnected: %s", gs, client)
 	}

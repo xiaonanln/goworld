@@ -56,6 +56,7 @@ func (info *entityDispatchInfo) isBlockingRPC() bool {
 
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
+	dispid            uint16
 	config            *config.DispatcherConfig
 	gameClients       []*dispatcherClientProxy
 	gateClients       []*dispatcherClientProxy
@@ -74,12 +75,13 @@ type DispatcherService struct {
 	entitySyncInfosToGame     [][]byte // cache entity sync infos to gates
 }
 
-func newDispatcherService() *DispatcherService {
-	cfg := config.Get()
-	gameCount := len(cfg.Games)
-	gateCount := len(cfg.Gates)
+func newDispatcherService(dispid uint16) *DispatcherService {
+	cfg := config.GetDispatcher(dispid)
+	gameCount := len(config.GetGameIDs())
+	gateCount := len(config.GetGateIDs())
 	return &DispatcherService{
-		config:            &cfg.Dispatcher,
+		dispid:            dispid,
+		config:            cfg,
 		gameClients:       make([]*dispatcherClientProxy, gameCount),
 		gateClients:       make([]*dispatcherClientProxy, gateCount),
 		chooseClientIndex: 0,
@@ -187,7 +189,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 	}
 	dcp.gameid = gameid
-	dcp.startAutoFlush()
+	dcp.startAutoFlush() // TODO: why start autoflush after gameid is set ?
 
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleSetGameID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)

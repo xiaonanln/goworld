@@ -19,6 +19,8 @@ import (
 )
 
 var (
+	dispidArg         int
+	dispid            uint16
 	configFile        = ""
 	logLevel          string
 	runInDaemonMode   bool
@@ -27,10 +29,17 @@ var (
 )
 
 func parseArgs() {
+	flag.IntVar(&dispidArg, "dispid", 0, "set dispatcher ID")
 	flag.StringVar(&configFile, "configfile", "", "set config file path")
 	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
 	flag.BoolVar(&runInDaemonMode, "d", false, "run in daemon mode")
 	flag.Parse()
+	dispid = uint16(dispidArg)
+
+	validDispIds := config.GetDispatcherIDs()
+	if dispid < validDispIds[0] || dispid > validDispIds[len(validDispIds)-1] {
+		gwlog.Fatalf("dispatcher ID must be one of %v, but is %v, use -dispid to specify", config.GetDispatcherIDs(), dispid)
+	}
 }
 
 func setupGCPercent() {
@@ -50,7 +59,7 @@ func main() {
 		config.SetConfigFile(configFile)
 	}
 
-	dispatcherConfig := config.GetDispatcher()
+	dispatcherConfig := config.GetDispatcher(dispid)
 
 	if logLevel == "" {
 		logLevel = dispatcherConfig.LogLevel
@@ -59,7 +68,7 @@ func main() {
 	setupSignals()
 	binutil.SetupHTTPServer(dispatcherConfig.HTTPIp, dispatcherConfig.HTTPPort, nil)
 
-	dispatcherService = newDispatcherService()
+	dispatcherService = newDispatcherService(dispid)
 	dispatcherService.run()
 }
 

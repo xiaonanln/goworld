@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -288,7 +288,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 	}
 
 	if cause == ccCreate || cause == ccRestore {
-		dispatcherclient.GetDispatcherClientForSend().SendNotifyCreateEntity(entityID)
+		dispatchercluster.SendNotifyCreateEntity(entityID)
 	}
 
 	if client != nil {
@@ -326,12 +326,12 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 		// callback runs in main routine
 		if err != nil {
 			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
-			dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
+			dispatchercluster.SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 		}
 
 		if space != nil && space.IsDestroyed() {
 			// Space might be destroy during the Load process, so cancel the entity creation
-			dispatcherclient.GetDispatcherClientForSend().SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
+			dispatchercluster.SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
 			return
 		}
 
@@ -340,11 +340,11 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 }
 
 func loadEntityAnywhere(typeName string, entityID common.EntityID) {
-	dispatcherclient.GetDispatcherClientForSend().SendLoadEntityAnywhere(typeName, entityID)
+	dispatchercluster.SendLoadEntityAnywhere(typeName, entityID)
 }
 
 func createEntityAnywhere(typeName string, data map[string]interface{}) {
-	dispatcherclient.GetDispatcherClientForSend().SendCreateEntityAnywhere(typeName, data)
+	dispatchercluster.SendCreateEntityAnywhere(typeName, data)
 }
 
 // CreateEntityLocally creates new entity in the local game
@@ -407,7 +407,7 @@ func callEntity(id common.EntityID, method string, args []interface{}) {
 }
 
 func callRemote(id common.EntityID, method string, args []interface{}) {
-	dispatcherclient.GetDispatcherClientForSend().SendCallEntityMethod(id, method, args)
+	dispatchercluster.SelectByEntityID(id).SendCallEntityMethod(id, method, args)
 }
 
 var lastWarnedOnCallMethod = ""
