@@ -25,21 +25,25 @@ const (
 )
 
 type DispatcherConnMgr struct {
-	dispid                   uint16
-	_dispatcherClient        *DispatcherClient
-	isReconnect              bool
-	autoFlush                bool
-	dispatcherClientDelegate IDispatcherClientDelegate
+	gid               uint16 // gateid or gameid
+	dctype            DispatcherClientType
+	dispid            uint16
+	_dispatcherClient *DispatcherClient
+	isReconnect       bool
+	isRestoreGame     bool
+	delegate          IDispatcherClientDelegate
 }
 
 var (
 	errDispatcherNotConnected = errors.New("dispatcher not connected")
 )
 
-func NewDispatcherConnMgr(dispid uint16, autoFlush bool) *DispatcherConnMgr {
+func NewDispatcherConnMgr(gid uint16, dctype DispatcherClientType, dispid uint16, isRestoreGame bool, delegate IDispatcherClientDelegate) *DispatcherConnMgr {
 	return &DispatcherConnMgr{
-		dispid:    dispid,
-		autoFlush: autoFlush,
+		dctype:        dctype,
+		dispid:        dispid,
+		isRestoreGame: isRestoreGame,
+		delegate:      delegate,
 	}
 }
 
@@ -59,16 +63,21 @@ func (dcm *DispatcherConnMgr) String() string {
 
 func (dcm *DispatcherConnMgr) assureConnected() *DispatcherClient {
 	//gwlog.Debugf("assureConnected: _dispatcherClient", _dispatcherClient)
+	var err error
 	dc := dcm.getDispatcherClient()
 	for dc == nil || dc.IsClosed() {
-		err := dcm.connectDispatchClient()
+		dc, err = dcm.connectDispatchClient()
 		if err != nil {
 			gwlog.Errorf("Connect to dispatcher failed: %s", err.Error())
 			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
 		dcm.setDispatcherClient(dc)
-		dcm.dispatcherClientDelegate.OnDispatcherClientConnect(dcm.isReconnect)
+		if dcm.dctype == GameDispatcherClientType {
+			dc.SendSetGameID(dcm.gid, dcm.isReconnect, dcm.isRestoreGame)
+		} else {
+			dc.SendSetGateID(dcm.gid)
+		}
 		dcm.isReconnect = true
 
 		gwlog.Infof("dispatcher_client: connected to dispatcher: %s", dc)
@@ -76,30 +85,23 @@ func (dcm *DispatcherConnMgr) assureConnected() *DispatcherClient {
 	return dc
 }
 
-func (dcm *DispatcherConnMgr) connectDispatchClient() error {
+func (dcm *DispatcherConnMgr) connectDispatchClient() (*DispatcherClient, error) {
 	dispatcherConfig := config.GetDispatcher(dcm.dispid)
 	conn, err := netutil.ConnectTCP(dispatcherConfig.Ip, dispatcherConfig.Port)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetReadBuffer(consts.DISPATCHER_CLIENT_READ_BUFFER_SIZE)
 	tcpConn.SetWriteBuffer(consts.DISPATCHER_CLIENT_WRITE_BUFFER_SIZE)
-	dc := newDispatcherClient(conn)
-	if dcm.autoFlush {
-		dc.StartAutoFlush(dcm.dispatcherClientDelegate.HandleDispatcherClientBeforeFlush)
-	}
-	return nil
+	dc := newDispatcherClient(dcm.dctype, conn, dcm.isReconnect, dcm.isRestoreGame)
+	return dc, nil
 }
 
 // IDispatcherClientDelegate defines functions that should be implemented by dispatcher clients
 type IDispatcherClientDelegate interface {
-	OnDispatcherClientConnect(isReconnect bool)
 	HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet)
 	HandleDispatcherClientDisconnect()
-	HandleDispatcherClientBeforeFlush()
-	//HandleDeclareService(entityID common.EntityID, serviceName string)
-	//HandleCallEntityMethod(entityID common.EntityID, method string, args []interface{})
 }
 
 // Initialize the dispatcher client, only called by engine
@@ -129,7 +131,7 @@ func (dcm *DispatcherConnMgr) serveDispatcherClient() {
 
 			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
 			dc.Close()
-			dcm.dispatcherClientDelegate.HandleDispatcherClientDisconnect()
+			dcm.delegate.HandleDispatcherClientDisconnect()
 			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}
@@ -137,6 +139,6 @@ func (dcm *DispatcherConnMgr) serveDispatcherClient() {
 		if consts.DEBUG_PACKETS {
 			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dc, msgtype, pkt.Payload())
 		}
-		dcm.dispatcherClientDelegate.HandleDispatcherClientPacket(msgtype, pkt)
+		dcm.delegate.HandleDispatcherClientPacket(msgtype, pkt)
 	}
 }

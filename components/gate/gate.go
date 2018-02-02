@@ -22,6 +22,7 @@ import (
 
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -89,7 +90,8 @@ func main() {
 		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
 	}
 
-	dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
+	dispatchercluster.Initialize(dispatcherclient.GateDispatcherClientType, true, false)
+	//dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
 }
@@ -117,11 +119,6 @@ func setupSignals() {
 }
 
 type dispatcherClientDelegate struct {
-}
-
-func (delegate *dispatcherClientDelegate) OnDispatcherClientConnect(isReconnect bool) {
-	// called when connected / reconnected to dispatcher (not in main routine)
-	dispatcherClient.SendSetGateID(gateid)
 }
 
 var lastWarnGateServiceQueueLen = 0

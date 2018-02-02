@@ -65,10 +65,10 @@ func main() {
 		logLevel = dispatcherConfig.LogLevel
 	}
 	binutil.SetupGWLog("dispatcherService", logLevel, dispatcherConfig.LogFile, dispatcherConfig.LogStderr)
-	setupSignals()
 	binutil.SetupHTTPServer(dispatcherConfig.HTTPIp, dispatcherConfig.HTTPPort, nil)
 
 	dispatcherService = newDispatcherService(dispid)
+	setupSignals() // call setupSignals to avoid data race on `dispatcherService`
 	dispatcherService.run()
 }
 

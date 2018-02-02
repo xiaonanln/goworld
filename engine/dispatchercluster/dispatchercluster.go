@@ -1,26 +1,41 @@
 package dispatchercluster
 
 import (
+	"time"
+
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/gwutils"
+	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 var (
 	dispatcherConns []*dispatcherclient.DispatcherConnMgr
 	dispatcherNum   int
+	gid             uint16
+	delegate        IDispatcherClusterDelegate
 )
 
-func Initialize(autoFlush bool) {
+type IDispatcherClusterDelegate interface {
+	HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet)
+	HandleDispatcherClientDisconnect()
+}
+
+func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, autoFlush bool, isRestoreGame bool, delegate IDispatcherClusterDelegate) {
+	gid = _gid
 	dispIds := config.GetDispatcherIDs()
 	dispatcherNum = len(dispIds)
 	dispatcherConns = make([]*dispatcherclient.DispatcherConnMgr, dispatcherNum)
 	for _, dispid := range dispIds {
-		dispatcherConns[dispid-1] = dispatcherclient.NewDispatcherConnMgr(dispid, autoFlush)
+		dispatcherConns[dispid-1] = dispatcherclient.NewDispatcherConnMgr(dctype, dispid, autoFlush, isRestoreGame)
 	}
 	for _, dispConn := range dispatcherConns {
 		dispConn.Connect()
 	}
+
+	go gwutils.RepeatUntilPanicless(autoFlushRoutine)
 }
 
 func SendNotifyDestroyEntity(id common.EntityID) error {
@@ -77,4 +92,22 @@ func SelectByEntityID(id common.EntityID) *dispatcherclient.DispatcherClient {
 func SelectByGateID(gateid uint16) *dispatcherclient.DispatcherClient {
 	idx := hashGateID(gateid) % dispatcherNum
 	return dispatcherConns[idx].GetDispatcherClientForSend()
+}
+
+func Flush(reason string) (anyerror error) {
+	for _, dispconn := range dispatcherConns {
+		err := dispconn.GetDispatcherClientForSend().Flush(reason)
+		if err != nil {
+			anyerror = err
+		}
+	}
+	return
+}
+
+func autoFlushRoutine() {
+	for {
+		time.Sleep(10 * time.Millisecond)
+
+		Flush("dispatchercluster")
+	}
 }

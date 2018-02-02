@@ -187,16 +187,6 @@ type dispatcherClusterDelegate struct {
 	lastCollectEntitySyncInfosTime time.Time
 }
 
-func (delegate *dispatcherClusterDelegate) OnDispatcherClusterConnected(isReconnect bool) {
-	// called when connected / reconnected to dispatcher (not in main routine)
-	var isRestore bool
-	if !isReconnect {
-		isRestore = restore
-	}
-
-	dispatchercluster.SendSetGameID(gameid, isReconnect, isRestore)
-}
-
 var lastWarnGateServiceQueueLen = 0
 
 func (delegate *dispatcherClusterDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
