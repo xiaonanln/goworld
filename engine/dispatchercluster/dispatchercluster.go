@@ -6,6 +6,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 )
 
@@ -96,20 +97,24 @@ func SelectByGateID(gateid uint16) *dispatcherclient.DispatcherClient {
 	return dispatcherConns[idx].GetDispatcherClientForSend()
 }
 
-func Flush(reason string) (anyerror error) {
-	for _, dispconn := range dispatcherConns {
-		err := dispconn.GetDispatcherClientForSend().Flush(reason)
-		if err != nil {
-			anyerror = err
-		}
-	}
-	return
-}
+//func Flush(reason string) (anyerror error) {
+//	for _, dispconn := range dispatcherConns {
+//		err := dispconn.GetDispatcherClientForSend().Flush(reason)
+//		if err != nil {
+//			anyerror = err
+//		}
+//	}
+//	return
+//}
 
 func autoFlushRoutine() {
 	for {
 		time.Sleep(10 * time.Millisecond)
-
-		Flush("dispatchercluster")
+		for _, dispconn := range dispatcherConns {
+			err := dispconn.GetDispatcherClientForSend().Flush("dispatchercluster")
+			if err != nil {
+				gwlog.Errorf("dispatchercluster: %s flush failed: %v", dispconn, err)
+			}
+		}
 	}
 }
