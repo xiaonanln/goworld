@@ -78,8 +78,8 @@ func SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data ma
 }
 
 func SendStartFreezeGame(gameid uint16) (anyerror error) {
-	for _, dispconn := range dispatcherConns {
-		err := dispconn.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
+	for _, dcm := range dispatcherConns {
+		err := dcm.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
 		if err != nil {
 			anyerror = err
 		}
