@@ -82,9 +82,10 @@ func (gwc *GoWorldConnection) SendNotifyClientDisconnected(id common.ClientID) e
 }
 
 // SendCreateEntityAnywhere sends MT_CREATE_ENTITY_ANYWHERE message
-func (gwc *GoWorldConnection) SendCreateEntityAnywhere(typeName string, data map[string]interface{}) error {
+func (gwc *GoWorldConnection) SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CREATE_ENTITY_ANYWHERE)
+	packet.AppendEntityID(entityid)
 	packet.AppendVarStr(typeName)
 	packet.AppendData(data)
 	return gwc.SendPacketRelease(packet)

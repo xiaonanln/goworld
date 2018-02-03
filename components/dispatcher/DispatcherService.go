@@ -398,6 +398,7 @@ func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClie
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
+	// TODO: record entityid -> gameid ?
 	service.chooseGameDispatcherClient().SendPacket(pkt)
 }
 

@@ -40,6 +40,7 @@ var (
 
 func NewDispatcherConnMgr(gid uint16, dctype DispatcherClientType, dispid uint16, isRestoreGame bool, delegate IDispatcherClientDelegate) *DispatcherConnMgr {
 	return &DispatcherConnMgr{
+		gid:           gid,
 		dctype:        dctype,
 		dispid:        dispid,
 		isRestoreGame: isRestoreGame,

@@ -90,7 +90,7 @@ func main() {
 		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
 	}
 
-	dispatchercluster.Initialize(dispatcherclient.GateDispatcherClientType, true, false)
+	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, true, &dispatcherClientDelegate{})
 	//dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
@@ -124,10 +124,7 @@ type dispatcherClientDelegate struct {
 var lastWarnGateServiceQueueLen = 0
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
-	gateService.packetQueue.Push(packetQueueItem{
-		msgtype: msgtype,
-		packet:  packet,
-	})
+	gateService.packetQueue.Push(proto.Message{msgtype, packet})
 	qlen := gateService.packetQueue.Len()
 	if qlen >= 1000 && qlen%1000 == 0 && lastWarnGateServiceQueueLen != qlen {
 		gwlog.Warnf("Gate service queue length = %d", qlen)

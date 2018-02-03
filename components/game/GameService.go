@@ -14,7 +14,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
@@ -33,20 +33,16 @@ const (
 	rsFreezed
 )
 
-type packetQueueItem struct { // packet queue from dispatcher client
-	msgtype proto.MsgType
-	packet  *netutil.Packet
-}
-
 type _GameService struct {
 	config       *config.GameConfig
 	id           uint16
 	gameDelegate IGameDelegate
 	//registeredServices map[string]entity.EntityIDSet
 
-	packetQueue         chan packetQueueItem
-	isAllGamesConnected bool
-	runState            xnsyncutil.AtomicInt
+	packetQueue                    chan proto.Message
+	isAllGamesConnected            bool
+	runState                       xnsyncutil.AtomicInt
+	lastCollectEntitySyncInfosTime time.Time
 	//collectEntitySyncInfosRequest chan struct{}
 	//collectEntitySycnInfosReply   chan interface{}
 }
@@ -56,7 +52,7 @@ func newGameService(gameid uint16, delegate IGameDelegate) *_GameService {
 		id:           gameid,
 		gameDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
-		packetQueue: make(chan packetQueueItem, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
+		packetQueue: make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
 		//terminated:         xnsyncutil.NewOneTimeCond(),
 		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
 		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
@@ -93,7 +89,7 @@ func (gs *_GameService) serveRoutine() {
 		isTick := false
 		select {
 		case item := <-gs.packetQueue:
-			msgtype, pkt := item.msgtype, item.packet
+			msgtype, pkt := item.MsgType, item.Packet
 			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
 				gs.HandleSyncPositionYawFromClient(pkt)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
@@ -123,10 +119,11 @@ func (gs *_GameService) serveRoutine() {
 				typeName := pkt.ReadVarStr()
 				gs.HandleLoadEntityAnywhere(typeName, eid)
 			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
+				entityid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
 				var data map[string]interface{}
 				pkt.ReadData(&data)
-				gs.HandleCreateEntityAnywhere(typeName, data)
+				gs.HandleCreateEntityAnywhere(entityid, typeName, data)
 			} else if msgtype == proto.MT_DECLARE_SERVICE {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
@@ -170,7 +167,11 @@ func (gs *_GameService) serveRoutine() {
 		// after handling packets or firing timers, check the posted functions
 		post.Tick()
 		if isTick {
-			gameDispatcherClientDelegate.HandleDispatcherClientBeforeFlush()
+			now := time.Now()
+			if now.Sub(gs.lastCollectEntitySyncInfosTime) >= time.Millisecond*100 {
+				gs.lastCollectEntitySyncInfosTime = now
+				entity.CollectEntitySyncInfos()
+			}
 		}
 	}
 }
@@ -279,11 +280,11 @@ func (gs *_GameService) String() string {
 	return fmt.Sprintf("_GameService<%d>", gs.id)
 }
 
-func (gs *_GameService) HandleCreateEntityAnywhere(typeName string, data map[string]interface{}) {
+func (gs *_GameService) HandleCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleCreateEntityAnywhere: typeName=%s, data=%v", gs, typeName, data)
+		gwlog.Debugf("%s.handleCreateEntityAnywhere: %s, typeName=%s, data=%v", gs, entityid, typeName, data)
 	}
-	entity.CreateEntityLocally(typeName, data, nil)
+	entity.OnCreateEntityAnywhere(entityid, typeName, data)
 }
 
 func (gs *_GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
@@ -407,5 +408,5 @@ func (gs *_GameService) terminate() {
 }
 
 func (gs *_GameService) freeze() {
-	dispatcherclient.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
+	dispatchercluster.SendStartFreezeGame(gameid)
 }

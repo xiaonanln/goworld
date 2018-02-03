@@ -23,6 +23,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
+	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
@@ -39,7 +40,7 @@ var (
 	runInDaemonMode              bool
 	gameService                  *_GameService
 	signalChan                   = make(chan os.Signal, 1)
-	gameDispatcherClientDelegate = &dispatcherClusterDelegate{}
+	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
 )
 
 func parseArgs() {
@@ -99,7 +100,7 @@ func Run(delegate IGameDelegate) {
 
 	gameService = newGameService(gameid, delegate)
 
-	dispatchercluster.Initialize()
+	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, &dispatcherClientDelegate{})
 
 	setupSignals()
 
@@ -183,30 +184,20 @@ func waitEntityStorageFinish() {
 	gwlog.Infof("*** DB OK ***")
 }
 
-type dispatcherClusterDelegate struct {
-	lastCollectEntitySyncInfosTime time.Time
+type dispatcherClientDelegate struct {
 }
 
 var lastWarnGateServiceQueueLen = 0
 
-func (delegate *dispatcherClusterDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
-	gameService.packetQueue <- packetQueueItem{ // may block the dispatcher client routine
-		msgtype: msgtype,
-		packet:  packet,
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
+	gameService.packetQueue <- proto.Message{ // may block the dispatcher client routine
+		MsgType: msgtype,
+		Packet:  packet,
 	}
 }
 
-func (delegate *dispatcherClusterDelegate) HandleDispatcherClientDisconnect() {
+func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
-}
-
-func (delegate *dispatcherClusterDelegate) HandleDispatcherClientBeforeFlush() {
-	// collect all sync infos from entities and group them by target gates
-	now := time.Now()
-	if now.Sub(delegate.lastCollectEntitySyncInfosTime) >= time.Millisecond*100 {
-		delegate.lastCollectEntitySyncInfosTime = now
-		entity.CollectEntitySyncInfos()
-	}
 }
 
 // GetGameID returns the current Game Server ID

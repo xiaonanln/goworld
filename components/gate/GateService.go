@@ -406,18 +406,13 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 	packet.Release()
 }
 
-type packetQueueItem struct { // packet queue from dispatcher client
-	msgtype proto.MsgType
-	packet  *netutil.Packet
-}
-
 func (gs *GateService) handlePacketRoutine() {
 	for {
-		item := gs.packetQueue.Pop().(packetQueueItem)
+		item := gs.packetQueue.Pop().(proto.Message)
 		op := opmon.StartOperation("GateServiceHandlePacket")
-		gs.HandleDispatcherClientPacket(item.msgtype, item.packet)
+		gs.HandleDispatcherClientPacket(item.MsgType, item.Packet)
 		op.Finish(time.Millisecond * 100)
-		item.packet.Release()
+		item.Packet.Release()
 	}
 }
 

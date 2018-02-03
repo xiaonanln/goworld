@@ -54,12 +54,7 @@ type ClientBot struct {
 	useKCP             bool
 	useWebSocket       bool
 	noEntitySync       bool
-	packetQueue        chan packetQueueItem
-}
-
-type packetQueueItem struct { // packet queue from dispatcher client
-	msgtype proto.MsgType
-	packet  *netutil.Packet
+	packetQueue        chan proto.Message
 }
 
 func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, waiter *sync.WaitGroup) *ClientBot {
@@ -70,7 +65,7 @@ func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, wai
 		useKCP:       useKCP,
 		useWebSocket: useWebSocket,
 		noEntitySync: noEntitySync,
-		packetQueue:  make(chan packetQueueItem),
+		packetQueue:  make(chan proto.Message),
 	}
 }
 
@@ -179,7 +174,7 @@ func (bot *ClientBot) recvLoop() {
 		pkt, err := bot.conn.Recv(&msgtype)
 		if pkt != nil {
 			//fmt.Fprintf(os.Stderr, "P")
-			bot.packetQueue <- packetQueueItem{msgtype, pkt}
+			bot.packetQueue <- proto.Message{msgtype, pkt}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			// bad error
 			gwlog.Errorf("Client recv packet failed: %v", err)
@@ -194,10 +189,8 @@ func (bot *ClientBot) loop() {
 		select {
 		case item := <-bot.packetQueue:
 			//fmt.Fprintf(os.Stderr, "p")
-			msgtype := item.msgtype
-			pkt := item.packet
-			bot.handlePacket(msgtype, pkt)
-			pkt.Release()
+			bot.handlePacket(item.MsgType, item.Packet)
+			item.Packet.Release()
 			break
 		case <-ticker:
 			//fmt.Fprintf(os.Stderr, "|")
