@@ -28,6 +28,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
@@ -137,7 +138,10 @@ func setupSignals() {
 				// freezing game ...
 				gwlog.Infof("Freezing game service ...")
 
-				gameService.freeze()
+				post.Post(func() {
+					gameService.startFreeze()
+				})
+
 				waitGameServiceStateSatisfied(func(rs int) bool { // wait until not running
 					return rs != rsRunning
 				})

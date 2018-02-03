@@ -43,6 +43,7 @@ type _GameService struct {
 	isAllGamesConnected            bool
 	runState                       xnsyncutil.AtomicInt
 	lastCollectEntitySyncInfosTime time.Time
+	dispatcherStartFreezeAcks      []bool
 	//collectEntitySyncInfosRequest chan struct{}
 	//collectEntitySycnInfosReply   chan interface{}
 }
@@ -138,7 +139,8 @@ func (gs *_GameService) serveRoutine() {
 				gateid := pkt.ReadUint16()
 				gs.HandleGateDisconnected(gateid)
 			} else if msgtype == proto.MT_START_FREEZE_GAME_ACK {
-				gs.HandleStartFreezeGameAck()
+				dispid := pkt.ReadUint16()
+				gs.HandleStartFreezeGameAck(dispid)
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 				if consts.DEBUG_MODE {
@@ -320,8 +322,15 @@ func (gs *_GameService) HandleGateDisconnected(gateid uint16) {
 	entity.OnGateDisconnected(gateid)
 }
 
-func (gs *_GameService) HandleStartFreezeGameAck() {
-	gwlog.Infof("Start freeze game ACK received, start freezing ...")
+func (gs *_GameService) HandleStartFreezeGameAck(dispid uint16) {
+	gwlog.Infof("Start freeze game ACK of dispatcher %d is received, checking ...", dispid)
+	gs.dispatcherStartFreezeAcks[dispid-1] = true
+	for _, acked := range gs.dispatcherStartFreezeAcks {
+		if !acked {
+			return
+		}
+	}
+	// all acks are received, enter freezing state ...
 	gs.runState.Store(rsFreezing)
 }
 
@@ -407,6 +416,8 @@ func (gs *_GameService) terminate() {
 	gs.runState.Store(rsTerminating)
 }
 
-func (gs *_GameService) freeze() {
+func (gs *_GameService) startFreeze() {
+	dispatcherNum := len(config.GetDispatcherIDs())
+	gs.dispatcherStartFreezeAcks = make([]bool, dispatcherNum)
 	dispatchercluster.SendStartFreezeGame(gameid)
 }

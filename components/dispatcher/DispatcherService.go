@@ -258,6 +258,7 @@ func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientPro
 	// tell the game to start real freeze, using the packet
 	pkt.ClearPayload()
 	pkt.AppendUint16(proto.MT_START_FREEZE_GAME_ACK)
+	pkt.AppendUint16(dispid)
 	dcp.SendPacket(pkt)
 }
 
