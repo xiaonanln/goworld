@@ -5,8 +5,6 @@ import (
 
 	"fmt"
 
-	"os"
-
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -75,59 +73,12 @@ func (dcp *dispatcherClientProxy) serve() {
 			gwlog.Panic(err)
 		}
 
+		// pass the packet to the dispatcher service
 		if consts.DEBUG_PACKETS {
 			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
 		}
 
-		if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
-			dcp.owner.handleSyncPositionYawFromClient(dcp, pkt)
-		} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
-			dcp.owner.handleSyncPositionYawOnClients(dcp, pkt)
-		} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
-			dcp.owner.handleCallEntityMethod(dcp, pkt)
-		} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
-			dcp.owner.handleDoSomethingOnSpecifiedClient(dcp, pkt)
-		} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-			dcp.owner.handleCallEntityMethodFromClient(dcp, pkt)
-		} else if msgtype == proto.MT_MIGRATE_REQUEST {
-			dcp.owner.handleMigrateRequest(dcp, pkt)
-		} else if msgtype == proto.MT_REAL_MIGRATE {
-			dcp.owner.handleRealMigrate(dcp, pkt)
-		} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
-			dcp.owner.handleCallFilteredClientProxies(dcp, pkt)
-		} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
-			dcp.owner.handleNotifyClientConnected(dcp, pkt)
-		} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
-			dcp.owner.handleNotifyClientDisconnected(dcp, pkt)
-		} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
-			dcp.owner.handleLoadEntityAnywhere(dcp, pkt)
-		} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
-			eid := pkt.ReadEntityID()
-			dcp.owner.handleNotifyCreateEntity(dcp, pkt, eid)
-		} else if msgtype == proto.MT_NOTIFY_DESTROY_ENTITY {
-			eid := pkt.ReadEntityID()
-			dcp.owner.handleNotifyDestroyEntity(dcp, pkt, eid)
-		} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
-			dcp.owner.handleCreateEntityAnywhere(dcp, pkt)
-		} else if msgtype == proto.MT_DECLARE_SERVICE {
-			dcp.owner.handleDeclareService(dcp, pkt)
-		} else if msgtype == proto.MT_SET_GAME_ID {
-			// this is a game server
-			dcp.owner.handleSetGameID(dcp, pkt)
-		} else if msgtype == proto.MT_SET_GATE_ID {
-			// this is a gate
-			dcp.owner.handleSetGateID(dcp, pkt)
-		} else if msgtype == proto.MT_START_FREEZE_GAME {
-			// freeze the game
-			dcp.owner.handleStartFreezeGame(dcp, pkt)
-		} else {
-			gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
-			if consts.DEBUG_MODE {
-				os.Exit(2)
-			}
-		}
-
-		pkt.Release()
+		dcp.owner.messageQueue <- dispatcherMessage{dcp, proto.Message{msgtype, pkt}}
 	}
 }
 

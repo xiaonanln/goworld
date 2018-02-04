@@ -81,21 +81,10 @@ func setupSignals() {
 
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// interrupting, quit dispatcher
-				tryExit(sig)
+				dispatcherService.commandQueue <- dispatcherCommandExit
 			} else {
 				gwlog.Infof("unexcepted signal: %s", sig)
 			}
 		}
 	}()
-}
-
-func tryExit(sig os.Signal) {
-	gamesNum := dispatcherService.connectedGameClientsNum()
-	if gamesNum > 0 {
-		gwlog.Warnf("%s: %d games is connected to dispatcher, can not quit!", sig, gamesNum)
-		return
-	}
-
-	gwlog.Infof("Dispatcher terminated gracefully.")
-	os.Exit(0)
 }

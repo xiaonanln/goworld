@@ -33,6 +33,8 @@ const (
 	// MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME is maxium number of bytes of entity sync info cached for each game
 	MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME = 1024 * 1024
 
+	DISPATCHER_SERVICE_PACKET_QUEUE_SIZE = 10000
+
 	// For Game Service
 	// GAME_SERVICE_PACKET_QUEUE_SIZE is the max packet queue length for game service
 	GAME_SERVICE_PACKET_QUEUE_SIZE = 10000 // packet queue size
