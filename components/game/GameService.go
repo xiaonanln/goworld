@@ -247,8 +247,8 @@ func (gs *_GameService) doFreeze() {
 		return
 	}
 
-	gs.runState.Store(rsFreezed)
 	gwlog.Infof("All entities saved & freezed, game service terminated.")
+	gs.runState.Store(rsFreezed)
 	for {
 		time.Sleep(time.Second)
 	}
