@@ -53,6 +53,13 @@ func (info *entityDispatchInfo) isBlockingRPC() bool {
 	return now.Before(info.blockUntilTime)
 }
 
+type gameClientInfo struct {
+	*dispatcherClientProxy
+	gameid         uint16
+	blockUntilTime time.Time // game can be blocked
+
+}
+
 type dispatcherMessage struct {
 	dcp *dispatcherClientProxy
 	proto.Message
@@ -66,9 +73,10 @@ const (
 
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
-	dispid            uint16
-	config            *config.DispatcherConfig
-	gameClients       []*dispatcherClientProxy
+	dispid      uint16
+	config      *config.DispatcherConfig
+	gameClients []*dispatcherClientProxy
+
 	gateClients       []*dispatcherClientProxy
 	messageQueue      chan dispatcherMessage
 	commandQueue      chan dispatcherCommandType
@@ -304,13 +312,13 @@ func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientPro
 	gwlog.Infof("Handling start freeze game ...")
 	gameid := dcp.gameid
 
-	for _, info := range service.entityDispatchInfos {
-		if info.gameid == gameid {
-			info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
-		}
-	}
+	//for _, info := range service.entityDispatchInfos {
+	//	if info.gameid == gameid {
+	//		info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
+	//	}
+	//}
 
-	// tell the game to start real freeze, using the packet
+	// tell the game to start real freeze, re-using the packet
 	pkt.ClearPayload()
 	pkt.AppendUint16(proto.MT_START_FREEZE_GAME_ACK)
 	pkt.AppendUint16(dispid)
