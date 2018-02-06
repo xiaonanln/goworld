@@ -75,7 +75,7 @@ const (
 
 	// For Snappy Compress
 	// MIN_DATA_SIZE_TO_COMPRESS is the minimal data size to compress
-	MIN_DATA_SIZE_TO_COMPRESS = 1024
+	MIN_DATA_SIZE_TO_COMPRESS = 512
 
 	// For UDP Connections between Gates and Clients
 	// UDP_MAX_PACKET_PAYLOAD_SIZE is the max packet payload size of UDP packets. Since UDP are only used for sync, this value can be very small
@@ -106,10 +106,9 @@ const (
 	DEBUG_MODE = false
 )
 
-// Async & MongoDB configurations
+// Async configurations
 const (
-	ASYNC_JOB_QUEUE_MAXLEN  = 10000
-	MONGODB_OP_QUEUE_MAXLEN = 10000
+	ASYNC_JOB_QUEUE_MAXLEN = 10000
 )
 
 // KCP Options
