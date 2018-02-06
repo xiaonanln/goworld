@@ -42,14 +42,15 @@ var (
 
 // GameConfig defines fields of game config
 type GameConfig struct {
-	BootEntity   string
-	SaveInterval time.Duration
-	LogFile      string
-	LogStderr    bool
-	HTTPIp       string
-	HTTPPort     int
-	LogLevel     string
-	GoMaxProcs   int
+	BootEntity             string
+	SaveInterval           time.Duration
+	LogFile                string
+	LogStderr              bool
+	HTTPIp                 string
+	HTTPPort               int
+	LogLevel               string
+	GoMaxProcs             int
+	PositionSyncIntervalMS int
 }
 
 // GateConfig defines fields of gate config
@@ -296,6 +297,7 @@ func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.HTTPIp = _DEFAULT_HTTP_IP
 	scc.HTTPPort = 0 // pprof not enabled by default
 	scc.GoMaxProcs = 0
+	scc.PositionSyncIntervalMS = 100 // sync positions per 100ms by default
 
 	_readGameConfig(section, scc)
 }
@@ -329,6 +331,8 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else if name == "gomaxprocs" {
 			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
+		} else if name == "position_sync_interval_ms" {
+			sc.PositionSyncIntervalMS = key.MustInt(sc.PositionSyncIntervalMS)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}

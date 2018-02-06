@@ -42,8 +42,9 @@ type _GameService struct {
 	packetQueue                    chan proto.Message
 	isAllGamesConnected            bool
 	runState                       xnsyncutil.AtomicInt
-	lastCollectEntitySyncInfosTime time.Time
+	nextCollectEntitySyncInfosTime time.Time
 	dispatcherStartFreezeAcks      []bool
+	positionSyncInterval           time.Duration
 	//collectEntitySyncInfosRequest chan struct{}
 	//collectEntitySycnInfosReply   chan interface{}
 }
@@ -82,6 +83,12 @@ func (gs *_GameService) run(restore bool) {
 func (gs *_GameService) serveRoutine() {
 	cfg := config.GetGame(gameid)
 	gs.config = cfg
+	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
+	if gs.positionSyncInterval < consts.GAME_SERVICE_TICK_INTERVAL {
+		gwlog.Warnf("%s: entity position sync interval is too small: %s, so reset to %s", gs, gs.positionSyncInterval, consts.GAME_SERVICE_TICK_INTERVAL)
+		gs.positionSyncInterval = consts.GAME_SERVICE_TICK_INTERVAL
+	}
+
 	gwlog.Infof("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
 	ticker := time.Tick(consts.GAME_SERVICE_TICK_INTERVAL)
@@ -170,8 +177,8 @@ func (gs *_GameService) serveRoutine() {
 		post.Tick()
 		if isTick {
 			now := time.Now()
-			if now.Sub(gs.lastCollectEntitySyncInfosTime) >= time.Millisecond*100 {
-				gs.lastCollectEntitySyncInfosTime = now
+			if !gs.nextCollectEntitySyncInfosTime.Before(now) {
+				gs.nextCollectEntitySyncInfosTime = now.Add(gs.positionSyncInterval)
 				entity.CollectEntitySyncInfos()
 			}
 		}
