@@ -10,8 +10,8 @@ func CreateSpaceLocally(kind int) common.EntityID {
 }
 
 // CreateSpaceAnywhere creates a space in any game server
-func CreateSpaceAnywhere(kind int) {
-	createEntityAnywhere(_SPACE_ENTITY_TYPE, map[string]interface{}{
+func CreateSpaceAnywhere(kind int) common.EntityID {
+	return createEntityAnywhere(_SPACE_ENTITY_TYPE, map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: kind,
 	})
 }

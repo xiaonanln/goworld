@@ -343,9 +343,10 @@ func loadEntityAnywhere(typeName string, entityID common.EntityID) {
 	dispatchercluster.SendLoadEntityAnywhere(typeName, entityID)
 }
 
-func createEntityAnywhere(typeName string, data map[string]interface{}) {
+func createEntityAnywhere(typeName string, data map[string]interface{}) common.EntityID {
 	entityid := common.GenEntityID()
 	dispatchercluster.SendCreateEntityAnywhere(entityid, typeName, data)
+	return entityid
 }
 
 // CreateEntityLocally creates new entity in the local game
@@ -354,9 +355,8 @@ func CreateEntityLocally(typeName string, data map[string]interface{}, client *G
 }
 
 // CreateEntityAnywhere creates new entity in any game
-// TODO: return Entity ID which is callable immediately
-func CreateEntityAnywhere(typeName string) {
-	createEntityAnywhere(typeName, nil)
+func CreateEntityAnywhere(typeName string) common.EntityID {
+	return createEntityAnywhere(typeName, nil)
 }
 
 // OnCreateEntityAnywhere is called when CreateEntityAnywhere chooses this game

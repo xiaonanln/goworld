@@ -45,8 +45,8 @@ func CreateEntityLocally(typeName string) common.EntityID {
 }
 
 // CreateEntityAnywhere creates a entity on any server
-func CreateEntityAnywhere(typeName string) {
-	entity.CreateEntityAnywhere(typeName)
+func CreateEntityAnywhere(typeName string) common.EntityID {
+	return entity.CreateEntityAnywhere(typeName)
 }
 
 // LoadEntityAnywhere loads the specified entity from entity storage

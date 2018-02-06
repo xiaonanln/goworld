@@ -451,7 +451,6 @@ func (service *DispatcherService) handleNotifyCreateEntity(dcp *dispatcherClient
 		gwlog.Debugf("%s.handleNotifyCreateEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
-
 	entityDispatchInfo.gameid = dcp.gameid
 	entityDispatchInfo.unblock()
 }
@@ -514,8 +513,13 @@ func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClie
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
-	// TODO: record entityid -> gameid ?
-	service.chooseGame().dispatchPacket(pkt)
+
+	entityid := pkt.ReadEntityID()
+
+	gdi := service.chooseGame()
+	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityid)
+	entityDispatchInfo.gameid = gdi.gameid // setup gameid of entity
+	gdi.dispatchPacket(pkt)
 }
 
 func (service *DispatcherService) handleDeclareService(dcp *dispatcherClientProxy, pkt *netutil.Packet) {

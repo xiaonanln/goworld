@@ -65,7 +65,7 @@ const (
 	// DISPATCHER_MIGRATE_TIMEOUT is timeout for entity migration
 	DISPATCHER_MIGRATE_TIMEOUT = time.Minute * 5
 	// DISPATCHER_LOAD_TIMEOUT is timeout for loading entity
-	DISPATCHER_LOAD_TIMEOUT = time.Minute * 5
+	DISPATCHER_LOAD_TIMEOUT = time.Minute
 	// DISPATCHER_FREEZE_GAME_TIMEOUT is timeout for freezing & restoring game
 	DISPATCHER_FREEZE_GAME_TIMEOUT = time.Minute * 5
 	// For Storage
