@@ -40,7 +40,7 @@ func startDispatchers() {
 
 func startDispatcher(dispid uint16) {
 	cfg := config.GetDispatcher(dispid)
-	args := []string{}
+	args := []string{"-dispid", strconv.Itoa(int(dispid))}
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
