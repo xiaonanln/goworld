@@ -70,12 +70,27 @@ func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 		}
 	}
 }
+func (info *entityDispatchInfo) unblock() {
+	if !info.blockUntilTime.IsZero() { // entity is loading, it's done now
+		//gwlog.Infof("entity is loaded now, clear loadTime")
+		info.blockUntilTime = time.Time{}
+
+		targetGame := info.gameid
+		// send the cached calls to target game
+		var pendingPackets []*netutil.Packet
+		pendingPackets, info.pendingPacketQueue = info.pendingPacketQueue, nil
+		for _, pkt := range pendingPackets {
+			dispatcherService.dispatchPacketToGame(targetGame, pkt)
+			pkt.Release()
+		}
+	}
+}
 
 type gameDispatchInfo struct {
 	gameid             uint16
 	_clientProxy       *dispatcherClientProxy
 	blockUntilTime     time.Time // game can be blocked
-	blockedPacketQueue []*netutil.Packet
+	pendingPacketQueue []*netutil.Packet
 }
 
 func (gdi *gameDispatchInfo) setClientProxy(clientProxy *dispatcherClientProxy) (oldClientProxy *dispatcherClientProxy) {
@@ -99,9 +114,27 @@ func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 	if !gdi.isBlocked() {
 		return gdi._clientProxy.SendPacket(pkt)
 	} else {
-		gdi.blockedPacketQueue = append(gdi.blockedPacketQueue, pkt)
-		pkt.AddRefCount(1)
-		return nil
+		if len(gdi.pendingPacketQueue) < consts.GAME_PENDING_PACKET_QUEUE_MAX_LEN {
+			gdi.pendingPacketQueue = append(gdi.pendingPacketQueue, pkt)
+			pkt.AddRefCount(1)
+			return nil
+		} else {
+			return errors.Errorf("packet to game %d is dropped", gdi.gameid)
+		}
+	}
+}
+
+func (gdi *gameDispatchInfo) unblock() {
+	if !gdi.blockUntilTime.IsZero() {
+		gdi.blockUntilTime = time.Time{}
+
+		// send the cached calls to target game
+		var pendingPackets []*netutil.Packet
+		pendingPackets, gdi.pendingPacketQueue = gdi.pendingPacketQueue, nil
+		for _, pkt := range pendingPackets {
+			gdi._clientProxy.SendPacket(pkt)
+			pkt.Release()
+		}
 	}
 }
 
@@ -118,20 +151,16 @@ const (
 
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
-	dispid            uint16
-	config            *config.DispatcherConfig
-	games             []*gameDispatchInfo
-	gates             []*dispatcherClientProxy
-	messageQueue      chan dispatcherMessage
-	commandQueue      chan dispatcherCommandType
-	chooseClientIndex int
-
-	entityDispatchInfos map[common.EntityID]*entityDispatchInfo
-
-	registeredServices map[string]entity.EntityIDSet
-
-	targetGameOfClient map[common.ClientID]uint16
-
+	dispid                uint16
+	config                *config.DispatcherConfig
+	games                 []*gameDispatchInfo
+	gates                 []*dispatcherClientProxy
+	messageQueue          chan dispatcherMessage
+	commandQueue          chan dispatcherCommandType
+	chooseClientIndex     int
+	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
+	registeredServices    map[string]entity.EntityIDSet
+	targetGameOfClient    map[common.ClientID]uint16
 	entitySyncInfosToGame [][]byte // cache entity sync infos to gates
 }
 
@@ -140,23 +169,21 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 	gameCount := len(config.GetGameIDs())
 	gateCount := len(config.GetGateIDs())
 	ds := &DispatcherService{
-		dispid:            dispid,
-		config:            cfg,
-		messageQueue:      make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
-		commandQueue:      make(chan dispatcherCommandType),
-		games:             make([]*gameDispatchInfo, gameCount),
-		gates:             make([]*dispatcherClientProxy, gateCount),
-		chooseClientIndex: 0,
-
-		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
-		registeredServices:  map[string]entity.EntityIDSet{},
-		targetGameOfClient:  map[common.ClientID]uint16{},
-
+		dispid:                dispid,
+		config:                cfg,
+		messageQueue:          make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
+		commandQueue:          make(chan dispatcherCommandType),
+		games:                 make([]*gameDispatchInfo, gameCount),
+		gates:                 make([]*dispatcherClientProxy, gateCount),
+		chooseClientIndex:     0,
+		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
+		registeredServices:    map[string]entity.EntityIDSet{},
+		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: make([][]byte, gameCount),
 	}
 
 	for i := range ds.games {
-		ds.games[i] = &gameDispatchInfo{}
+		ds.games[i] = &gameDispatchInfo{gameid: uint16(i + 1)}
 	}
 
 	return ds
@@ -298,6 +325,8 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	gdi := service.games[gameid-1]
 	olddcp := gdi.setClientProxy(dcp) // should be nil, unless reconnect
 
+	gdi.unblock()
+
 	if !isRestore {
 		// notify all games that all games connected to dispatcher now!
 		if service.isAllGameClientsConnected() {
@@ -424,12 +453,7 @@ func (service *DispatcherService) handleNotifyCreateEntity(dcp *dispatcherClient
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
 
 	entityDispatchInfo.gameid = dcp.gameid
-
-	if !entityDispatchInfo.blockUntilTime.IsZero() { // entity is loading, it's done now
-		//gwlog.Infof("entity is loaded now, clear loadTime")
-		entityDispatchInfo.blockUntilTime = time.Time{}
-		service.sendPendingPackets(entityDispatchInfo)
-	}
+	entityDispatchInfo.unblock()
 }
 
 func (service *DispatcherService) handleNotifyDestroyEntity(dcp *dispatcherClientProxy, pkt *netutil.Packet, entityID common.EntityID) {
@@ -630,7 +654,6 @@ func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, 
 	// mark the eid as migrating done
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
 
-	entityDispatchInfo.blockUntilTime = time.Time{} // mark the entity as NOT migrating
 	entityDispatchInfo.gameid = targetGame
 	service.targetGameOfClient[clientid] = targetGame // migrating also change target game of client
 
@@ -640,18 +663,7 @@ func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, 
 
 	service.dispatchPacketToGame(targetGame, pkt)
 	// send the cached calls to target game
-	service.sendPendingPackets(entityDispatchInfo)
-}
-
-func (service *DispatcherService) sendPendingPackets(entityDispatchInfo *entityDispatchInfo) {
-	targetGame := entityDispatchInfo.gameid
-	// send the cached calls to target game
-	var pendingPackets []*netutil.Packet
-	pendingPackets, entityDispatchInfo.pendingPacketQueue = entityDispatchInfo.pendingPacketQueue, nil
-	for _, pkt := range pendingPackets {
-		service.dispatchPacketToGame(targetGame, pkt)
-		pkt.Release()
-	}
+	entityDispatchInfo.unblock()
 }
 
 func (service *DispatcherService) broadcastToGameClients(pkt *netutil.Packet) {
