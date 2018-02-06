@@ -24,21 +24,29 @@ func start(sid ServerID) {
 		showMsgAndQuit("server is already running, can not start multiple servers")
 	}
 
-	startDispatcher()
+	startDispatchers()
 	startGames(sid, false)
 	startGates()
 }
 
-func startDispatcher() {
-	showMsg("start dispatcher ...")
+func startDispatchers() {
+	showMsg("start dispatchers ...")
+	dispatcherIds := config.GetDispatcherIDs()
+	showMsg("dispatcher ids: %v", dispatcherIds)
+	for _, dispid := range dispatcherIds {
+		startDispatcher(dispid)
+	}
+}
+
+func startDispatcher(dispid uint16) {
+	cfg := config.GetDispatcher(dispid)
 	args := []string{}
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
 	cmd := exec.Command(env.GetDispatcherBinary(), args...)
-	err := runCmdUntilTag(cmd, config.GetDispatcher().LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
+	err := runCmdUntilTag(cmd, cfg.LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
-
 }
 
 func startGames(sid ServerID, isRestore bool) {
