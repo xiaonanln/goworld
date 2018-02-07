@@ -227,9 +227,9 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 }
 
 // HandleDispatcherClientPacket handles packets received by dispatcher client
-func (gs *GateService) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
+func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.HandleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())
+		gwlog.Debugf("%s.handleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())
 	}
 
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
@@ -408,7 +408,7 @@ func (gs *GateService) handlePacketRoutine() {
 	for {
 		item := gs.packetQueue.Pop().(proto.Message)
 		op := opmon.StartOperation("GateServiceHandlePacket")
-		gs.HandleDispatcherClientPacket(item.MsgType, item.Packet)
+		gs.handleDispatcherClientPacket(item.MsgType, item.Packet)
 		op.Finish(time.Millisecond * 100)
 		item.Packet.Release()
 	}
