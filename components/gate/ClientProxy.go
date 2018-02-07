@@ -14,6 +14,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
@@ -61,7 +62,10 @@ func (cp *ClientProxy) serve() {
 	defer func() {
 		cp.Close()
 		// tell the gate service that this client is down
-		gateService.onClientProxyClose(cp)
+		post.Post(func() {
+			gateService.onClientProxyClose(cp)
+		})
+
 		if err := recover(); err != nil && !netutil.IsConnectionError(err.(error)) {
 			gwlog.TraceError("%s error: %s", cp, err.(error))
 			if consts.DEBUG_MODE {
