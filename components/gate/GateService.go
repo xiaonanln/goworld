@@ -37,11 +37,9 @@ type GateService struct {
 	clientProxiesLock sync.RWMutex
 	packetQueue       *xnsyncutil.SyncQueue
 
-	filterTreesLock sync.Mutex
-	filterTrees     map[string]*_FilterTree
+	filterTrees map[string]*_FilterTree
 
-	pendingSyncPackets     []*netutil.Packet
-	pendingSyncPacketsLock sync.Mutex
+	pendingSyncPackets []*netutil.Packet
 
 	terminating xnsyncutil.AtomicBool
 	terminated  *xnsyncutil.OneTimeCond
