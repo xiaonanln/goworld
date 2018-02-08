@@ -44,6 +44,7 @@ type GateService struct {
 
 	filterTrees             map[string]*_FilterTree
 	pendingSyncPackets      []*netutil.Packet
+	nextFlushSyncTime       time.Time
 	terminating             xnsyncutil.AtomicBool
 	terminated              *xnsyncutil.OneTimeCond
 	tlsConfig               *tls.Config
@@ -371,7 +372,13 @@ func (gs *GateService) handleSyncPositionYawFromClient(packet *netutil.Packet) {
 	gs.pendingSyncPackets = append(gs.pendingSyncPackets, packet)
 }
 
-func (gs *GateService) handleDispatcherClientBeforeFlush() {
+func (gs *GateService) tryFlushPendingSyncPackets() {
+	now := time.Now()
+	if now.Before(gs.nextFlushSyncTime) {
+		return
+	}
+
+	gs.nextFlushSyncTime = now.Add(time.Millisecond * 100) // todo: make the interval configurable in goworld.ini
 	if len(gs.pendingSyncPackets) == 0 {
 		return
 	}
@@ -381,7 +388,7 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 
 	packet := pendingSyncPackets[0] // use the first packet for sending
 	if len(packet.UnreadPayload()) != common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY {
-		gwlog.Panicf("%s.handleDispatcherClientBeforeFlush: entity sync info size should be %d, but received %d", gs, proto.SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
+		gwlog.Panicf("%s.tryFlushPendingSyncPackets: entity sync info size should be %d, but received %d", gs, proto.SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
 	}
 
 	//gwlog.Infof("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))
@@ -413,8 +420,10 @@ func (gs *GateService) handlePacketRoutine() {
 			item.Packet.Release()
 			break
 		case <-gs.ticker:
+			gs.tryFlushPendingSyncPackets()
 			break
 		}
+
 		post.Tick()
 	}
 }
