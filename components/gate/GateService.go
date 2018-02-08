@@ -24,31 +24,42 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/opmon"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 	"github.com/xtaci/kcp-go"
 )
 
+type clientProxyMessage struct {
+	cp  *ClientProxy
+	msg proto.Message
+}
+
 // GateService implements the gate service logic
 type GateService struct {
-	listenAddr    string
-	clientProxies map[common.ClientID]*ClientProxy
-	packetQueue   chan proto.Message
+	listenAddr                  string
+	clientProxies               map[common.ClientID]*ClientProxy
+	dispatcherClientPacketQueue chan proto.Message
+	clientPacketQueue           chan clientProxyMessage
+	ticker                      <-chan time.Time
 
-	filterTrees        map[string]*_FilterTree
-	pendingSyncPackets []*netutil.Packet
-	terminating        xnsyncutil.AtomicBool
-	terminated         *xnsyncutil.OneTimeCond
-	tlsConfig          *tls.Config
+	filterTrees             map[string]*_FilterTree
+	pendingSyncPackets      []*netutil.Packet
+	terminating             xnsyncutil.AtomicBool
+	terminated              *xnsyncutil.OneTimeCond
+	tlsConfig               *tls.Config
+	checkHeartbeatsInterval int
 }
 
 func newGateService() *GateService {
 	return &GateService{
-		//packetQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
-		clientProxies:      map[common.ClientID]*ClientProxy{},
-		packetQueue:        make(chan proto.Message, consts.GATE_SERVICE_PACKET_QUEUE_SIZE),
-		filterTrees:        map[string]*_FilterTree{},
-		pendingSyncPackets: []*netutil.Packet{},
-		terminated:         xnsyncutil.NewOneTimeCond(),
+		//dispatcherClientPacketQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
+		clientProxies:               map[common.ClientID]*ClientProxy{},
+		dispatcherClientPacketQueue: make(chan proto.Message, consts.GATE_SERVICE_PACKET_QUEUE_SIZE),
+		clientPacketQueue:           make(chan clientProxyMessage, consts.GATE_SERVICE_PACKET_QUEUE_SIZE),
+		ticker:                      time.Tick(consts.GATE_SERVICE_TICK_INTERVAL),
+		filterTrees:                 map[string]*_FilterTree{},
+		pendingSyncPackets:          []*netutil.Packet{},
+		terminated:                  xnsyncutil.NewOneTimeCond(),
 	}
 }
 
@@ -63,8 +74,9 @@ func (gs *GateService) run() {
 	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 	go gs.serveKCP(gs.listenAddr)
+
 	if cfg.HeartbeatCheckInterval > 0 {
-		go gs.checkClientHeartbeatsRoutine(cfg.HeartbeatCheckInterval)
+		gs.checkHeartbeatsInterval = cfg.HeartbeatCheckInterval
 	}
 	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.GATE_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
@@ -121,7 +133,7 @@ func (gs *GateService) serveKCP(addr string) {
 			if err != nil {
 				gwlog.Panic(err)
 			}
-			go gs.handleKCPConn(conn)
+			gs.handleKCPConn(conn)
 		}
 	})
 }
@@ -148,6 +160,7 @@ func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
 }
 
 func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool) {
+	// this function might run in multiple threads
 	if gs.terminating.Load() {
 		// server terminating, not accepting more connections
 		netconn.Close()
@@ -163,45 +176,33 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 
 	conn := netutil.NetConnection{netconn}
 	cp := newClientProxy(conn, cfg)
-
-	gs.clientProxiesLock.Lock()
-	gs.clientProxies[cp.clientid] = cp
-	gs.clientProxiesLock.Unlock()
-
-	dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.ServeTCPConnection: client %s connected", gs, cp)
 	}
-	cp.serve()
-}
 
-func (gs *GateService) checkClientHeartbeatsRoutine(checkInterval int) {
-	gwutils.RepeatUntilPanicless(func() {
-		checkIntervalDuration := time.Duration(checkInterval) * time.Second
-		for {
-			time.Sleep(checkIntervalDuration)
-
-			now := time.Now().Unix()
-			gs.clientProxiesLock.RLock()
-
-			for _, cp := range gs.clientProxies { // close all connected clients when terminating
-				heatbeatTime := cp.heartbeatTime.Load()
-				if heatbeatTime < now-int64(checkInterval) {
-					// 10 seconds no heartbeat, close it...
-					gwlog.Infof("Connection %s timeout ...", cp)
-					cp.Close()
-				}
-			}
-
-			gs.clientProxiesLock.RUnlock()
-		}
+	// pass the client proxy to GateService ...
+	post.Post(func() {
+		gs.clientProxies[cp.clientid] = cp
+		dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
+		go cp.serve()
 	})
 }
 
+func (gs *GateService) checkClientHeartbeats() {
+	now := time.Now().Unix()
+
+	for _, cp := range gs.clientProxies { // close all connected clients when terminating
+		heatbeatTime := cp.heartbeatTime.Load() // todo: not use atomic ?
+		if heatbeatTime < now-int64(gs.checkHeartbeatsInterval) {
+			// 10 seconds no heartbeat, close it...
+			gwlog.Infof("Connection %s timeout ...", cp)
+			cp.Close()
+		}
+	}
+}
+
 func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
-	gs.clientProxiesLock.Lock()
 	delete(gs.clientProxies, cp.clientid)
-	gs.clientProxiesLock.Unlock()
 
 	for key, val := range cp.filterProps {
 		ft := gs.filterTrees[key]
@@ -220,6 +221,27 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 }
 
 // HandleDispatcherClientPacket handles packets received by dispatcher client
+func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.MsgType, pkt *netutil.Packet) {
+	cp.heartbeatTime.Store(time.Now().Unix())
+
+	if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
+		cp.handleSyncPositionYawFromClient(pkt)
+	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
+		cp.handleCallEntityMethodFromClient(pkt)
+	} else if msgtype == proto.MT_HEARTBEAT_FROM_CLIENT {
+		// kcp connected from client, need to do nothing here
+
+	} else {
+		if consts.DEBUG_MODE {
+			gwlog.TraceError("unknown message type from client: %d", msgtype)
+			os.Exit(2)
+		} else {
+			gwlog.Panicf("unknown message type from client: %d", msgtype)
+		}
+	}
+
+}
+
 func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleDispatcherClientPacket: msgtype=%v, packet(%d)=%v", gs, msgtype, packet.GetPayloadLen(), packet.Payload())
@@ -230,7 +252,6 @@ func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packe
 		clientid := packet.ReadClientID()
 
 		clientproxy := gs.clientProxies[clientid]
-		gs.clientProxiesLock.RUnlock()
 
 		if clientproxy != nil {
 			if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
@@ -288,8 +309,6 @@ func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, pa
 	gwlog.Debugf("%s.handleClearClientFilterProps: clientproxy=%s", gs, clientproxy)
 	clientid := clientproxy.clientid
 
-	gs.filterTreesLock.Lock()
-
 	for key, val := range clientproxy.filterProps {
 		ft, ok := gs.filterTrees[key]
 		if !ok {
@@ -297,7 +316,6 @@ func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, pa
 		}
 		ft.Remove(clientid, val)
 	}
-	gs.filterTreesLock.Unlock()
 
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Debugf("CLEAR CLIENT %s FILTER PROPS", clientproxy)
@@ -317,7 +335,6 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 	//fmt.Fprintf(os.Stderr, "(%d,%d)", payloadLen, len(dispatch))
 
 	// multiple entity sync infos are received from game->dispatcher, gate need to dispatcher these infos to different clients
-	gs.clientProxiesLock.RLock()
 
 	for clientid, data := range dispatch {
 		clientproxy := gs.clientProxies[clientid]
@@ -330,16 +347,11 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 			packet.Release()
 		}
 	}
-
-	gs.clientProxiesLock.RUnlock()
 }
 
 func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 	key := packet.ReadVarStr()
 	val := packet.ReadVarStr()
-
-	gs.filterTreesLock.Lock()
-	gs.clientProxiesLock.RLock()
 
 	ft := gs.filterTrees[key]
 	if ft != nil {
@@ -352,32 +364,20 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 		})
 	}
 
-	gs.clientProxiesLock.RUnlock()
-	gs.filterTreesLock.Unlock()
 }
 
 func (gs *GateService) handleSyncPositionYawFromClient(packet *netutil.Packet) {
 	packet.AddRefCount(1)
-	gs.pendingSyncPacketsLock.Lock()
 	gs.pendingSyncPackets = append(gs.pendingSyncPackets, packet)
-	gs.pendingSyncPacketsLock.Unlock()
-	//eid := packet.ReadEntityID()
-	//x := packet.ReadFloat32()
-	//y := packet.ReadFloat32()
-	//z := packet.ReadFloat32()
-	//yaw := packet.ReadFloat32()
 }
 
 func (gs *GateService) handleDispatcherClientBeforeFlush() {
-	gs.pendingSyncPacketsLock.Lock()
-	pendingSyncPackets := gs.pendingSyncPackets
-	gs.pendingSyncPackets = make([]*netutil.Packet, 0, len(pendingSyncPackets))
-	gs.pendingSyncPacketsLock.Unlock()
-	// merge all client sync packets, and send in one packet (to reduce dispatcher overhead)
-
-	if len(pendingSyncPackets) == 0 {
+	if len(gs.pendingSyncPackets) == 0 {
 		return
 	}
+
+	pendingSyncPackets := gs.pendingSyncPackets
+	// merge all client sync packets, and send in one packet (to reduce dispatcher overhead)
 
 	packet := pendingSyncPackets[0] // use the first packet for sending
 	if len(packet.UnreadPayload()) != common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY {
@@ -385,38 +385,46 @@ func (gs *GateService) handleDispatcherClientBeforeFlush() {
 	}
 
 	//gwlog.Infof("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))
-	for _, syncPkt := range pendingSyncPackets[1:] { // merge other packets to the first packet
+	for i, syncPkt := range pendingSyncPackets[1:] { // merge other packets to the first packet
 		//gwlog.Infof("sycn packet unread %d", len(syncPkt.UnreadPayload()))
 		packet.AppendBytes(syncPkt.UnreadPayload())
 		syncPkt.Release()
+		pendingSyncPackets[i+1] = nil
 	}
 	dispatchercluster.SelectByGateID(gateid).SendPacket(packet)
 	packet.Release()
+	pendingSyncPackets[0] = nil
+
+	gs.pendingSyncPackets = gs.pendingSyncPackets[:0] // reuse pendingSyncPackets capacity, but clear all packets
 }
 
 func (gs *GateService) handlePacketRoutine() {
 	for {
 		select {
-		case item := <-gs.packetQueue:
+		case item := <-gs.clientPacketQueue:
+			op := opmon.StartOperation("GateServiceHandlePacket")
+			gs.handleClientProxyPacket(item.cp, item.msg.MsgType, item.msg.Packet)
+			op.Finish(time.Millisecond * 100)
+			item.msg.Packet.Release()
+		case item := <-gs.dispatcherClientPacketQueue:
 			op := opmon.StartOperation("GateServiceHandlePacket")
 			gs.handleDispatcherClientPacket(item.MsgType, item.Packet)
 			op.Finish(time.Millisecond * 100)
 			item.Packet.Release()
 			break
+		case <-gs.ticker:
+			break
 		}
+		post.Tick()
 	}
 }
 
 func (gs *GateService) terminate() {
 	gs.terminating.Store(true)
 
-	gs.clientProxiesLock.RLock()
-
 	for _, cp := range gs.clientProxies { // close all connected clients when terminating
 		cp.Close()
 	}
-
-	gs.clientProxiesLock.RUnlock()
 
 	gs.terminated.Signal()
 }

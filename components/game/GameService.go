@@ -45,6 +45,7 @@ type _GameService struct {
 	nextCollectEntitySyncInfosTime time.Time
 	dispatcherStartFreezeAcks      []bool
 	positionSyncInterval           time.Duration
+	ticker                         <-chan time.Time
 	//collectEntitySyncInfosRequest chan struct{}
 	//collectEntitySycnInfosReply   chan interface{}
 }
@@ -55,6 +56,7 @@ func newGameService(gameid uint16, delegate IGameDelegate) *_GameService {
 		gameDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
 		packetQueue: make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
+		ticker:      time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
 		//terminated:         xnsyncutil.NewOneTimeCond(),
 		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
 		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
@@ -91,7 +93,6 @@ func (gs *_GameService) serveRoutine() {
 
 	gwlog.Infof("Read game %d config: \n%s\n", gameid, config.DumpPretty(cfg))
 
-	ticker := time.Tick(consts.GAME_SERVICE_TICK_INTERVAL)
 	// here begins the main loop of Game
 	for {
 		isTick := false
@@ -156,7 +157,7 @@ func (gs *_GameService) serveRoutine() {
 			}
 
 			pkt.Release()
-		case <-ticker:
+		case <-gs.ticker:
 			isTick = true
 			runState := gs.runState.Load()
 			if runState == rsTerminating {

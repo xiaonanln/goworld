@@ -76,7 +76,7 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
-	cp.GoWorldConnection.SetAutoFlush(time.Millisecond * 50)
+	cp.GoWorldConnection.SetAutoFlush(time.Millisecond * 10)
 	//cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
 
 	for {
@@ -84,25 +84,7 @@ func (cp *ClientProxy) serve() {
 		//cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
-			cp.heartbeatTime.Store(time.Now().Unix())
-
-			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
-				cp.handleSyncPositionYawFromClient(pkt)
-			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-				cp.handleCallEntityMethodFromClient(pkt)
-			} else if msgtype == proto.MT_HEARTBEAT_FROM_CLIENT {
-				// kcp connected from client, need to do nothing here
-
-			} else {
-				if consts.DEBUG_MODE {
-					gwlog.TraceError("unknown message type from client: %d", msgtype)
-					os.Exit(2)
-				} else {
-					gwlog.Panicf("unknown message type from client: %d", msgtype)
-				}
-			}
-
-			pkt.Release()
+			gateService.clientPacketQueue <- clientProxyMessage{cp, proto.Message{msgtype, pkt}}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			if netutil.IsConnectionError(err) {
 				break

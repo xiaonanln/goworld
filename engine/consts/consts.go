@@ -51,6 +51,8 @@ const (
 	// For Gate Service
 	// GATE_SERVICE_PACKET_QUEUE_SIZE is the packet queue size of gate service
 	GATE_SERVICE_PACKET_QUEUE_SIZE = 10000
+	// GATE_SERVICE_TICK_INTERVAL is the tick interval to tick timers in gate service
+	GATE_SERVICE_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affect timer resolution
 	// CLIENT_PROXY_WRITE_BUFFER_SIZE is the write buffer size for gates' client proxies
 	CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024
 	// CLIENT_PROXY_READ_BUFFER_SIZE is the read buffer size for gates' client proxies

@@ -26,6 +26,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
@@ -107,7 +108,10 @@ func setupSignals() {
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// terminating gate ...
 				gwlog.Infof("Terminating gate service ...")
-				gateService.terminate()
+				post.Post(func() {
+					gateService.terminate()
+				})
+
 				gateService.terminated.Wait()
 				gwlog.Infof("Gate %d terminated gracefully.", gateid)
 				os.Exit(0)
@@ -121,15 +125,8 @@ func setupSignals() {
 type dispatcherClientDelegate struct {
 }
 
-var lastWarnGateServiceQueueLen = 0
-
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
-	gateService.packetQueue.Push(proto.Message{msgtype, packet})
-	qlen := gateService.packetQueue.Len()
-	if qlen >= 1000 && qlen%1000 == 0 && lastWarnGateServiceQueueLen != qlen {
-		gwlog.Warnf("Gate service queue length = %d", qlen)
-		lastWarnGateServiceQueueLen = qlen
-	}
+	gateService.dispatcherClientPacketQueue <- proto.Message{msgtype, packet}
 }
 
 func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
@@ -137,10 +134,6 @@ func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	// if gate is disconnected from dispatcher, we just quit
 	gwlog.Infof("Disconnected from dispatcher, gate has to quit.")
 	signalChan <- syscall.SIGTERM // let gate quit
-}
-
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientBeforeFlush() {
-	gateService.handleDispatcherClientBeforeFlush()
 }
 
 // GetGateID gets the gate ID
