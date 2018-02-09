@@ -571,7 +571,7 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 
 func (service *DispatcherService) sendEntitySyncInfosToGames() {
 	for gameidx, entitySyncInfos := range service.entitySyncInfosToGame {
-		if entitySyncInfos == nil {
+		if len(entitySyncInfos) == 0 {
 			continue
 		}
 

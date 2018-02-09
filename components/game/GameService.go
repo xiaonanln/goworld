@@ -178,7 +178,7 @@ func (gs *_GameService) serveRoutine() {
 		post.Tick()
 		if isTick {
 			now := time.Now()
-			if !gs.nextCollectEntitySyncInfosTime.Before(now) {
+			if !gs.nextCollectEntitySyncInfosTime.After(now) {
 				gs.nextCollectEntitySyncInfosTime = now.Add(gs.positionSyncInterval)
 				entity.CollectEntitySyncInfos()
 			}
