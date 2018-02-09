@@ -36,6 +36,7 @@ const (
 	MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME = 1024 * 1024
 
 	DISPATCHER_SERVICE_PACKET_QUEUE_SIZE = 10000
+	DISPATCHER_SERVICE_TICK_INTERVAL     = time.Millisecond * 100 // server tick interval => affect timer resolution
 
 	// For Game Service
 	// GAME_SERVICE_PACKET_QUEUE_SIZE is the max packet queue length for game service

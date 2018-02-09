@@ -16,6 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/post"
 )
 
 var (
@@ -81,7 +82,9 @@ func setupSignals() {
 
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
 				// interrupting, quit dispatcher
-				dispatcherService.commandQueue <- dispatcherCommandExit
+				post.Post(func() {
+					dispatcherService.terminate()
+				})
 			} else {
 				gwlog.Infof("unexcepted signal: %s", sig)
 			}

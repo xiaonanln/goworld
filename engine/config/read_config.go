@@ -69,6 +69,7 @@ type GateConfig struct {
 	RSAKey                 string
 	RSACertificate         string
 	HeartbeatCheckInterval int
+	PositionSyncIntervalMS int
 }
 
 // DispatcherConfig defines fields of dispatcher config
@@ -351,6 +352,8 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 	gcc.CompressFormat = "gwsnappy"
 	gcc.RSAKey = "rsa.key"
 	gcc.RSACertificate = "rsa.crt"
+	gcc.HeartbeatCheckInterval = 0
+	gcc.PositionSyncIntervalMS = 100
 
 	_readGateConfig(section, gcc)
 }
@@ -402,6 +405,8 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 			sc.RSACertificate = key.MustString(sc.RSACertificate)
 		} else if name == "heartbeat_check_interval" {
 			sc.HeartbeatCheckInterval = key.MustInt(sc.HeartbeatCheckInterval)
+		} else if name == "position_sync_interval_ms" {
+			sc.PositionSyncIntervalMS = key.MustInt(sc.PositionSyncIntervalMS)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}

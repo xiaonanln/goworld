@@ -49,6 +49,7 @@ type GateService struct {
 	terminated              *xnsyncutil.OneTimeCond
 	tlsConfig               *tls.Config
 	checkHeartbeatsInterval int
+	positionSyncInterval    time.Duration
 }
 
 func newGateService() *GateService {
@@ -78,9 +79,13 @@ func (gs *GateService) run() {
 
 	if cfg.HeartbeatCheckInterval > 0 {
 		gs.checkHeartbeatsInterval = cfg.HeartbeatCheckInterval
+		gwlog.Infof("%s: checkHeartbeatsInterval = %s", gs, gs.checkHeartbeatsInterval)
 	}
+	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
+	gwlog.Infof("%s: positionSyncInterval = %s", gs, gs.positionSyncInterval)
+
 	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.GATE_STARTED_TAG)
-	gwutils.RepeatUntilPanicless(gs.handlePacketRoutine)
+	gwutils.RepeatUntilPanicless(gs.mainRoutine)
 }
 
 func (gs *GateService) setupTLSConfig(cfg *config.GateConfig) {
@@ -378,7 +383,7 @@ func (gs *GateService) tryFlushPendingSyncPackets() {
 		return
 	}
 
-	gs.nextFlushSyncTime = now.Add(time.Millisecond * 100) // todo: make the interval configurable in goworld.ini
+	gs.nextFlushSyncTime = now.Add(gs.positionSyncInterval) // todo: make the interval configurable in goworld.ini
 	if len(gs.pendingSyncPackets) == 0 {
 		return
 	}
@@ -405,7 +410,7 @@ func (gs *GateService) tryFlushPendingSyncPackets() {
 	gs.pendingSyncPackets = gs.pendingSyncPackets[:0] // reuse pendingSyncPackets capacity, but clear all packets
 }
 
-func (gs *GateService) handlePacketRoutine() {
+func (gs *GateService) mainRoutine() {
 	for {
 		select {
 		case item := <-gs.clientPacketQueue:

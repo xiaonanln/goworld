@@ -17,6 +17,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
@@ -143,12 +144,6 @@ type dispatcherMessage struct {
 	proto.Message
 }
 
-type dispatcherCommandType int
-
-const (
-	dispatcherCommandExit dispatcherCommandType = iota
-)
-
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
 	dispid                uint16
@@ -156,12 +151,12 @@ type DispatcherService struct {
 	games                 []*gameDispatchInfo
 	gates                 []*dispatcherClientProxy
 	messageQueue          chan dispatcherMessage
-	commandQueue          chan dispatcherCommandType
 	chooseClientIndex     int
 	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
 	registeredServices    map[string]entity.EntityIDSet
 	targetGameOfClient    map[common.ClientID]uint16
 	entitySyncInfosToGame [][]byte // cache entity sync infos to gates
+	ticker                <-chan time.Time
 }
 
 func newDispatcherService(dispid uint16) *DispatcherService {
@@ -172,7 +167,6 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		dispid:                dispid,
 		config:                cfg,
 		messageQueue:          make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
-		commandQueue:          make(chan dispatcherCommandType),
 		games:                 make([]*gameDispatchInfo, gameCount),
 		gates:                 make([]*dispatcherClientProxy, gateCount),
 		chooseClientIndex:     0,
@@ -180,6 +174,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		registeredServices:    map[string]entity.EntityIDSet{},
 		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: make([][]byte, gameCount),
+		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
 	}
 
 	for i := range ds.games {
@@ -247,24 +242,16 @@ func (service *DispatcherService) messageLoop() {
 
 			pkt.Release()
 			break
-		case cmd := <-service.commandQueue:
-			service.handleCommand(cmd)
+		case <-service.ticker:
+			post.Tick()
 			break
 		}
 	}
 }
 
-func (service *DispatcherService) handleCommand(cmd dispatcherCommandType) {
-	if cmd == dispatcherCommandExit {
-		//gamesNum := dispatcherService.connectedGameClientsNum()
-		//if gamesNum > 0 {
-		//	gwlog.Warnf("%d games is connected to dispatcher, can not quit!", gamesNum)
-		//	return
-		//}
-
-		gwlog.Infof("Dispatcher terminated gracefully.")
-		os.Exit(0)
-	}
+func (service *DispatcherService) terminate() {
+	gwlog.Infof("Dispatcher terminated gracefully.")
+	os.Exit(0)
 }
 
 func (service *DispatcherService) delEntityDispatchInfo(entityID common.EntityID) {
