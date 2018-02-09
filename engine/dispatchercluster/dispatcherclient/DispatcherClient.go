@@ -3,8 +3,6 @@ package dispatcherclient
 import (
 	"net"
 
-	"time"
-
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -40,23 +38,23 @@ func newDispatcherClient(dctype DispatcherClientType, conn net.Conn, isReconnect
 	return dc
 }
 
-func (dc *DispatcherClient) StartAutoFlush(interval time.Duration, beforeFlushCallback func()) {
-	gwc := dc.GoWorldConnection
-	go func() {
-		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
-		for !gwc.IsClosed() {
-			time.Sleep(interval)
-			if beforeFlushCallback != nil {
-				beforeFlushCallback()
-			}
-
-			err := gwc.Flush("DispatcherClient")
-			if err != nil {
-				break
-			}
-		}
-	}()
-}
+//func (dc *DispatcherClient) StartAutoFlush(interval time.Duration, beforeFlushCallback func()) {
+//	gwc := dc.GoWorldConnection
+//	go func() {
+//		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
+//		for !gwc.IsClosed() {
+//			time.Sleep(interval)
+//			if beforeFlushCallback != nil {
+//				beforeFlushCallback()
+//			}
+//
+//			err := gwc.Flush("DispatcherClient")
+//			if err != nil {
+//				break
+//			}
+//		}
+//	}()
+//}
 
 // Close the dispatcher client
 func (dc *DispatcherClient) Close() error {

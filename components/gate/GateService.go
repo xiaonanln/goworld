@@ -332,6 +332,7 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 	_ = packet.ReadUint16() // read useless gateid
 	payload := packet.UnreadPayload()
 	payloadLen := len(payload)
+	//gwlog.Infof("handleSyncPositionYawOnClients payloadLen=%v", payloadLen)
 	dispatch := map[common.ClientID][]byte{}
 	for i := 0; i < payloadLen; i += common.CLIENTID_LENGTH + common.ENTITYID_LENGTH + proto.SYNC_INFO_SIZE_PER_ENTITY {
 		clientid := common.ClientID(payload[i : i+common.CLIENTID_LENGTH])

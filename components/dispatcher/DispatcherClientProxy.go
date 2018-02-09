@@ -5,8 +5,6 @@ import (
 
 	"fmt"
 
-	"time"
-
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -30,21 +28,6 @@ func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *dispatc
 		owner:             owner,
 	}
 	return dcp
-}
-
-func (dcp *dispatcherClientProxy) startAutoFlush() {
-	go func() {
-		gwc := dcp.GoWorldConnection
-		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
-		for !gwc.IsClosed() {
-			time.Sleep(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
-			dcp.beforeFlush()
-			err := gwc.Flush("DispatcherClientProxy")
-			if err != nil {
-				break
-			}
-		}
-	}()
 }
 
 func (dcp *dispatcherClientProxy) serve() {

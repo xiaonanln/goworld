@@ -244,6 +244,7 @@ func (service *DispatcherService) messageLoop() {
 			break
 		case <-service.ticker:
 			post.Tick()
+			service.sendEntitySyncInfosToGames()
 			break
 		}
 	}
@@ -303,7 +304,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 	}
 	dcp.gameid = gameid
-	dcp.startAutoFlush() // TODO: why start autoflush after gameid is set ?
+	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL) // TODO: why start autoflush after gameid is set ?
 
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleSetGameID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)
@@ -350,7 +351,7 @@ func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pk
 		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 	}
 	dcp.gateid = gateid
-	dcp.startAutoFlush()
+	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL) // TODO: why start autoflush after gameid is set ?
 
 	service.gates[gateid-1] = dcp
 }
@@ -362,12 +363,6 @@ func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientPro
 	gdi := service.games[gameid-1]
 
 	gdi.block(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
-
-	//for _, info := range service.entityDispatchInfos {
-	//	if info.gameid == gameid {
-	//		info.blockRPC(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)
-	//	}
-	//}
 
 	// tell the game to start real freeze, re-using the packet
 	pkt.ClearPayload()
@@ -574,8 +569,29 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 	}
 }
 
+func (service *DispatcherService) sendEntitySyncInfosToGames() {
+	for gameidx, entitySyncInfos := range service.entitySyncInfosToGame {
+		if entitySyncInfos == nil {
+			continue
+		}
+
+		service.entitySyncInfosToGame[gameidx] = entitySyncInfos[0:0]
+		// send the entity sync infos to this game
+		packet := netutil.NewPacket()
+		packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		packet.AppendBytes(entitySyncInfos)
+
+		service.games[gameidx].dispatchPacket(packet)
+		packet.Release()
+	}
+}
+
 func (service *DispatcherService) popEntitySyncInfosToGame(gameid uint16) []byte {
 	entitySyncInfos := service.entitySyncInfosToGame[gameid-1]
+	if entitySyncInfos == nil {
+		return nil
+	}
+
 	service.entitySyncInfosToGame[gameid-1] = make([]byte, 0, len(entitySyncInfos))
 	return entitySyncInfos
 }

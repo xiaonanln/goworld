@@ -20,8 +20,6 @@ const (
 	PACKET_PAYLOAD_LEN_COMPRESS_THRESHOLD = 512
 
 	// For Dispatcher
-	// DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL is the flush interval for client proxy. Smaller interval costs more CPU but dispatches patckets sooner
-	DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL = 5 * time.Millisecond
 	// DISPATCHER_GC_PERCENT is the GC percent for dispatcher
 	DISPATCHER_GC_PERCENT = 1000
 	// DISPATCHER_CLIENT_PROXY_WRITE_BUFFER_SIZE is dispatcher client proxies' write buffer size
@@ -36,7 +34,10 @@ const (
 	MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME = 1024 * 1024
 
 	DISPATCHER_SERVICE_PACKET_QUEUE_SIZE = 10000
-	DISPATCHER_SERVICE_TICK_INTERVAL     = time.Millisecond * 100 // server tick interval => affect timer resolution
+	// DISPATCHER_SERVICE_TICK_INTERVAL is the tick interval for dispatcher service's main routine.
+	DISPATCHER_SERVICE_TICK_INTERVAL = time.Millisecond * 5 // server tick interval => affect timer resolution
+	// DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL is the flush interval for client proxy. Smaller interval costs more CPU but dispatches patckets sooner
+	DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL = 5 * time.Millisecond
 
 	// For Game Service
 	// GAME_SERVICE_PACKET_QUEUE_SIZE is the max packet queue length for game service

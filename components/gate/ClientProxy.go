@@ -76,7 +76,7 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
-	cp.GoWorldConnection.SetAutoFlush(time.Millisecond * 10)
+	cp.SetAutoFlush(time.Millisecond * 10)
 	//cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
 
 	for {
