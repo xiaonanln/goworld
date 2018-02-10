@@ -80,7 +80,6 @@ func (cp *ClientProxy) serve() {
 
 	for {
 		var msgtype proto.MsgType
-		//cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			gateService.clientPacketQueue <- clientProxyMessage{cp, proto.Message{msgtype, pkt}}

@@ -402,7 +402,7 @@ func callEntity(id common.EntityID, method string, args []interface{}) {
 	if consts.OPTIMIZE_LOCAL_ENTITIES {
 		e := entityManager.get(id)
 		if e != nil { // this entity is local, just call entity directly
-			e.Post(func() { // TODO: what if the taret entity is migrating ? callRemote instead ?
+			e.Post(func() {
 				e.onCallFromLocal(method, args)
 			})
 		} else {
