@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/natefinch/lumberjack"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"golang.org/x/net/websocket"
 )
@@ -60,18 +59,11 @@ func SetupGWLog(component string, logLevel string, logFile string, logStderr boo
 
 	outputWriters := make([]io.Writer, 0, 2)
 	if logFile != "" {
-		var logFileWriter io.Writer
-		logFileWriter = &lumberjack.Logger{
-			Filename:   logFile,
-			MaxSize:    100, // megabytes
-			MaxBackups: 100,
-			MaxAge:     30, //days
-			Compress:   false,
-			LocalTime:  true,
+		fileWriter, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			gwlog.Fatalf("open log file %s failed: %v", logFile, err)
 		}
-
-		logFileWriter.(*lumberjack.Logger).Rotate() // rotate immediately
-		outputWriters = append(outputWriters, logFileWriter)
+		outputWriters = append(outputWriters, fileWriter)
 	}
 
 	if logStderr {
