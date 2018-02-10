@@ -230,9 +230,11 @@ func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.Ms
 	cp.heartbeatTime = time.Now()
 
 	if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
-		cp.handleSyncPositionYawFromClient(pkt)
+		gs.handleSyncPositionYawFromClient(pkt)
 	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-		cp.handleCallEntityMethodFromClient(pkt)
+		pkt.AppendClientID(cp.clientid) // append clientid to the packet
+		eid := pkt.ReadEntityID()
+		dispatchercluster.SelectByEntityID(eid).SendPacket(pkt)
 	} else if msgtype == proto.MT_HEARTBEAT_FROM_CLIENT {
 		// kcp connected from client, need to do nothing here
 

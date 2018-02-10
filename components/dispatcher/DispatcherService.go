@@ -317,7 +317,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 
 	if !isRestore {
 		// notify all games that all games connected to dispatcher now!
-		if service.isAllGameClientsConnected() {
+		if service.dispid == 1 && service.isAllGameClientsConnected() {
 			pkt.ClearPayload() // reuse this packet
 			pkt.AppendUint16(proto.MT_NOTIFY_ALL_GAMES_CONNECTED)
 			if olddcp == nil {
@@ -605,7 +605,7 @@ func (service *DispatcherService) handleCallEntityMethodFromClient(dcp *dispatch
 
 	entityDispatchInfo := service.entityDispatchInfos[entityID]
 	if entityDispatchInfo == nil {
-		gwlog.Errorf("%s.handleCallEntityMethodFromClient: entity %s is not found: %v", service, entityID, service.entityDispatchInfos)
+		gwlog.Errorf("%s.handleCallEntityMethodFromClient: entity %s is not found", service, entityID)
 		return
 	}
 

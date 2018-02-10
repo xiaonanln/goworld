@@ -10,7 +10,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -92,14 +91,4 @@ func (cp *ClientProxy) serve() {
 			}
 		}
 	}
-}
-
-func (cp *ClientProxy) handleSyncPositionYawFromClient(pkt *netutil.Packet) {
-	// client syncing entity info, cache the packet for further process
-	gateService.handleSyncPositionYawFromClient(pkt)
-}
-
-func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
-	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	dispatchercluster.SelectByGateID(gateid).SendPacket(pkt)
 }
