@@ -48,7 +48,7 @@ type GateService struct {
 	terminating             xnsyncutil.AtomicBool
 	terminated              *xnsyncutil.OneTimeCond
 	tlsConfig               *tls.Config
-	checkHeartbeatsInterval int
+	checkHeartbeatsInterval time.Duration
 	positionSyncInterval    time.Duration
 }
 
@@ -78,7 +78,7 @@ func (gs *GateService) run() {
 	go gs.serveKCP(gs.listenAddr)
 
 	if cfg.HeartbeatCheckInterval > 0 {
-		gs.checkHeartbeatsInterval = cfg.HeartbeatCheckInterval
+		gs.checkHeartbeatsInterval = time.Second * time.Duration(cfg.HeartbeatCheckInterval)
 		gwlog.Infof("%s: checkHeartbeatsInterval = %s", gs, gs.checkHeartbeatsInterval)
 	}
 	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
@@ -195,11 +195,10 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 }
 
 func (gs *GateService) checkClientHeartbeats() {
-	now := time.Now().Unix()
+	now := time.Now()
 
 	for _, cp := range gs.clientProxies { // close all connected clients when terminating
-		heatbeatTime := cp.heartbeatTime.Load() // todo: not use atomic ?
-		if heatbeatTime < now-int64(gs.checkHeartbeatsInterval) {
+		if cp.heartbeatTime.Add(gs.checkHeartbeatsInterval).Before(now) {
 			// 10 seconds no heartbeat, close it...
 			gwlog.Infof("Connection %s timeout ...", cp)
 			cp.Close()
@@ -228,7 +227,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 
 // HandleDispatcherClientPacket handles packets received by dispatcher client
 func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.MsgType, pkt *netutil.Packet) {
-	cp.heartbeatTime.Store(time.Now().Unix())
+	cp.heartbeatTime = time.Now()
 
 	if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
 		cp.handleSyncPositionYawFromClient(pkt)
@@ -384,7 +383,7 @@ func (gs *GateService) tryFlushPendingSyncPackets() {
 		return
 	}
 
-	gs.nextFlushSyncTime = now.Add(gs.positionSyncInterval) // todo: make the interval configurable in goworld.ini
+	gs.nextFlushSyncTime = now.Add(gs.positionSyncInterval)
 	if len(gs.pendingSyncPackets) == 0 {
 		return
 	}

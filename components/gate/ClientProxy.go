@@ -5,7 +5,8 @@ import (
 
 	"os"
 
-	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
+	"time"
+
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -33,7 +34,7 @@ type ClientProxy struct {
 	clientid       common.ClientID
 	filterProps    map[string]string
 	clientSyncInfo clientSyncInfo
-	heartbeatTime  xnsyncutil.AtomicInt64
+	heartbeatTime  time.Time
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
