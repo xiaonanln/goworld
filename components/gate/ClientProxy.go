@@ -2,15 +2,14 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"os"
 
-	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
+	"time"
+
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -34,7 +33,7 @@ type ClientProxy struct {
 	clientid       common.ClientID
 	filterProps    map[string]string
 	clientSyncInfo clientSyncInfo
-	heartbeatTime  xnsyncutil.AtomicInt64
+	heartbeatTime  time.Time
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
@@ -76,12 +75,11 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
-	cp.SetAutoFlush(time.Millisecond * 10)
+	cp.SetAutoFlush(consts.CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
 	//cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
 
 	for {
 		var msgtype proto.MsgType
-		//cp.SetRecvDeadline(time.Now().Add(time.Millisecond * 50)) // TODO: quit costy
 		pkt, err := cp.Recv(&msgtype)
 		if pkt != nil {
 			gateService.clientPacketQueue <- clientProxyMessage{cp, proto.Message{msgtype, pkt}}
@@ -93,14 +91,4 @@ func (cp *ClientProxy) serve() {
 			}
 		}
 	}
-}
-
-func (cp *ClientProxy) handleSyncPositionYawFromClient(pkt *netutil.Packet) {
-	// client syncing entity info, cache the packet for further process
-	gateService.handleSyncPositionYawFromClient(pkt)
-}
-
-func (cp *ClientProxy) handleCallEntityMethodFromClient(pkt *netutil.Packet) {
-	pkt.AppendClientID(cp.clientid) // append clientid to the packet
-	dispatchercluster.SelectByGateID(gateid).SendPacket(pkt)
 }

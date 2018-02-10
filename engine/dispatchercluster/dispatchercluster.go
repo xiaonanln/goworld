@@ -87,14 +87,26 @@ func SendStartFreezeGame(gameid uint16) (anyerror error) {
 	return
 }
 
-func SelectByEntityID(id common.EntityID) *dispatcherclient.DispatcherClient {
-	idx := hashEntityID(id) % dispatcherNum
+func EntityIDToDispatcherID(entityid common.EntityID) uint16 {
+	return uint16((hashEntityID(entityid) % dispatcherNum) + 1)
+}
+
+func SelectByEntityID(entityid common.EntityID) *dispatcherclient.DispatcherClient {
+	idx := hashEntityID(entityid) % dispatcherNum
 	return dispatcherConns[idx].GetDispatcherClientForSend()
 }
 
 func SelectByGateID(gateid uint16) *dispatcherclient.DispatcherClient {
 	idx := hashGateID(gateid) % dispatcherNum
 	return dispatcherConns[idx].GetDispatcherClientForSend()
+}
+
+func SelectByDispatcherID(dispid uint16) *dispatcherclient.DispatcherClient {
+	return dispatcherConns[dispid-1].GetDispatcherClientForSend()
+}
+
+func Select(dispidx int) *dispatcherclient.DispatcherClient {
+	return dispatcherConns[dispidx].GetDispatcherClientForSend()
 }
 
 //func Flush(reason string) (anyerror error) {

@@ -9,8 +9,6 @@ import (
 
 	"sync"
 
-	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -517,7 +515,7 @@ func (p *Packet) compress(compressor compress.Compressor) {
 
 	compressedPayloadLen := len(compressedPayload)
 
-	fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
+	//fmt.Printf("(%.1fKB=%.1f%%)", float64(oldPayloadLen)/1024.0, float64(compressedPayloadLen)*100.0/float64(oldPayloadLen))
 
 	if compressedPayloadLen >= oldPayloadLen-4 { // leave 4 bytes for AppendUint32 in the last
 		return // compress not useful enough, throw away

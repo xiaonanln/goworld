@@ -15,8 +15,9 @@ import (
 
 // GoWorldConnection is the network protocol implementation of GoWorld components (dispatcher, gate, game)
 type GoWorldConnection struct {
-	packetConn *netutil.PacketConnection
-	closed     xnsyncutil.AtomicBool
+	packetConn   *netutil.PacketConnection
+	closed       xnsyncutil.AtomicBool
+	autoFlushing bool
 }
 
 // NewGoWorldConnection creates a GoWorldConnection using network connection
@@ -350,6 +351,10 @@ func (gwc *GoWorldConnection) Flush(reason string) error {
 
 // SetAutoFlush starts a goroutine to flush connection writes at some specified interval
 func (gwc *GoWorldConnection) SetAutoFlush(interval time.Duration) {
+	if gwc.autoFlushing {
+		gwlog.Panicf("%s.SetAutoFlush: already auto flushing!", gwc)
+	}
+	gwc.autoFlushing = true
 	go func() {
 		//defer gwlog.Debugf("%s: auto flush routine quited", gwc)
 		for !gwc.IsClosed() {

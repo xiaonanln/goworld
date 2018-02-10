@@ -48,11 +48,19 @@ type GateService struct {
 	terminating             xnsyncutil.AtomicBool
 	terminated              *xnsyncutil.OneTimeCond
 	tlsConfig               *tls.Config
-	checkHeartbeatsInterval int
+	checkHeartbeatsInterval time.Duration
 	positionSyncInterval    time.Duration
 }
 
 func newGateService() *GateService {
+	dispIds := config.GetDispatcherIDs()
+	pendingSyncPackets := make([]*netutil.Packet, len(dispIds)) // one packet for each dispatcher
+	for i := range pendingSyncPackets {
+		pkt := netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		pendingSyncPackets[i] = pkt
+	}
+
 	return &GateService{
 		//dispatcherClientPacketQueue: make(chan packetQueueItem, consts.DISPATCHER_CLIENT_PACKET_QUEUE_SIZE),
 		clientProxies:               map[common.ClientID]*ClientProxy{},
@@ -60,7 +68,7 @@ func newGateService() *GateService {
 		clientPacketQueue:           make(chan clientProxyMessage, consts.GATE_SERVICE_PACKET_QUEUE_SIZE),
 		ticker:                      time.Tick(consts.GATE_SERVICE_TICK_INTERVAL),
 		filterTrees:                 map[string]*_FilterTree{},
-		pendingSyncPackets:          []*netutil.Packet{},
+		pendingSyncPackets:          pendingSyncPackets,
 		terminated:                  xnsyncutil.NewOneTimeCond(),
 	}
 }
@@ -78,7 +86,7 @@ func (gs *GateService) run() {
 	go gs.serveKCP(gs.listenAddr)
 
 	if cfg.HeartbeatCheckInterval > 0 {
-		gs.checkHeartbeatsInterval = cfg.HeartbeatCheckInterval
+		gs.checkHeartbeatsInterval = time.Second * time.Duration(cfg.HeartbeatCheckInterval)
 		gwlog.Infof("%s: checkHeartbeatsInterval = %s", gs, gs.checkHeartbeatsInterval)
 	}
 	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
@@ -195,11 +203,10 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 }
 
 func (gs *GateService) checkClientHeartbeats() {
-	now := time.Now().Unix()
+	now := time.Now()
 
 	for _, cp := range gs.clientProxies { // close all connected clients when terminating
-		heatbeatTime := cp.heartbeatTime.Load() // todo: not use atomic ?
-		if heatbeatTime < now-int64(gs.checkHeartbeatsInterval) {
+		if cp.heartbeatTime.Add(gs.checkHeartbeatsInterval).Before(now) {
 			// 10 seconds no heartbeat, close it...
 			gwlog.Infof("Connection %s timeout ...", cp)
 			cp.Close()
@@ -228,12 +235,14 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 
 // HandleDispatcherClientPacket handles packets received by dispatcher client
 func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.MsgType, pkt *netutil.Packet) {
-	cp.heartbeatTime.Store(time.Now().Unix())
+	cp.heartbeatTime = time.Now()
 
 	if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
-		cp.handleSyncPositionYawFromClient(pkt)
+		gs.handleSyncPositionYawFromClient(pkt)
 	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-		cp.handleCallEntityMethodFromClient(pkt)
+		pkt.AppendClientID(cp.clientid) // append clientid to the packet
+		eid := pkt.ReadEntityID()
+		dispatchercluster.SelectByEntityID(eid).SendPacket(pkt)
 	} else if msgtype == proto.MT_HEARTBEAT_FROM_CLIENT {
 		// kcp connected from client, need to do nothing here
 
@@ -374,8 +383,12 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 }
 
 func (gs *GateService) handleSyncPositionYawFromClient(packet *netutil.Packet) {
-	packet.AddRefCount(1)
-	gs.pendingSyncPackets = append(gs.pendingSyncPackets, packet)
+	eid := packet.ReadEntityID()
+	data := packet.ReadBytes(proto.SYNC_INFO_SIZE_PER_ENTITY)
+	dispid := dispatchercluster.EntityIDToDispatcherID(eid) // get the target dispatcher for the entity ID
+	pkt := gs.pendingSyncPackets[dispid-1]
+	pkt.AppendEntityID(eid)
+	pkt.AppendBytes(data)
 }
 
 func (gs *GateService) tryFlushPendingSyncPackets() {
@@ -384,31 +397,18 @@ func (gs *GateService) tryFlushPendingSyncPackets() {
 		return
 	}
 
-	gs.nextFlushSyncTime = now.Add(gs.positionSyncInterval) // todo: make the interval configurable in goworld.ini
-	if len(gs.pendingSyncPackets) == 0 {
-		return
+	gs.nextFlushSyncTime = now.Add(gs.positionSyncInterval)
+	for dispidx, pkt := range gs.pendingSyncPackets {
+		if pkt.GetPayloadLen() <= 2 {
+			continue
+		}
+
+		dispatchercluster.Select(dispidx).SendPacketRelease(pkt)
+		// create new packet for next flush
+		pkt = netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		gs.pendingSyncPackets[dispidx] = pkt
 	}
-
-	pendingSyncPackets := gs.pendingSyncPackets
-	// merge all client sync packets, and send in one packet (to reduce dispatcher overhead)
-
-	packet := pendingSyncPackets[0] // use the first packet for sending
-	if len(packet.UnreadPayload()) != common.ENTITYID_LENGTH+proto.SYNC_INFO_SIZE_PER_ENTITY {
-		gwlog.Panicf("%s.tryFlushPendingSyncPackets: entity sync info size should be %d, but received %d", gs, proto.SYNC_INFO_SIZE_PER_ENTITY, len(packet.UnreadPayload())-common.ENTITYID_LENGTH)
-	}
-
-	//gwlog.Infof("sycn packet payload len %d, unread %d", packet.GetPayloadLen(), len(packet.UnreadPayload()))
-	for i, syncPkt := range pendingSyncPackets[1:] { // merge other packets to the first packet
-		//gwlog.Infof("sycn packet unread %d", len(syncPkt.UnreadPayload()))
-		packet.AppendBytes(syncPkt.UnreadPayload())
-		syncPkt.Release()
-		pendingSyncPackets[i+1] = nil
-	}
-	dispatchercluster.SelectByGateID(gateid).SendPacket(packet)
-	packet.Release()
-	pendingSyncPackets[0] = nil
-
-	gs.pendingSyncPackets = gs.pendingSyncPackets[:0] // reuse pendingSyncPackets capacity, but clear all packets
 }
 
 func (gs *GateService) mainRoutine() {

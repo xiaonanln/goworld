@@ -53,9 +53,6 @@ func (edi *entityDispatchInfo) isBlockingRPC() bool {
 }
 
 func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
-	if edi == nil {
-		return nil
-	}
 
 	if !edi.isBlockingRPC() {
 		return dispatcherService.dispatchPacketToGame(edi.gameid, pkt)
@@ -155,7 +152,7 @@ type DispatcherService struct {
 	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
 	registeredServices    map[string]entity.EntityIDSet
 	targetGameOfClient    map[common.ClientID]uint16
-	entitySyncInfosToGame [][]byte // cache entity sync infos to gates
+	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
 }
 
@@ -163,6 +160,12 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 	cfg := config.GetDispatcher(dispid)
 	gameCount := len(config.GetGameIDs())
 	gateCount := len(config.GetGateIDs())
+	entitySyncInfosToGame := make([]*netutil.Packet, gameCount)
+	for i := range entitySyncInfosToGame {
+		pkt := netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		entitySyncInfosToGame[i] = pkt
+	}
 	ds := &DispatcherService{
 		dispid:                dispid,
 		config:                cfg,
@@ -173,7 +176,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
 		registeredServices:    map[string]entity.EntityIDSet{},
 		targetGameOfClient:    map[common.ClientID]uint16{},
-		entitySyncInfosToGame: make([][]byte, gameCount),
+		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
 	}
 
@@ -317,7 +320,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 
 	if !isRestore {
 		// notify all games that all games connected to dispatcher now!
-		if service.isAllGameClientsConnected() {
+		if service.dispid == 1 && service.isAllGameClientsConnected() {
 			pkt.ClearPayload() // reuse this packet
 			pkt.AppendUint16(proto.MT_NOTIFY_ALL_GAMES_CONNECTED)
 			if olddcp == nil {
@@ -539,7 +542,11 @@ func (service *DispatcherService) handleCallEntityMethod(dcp *dispatcherClientPr
 	}
 
 	entityDispatchInfo := service.entityDispatchInfos[entityID]
-	entityDispatchInfo.dispatchPacket(pkt)
+	if entityDispatchInfo != nil {
+		entityDispatchInfo.dispatchPacket(pkt)
+	} else {
+		gwlog.Warnf("%s: entity %s is called by other entity, but dispatch info is not found", service, entityID)
+	}
 }
 
 func (service *DispatcherService) handleSyncPositionYawOnClients(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -556,6 +563,7 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 
 		entityDispatchInfo := service.entityDispatchInfos[eid]
 		if entityDispatchInfo == nil {
+			gwlog.Warnf("%s: entity %s is synced from client, but dispatch info is not found", service, eid)
 			continue
 		}
 
@@ -563,37 +571,25 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 
 		// put this sync info to the pending queue of target game
 		// concat to the end of queue
-		if len(service.entitySyncInfosToGame[gameid-1]) < consts.MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME { // when game is freezed, prohibit caching too much data per game
-			service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
-		}
+		pkt := service.entitySyncInfosToGame[gameid-1]
+		pkt.AppendBytes(payload[i : i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH])
 	}
 }
 
 func (service *DispatcherService) sendEntitySyncInfosToGames() {
-	for gameidx, entitySyncInfos := range service.entitySyncInfosToGame {
-		if len(entitySyncInfos) == 0 {
+	for gameidx, pkt := range service.entitySyncInfosToGame {
+		if pkt.GetPayloadLen() <= 2 {
 			continue
 		}
 
-		service.entitySyncInfosToGame[gameidx] = entitySyncInfos[0:0]
+		service.games[gameidx].dispatchPacket(pkt)
+		pkt.Release()
+
 		// send the entity sync infos to this game
-		packet := netutil.NewPacket()
-		packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
-		packet.AppendBytes(entitySyncInfos)
-
-		service.games[gameidx].dispatchPacket(packet)
-		packet.Release()
+		pkt = netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		service.entitySyncInfosToGame[gameidx] = pkt
 	}
-}
-
-func (service *DispatcherService) popEntitySyncInfosToGame(gameid uint16) []byte {
-	entitySyncInfos := service.entitySyncInfosToGame[gameid-1]
-	if entitySyncInfos == nil {
-		return nil
-	}
-
-	service.entitySyncInfosToGame[gameid-1] = make([]byte, 0, len(entitySyncInfos))
-	return entitySyncInfos
 }
 
 func (service *DispatcherService) handleCallEntityMethodFromClient(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -604,12 +600,11 @@ func (service *DispatcherService) handleCallEntityMethodFromClient(dcp *dispatch
 	}
 
 	entityDispatchInfo := service.entityDispatchInfos[entityID]
-	if entityDispatchInfo == nil {
-		gwlog.Errorf("%s.handleCallEntityMethodFromClient: entity %s is not found: %v", service, entityID, service.entityDispatchInfos)
-		return
+	if entityDispatchInfo != nil {
+		entityDispatchInfo.dispatchPacket(pkt)
+	} else {
+		gwlog.Warnf("%s: entity %s is called by client, but dispatch info is not found", service, entityID)
 	}
-
-	entityDispatchInfo.dispatchPacket(pkt)
 }
 
 func (service *DispatcherService) handleDoSomethingOnSpecifiedClient(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
