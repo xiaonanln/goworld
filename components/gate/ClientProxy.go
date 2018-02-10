@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"os"
 
@@ -76,7 +75,7 @@ func (cp *ClientProxy) serve() {
 		}
 	}()
 
-	cp.SetAutoFlush(time.Millisecond * 10)
+	cp.SetAutoFlush(consts.CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
 	//cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
 
 	for {
