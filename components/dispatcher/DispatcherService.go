@@ -205,6 +205,8 @@ func (service *DispatcherService) messageLoop() {
 				service.handleDoSomethingOnSpecifiedClient(dcp, pkt)
 			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
 				service.handleCallEntityMethodFromClient(dcp, pkt)
+			} else if msgtype == proto.MT_QUERY_SPACE_GAMEID_FOR_MIGRATE {
+				service.handleQuerySpaceGameIDForMigrate(dcp, pkt)
 			} else if msgtype == proto.MT_MIGRATE_REQUEST {
 				service.handleMigrateRequest(dcp, pkt)
 			} else if msgtype == proto.MT_REAL_MIGRATE {
@@ -616,28 +618,33 @@ func (service *DispatcherService) handleCallFilteredClientProxies(dcp *dispatche
 	service.broadcastToGateClients(pkt)
 }
 
+func (service *DispatcherService) handleQuerySpaceGameIDForMigrate(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+	spaceid := pkt.ReadEntityID()
+	if consts.DEBUG_PACKETS {
+		gwlog.Debugf("%s.handleQuerySpaceGameIDForMigrate: spaceid=%s", service, spaceid)
+	}
+
+	spaceDispatchInfo := service.entityDispatchInfos[spaceid]
+	var gameid uint16
+	if spaceDispatchInfo != nil {
+		gameid = spaceDispatchInfo.gameid
+	}
+	pkt.AppendUint16(gameid)
+	// send the packet back
+	dcp.SendPacket(pkt)
+}
+
 func (service *DispatcherService) handleMigrateRequest(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
 	spaceID := pkt.ReadEntityID()
+	spaceGameID := pkt.ReadUint16()
+
 	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("Entity %s is migrating to space %s", entityID, spaceID)
+		gwlog.Debugf("Entity %s is migrating to space %s @ game%d", entityID, spaceID, spaceGameID)
 	}
 
-	// mark the entity as migrating
-
-	spaceDispatchInfo := service.entityDispatchInfos[spaceID]
-	var spaceLoc uint16
-	if spaceDispatchInfo != nil {
-		spaceLoc = spaceDispatchInfo.gameid
-	}
-
-	pkt.AppendUint16(spaceLoc) // append the space game location to the packet
-
-	if spaceLoc > 0 { // almost true
-		entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
-		entityDispatchInfo.blockRPC(consts.DISPATCHER_MIGRATE_TIMEOUT)
-	}
-
+	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
+	entityDispatchInfo.blockRPC(consts.DISPATCHER_MIGRATE_TIMEOUT)
 	dcp.SendPacket(pkt)
 }
 

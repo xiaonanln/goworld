@@ -33,7 +33,7 @@ const (
 	rsFreezed
 )
 
-type _GameService struct {
+type GameService struct {
 	config       *config.GameConfig
 	id           uint16
 	gameDelegate IGameDelegate
@@ -50,8 +50,8 @@ type _GameService struct {
 	//collectEntitySycnInfosReply   chan interface{}
 }
 
-func newGameService(gameid uint16, delegate IGameDelegate) *_GameService {
-	return &_GameService{
+func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
+	return &GameService{
 		id:           gameid,
 		gameDelegate: delegate,
 		//registeredServices: map[string]entity.EntityIDSet{},
@@ -65,7 +65,7 @@ func newGameService(gameid uint16, delegate IGameDelegate) *_GameService {
 	}
 }
 
-func (gs *_GameService) run(restore bool) {
+func (gs *GameService) run(restore bool) {
 	gs.runState.Store(rsRunning)
 
 	if !restore {
@@ -82,7 +82,7 @@ func (gs *_GameService) run(restore bool) {
 	gwutils.RepeatUntilPanicless(gs.serveRoutine)
 }
 
-func (gs *_GameService) serveRoutine() {
+func (gs *GameService) serveRoutine() {
 	cfg := config.GetGame(gameid)
 	gs.config = cfg
 	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
@@ -112,7 +112,9 @@ func (gs *_GameService) serveRoutine() {
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
 				gs.HandleCallEntityMethod(eid, method, args, "")
-			} else if msgtype == proto.MT_MIGRATE_REQUEST { // migrate request sent to dispatcher is sent back
+			} else if msgtype == proto.MT_QUERY_SPACE_GAMEID_FOR_MIGRATE_ACK {
+				gs.HandleQuerySpaceGameIDForMigrateAck(pkt)
+			} else if msgtype == proto.MT_MIGRATE_REQUEST_ACK {
 				gs.HandleMigrateRequestAck(pkt)
 			} else if msgtype == proto.MT_REAL_MIGRATE {
 				gs.HandleRealMigrate(pkt)
@@ -186,12 +188,12 @@ func (gs *_GameService) serveRoutine() {
 	}
 }
 
-func (gs *_GameService) waitPostsComplete() {
+func (gs *GameService) waitPostsComplete() {
 	gwlog.Infof("waiting for posts to complete ...")
 	post.Tick() // just tick is Ok, tick will consume all posts
 }
 
-func (gs *_GameService) doTerminate() {
+func (gs *GameService) doTerminate() {
 	// wait for all posts to complete
 	gs.waitPostsComplete()
 	// wait for all async to clear
@@ -211,7 +213,7 @@ func (gs *_GameService) doTerminate() {
 
 var freezePacker = netutil.MessagePackMsgPacker{}
 
-func (gs *_GameService) doFreeze() {
+func (gs *GameService) doFreeze() {
 	// wait for all posts to complete
 	st := time.Now()
 	gs.waitPostsComplete()
@@ -266,7 +268,7 @@ func freezeFilename(gameid uint16) string {
 	return fmt.Sprintf("game%d_freezed.dat", gameid)
 }
 
-func (gs *_GameService) doRestore() error {
+func (gs *GameService) doRestore() error {
 	t0 := time.Now()
 	freezeFilename := freezeFilename(gameid)
 	data, err := ioutil.ReadFile(freezeFilename)
@@ -286,25 +288,25 @@ func (gs *_GameService) doRestore() error {
 	return err
 }
 
-func (gs *_GameService) String() string {
-	return fmt.Sprintf("_GameService<%d>", gs.id)
+func (gs *GameService) String() string {
+	return fmt.Sprintf("GameService<%d>", gs.id)
 }
 
-func (gs *_GameService) HandleCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) {
+func (gs *GameService) HandleCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleCreateEntityAnywhere: %s, typeName=%s, data=%v", gs, entityid, typeName, data)
 	}
 	entity.OnCreateEntityAnywhere(entityid, typeName, data)
 }
 
-func (gs *_GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
+func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
 	}
 	entity.LoadEntityLocally(typeName, entityID)
 }
 
-func (gs *_GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
+func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleDeclareService: %s declares %s", gs, entityID, serviceName)
@@ -312,7 +314,7 @@ func (gs *_GameService) HandleDeclareService(entityID common.EntityID, serviceNa
 	entity.OnDeclareService(serviceName, entityID)
 }
 
-func (gs *_GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
+func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
 	// tell the entity that it is registered successfully
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
@@ -320,17 +322,17 @@ func (gs *_GameService) HandleUndeclareService(entityID common.EntityID, service
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
-func (gs *_GameService) HandleNotifyAllGamesConnected() {
+func (gs *GameService) HandleNotifyAllGamesConnected() {
 	// all games are connected
 	gwlog.Infof("All games connected.")
 	gs.gameDelegate.OnGameReady()
 }
 
-func (gs *_GameService) HandleGateDisconnected(gateid uint16) {
+func (gs *GameService) HandleGateDisconnected(gateid uint16) {
 	entity.OnGateDisconnected(gateid)
 }
 
-func (gs *_GameService) HandleStartFreezeGameAck(dispid uint16) {
+func (gs *GameService) HandleStartFreezeGameAck(dispid uint16) {
 	gwlog.Infof("Start freeze game ACK of dispatcher %d is received, checking ...", dispid)
 	gs.dispatcherStartFreezeAcks[dispid-1] = true
 	for _, acked := range gs.dispatcherStartFreezeAcks {
@@ -342,7 +344,7 @@ func (gs *_GameService) HandleStartFreezeGameAck(dispid uint16) {
 	gs.runState.Store(rsFreezing)
 }
 
-func (gs *_GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
+func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	//gwlog.Infof("handleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
 	payload := pkt.UnreadPayload()
 	payloadLen := len(payload)
@@ -356,14 +358,14 @@ func (gs *_GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	}
 }
 
-func (gs *_GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
+func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method string, args [][]byte, clientid common.ClientID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	}
 	entity.OnCall(entityID, method, args, clientid)
 }
 
-func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, gateid uint16) {
+func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gateid uint16) {
 	client := entity.MakeGameClient(clientid, gateid)
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleNotifyClientConnected: %s", gs, client)
@@ -373,7 +375,7 @@ func (gs *_GameService) HandleNotifyClientConnected(clientid common.ClientID, ga
 	entity.CreateEntityLocally(gs.config.BootEntity, nil, client)
 }
 
-func (gs *_GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
+func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.handleNotifyClientDisconnected: %s", gs, clientid)
 	}
@@ -381,7 +383,14 @@ func (gs *_GameService) HandleNotifyClientDisconnected(clientid common.ClientID)
 	entity.OnClientDisconnected(clientid)
 }
 
-func (gs *_GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
+func (gs *GameService) HandleQuerySpaceGameIDForMigrateAck(pkt *netutil.Packet) {
+	spaceid := pkt.ReadEntityID()
+	entityid := pkt.ReadEntityID()
+	gameid := pkt.ReadUint16()
+	entity.OnQuerySpaceGameIDForMigrateAck(entityid, spaceid, gameid)
+}
+
+func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
 	spaceid := pkt.ReadEntityID()
 	spaceLoc := pkt.ReadUint16()
@@ -393,7 +402,7 @@ func (gs *_GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 	entity.OnMigrateRequestAck(eid, spaceid, spaceLoc)
 }
 
-func (gs *_GameService) HandleRealMigrate(pkt *netutil.Packet) {
+func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
 	_ = pkt.ReadUint16() // targetGame is not userful
 
@@ -420,11 +429,11 @@ func (gs *_GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
 }
 
-func (gs *_GameService) terminate() {
+func (gs *GameService) terminate() {
 	gs.runState.Store(rsTerminating)
 }
 
-func (gs *_GameService) startFreeze() {
+func (gs *GameService) startFreeze() {
 	dispatcherNum := len(config.GetDispatcherIDs())
 	gs.dispatcherStartFreezeAcks = make([]bool, dispatcherNum)
 	dispatchercluster.SendStartFreezeGame(gameid)

@@ -47,8 +47,8 @@ func SendSetClientFilterProp(gateid uint16, clientid common.ClientID, key, val s
 	return SelectByGateID(gateid).SendSetClientFilterProp(gateid, clientid, key, val)
 }
 
-func SendMigrateRequest(spaceID common.EntityID, entityID common.EntityID) error {
-	return SelectByEntityID(entityID).SendMigrateRequest(spaceID, entityID)
+func SendMigrateRequest(entityID common.EntityID, spaceID common.EntityID, spaceGameID uint16) error {
+	return SelectByEntityID(entityID).SendMigrateRequest(entityID, spaceID, spaceGameID)
 }
 
 func SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,

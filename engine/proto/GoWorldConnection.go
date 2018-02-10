@@ -289,12 +289,22 @@ func (gwc *GoWorldConnection) SendCallFilterClientProxies(key string, val string
 	return gwc.SendPacketRelease(packet)
 }
 
+// SendQuerySpaceGameIDForMigrate sends MT_QUERY_SPACE_GAMEID_FOR_MIGRATE message
+func (gwc *GoWorldConnection) SendQuerySpaceGameIDForMigrate(spaceid common.EntityID, entityid common.EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_QUERY_SPACE_GAMEID_FOR_MIGRATE)
+	packet.AppendEntityID(spaceid)
+	packet.AppendEntityID(entityid)
+	return gwc.SendPacketRelease(packet)
+}
+
 // SendMigrateRequest sends MT_MIGRATE_REQUEST message
-func (gwc *GoWorldConnection) SendMigrateRequest(spaceID common.EntityID, entityID common.EntityID) error {
+func (gwc *GoWorldConnection) SendMigrateRequest(entityID common.EntityID, spaceID common.EntityID, spaceGameID uint16) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_MIGRATE_REQUEST)
 	packet.AppendEntityID(entityID)
 	packet.AppendEntityID(spaceID)
+	packet.AppendUint16(spaceGameID)
 	return gwc.SendPacketRelease(packet)
 }
 

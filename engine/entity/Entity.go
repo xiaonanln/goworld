@@ -181,8 +181,8 @@ func (e *Entity) ToSpace() *Space {
 	return (*Space)(unsafe.Pointer(e))
 }
 
-func (e *Entity) init(typeName string, entityID common.EntityID, entityInstance reflect.Value) {
-	e.ID = entityID
+func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance reflect.Value) {
+	e.ID = entityid
 	e.V = entityInstance
 	e.I = entityInstance.Interface().(IEntity)
 	e.TypeName = typeName
@@ -1003,22 +1003,22 @@ func (e *Entity) GetListAttr(key string) *ListAttr {
 // Enter Space
 
 // EnterSpace let the entity enters space
-func (e *Entity) EnterSpace(spaceID common.EntityID, pos Vector3) {
+func (e *Entity) EnterSpace(spaceid common.EntityID, pos Vector3) {
 	if e.isEnteringSpace() {
-		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceID)
+		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceid)
 		e.callCompositiveMethod("OnEnterSpace")
 		return
 	}
 
-	if consts.OPTIMIZE_LOCAL_ENTITIES {
-		localSpace := spaceManager.getSpace(spaceID)
+	if consts.OPTIMIZE_LOCAL_SPACE_ENTERING {
+		localSpace := spaceManager.getSpace(spaceid)
 		if localSpace != nil { // target space is local, just enter
 			e.enterLocalSpace(localSpace, pos)
 		} else { // else request migrating to other space
-			e.requestMigrateTo(spaceID, pos)
+			e.requestMigrateTo(spaceid, pos)
 		}
 	} else {
-		e.requestMigrateTo(spaceID, pos)
+		e.requestMigrateTo(spaceid, pos)
 	}
 }
 
@@ -1034,7 +1034,7 @@ func (e *Entity) enterLocalSpace(space *Space, pos Vector3) {
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
 
 	e.Post(func() {
-		e.clearEnteringSpaceRequest()
+		e.cancelEnterSpace()
 
 		if space.IsDestroyed() {
 			gwlog.Warnf("%s: space %s is destroyed, enter space cancelled", e, space.ID)
@@ -1053,50 +1053,88 @@ func (e *Entity) isEnteringSpace() bool {
 }
 
 // Migrate to the server of space
-func (e *Entity) requestMigrateTo(spaceID common.EntityID, pos Vector3) {
-	e.enteringSpaceRequest.SpaceID = spaceID
+func (e *Entity) requestMigrateTo(spaceid common.EntityID, pos Vector3) {
+	e.enteringSpaceRequest.SpaceID = spaceid
 	e.enteringSpaceRequest.EnterPos = pos
 	e.enteringSpaceRequest.RequestTime = time.Now().UnixNano()
 
-	dispatchercluster.SendMigrateRequest(spaceID, e.ID)
+	dispatchercluster.SelectByEntityID(spaceid).SendQuerySpaceGameIDForMigrate(spaceid, e.ID)
 }
 
-func (e *Entity) clearEnteringSpaceRequest() {
+func (e *Entity) cancelEnterSpace() {
+	// TODO: cancel migrating block in dispatcher
 	e.enteringSpaceRequest.SpaceID = ""
 	e.enteringSpaceRequest.EnterPos = Vector3{}
 	e.enteringSpaceRequest.RequestTime = 0
 }
 
-// OnMigrateRequestAck is called by engine when mgirate request Ack is received
-func OnMigrateRequestAck(entityID common.EntityID, spaceID common.EntityID, spaceLoc uint16) {
-	entity := entityManager.get(entityID)
-	if entity == nil {
-		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityID)
-		gwlog.Errorf("Migrate failed since entity is destroyed: spaceID=%s, entityID=%s", spaceID, entityID)
-		return
-	}
+// OnQuerySpaceGameIDForMigrateAck is called by engine when query entity gameid ACK is received
+func OnQuerySpaceGameIDForMigrateAck(entityid common.EntityID, spaceid common.EntityID, spaceGameID uint16) {
 
-	if spaceLoc == 0 {
-		// target space not found, migrate not started
-		gwlog.Errorf("Migrate failed since target space is not found: spaceID=%s, entity=%s", spaceID, entity)
-		entity.clearEnteringSpaceRequest()
+	//gwlog.Infof("OnQuerySpaceGameIDForMigrateAck: entityid=%s, spaceid=%s, spaceGameID=%v", entityid, spaceid, spaceGameID)
+
+	entity := entityManager.get(entityid)
+	if entity == nil {
+		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityid)
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since entity is destroyed: entityid=%s, spaceid=%s", entityid, spaceid)
 		return
 	}
 
 	if !entity.isEnteringSpace() {
 		// replay from dispatcher is too late ?
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since entity is not migrating: entity=%s, spaceid=%s", entity, spaceid)
 		return
 	}
 
-	if entity.enteringSpaceRequest.SpaceID != spaceID {
+	if entity.enteringSpaceRequest.SpaceID != spaceid {
 		// not entering this space ?
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since entity is enter other space: entity=%s, spaceid=%s, other space=%s", entity, spaceid, entity.enteringSpaceRequest.SpaceID)
 		return
 	}
 
-	entity.realMigrateTo(spaceID, entity.enteringSpaceRequest.EnterPos, spaceLoc)
+	if spaceGameID == 0 {
+		// target space not found, migrate not started
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since target space is not found: entity=%s, spaceid=%s", entity, spaceid)
+		entity.cancelEnterSpace()
+		return
+	}
+
+	dispatchercluster.SendMigrateRequest(entityid, spaceid, spaceGameID)
 }
 
-func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Vector3, spaceLoc uint16) {
+// OnMigrateRequestAck is called by engine when mgirate request Ack is received
+func OnMigrateRequestAck(entityid common.EntityID, spaceid common.EntityID, spaceGameID uint16) {
+	//gwlog.Infof("OnMigrateRequestAck: entityid=%s, spaceid=%s, spaceGameID=%v", entityid, spaceid, spaceGameID)
+	entity := entityManager.get(entityid)
+	if entity == nil {
+		//dispatcher_client.GetDispatcherClientForSend().SendCancelMigrateRequest(entityid)
+		gwlog.Errorf("Migrate failed since entity is destroyed: spaceid=%s, entityid=%s", spaceid, entityid)
+		return
+	}
+
+	if !entity.isEnteringSpace() {
+		// replay from dispatcher is too late ?
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since entity is not migrating: entity=%s, spaceid=%s", entity, spaceid)
+		return
+	}
+
+	if entity.enteringSpaceRequest.SpaceID != spaceid {
+		// not entering this space ?
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since entity is enter other space: entity=%s, spaceid=%s, other space=%s", entity, spaceid, entity.enteringSpaceRequest.SpaceID)
+		return
+	}
+
+	if spaceGameID == 0 {
+		// target space not found, migrate not started
+		gwlog.Errorf("entity.OnQuerySpaceGameIDForMigrateAck: migrate failed since target space is not found: entity=%s, spaceid=%s", entity, spaceid)
+		entity.cancelEnterSpace()
+		return
+	}
+
+	entity.realMigrateTo(spaceid, entity.enteringSpaceRequest.EnterPos, spaceGameID)
+}
+
+func (e *Entity) realMigrateTo(spaceid common.EntityID, pos Vector3, spaceGameID uint16) {
 	var clientid common.ClientID
 	var clientsrv uint16
 	if e.client != nil {
@@ -1108,27 +1146,27 @@ func (e *Entity) realMigrateTo(spaceID common.EntityID, pos Vector3, spaceLoc ui
 	timerData := e.dumpTimers()
 	migrateData := e.GetMigrateData()
 
-	dispatchercluster.SendRealMigrate(e.ID, spaceLoc, spaceID,
+	dispatchercluster.SendRealMigrate(e.ID, spaceGameID, spaceid,
 		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
 }
 
 // OnRealMigrate is used by entity migration
-func OnRealMigrate(entityID common.EntityID, spaceID common.EntityID, x, y, z float32, typeName string,
+func OnRealMigrate(entityid common.EntityID, spaceid common.EntityID, x, y, z float32, typeName string,
 	migrateData map[string]interface{}, timerData []byte,
 	clientid common.ClientID, clientsrv uint16) {
 
-	if entityManager.get(entityID) != nil {
-		gwlog.Panicf("entity %s already exists", entityID)
+	if entityManager.get(entityid) != nil {
+		gwlog.Panicf("entity %s already exists", entityid)
 	}
 
 	// try to find the target space, but might be nil
-	space := spaceManager.getSpace(spaceID)
+	space := spaceManager.getSpace(spaceid)
 	var client *GameClient
 	if !clientid.IsNil() {
 		client = MakeGameClient(clientid, clientsrv)
 	}
 	pos := Vector3{Coord(x), Coord(y), Coord(z)}
-	createEntity(typeName, space, pos, entityID, migrateData, timerData, client, ccMigrate)
+	createEntity(typeName, space, pos, entityid, migrateData, timerData, client, ccMigrate)
 }
 
 // OnMigrateOut is called when entity is migrating out

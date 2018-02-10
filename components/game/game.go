@@ -39,7 +39,7 @@ var (
 	logLevel                     string
 	restore                      bool
 	runInDaemonMode              bool
-	gameService                  *_GameService
+	gameService                  *GameService
 	signalChan                   = make(chan os.Signal, 1)
 	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
 )
