@@ -53,9 +53,6 @@ func (edi *entityDispatchInfo) isBlockingRPC() bool {
 }
 
 func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
-	if edi == nil {
-		return nil
-	}
 
 	if !edi.isBlockingRPC() {
 		return dispatcherService.dispatchPacketToGame(edi.gameid, pkt)
@@ -539,7 +536,11 @@ func (service *DispatcherService) handleCallEntityMethod(dcp *dispatcherClientPr
 	}
 
 	entityDispatchInfo := service.entityDispatchInfos[entityID]
-	entityDispatchInfo.dispatchPacket(pkt)
+	if entityDispatchInfo != nil {
+		entityDispatchInfo.dispatchPacket(pkt)
+	} else {
+		gwlog.Warnf("%s: entity %s is called by other entity, but dispatch info is not found", service, entityID)
+	}
 }
 
 func (service *DispatcherService) handleSyncPositionYawOnClients(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -556,6 +557,7 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 
 		entityDispatchInfo := service.entityDispatchInfos[eid]
 		if entityDispatchInfo == nil {
+			gwlog.Warnf("%s: entity %s is synced from client, but dispatch info is not found", service, eid)
 			continue
 		}
 
@@ -604,12 +606,11 @@ func (service *DispatcherService) handleCallEntityMethodFromClient(dcp *dispatch
 	}
 
 	entityDispatchInfo := service.entityDispatchInfos[entityID]
-	if entityDispatchInfo == nil {
-		gwlog.Errorf("%s.handleCallEntityMethodFromClient: entity %s is not found", service, entityID)
-		return
+	if entityDispatchInfo != nil {
+		entityDispatchInfo.dispatchPacket(pkt)
+	} else {
+		gwlog.Warnf("%s: entity %s is called by client, but dispatch info is not found", service, entityID)
 	}
-
-	entityDispatchInfo.dispatchPacket(pkt)
 }
 
 func (service *DispatcherService) handleDoSomethingOnSpecifiedClient(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
