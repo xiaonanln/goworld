@@ -74,18 +74,3 @@ func (dcp *dispatcherClientProxy) String() string {
 		return fmt.Sprintf("dispatcherClientProxy<%s>", dcp.RemoteAddr())
 	}
 }
-
-func (dcp *dispatcherClientProxy) beforeFlush() {
-	// Collect all entity sync infos to this game before flush
-	if dcp.gameid > 0 {
-		entitySyncInfos := dcp.owner.popEntitySyncInfosToGame(dcp.gameid)
-		if len(entitySyncInfos) > 0 {
-			// send the entity sync infos to this game
-			packet := netutil.NewPacket()
-			packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
-			packet.AppendBytes(entitySyncInfos)
-			dcp.SendPacket(packet)
-			packet.Release()
-		}
-	}
-}

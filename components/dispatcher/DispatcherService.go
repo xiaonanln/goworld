@@ -152,7 +152,7 @@ type DispatcherService struct {
 	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
 	registeredServices    map[string]entity.EntityIDSet
 	targetGameOfClient    map[common.ClientID]uint16
-	entitySyncInfosToGame [][]byte // cache entity sync infos to gates
+	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
 }
 
@@ -160,6 +160,12 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 	cfg := config.GetDispatcher(dispid)
 	gameCount := len(config.GetGameIDs())
 	gateCount := len(config.GetGateIDs())
+	entitySyncInfosToGame := make([]*netutil.Packet, gameCount)
+	for i := range entitySyncInfosToGame {
+		pkt := netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		entitySyncInfosToGame[i] = pkt
+	}
 	ds := &DispatcherService{
 		dispid:                dispid,
 		config:                cfg,
@@ -170,7 +176,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
 		registeredServices:    map[string]entity.EntityIDSet{},
 		targetGameOfClient:    map[common.ClientID]uint16{},
-		entitySyncInfosToGame: make([][]byte, gameCount),
+		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
 	}
 
@@ -565,37 +571,25 @@ func (service *DispatcherService) handleSyncPositionYawFromClient(dcp *dispatche
 
 		// put this sync info to the pending queue of target game
 		// concat to the end of queue
-		if len(service.entitySyncInfosToGame[gameid-1]) < consts.MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME { // when game is freezed, prohibit caching too much data per game
-			service.entitySyncInfosToGame[gameid-1] = append(service.entitySyncInfosToGame[gameid-1], payload[i:i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH]...)
-		}
+		pkt := service.entitySyncInfosToGame[gameid-1]
+		pkt.AppendBytes(payload[i : i+proto.SYNC_INFO_SIZE_PER_ENTITY+common.ENTITYID_LENGTH])
 	}
 }
 
 func (service *DispatcherService) sendEntitySyncInfosToGames() {
-	for gameidx, entitySyncInfos := range service.entitySyncInfosToGame {
-		if len(entitySyncInfos) == 0 {
+	for gameidx, pkt := range service.entitySyncInfosToGame {
+		if pkt.GetPayloadLen() <= 2 {
 			continue
 		}
 
-		service.entitySyncInfosToGame[gameidx] = entitySyncInfos[0:0]
+		service.games[gameidx].dispatchPacket(pkt)
+		pkt.Release()
+
 		// send the entity sync infos to this game
-		packet := netutil.NewPacket()
-		packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
-		packet.AppendBytes(entitySyncInfos)
-
-		service.games[gameidx].dispatchPacket(packet)
-		packet.Release()
+		pkt = netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_FROM_CLIENT)
+		service.entitySyncInfosToGame[gameidx] = pkt
 	}
-}
-
-func (service *DispatcherService) popEntitySyncInfosToGame(gameid uint16) []byte {
-	entitySyncInfos := service.entitySyncInfosToGame[gameid-1]
-	if entitySyncInfos == nil {
-		return nil
-	}
-
-	service.entitySyncInfosToGame[gameid-1] = make([]byte, 0, len(entitySyncInfos))
-	return entitySyncInfos
 }
 
 func (service *DispatcherService) handleCallEntityMethodFromClient(dcp *dispatcherClientProxy, pkt *netutil.Packet) {

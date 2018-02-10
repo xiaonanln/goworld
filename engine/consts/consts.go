@@ -30,8 +30,6 @@ const (
 	GAME_PENDING_PACKET_QUEUE_MAX_LEN = 1000000
 	// ENTITY_PENDING_PACKET_QUEUE_MAX_LEN is the maxium number of packets in pending queue when entity is blocked
 	ENTITY_PENDING_PACKET_QUEUE_MAX_LEN = 1000
-	// MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME is maxium number of bytes of entity sync info cached for each game
-	MAX_ENTITY_SYNC_INFOS_CACHE_SIZE_PER_GAME = 1024 * 1024
 
 	DISPATCHER_SERVICE_PACKET_QUEUE_SIZE = 10000
 	// DISPATCHER_SERVICE_TICK_INTERVAL is the tick interval for dispatcher service's main routine.
