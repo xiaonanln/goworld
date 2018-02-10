@@ -70,7 +70,7 @@ func startGame(sid ServerID, gameid uint16, isRestore bool) {
 		args = append(args, "-d")
 	}
 	cmd := exec.Command(gameExePath, args...)
-	err := runCmdUntilTag(cmd, config.GetGame(gameid).LogFile, consts.GAME_STARTED_TAG, time.Second*10)
+	err := runCmdUntilTag(cmd, config.GetGame(gameid).LogFile, consts.GAME_STARTED_TAG, time.Second*600)
 	checkErrorOrQuit(err, "start game failed, see game.log for error")
 }
 
