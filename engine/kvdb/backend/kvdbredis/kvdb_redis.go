@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/google/btree"
+	"github.com/petar/GoLLRB/llrb"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )
@@ -15,14 +15,14 @@ const (
 
 type redisKVDB struct {
 	c       redis.Conn
-	keyTree *btree.BTree
+	keyTree *llrb.LLRB
 }
 
 type keyTreeItem struct {
 	key string
 }
 
-func (ki keyTreeItem) Less(_other btree.Item) bool {
+func (ki keyTreeItem) Less(_other llrb.Item) bool {
 	return ki.key < _other.(keyTreeItem).key
 }
 
@@ -35,7 +35,7 @@ func OpenRedisKVDB(url string, dbindex int) (kvdbtypes.KVDBEngine, error) {
 
 	db := &redisKVDB{
 		c:       c,
-		keyTree: btree.New(2),
+		keyTree: llrb.New(),
 	}
 
 	if err := db.initialize(dbindex); err != nil {
@@ -124,7 +124,7 @@ func (it *redisKVDBIterator) Next() (kvdbtypes.KVItem, error) {
 
 func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
 	keys := []string{} // retrive all keys in the range, ordered
-	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it btree.Item) bool {
+	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it llrb.Item) bool {
 		keys = append(keys, it.(keyTreeItem).key)
 		return true
 	})
