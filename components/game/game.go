@@ -91,20 +91,27 @@ func Run(delegate IGameDelegate) {
 	}
 	binutil.SetupGWLog(fmt.Sprintf("game%d", gameid), logLevel, gameConfig.LogFile, gameConfig.LogStderr)
 
+    gwlog.Infof("Initializing storage ...")
 	storage.Initialize()
+    gwlog.Infof("Initializing KVDB ...")
 	kvdb.Initialize()
+    gwlog.Infof("Initializing crontab ...")
 	crontab.Initialize()
 
+    gwlog.Infof("Setup http server ...")
 	binutil.SetupHTTPServer(gameConfig.HTTPIp, gameConfig.HTTPPort, nil)
 
 	entity.SetSaveInterval(gameConfig.SaveInterval)
 
+    gwlog.Infof("Start game service ...")
 	gameService = newGameService(gameid, delegate)
 
+    gwlog.Infof("Start dispatchercluster ...")
 	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, &dispatcherClientDelegate{})
 
 	setupSignals()
 
+    gwlog.Infof("Game service start running ...")
 	gameService.run(restore)
 }
 
