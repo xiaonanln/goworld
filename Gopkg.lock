@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/go-ole/go-ole"
   packages = ["."]
-  revision = "0e87ea779d9deb219633b828a023b32e1244dd57"
-  version = "v1.2.0"
+  revision = "a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506"
+  version = "v1.2.1"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -38,10 +38,10 @@
   version = "v1.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -90,12 +90,6 @@
   name = "github.com/kr/text"
   packages = ["."]
   revision = "7cafcd837844e784b526369c9bce262804aebc60"
-
-[[projects]]
-  name = "github.com/natefinch/lumberjack"
-  packages = ["."]
-  revision = "a96e63847dc3c67d17befa69c303767e2f84e54f"
-  version = "v2.1"
 
 [[projects]]
   branch = "master"
@@ -185,26 +179,26 @@
 [[projects]]
   name = "github.com/xtaci/kcp-go"
   packages = ["."]
-  revision = "86eebd5cadb519b7c9306082c7eb3bcee2c49a7b"
-  version = "v3.23"
+  revision = "42bc1dfefff592fdb3affa793980c4f6ab4213e5"
+  version = "v3.24"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","ssh/terminal","tea","twofish","xtea"]
-  revision = "0efb9460aaf800c6376acf625be2853bceac2e06"
+  revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
+  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "03467258950d845cd1877eab69461b98e8c09219"
+  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -227,6 +221,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f891887634cb1a3f02513f79125b6e6eba270dc624c2aa131e308d9004de004f"
+  inputs-digest = "b3c42c1ad8f60c3b33daaeb62af7426dee9e4942e1dfbf1885200b74e44ae0cc"
   solver-name = "gps-cdcl"
   solver-version = 1
