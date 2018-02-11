@@ -26,8 +26,8 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity, isPersistent, use
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
-func CreateSpaceAnywhere(kind int) {
-	entity.CreateSpaceAnywhere(kind)
+func CreateSpaceAnywhere(kind int) common.EntityID {
+	return entity.CreateSpaceAnywhere(kind)
 }
 
 // CreateSpaceLocally creates a space with specified kind in the local game server

@@ -399,7 +399,7 @@ func GetServiceProviders(serviceName string) EntityIDSet {
 }
 
 func callEntity(id common.EntityID, method string, args []interface{}) {
-	if consts.OPTIMIZE_LOCAL_ENTITIES {
+	if consts.OPTIMIZE_LOCAL_SPACE_ENTERING {
 		e := entityManager.get(id)
 		if e != nil { // this entity is local, just call entity directly
 			e.Post(func() {

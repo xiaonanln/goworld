@@ -55,11 +55,19 @@ const (
 	MT_START_FREEZE_GAME_ACK
 
 	// Message types for migrating
-
 	// MT_MIGRATE_REQUEST is a message type for entity migrations
 	MT_MIGRATE_REQUEST
 	// MT_REAL_MIGRATE is a message type for entity migrations
 	MT_REAL_MIGRATE
+	// MT_QUERY_SPACE_GAMEID_FOR_MIGRATE is a message type for entity migrations
+	MT_QUERY_SPACE_GAMEID_FOR_MIGRATE
+)
+
+// Alias message types
+const (
+	// MT_MIGRATE_REQUEST_ACK is a message type for entity migrations
+	MT_MIGRATE_REQUEST_ACK                = MT_MIGRATE_REQUEST
+	MT_QUERY_SPACE_GAMEID_FOR_MIGRATE_ACK = MT_QUERY_SPACE_GAMEID_FOR_MIGRATE
 )
 
 const (
