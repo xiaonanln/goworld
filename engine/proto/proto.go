@@ -61,6 +61,7 @@ const (
 	MT_REAL_MIGRATE
 	// MT_QUERY_SPACE_GAMEID_FOR_MIGRATE is a message type for entity migrations
 	MT_QUERY_SPACE_GAMEID_FOR_MIGRATE
+	MT_CANCEL_MIGRATE
 )
 
 // Alias message types

@@ -67,9 +67,10 @@ type Entity struct {
 	Attrs *MapAttr
 
 	enteringSpaceRequest struct {
-		SpaceID     common.EntityID
-		EnterPos    Vector3
-		RequestTime int64
+		SpaceID              common.EntityID
+		EnterPos             Vector3
+		RequestTime          int64
+		migrateRequestIsSent bool
 	}
 
 	filterProps map[string]string
@@ -1066,6 +1067,11 @@ func (e *Entity) cancelEnterSpace() {
 	e.enteringSpaceRequest.SpaceID = ""
 	e.enteringSpaceRequest.EnterPos = Vector3{}
 	e.enteringSpaceRequest.RequestTime = 0
+	if e.enteringSpaceRequest.migrateRequestIsSent {
+		// if migrate request is already sent, the entity is already blocked in dispatcher, so we should tell the dispatcher to unblock this entity
+		e.enteringSpaceRequest.migrateRequestIsSent = false
+		dispatchercluster.SelectByEntityID(e.ID).SendCancelMigrate(e.ID)
+	}
 }
 
 // OnQuerySpaceGameIDForMigrateAck is called by engine when query entity gameid ACK is received
@@ -1099,6 +1105,7 @@ func OnQuerySpaceGameIDForMigrateAck(entityid common.EntityID, spaceid common.En
 		return
 	}
 
+	entity.enteringSpaceRequest.migrateRequestIsSent = true
 	dispatchercluster.SendMigrateRequest(entityid, spaceid, spaceGameID)
 }
 

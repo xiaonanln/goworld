@@ -42,22 +42,16 @@ func (edi *entityDispatchInfo) blockRPC(d time.Duration) {
 	}
 }
 
-func (edi *entityDispatchInfo) isBlockingRPC() bool {
+func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 	if edi.blockUntilTime.IsZero() {
-		// most common case
-		return false
+		// most common case. handle it quickly
+		return dispatcherService.dispatchPacketToGame(edi.gameid, pkt)
 	}
 
+	// blockUntilTime is set, need to check if block should be released
 	now := time.Now()
-	return now.Before(edi.blockUntilTime)
-}
-
-func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
-
-	if !edi.isBlockingRPC() {
-		return dispatcherService.dispatchPacketToGame(edi.gameid, pkt)
-	} else {
-		// if migrating, just put the call to wait
+	if now.Before(edi.blockUntilTime) {
+		// keep blocking, just put the call to wait
 		if len(edi.pendingPacketQueue) < consts.ENTITY_PENDING_PACKET_QUEUE_MAX_LEN {
 			pkt.AddRefCount(1)
 			edi.pendingPacketQueue = append(edi.pendingPacketQueue, pkt)
@@ -66,8 +60,13 @@ func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 			gwlog.Errorf("%s.dispatchPacket: packet queue too long, packet dropped", edi)
 			return errors.Errorf("%s: packet of entity %s is dropped", dispatcherService)
 		}
+	} else {
+		// time to unblock
+		edi.unblock()
+		return nil
 	}
 }
+
 func (info *entityDispatchInfo) unblock() {
 	if !info.blockUntilTime.IsZero() { // entity is loading, it's done now
 		//gwlog.Infof("entity is loaded now, clear loadTime")
@@ -227,6 +226,8 @@ func (service *DispatcherService) messageLoop() {
 				service.handleNotifyDestroyEntity(dcp, pkt, eid)
 			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 				service.handleCreateEntityAnywhere(dcp, pkt)
+			} else if msgtype == proto.MT_CANCEL_MIGRATE {
+				service.handleCancelMigrate(dcp, pkt)
 			} else if msgtype == proto.MT_DECLARE_SERVICE {
 				service.handleDeclareService(dcp, pkt)
 			} else if msgtype == proto.MT_SET_GAME_ID {
@@ -646,6 +647,19 @@ func (service *DispatcherService) handleMigrateRequest(dcp *dispatcherClientProx
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
 	entityDispatchInfo.blockRPC(consts.DISPATCHER_MIGRATE_TIMEOUT)
 	dcp.SendPacket(pkt)
+}
+
+func (service *DispatcherService) handleCancelMigrate(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+	entityid := pkt.ReadEntityID()
+
+	if consts.DEBUG_PACKETS {
+		gwlog.Debugf("Entity %s cancelled migrating", entityid)
+	}
+
+	entityDispatchInfo := service.entityDispatchInfos[entityid]
+	if entityDispatchInfo != nil {
+		entityDispatchInfo.unblock()
+	}
 }
 
 func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, pkt *netutil.Packet) {

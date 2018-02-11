@@ -308,6 +308,14 @@ func (gwc *GoWorldConnection) SendMigrateRequest(entityID common.EntityID, space
 	return gwc.SendPacketRelease(packet)
 }
 
+// SendCancelMigrate sends MT_CANCEL_MIGRATE message to dispatcher to unblock the entity
+func (gwc *GoWorldConnection) SendCancelMigrate(entityid common.EntityID) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_CANCEL_MIGRATE)
+	packet.AppendEntityID(entityid)
+	return gwc.SendPacketRelease(packet)
+}
+
 // SendRealMigrate sends MT_REAL_MIGRATE message
 func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,
 	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
