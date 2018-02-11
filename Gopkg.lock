@@ -51,12 +51,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/google/btree"
-  packages = ["."]
-  revision = "e89373fe6b4a7413d7acd6da1725b83ef713e6e4"
-
-[[projects]]
-  branch = "master"
   name = "github.com/kardianos/osext"
   packages = ["."]
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
@@ -221,6 +215,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b3c42c1ad8f60c3b33daaeb62af7426dee9e4942e1dfbf1885200b74e44ae0cc"
+  inputs-digest = "f18031634df0bec4983207c9489fe3f68985cdaad793622dc7fb9af0d6166e98"
   solver-name = "gps-cdcl"
   solver-version = 1
