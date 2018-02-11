@@ -165,14 +165,14 @@ type _Something struct {
 
 var (
 	_DO_THINGS = []*_Something{
-		{"DoEnterRandomSpace", 20, time.Minute},
-		{"DoSendMail", 5, time.Minute},
-		{"DoGetMails", 10, time.Minute},
-        //{"DoSayInWorldChannel", 5, time.Minute},
-		//{"DoSayInProfChannel", 5, time.Minute},
-		{"DoTestListField", 10, time.Minute},
+		//{"DoEnterRandomSpace", 20, time.Minute},
+		//{"DoSendMail", 5, time.Minute},
+		//{"DoGetMails", 10, time.Minute},
+		{"DoSayInWorldChannel", 5, time.Minute},
+		{"DoSayInProfChannel", 5, time.Minute},
+		//{"DoTestListField", 10, time.Minute},
 		//{"DoTestPublish", 1, time.Minute},
-		{"DoTestMsgbox", 10, time.Minute},
+		//{"DoTestMsgbox", 10, time.Minute},
 	}
 )
 

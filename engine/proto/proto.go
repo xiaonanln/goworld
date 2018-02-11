@@ -125,6 +125,18 @@ const (
 	UDP_SYNC_PACKET_SIZE      = common.ENTITYID_LENGTH + SYNC_INFO_SIZE_PER_ENTITY
 )
 
+// Operators for calling filtered clients
+type FilterClientsOpType byte
+
+const (
+	FILTER_CLIENTS_OP_EQ FilterClientsOpType = iota
+	FILTER_CLIENTS_OP_NE
+	FILTER_CLIENTS_OP_GT
+	FILTER_CLIENTS_OP_LT
+	FILTER_CLIENTS_OP_GTE
+	FILTER_CLIENTS_OP_LTE
+)
+
 // EntitySyncInfo defines fields of entity sync info
 type EntitySyncInfo struct {
 	X, Y, Z float32

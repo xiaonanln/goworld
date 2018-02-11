@@ -1215,8 +1215,26 @@ func (e *Entity) SetFilterProp(key string, val string) {
 // CallFitleredClients calls the filtered clients with prop key == value
 //
 // The message is broadcast to filtered clientproxies directly without going through entities
-func (e *Entity) CallFitleredClients(key string, val string, method string, args ...interface{}) {
-	dispatchercluster.SendCallFilterClientProxies(key, val, method, args)
+func (e *Entity) CallFitleredClients(key, op, val string, method string, args ...interface{}) {
+	// parse op from string to FilterClientsOpType
+	var realop proto.FilterClientsOpType
+	if op == "=" {
+		realop = proto.FILTER_CLIENTS_OP_EQ
+	} else if op == "!=" {
+		realop = proto.FILTER_CLIENTS_OP_NE
+	} else if op == ">" {
+		realop = proto.FILTER_CLIENTS_OP_GT
+	} else if op == "<" {
+		realop = proto.FILTER_CLIENTS_OP_LT
+	} else if op == ">=" {
+		realop = proto.FILTER_CLIENTS_OP_GTE
+	} else if op == "<=" {
+		realop = proto.FILTER_CLIENTS_OP_LTE
+	} else {
+		gwlog.Panicf("%s.CallFitleredClients: unsupported op: calling method %s on clients filtered by %s %s %s", e, method, key, op, val)
+	}
+
+	dispatchercluster.SendCallFilterClientProxies(realop, key, val, method, args)
 }
 
 // IsUseAOI returns if entity type is using aoi

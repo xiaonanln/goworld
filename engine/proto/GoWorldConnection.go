@@ -279,9 +279,10 @@ func (gwc *GoWorldConnection) SendClearClientFilterProp(gateid uint16, clientid 
 }
 
 // SendCallFilterClientProxies sends MT_CALL_FILTERED_CLIENTS message
-func (gwc *GoWorldConnection) SendCallFilterClientProxies(key string, val string, method string, args []interface{}) (err error) {
+func (gwc *GoWorldConnection) SendCallFilterClientProxies(op FilterClientsOpType, key, val string, method string, args []interface{}) (err error) {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_CALL_FILTERED_CLIENTS)
+	packet.AppendByte(byte(op))
 	packet.AppendVarStr(key)
 	packet.AppendVarStr(val)
 	packet.AppendVarStr(method)

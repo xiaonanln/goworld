@@ -8,6 +8,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 var (
@@ -55,9 +56,9 @@ func SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.
 	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
 	return SelectByEntityID(eid).SendRealMigrate(eid, targetGame, targetSpace, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
 }
-func SendCallFilterClientProxies(key string, val string, method string, args []interface{}) (anyerror error) {
+func SendCallFilterClientProxies(op proto.FilterClientsOpType, key, val string, method string, args []interface{}) (anyerror error) {
 	for _, dcm := range dispatcherConns {
-		err := dcm.GetDispatcherClientForSend().SendCallFilterClientProxies(key, val, method, args)
+		err := dcm.GetDispatcherClientForSend().SendCallFilterClientProxies(op, key, val, method, args)
 		if err != nil && anyerror == nil {
 			anyerror = err
 		}
