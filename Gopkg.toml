@@ -44,9 +44,6 @@
   name = "github.com/golang/snappy"
 
 [[constraint]]
-  name = "github.com/google/btree"
-
-[[constraint]]
   name = "github.com/pierrec/lz4"
   version = "1.0.1"
 
