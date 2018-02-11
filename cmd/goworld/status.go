@@ -25,21 +25,31 @@ func (ss *ServerStatus) IsRunning() bool {
 	return ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 || ss.NumGamesRunning > 0
 }
 
+func getProcPath(proc ps.Process) (string, error) {
+	path, err := proc.Path()
+
+	if err == nil {
+		return path, nil
+	}
+
+	if pathErr, ok := err.(*os.PathError); ok {
+		path = pathErr.Path
+		if strings.HasSuffix(path, " (deleted)") {
+			path = path[:len(path)-10]
+			return path, nil
+		}
+	}
+	return "", err
+}
+
 func detectServerStatus() *ServerStatus {
 	ss := &ServerStatus{}
 	procs, err := ps.Processes()
 	checkErrorOrQuit(err, "list processes failed")
 	for _, proc := range procs {
-		path, err := proc.Path()
+		path, err := getProcPath(proc)
 		if err != nil {
-			if pathErr, ok := err.(*os.PathError); ok {
-				path = pathErr.Path
-				if strings.HasSuffix(path, " (deleted)") {
-					path = path[:len(path)-10]
-				}
-			} else {
-				continue
-			}
+			continue
 		}
 
 		relpath, err := filepath.Rel(env.GoWorldRoot, path)
@@ -84,5 +94,18 @@ func showServerStatus(ss *ServerStatus) {
 	showMsg("%d dispatcher running, %d/%d gates running, %d/%d games (%s) running", ss.NumDispatcherRunning,
 		ss.NumGatesRunning, len(config.GetGateIDs()),
 		ss.NumGamesRunning, len(config.GetGameIDs()),
-		ss.ServerID)
+		ss.ServerID,
+	)
+
+	var listProcs []ps.Process
+	listProcs = append(listProcs, ss.DispatcherProcs...)
+	listProcs = append(listProcs, ss.GameProcs...)
+	listProcs = append(listProcs, ss.GateProcs...)
+	for _, proc := range listProcs {
+		path, err := getProcPath(proc)
+		if err != nil {
+			path = "[" + proc.Executable() + "]"
+		}
+		showMsg("\t%-10d%-16s%s", proc.Pid(), proc.Executable(), path)
+	}
 }
