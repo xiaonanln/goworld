@@ -34,3 +34,9 @@ func RepeatUntilPanicless(f func()) {
 	for !RunPanicless(f) {
 	}
 }
+
+// NextLargerKey finds the next key that is larger than the specified key,
+// but smaller than any other keys that is larger than the specified key
+func NextLargerKey(key string) string {
+	return key + "\x00" // the next string that is larger than key, but smaller than any other keys > key
+}

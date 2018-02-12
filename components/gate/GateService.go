@@ -366,18 +366,21 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 }
 
 func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
+	op := proto.FilterClientsOpType(packet.ReadOneByte())
 	key := packet.ReadVarStr()
 	val := packet.ReadVarStr()
 
 	ft := gs.filterTrees[key]
 	if ft != nil {
-		ft.Visit(val, func(clientid common.ClientID) {
+		ft.Visit(op, val, func(clientid common.ClientID) {
 			//// visit all clientids and
 			clientproxy := gs.clientProxies[clientid]
 			if clientproxy != nil {
 				clientproxy.SendPacket(packet)
 			}
 		})
+	} else {
+		gwlog.Errorf("clients are not filtered by key %s", key)
 	}
 
 }

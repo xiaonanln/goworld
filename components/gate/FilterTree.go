@@ -3,6 +3,9 @@ package main
 import (
 	llrb "github.com/petar/GoLLRB/llrb"
 	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
+	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 type _FilterTree struct {
@@ -44,14 +47,55 @@ func (ft *_FilterTree) Remove(id common.ClientID, val string) {
 	})
 }
 
-func (ft *_FilterTree) Visit(val string, f func(clientid common.ClientID)) {
-	ft.btree.AscendGreaterOrEqual(&filterTreeItem{common.ClientID(""), val}, func(_item llrb.Item) bool {
-		item := _item.(*filterTreeItem)
-		if item.val > val {
-			return false
-		}
+func (ft *_FilterTree) Visit(op proto.FilterClientsOpType, val string, f func(clientid common.ClientID)) {
+	if op == proto.FILTER_CLIENTS_OP_EQ {
+		// visit key == val
+		ft.btree.AscendGreaterOrEqual(&filterTreeItem{common.ClientID(""), val}, func(_item llrb.Item) bool {
+			item := _item.(*filterTreeItem)
+			if item.val > val {
+				return false
+			}
 
-		f(item.clientid)
-		return true
-	})
+			f(item.clientid)
+			return true
+		})
+	} else if op == proto.FILTER_CLIENTS_OP_NE {
+		// visit key != val
+		// visit key < val first
+		ft.btree.AscendLessThan(&filterTreeItem{common.ClientID(""), val}, func(_item llrb.Item) bool {
+			f(_item.(*filterTreeItem).clientid)
+			return true
+		})
+		// then visit key > val
+		ft.btree.AscendGreaterOrEqual(&filterTreeItem{common.ClientID(""), gwutils.NextLargerKey(val)}, func(_item llrb.Item) bool {
+			f(_item.(*filterTreeItem).clientid)
+			return true
+		})
+	} else if op == proto.FILTER_CLIENTS_OP_GT {
+		// visit key > val
+		ft.btree.AscendGreaterOrEqual(&filterTreeItem{common.ClientID(""), gwutils.NextLargerKey(val)}, func(_item llrb.Item) bool {
+			f(_item.(*filterTreeItem).clientid)
+			return true
+		})
+	} else if op == proto.FILTER_CLIENTS_OP_GTE {
+		// visit key >= val
+		ft.btree.AscendGreaterOrEqual(&filterTreeItem{common.ClientID(""), val}, func(_item llrb.Item) bool {
+			f(_item.(*filterTreeItem).clientid)
+			return true
+		})
+	} else if op == proto.FILTER_CLIENTS_OP_LT {
+		// visit key < val
+		ft.btree.AscendLessThan(&filterTreeItem{common.ClientID(""), val}, func(_item llrb.Item) bool {
+			f(_item.(*filterTreeItem).clientid)
+			return true
+		})
+	} else if op == proto.FILTER_CLIENTS_OP_LTE {
+		// visit key <= val
+		ft.btree.AscendLessThan(&filterTreeItem{common.ClientID(""), gwutils.NextLargerKey(val)}, func(_item llrb.Item) bool {
+			f(_item.(*filterTreeItem).clientid)
+			return true
+		})
+	} else {
+		gwlog.Panicf("unknown filter clients op: %s", op)
+	}
 }
