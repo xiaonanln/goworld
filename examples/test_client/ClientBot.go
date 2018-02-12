@@ -325,8 +325,9 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		}
 		bot.callEntityMethod(entityID, method, args)
 	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
-		_ = packet.ReadVarStr() // ignore key
-		_ = packet.ReadVarStr() // ignore val
+		_ = packet.ReadOneByte() // ignore op
+		_ = packet.ReadVarStr()  // ignore key
+		_ = packet.ReadVarStr()  // ignore val
 		method := packet.ReadVarStr()
 		args := packet.ReadArgs()
 		if bot.player == nil {
