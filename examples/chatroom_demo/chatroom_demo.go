@@ -2,13 +2,7 @@ package main
 
 import (
 	"github.com/xiaonanln/goworld"
-	"github.com/xiaonanln/goworld/components/game"
 )
-
-// serverDelegate 定义一些游戏服务器的回调函数
-type serverDelegate struct {
-	game.GameDelegate
-}
 
 func main() {
 	goworld.RegisterSpace(&MySpace{}) // 注册自定义的Space类型
@@ -19,5 +13,5 @@ func main() {
 	goworld.RegisterEntity("Avatar", &Avatar{}, true, true)
 
 	// 运行游戏服务器
-	goworld.Run(&serverDelegate{})
+	goworld.Run()
 }
