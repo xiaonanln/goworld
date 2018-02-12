@@ -459,6 +459,18 @@ func OnGameTerminating() {
 	}
 }
 
+var allGamesConnected bool
+
+// OnAllGamesConnected is called when all games are connected to dispatcher cluster
+func OnAllGamesConnected() {
+
+	allGamesConnected = true
+	gwlog.Infof("all games connected, nil space = %s", nilSpace)
+	if nilSpace != nil {
+		nilSpace.I.OnGameReady()
+	}
+}
+
 // OnGateDisconnected is called when gate is down
 func OnGateDisconnected(gateid uint16) {
 	gwlog.Warnf("Gate %d disconnected", gateid)

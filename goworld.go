@@ -4,6 +4,7 @@ import (
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/storage"
@@ -13,8 +14,8 @@ import (
 //
 // This is the main routine for the server and all entity logic,
 // and this function never quit
-func Run(delegate game.IGameDelegate) {
-	game.Run(delegate)
+func Run() {
+	game.Run()
 }
 
 // RegisterEntity registers the entity type so that entities can be created or loaded
@@ -27,6 +28,9 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity, isPersistent, use
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
 func CreateSpaceAnywhere(kind int) common.EntityID {
+	if kind == 0 {
+		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
+	}
 	return entity.CreateSpaceAnywhere(kind)
 }
 
@@ -34,6 +38,9 @@ func CreateSpaceAnywhere(kind int) common.EntityID {
 //
 // returns the space EntityID
 func CreateSpaceLocally(kind int) common.EntityID {
+	if kind == 0 {
+		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
+	}
 	return entity.CreateSpaceLocally(kind)
 }
 

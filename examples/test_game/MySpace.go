@@ -3,6 +3,9 @@ package main
 import (
 	"time"
 
+	timer "github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goworld"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -95,4 +98,28 @@ func (space *MySpace) ConfirmRequestDestroy(ok bool) {
 		}
 		space.Destroy()
 	}
+}
+
+// OnGameReady is called when the game server is ready
+func (space *MySpace) OnGameReady() {
+	gwlog.Infof("%s on game ready", space)
+
+	if goworld.GetGameID() == 1 { // Create services on just 1 server
+		for _, serviceName := range _SERVICE_NAMES {
+			serviceName := serviceName
+			goworld.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
+				gwlog.Infof("Found saved %s ids: %v", serviceName, eids)
+
+				if len(eids) == 0 {
+					goworld.CreateEntityAnywhere(serviceName)
+				} else {
+					// already exists
+					serviceID := eids[0]
+					goworld.LoadEntityAnywhere(serviceName, serviceID)
+				}
+			})
+		}
+	}
+
+	timer.AddCallback(time.Millisecond*1000, checkServerStarted)
 }

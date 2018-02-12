@@ -12,4 +12,6 @@ type ISpace interface {
 	// Space Operations
 	OnEntityEnterSpace(entity *Entity) // Called when any entity enters space
 	OnEntityLeaveSpace(entity *Entity) // Called when any entity leaves space
+	// Game releated callbacks on nil space only
+	OnGameReady()
 }

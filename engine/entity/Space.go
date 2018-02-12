@@ -35,10 +35,15 @@ type Space struct {
 }
 
 func (space *Space) String() string {
+	if space == nil {
+		return "nil"
+	}
+
 	if space.Kind != 0 {
 		return fmt.Sprintf("Space<%d|%s>", space.Kind, space.ID)
+	} else {
+		return fmt.Sprintf("NilSpace<%s>", space.ID)
 	}
-	return "Space<nil>"
 }
 
 func (space *Space) DefineAttrs(desc *EntityTypeDesc) {
@@ -71,6 +76,10 @@ func (space *Space) OnCreated() {
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	space.onSpaceCreated()
 	if space.IsNil() {
+		gwlog.Infof("nil space is created: %s, all games connected: %v", space, allGamesConnected)
+		if allGamesConnected {
+			space.I.OnGameReady()
+		}
 		return
 	}
 
@@ -305,4 +314,9 @@ func (space *Space) GetEntity(entityID common.EntityID) *Entity {
 // aoi Management
 func (space *Space) addToAOI(entity *Entity) {
 
+}
+
+// OnGameReady is called when the game server is ready on NilSpace only
+func (space *Space) OnGameReady() {
+	gwlog.Warnf("Game server is ready. Override function %T.OnGameReady to write your own game logic!", space.I)
 }

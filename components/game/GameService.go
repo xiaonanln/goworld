@@ -34,9 +34,8 @@ const (
 )
 
 type GameService struct {
-	config       *config.GameConfig
-	id           uint16
-	gameDelegate IGameDelegate
+	config *config.GameConfig
+	id     uint16
 	//registeredServices map[string]entity.EntityIDSet
 
 	packetQueue                    chan proto.Message
@@ -50,10 +49,9 @@ type GameService struct {
 	//collectEntitySycnInfosReply   chan interface{}
 }
 
-func newGameService(gameid uint16, delegate IGameDelegate) *GameService {
+func newGameService(gameid uint16) *GameService {
 	return &GameService{
-		id:           gameid,
-		gameDelegate: delegate,
+		id: gameid,
 		//registeredServices: map[string]entity.EntityIDSet{},
 		packetQueue: make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
 		ticker:      time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
@@ -144,7 +142,7 @@ func (gs *GameService) serveRoutine() {
 				serviceName := pkt.ReadVarStr()
 				gs.HandleUndeclareService(eid, serviceName)
 			} else if msgtype == proto.MT_NOTIFY_ALL_GAMES_CONNECTED {
-				gs.HandleNotifyAllGamesConnected()
+				gs.handleNotifyAllGamesConnected()
 			} else if msgtype == proto.MT_NOTIFY_GATE_DISCONNECTED {
 				gateid := pkt.ReadUint16()
 				gs.HandleGateDisconnected(gateid)
@@ -322,10 +320,9 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
-func (gs *GameService) HandleNotifyAllGamesConnected() {
+func (gs *GameService) handleNotifyAllGamesConnected() {
 	// all games are connected
-	gwlog.Infof("All games connected.")
-	gs.gameDelegate.OnGameReady()
+	entity.OnAllGamesConnected()
 }
 
 func (gs *GameService) HandleGateDisconnected(gateid uint16) {
