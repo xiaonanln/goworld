@@ -1196,6 +1196,10 @@ func (e *Entity) OnMigrateIn() {
 
 // SetFilterProp sets a filter property key-value
 func (e *Entity) SetFilterProp(key string, val string) {
+	if key == "" {
+		gwlog.Panicf("%s SetFilterProp: key must not be empty", e)
+	}
+
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Debugf("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
 	}
@@ -1212,10 +1216,12 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	}
 }
 
-// CallFitleredClients calls the filtered clients with prop key == value
+// CallFilteredClients calls the filtered clients with prop key == value
+// supported op includes "=", "!=", "<", "<=", ">", ">="
+// if key = "", all clients are called despite the value of op and val
 //
-// The message is broadcast to filtered clientproxies directly without going through entities
-func (e *Entity) CallFitleredClients(key, op, val string, method string, args ...interface{}) {
+// The message is broadcast to filtered clientproxies directly without going through entities, and therefore more efficient
+func (e *Entity) CallFilteredClients(key, op, val string, method string, args ...interface{}) {
 	// parse op from string to FilterClientsOpType
 	var realop proto.FilterClientsOpType
 	if op == "=" {
@@ -1231,7 +1237,7 @@ func (e *Entity) CallFitleredClients(key, op, val string, method string, args ..
 	} else if op == "<=" {
 		realop = proto.FILTER_CLIENTS_OP_LTE
 	} else {
-		gwlog.Panicf("%s.CallFitleredClients: unsupported op: calling method %s on clients filtered by %s %s %s", e, method, key, op, val)
+		gwlog.Panicf("%s.CallFilteredClients: unsupported op: calling method %s on clients filtered by %s %s %s", e, method, key, op, val)
 	}
 
 	dispatchercluster.SendCallFilterClientProxies(realop, key, val, method, args)

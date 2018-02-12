@@ -216,10 +216,10 @@ func (a *Avatar) OnGetMails(lastMailID int, mails []interface{}) {
 func (a *Avatar) Say_Client(channel string, content string) {
 	gwlog.Debugf("Say @%s: %s", channel, content)
 	if channel == "world" {
-		a.CallFitleredClients("online", "=", "1", "OnSay", a.ID, a.GetStr("name"), channel, content)
+		a.CallFilteredClients("", "=", "", "OnSay", a.ID, a.GetStr("name"), channel, content)
 	} else if channel == "prof" {
 		profStr := strconv.Itoa(int(a.GetInt("prof")))
-		a.CallFitleredClients("prof", "=", profStr, "OnSay", a.ID, a.GetStr("name"), channel, content)
+		a.CallFilteredClients("prof", "=", profStr, "OnSay", a.ID, a.GetStr("name"), channel, content)
 	} else {
 		gwlog.Panicf("%s.Say_Client: invalid channel: %s", a, channel)
 	}

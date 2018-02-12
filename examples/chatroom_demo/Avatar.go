@@ -52,7 +52,7 @@ func (a *Avatar) SendChat_Client(text string) {
 			a.CallClient("ShowError", "无法识别的命令："+cmd[0])
 		}
 	} else {
-		a.CallFitleredClients("chatroom", "=", a.GetStr("chatroom"), "OnRecvChat", a.GetStr("name"), text)
+		a.CallFilteredClients("chatroom", "=", a.GetStr("chatroom"), "OnRecvChat", a.GetStr("name"), text)
 	}
 }
 

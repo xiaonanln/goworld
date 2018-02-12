@@ -370,6 +370,14 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 	key := packet.ReadVarStr()
 	val := packet.ReadVarStr()
 
+	if key == "" {
+		// empty key meaning calling all clients
+		for _, cp := range gs.clientProxies {
+			cp.SendPacket(packet)
+		}
+		return
+	}
+
 	ft := gs.filterTrees[key]
 	if ft != nil {
 		ft.Visit(op, val, func(clientid common.ClientID) {
