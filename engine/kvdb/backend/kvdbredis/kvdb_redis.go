@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/petar/GoLLRB/llrb"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )
@@ -14,16 +13,7 @@ const (
 )
 
 type redisKVDB struct {
-	c       redis.Conn
-	keyTree *llrb.LLRB
-}
-
-type keyTreeItem struct {
-	key string
-}
-
-func (ki keyTreeItem) Less(_other llrb.Item) bool {
-	return ki.key < _other.(keyTreeItem).key
+	c redis.Conn
 }
 
 // OpenRedisKVDB opens Redis for KVDB backend
@@ -34,8 +24,7 @@ func OpenRedisKVDB(url string, dbindex int) (kvdbtypes.KVDBEngine, error) {
 	}
 
 	db := &redisKVDB{
-		c:       c,
-		keyTree: llrb.New(),
+		c: c,
 	}
 
 	if err := db.initialize(dbindex); err != nil {
@@ -52,30 +41,30 @@ func (db *redisKVDB) initialize(dbindex int) error {
 		}
 	}
 
-	keyMatch := keyPrefix + "*"
-	r, err := redis.Values(db.c.Do("SCAN", "0", "MATCH", keyMatch, "COUNT", 10000))
-	if err != nil {
-		return err
-	}
-	for {
-		nextCursor := r[0]
-		keys, err := redis.Strings(r[1], nil)
-		if err != nil {
-			return err
-		}
-		for _, key := range keys {
-			key := key[len(keyPrefix):]
-			db.keyTree.ReplaceOrInsert(keyTreeItem{key})
-		}
-
-		if db.isZeroCursor(nextCursor) {
-			break
-		}
-		r, err = redis.Values(db.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
-		if err != nil {
-			return err
-		}
-	}
+	//keyMatch := keyPrefix + "*"
+	//r, err := redis.Values(db.c.Do("SCAN", "0", "MATCH", keyMatch, "COUNT", 10000))
+	//if err != nil {
+	//	return err
+	//}
+	//for {
+	//	nextCursor := r[0]
+	//	keys, err := redis.Strings(r[1], nil)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	for _, key := range keys {
+	//		key := key[len(keyPrefix):]
+	//		db.keyTree.ReplaceOrInsert(keyTreeItem{key})
+	//	}
+	//
+	//	if db.isZeroCursor(nextCursor) {
+	//		break
+	//	}
+	//	r, err = redis.Values(db.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
@@ -96,9 +85,6 @@ func (db *redisKVDB) Get(key string) (val string, err error) {
 
 func (db *redisKVDB) Put(key string, val string) error {
 	_, err := db.c.Do("SET", keyPrefix+key, val)
-	if err == nil {
-		db.keyTree.ReplaceOrInsert(keyTreeItem{key})
-	}
 	return err
 }
 
@@ -123,16 +109,7 @@ func (it *redisKVDBIterator) Next() (kvdbtypes.KVItem, error) {
 }
 
 func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
-	keys := []string{} // retrive all keys in the range, ordered
-	db.keyTree.AscendRange(keyTreeItem{beginKey}, keyTreeItem{endKey}, func(it llrb.Item) bool {
-		keys = append(keys, it.(keyTreeItem).key)
-		return true
-	})
-
-	return &redisKVDBIterator{
-		db:       db,
-		leftKeys: keys,
-	}, nil
+	return nil, errors.Errorf("operation not supported on redis")
 }
 
 func (db *redisKVDB) Close() {
