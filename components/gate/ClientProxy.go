@@ -76,7 +76,7 @@ func (cp *ClientProxy) serve() {
 	}()
 
 	cp.SetAutoFlush(consts.CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
-	//cp.SendSetClientClientID(cp.clientid) // set the clientid on the client side
+	//cp.SendSetClientClientID(cp.cp) // set the cp on the client side
 
 	for {
 		var msgtype proto.MsgType

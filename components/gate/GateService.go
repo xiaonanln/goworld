@@ -223,7 +223,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 			if consts.DEBUG_FILTER_PROP {
 				gwlog.Debugf("DROP CLIENT %s FILTER PROP: %s = %s", cp, key, val)
 			}
-			ft.Remove(cp.clientid, val)
+			ft.Remove(cp, val)
 		}
 	}
 
@@ -240,7 +240,7 @@ func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.Ms
 	if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
 		gs.handleSyncPositionYawFromClient(pkt)
 	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-		pkt.AppendClientID(cp.clientid) // append clientid to the packet
+		pkt.AppendClientID(cp.clientid) // append cp to the packet
 		eid := pkt.ReadEntityID()
 		dispatchercluster.SelectByEntityID(eid).SendPacket(pkt)
 	} else if msgtype == proto.MT_HEARTBEAT_FROM_CLIENT {
@@ -297,7 +297,6 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 	gwlog.Debugf("%s.handleSetClientFilterProp: clientproxy=%s", gs, clientproxy)
 	key := packet.ReadVarStr()
 	val := packet.ReadVarStr()
-	clientid := clientproxy.clientid
 
 	ft, ok := gs.filterTrees[key]
 	if !ok {
@@ -310,10 +309,10 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 		if consts.DEBUG_FILTER_PROP {
 			gwlog.Debugf("REMOVE CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
 		}
-		ft.Remove(clientid, oldVal)
+		ft.Remove(clientproxy, oldVal)
 	}
 	clientproxy.filterProps[key] = val
-	ft.Insert(clientid, val)
+	ft.Insert(clientproxy, val)
 
 	if consts.DEBUG_FILTER_PROP {
 		gwlog.Debugf("SET CLIENT %s FILTER PROP: %s = %s", clientproxy, key, val)
@@ -322,14 +321,13 @@ func (gs *GateService) handleSetClientFilterProp(clientproxy *ClientProxy, packe
 
 func (gs *GateService) handleClearClientFilterProps(clientproxy *ClientProxy, packet *netutil.Packet) {
 	gwlog.Debugf("%s.handleClearClientFilterProps: clientproxy=%s", gs, clientproxy)
-	clientid := clientproxy.clientid
 
 	for key, val := range clientproxy.filterProps {
 		ft, ok := gs.filterTrees[key]
 		if !ok {
 			continue
 		}
-		ft.Remove(clientid, val)
+		ft.Remove(clientproxy, val)
 	}
 
 	if consts.DEBUG_FILTER_PROP {
@@ -380,12 +378,9 @@ func (gs *GateService) handleCallFilteredClientProxies(packet *netutil.Packet) {
 
 	ft := gs.filterTrees[key]
 	if ft != nil {
-		ft.Visit(op, val, func(clientid common.ClientID) {
+		ft.Visit(op, val, func(cp *ClientProxy) {
 			//// visit all clientids and
-			clientproxy := gs.clientProxies[clientid]
-			if clientproxy != nil {
-				clientproxy.SendPacket(packet)
-			}
+			cp.SendPacket(packet)
 		})
 	} else {
 		gwlog.Errorf("clients are not filtered by key %s", key)
