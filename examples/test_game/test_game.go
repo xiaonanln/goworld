@@ -66,4 +66,5 @@ func isAllServicesReady() bool {
 
 func onAllServicesReady() {
 	gwlog.Infof("ALL SERVICES ARE READY!!!")
+	goworld.CallNilSpaces("TestCallNilSpaces", 1, "abc", true, 2.3)
 }

@@ -226,6 +226,8 @@ func (service *DispatcherService) messageLoop() {
 				service.handleNotifyDestroyEntity(dcp, pkt, eid)
 			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
 				service.handleCreateEntityAnywhere(dcp, pkt)
+			} else if msgtype == proto.MT_CALL_NIL_SPACES {
+				service.handleCallNilSpaces(dcp, pkt)
 			} else if msgtype == proto.MT_CANCEL_MIGRATE {
 				service.handleCancelMigrate(dcp, pkt)
 			} else if msgtype == proto.MT_DECLARE_SERVICE {
@@ -329,7 +331,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 			if olddcp == nil {
 				// for the first time that all games connected to dispatcher, notify all games
 				gwlog.Infof("All games(%d) are connected", len(service.games))
-				service.broadcastToGameClients(pkt)
+				service.broadcastToGames(pkt)
 			} else { // dispatcher reconnected, only notify this game
 				dcp.SendPacket(pkt)
 			}
@@ -429,7 +431,7 @@ func (service *DispatcherService) handleGateDown(gateid uint16) {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(proto.MT_NOTIFY_GATE_DISCONNECTED)
 	pkt.AppendUint16(gateid)
-	service.broadcastToGameClients(pkt)
+	service.broadcastToGames(pkt)
 	pkt.Release()
 }
 
@@ -525,7 +527,7 @@ func (service *DispatcherService) handleDeclareService(dcp *dispatcherClientProx
 	}
 
 	service.registeredServices[serviceName].Add(entityID)
-	service.broadcastToGameClients(pkt)
+	service.broadcastToGames(pkt)
 }
 
 func (service *DispatcherService) handleServiceDown(serviceName string, eid common.EntityID) {
@@ -533,7 +535,7 @@ func (service *DispatcherService) handleServiceDown(serviceName string, eid comm
 	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
 	pkt.AppendEntityID(eid)
 	pkt.AppendVarStr(serviceName)
-	service.broadcastToGameClients(pkt)
+	service.broadcastToGames(pkt)
 	pkt.Release()
 }
 
@@ -550,6 +552,12 @@ func (service *DispatcherService) handleCallEntityMethod(dcp *dispatcherClientPr
 	} else {
 		gwlog.Warnf("%s: entity %s is called by other entity, but dispatch info is not found", service, entityID)
 	}
+}
+
+func (service *DispatcherService) handleCallNilSpaces(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+	// send the packet to all games
+	exceptGameID := pkt.ReadUint16()
+	service.broadcastToGamesExcept(pkt, exceptGameID)
 }
 
 func (service *DispatcherService) handleSyncPositionYawOnClients(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -616,7 +624,7 @@ func (service *DispatcherService) handleDoSomethingOnSpecifiedClient(dcp *dispat
 }
 
 func (service *DispatcherService) handleCallFilteredClientProxies(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
-	service.broadcastToGateClients(pkt)
+	service.broadcastToGates(pkt)
 }
 
 func (service *DispatcherService) handleQuerySpaceGameIDForMigrate(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -689,7 +697,7 @@ func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, 
 	entityDispatchInfo.unblock()
 }
 
-func (service *DispatcherService) broadcastToGameClients(pkt *netutil.Packet) {
+func (service *DispatcherService) broadcastToGames(pkt *netutil.Packet) {
 	for idx, gdi := range service.games {
 		if gdi != nil {
 			gdi.dispatchPacket(pkt)
@@ -699,7 +707,20 @@ func (service *DispatcherService) broadcastToGameClients(pkt *netutil.Packet) {
 	}
 }
 
-func (service *DispatcherService) broadcastToGateClients(pkt *netutil.Packet) {
+func (service *DispatcherService) broadcastToGamesExcept(pkt *netutil.Packet, exceptGameID uint16) {
+	for idx, gdi := range service.games {
+		if uint16(idx+1) == exceptGameID {
+			continue
+		}
+		if gdi != nil {
+			gdi.dispatchPacket(pkt)
+		} else {
+			gwlog.Errorf("Game %d is not connected to dispatcher when broadcasting", idx+1)
+		}
+	}
+}
+
+func (service *DispatcherService) broadcastToGates(pkt *netutil.Packet) {
 	for idx, dcp := range service.gates {
 		if dcp != nil {
 			dcp.SendPacket(pkt)

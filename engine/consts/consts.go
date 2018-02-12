@@ -4,7 +4,7 @@ import "time"
 
 // Optimizations
 const (
-	OPTIMIZE_LOCAL_SPACE_ENTERING = true // should be true for performance, set to false for testing only
+	OPTIMIZE_LOCAL_ENTITY_CALL = true // should be true for performance, set to false for testing only
 )
 
 // Tunable Options

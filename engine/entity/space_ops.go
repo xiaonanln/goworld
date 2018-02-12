@@ -1,6 +1,8 @@
 package entity
 
-import "github.com/xiaonanln/goworld/engine/common"
+import (
+	"github.com/xiaonanln/goworld/engine/common"
+)
 
 // CreateSpaceLocally creates a space in the local game server
 func CreateSpaceLocally(kind int) common.EntityID {
@@ -14,4 +16,11 @@ func CreateSpaceAnywhere(kind int) common.EntityID {
 	return createEntityAnywhere(_SPACE_ENTITY_TYPE, map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: kind,
 	})
+}
+
+// CreateNilSpace creates the nil space
+func CreateNilSpace(gameid uint16) common.EntityID {
+	return createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, "", map[string]interface{}{
+		_SPACE_KIND_ATTR_KEY: 0,
+	}, nil, nil, ccCreate)
 }

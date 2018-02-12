@@ -8,6 +8,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
+	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
@@ -85,6 +86,25 @@ func SendStartFreezeGame(gameid uint16) (anyerror error) {
 			anyerror = err
 		}
 	}
+	return
+}
+
+func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) (anyerror error) {
+	// construct one packet for multiple sending
+	packet := netutil.NewPacket()
+	packet.AppendUint16(proto.MT_CALL_NIL_SPACES)
+	packet.AppendUint16(exceptGameID)
+	packet.AppendVarStr(method)
+	packet.AppendArgs(args)
+
+	for _, dcm := range dispatcherConns {
+		err := dcm.GetDispatcherClientForSend().SendPacket(packet)
+		if err != nil {
+			anyerror = err
+		}
+	}
+
+	packet.Release()
 	return
 }
 

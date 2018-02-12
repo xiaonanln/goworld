@@ -67,7 +67,7 @@ func (gs *GameService) run(restore bool) {
 	gs.runState.Store(rsRunning)
 
 	if !restore {
-		entity.CreateSpaceLocally(0) // create to be the nil space
+		entity.CreateNilSpace(gameid) // create the nil space
 	} else {
 		// restoring from freezed states
 		err := gs.doRestore()
@@ -133,6 +133,11 @@ func (gs *GameService) serveRoutine() {
 				var data map[string]interface{}
 				pkt.ReadData(&data)
 				gs.HandleCreateEntityAnywhere(entityid, typeName, data)
+			} else if msgtype == proto.MT_CALL_NIL_SPACES {
+				_ = pkt.ReadUint16() // ignore except gameid
+				method := pkt.ReadVarStr()
+				args := pkt.ReadArgs()
+				gs.HandleCallNilSpaces(method, args)
 			} else if msgtype == proto.MT_DECLARE_SERVICE {
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
@@ -370,6 +375,15 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gat
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
 	entity.CreateEntityLocally(gs.config.BootEntity, nil, client)
+}
+
+func (gs *GameService) HandleCallNilSpaces(method string, args [][]byte) {
+	gwlog.Infof("%s.HandleCallNilSpaces: method=%s, argcount=%d", gs, method, len(args))
+	if consts.DEBUG_PACKETS {
+		gwlog.Debugf("%s.HandleCallNilSpaces: method=%s, argcount=%d", gs, method, len(args))
+	}
+
+	entity.OnCallNilSpaces(method, args)
 }
 
 func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {

@@ -483,13 +483,12 @@ func (e *Entity) Post(cb func()) {
 
 // Call other entities
 func (e *Entity) Call(id common.EntityID, method string, args ...interface{}) {
-	callEntity(id, method, args)
+	Call(id, method, args)
 }
 
 // CallService calls a service provider
 func (e *Entity) CallService(serviceName string, method string, args ...interface{}) {
-	serviceEid := entityManager.chooseServiceProvider(serviceName)
-	callEntity(serviceEid, method, args)
+	CallService(serviceName, method, args)
 }
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
@@ -1011,7 +1010,7 @@ func (e *Entity) EnterSpace(spaceid common.EntityID, pos Vector3) {
 		return
 	}
 
-	if consts.OPTIMIZE_LOCAL_SPACE_ENTERING {
+	if consts.OPTIMIZE_LOCAL_ENTITY_CALL {
 		localSpace := spaceManager.getSpace(spaceid)
 		if localSpace != nil { // target space is local, just enter
 			e.enterLocalSpace(localSpace, pos)

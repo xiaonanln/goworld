@@ -398,8 +398,8 @@ func GetServiceProviders(serviceName string) EntityIDSet {
 	return entityManager.registeredServices[serviceName]
 }
 
-func callEntity(id common.EntityID, method string, args []interface{}) {
-	if consts.OPTIMIZE_LOCAL_SPACE_ENTERING {
+func Call(id common.EntityID, method string, args []interface{}) {
+	if consts.OPTIMIZE_LOCAL_ENTITY_CALL {
 		e := entityManager.get(id)
 		if e != nil { // this entity is local, just call entity directly
 			e.Post(func() {
@@ -411,6 +411,24 @@ func callEntity(id common.EntityID, method string, args []interface{}) {
 	} else {
 		callRemote(id, method, args)
 	}
+}
+
+func CallService(serviceName string, method string, args []interface{}) {
+	serviceEid := entityManager.chooseServiceProvider(serviceName)
+	Call(serviceEid, method, args)
+}
+
+func CallNilSpaces(method string, args []interface{}, gameid uint16) {
+	if consts.OPTIMIZE_LOCAL_ENTITY_CALL {
+		dispatchercluster.SendCallNilSpaces(gameid, method, args)
+		nilSpace.onCallFromLocal(method, args)
+	} else {
+		dispatchercluster.SendCallNilSpaces(0, method, args)
+	}
+}
+
+func OnCallNilSpaces(method string, args [][]byte) {
+	nilSpace.onCallFromRemote(method, args, "")
 }
 
 func callRemote(id common.EntityID, method string, args []interface{}) {

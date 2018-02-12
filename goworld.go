@@ -115,6 +115,21 @@ func Entities() entity.EntityMap {
 	return entity.Entities()
 }
 
+// Call other entities
+func Call(id common.EntityID, method string, args ...interface{}) {
+	entity.Call(id, method, args)
+}
+
+// CallService calls a service provider
+func CallService(serviceName string, method string, args ...interface{}) {
+	entity.CallService(serviceName, method, args)
+}
+
+// CallNilSpaces calls methods of all nil spaces on all games
+func CallNilSpaces(method string, args ...interface{}) {
+	entity.CallNilSpaces(method, args, game.GetGameID())
+}
+
 // Post posts a callback to be executed
 func Post(callback post.PostCallback) {
 	post.Post(callback)

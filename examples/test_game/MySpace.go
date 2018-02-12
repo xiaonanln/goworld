@@ -123,3 +123,7 @@ func (space *MySpace) OnGameReady() {
 
 	timer.AddCallback(time.Millisecond*1000, checkServerStarted)
 }
+
+func (space *MySpace) TestCallNilSpaces(a, b, c, d interface{}) {
+	gwlog.Infof("TestCallNilSpaces %v %v %v %v: CallNilSpaces works in game %d", a, b, c, d, goworld.GetGameID())
+}

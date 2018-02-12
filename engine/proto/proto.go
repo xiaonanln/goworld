@@ -62,6 +62,9 @@ const (
 	// MT_QUERY_SPACE_GAMEID_FOR_MIGRATE is a message type for entity migrations
 	MT_QUERY_SPACE_GAMEID_FOR_MIGRATE
 	MT_CANCEL_MIGRATE
+
+	// MT_CALL_NIL_SPACES message is used to call nil spaces on all games
+	MT_CALL_NIL_SPACES
 )
 
 // Alias message types
