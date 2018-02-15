@@ -58,13 +58,13 @@ func TestMongoBackendFind(t *testing.T) {
 	testBackendFind(t, openTestMongoKVDB(t))
 }
 
-func TestRedisBackendFind(t *testing.T) {
-	testBackendFind(t, openTestRedisKVDB(t))
-}
-
-//func TestMySQLBackendFind(t *testing.T) {
-//	testBackendFind(t, openTestMySQLKVDB(t))
+//func TestRedisBackendFind(t *testing.T) {
+//	testBackendFind(t, openTestRedisKVDB(t))
 //}
+
+func TestMySQLBackendFind(t *testing.T) {
+	testBackendFind(t, openTestMySQLKVDB(t))
+}
 
 func testBackendFind(t *testing.T, kvdb KVDBEngine) {
 	beginKey := strconv.Itoa(1000 + rand.Intn(2000-1000))
