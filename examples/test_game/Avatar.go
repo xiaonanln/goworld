@@ -12,7 +12,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/ext/msgbox"
 	"github.com/xiaonanln/goworld/ext/pubsub"
 	"github.com/xiaonanln/typeconv"
 )
@@ -20,7 +19,7 @@ import (
 // Avatar entity which is the player itself
 type Avatar struct {
 	entity.Entity // Entity type should always inherit entity.Entity
-	msgbox.Msgbox
+	//msgbox.Msgbox
 }
 
 func (a *Avatar) DefineAttrs(desc *entity.EntityTypeDesc) {
@@ -41,7 +40,7 @@ func (a *Avatar) OnInit() {
 func (a *Avatar) OnAttrsReady() {
 	a.setDefaultAttrs()
 	gwlog.Debugf("Avatar %s is ready: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
-	a.Msgbox.SetMsgHandler(a.handleMsgboxMsg)
+	//a.Msgbox.SetMsgHandler(a.handleMsgboxMsg)
 }
 
 // OnCreated is called when avatar is created
@@ -249,14 +248,14 @@ func (a *Avatar) OnPublish(subject string, content string) {
 	a.CallClient("OnTestPublish", publisher, subject, content)
 }
 
-func (a *Avatar) TestMsgbox_Client() {
-	a.Msgbox.Send(a.ID, msgbox.Msg{
-		"sender":  a.ID,
-		"content": "hello",
-	})
-	a.Msgbox.Recv()
-}
+//func (a *Avatar) TestMsgbox_Client() {
+//	a.Msgbox.Send(a.ID, msgbox.Msg{
+//		"sender":  a.ID,
+//		"content": "hello",
+//	})
+//	a.Msgbox.Recv()
+//}
 
-func (a *Avatar) handleMsgboxMsg(msg msgbox.Msg) {
-	a.CallClient("OnRecvMsgboxMsg", msg)
-}
+//func (a *Avatar) handleMsgboxMsg(msg msgbox.Msg) {
+//	a.CallClient("OnRecvMsgboxMsg", msg)
+//}

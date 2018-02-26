@@ -57,10 +57,6 @@ type SpaceService struct {
 	pendingRequests []enterSpaceReq
 }
 
-func (s *SpaceService) DefineAttrs(desc *entity.EntityTypeDesc) {
-
-}
-
 func (s *SpaceService) getSpaceKindInfo(kind int) *_SpaceKindInfo {
 	ki := s.spaceKinds[kind]
 	if ki == nil {

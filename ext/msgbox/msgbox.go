@@ -9,7 +9,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -134,47 +133,47 @@ func (mbs *MsgboxService) getNextMsgId() int64 {
 	return id
 }
 
-// Msgbox is used to send messages among entities: e.x. Msgbox{&a.Entity}.Send(targetID, msg, callback)
-type Msgbox struct {
-	entity.Component
-	msghandler func(msg Msg)
-}
-
-func (mb *Msgbox) DefineAttrs(desc *entity.EntityTypeDesc) {
-	desc.DefineAttr(_LastMsgboxMsgIdAttrKey, "Persistent")
-}
-
-func (mb *Msgbox) OnInit() {
-	gwlog.Debugf("%s: initializing msgbox ...", mb.Entity)
-	mb.Attrs.SetDefaultInt(_LastMsgboxMsgIdAttrKey, 0)
-}
-
-func (mb *Msgbox) Send(targetID common.EntityID, msg Msg) {
-	mb.CallService(ServiceName, "Send", targetID, msg)
-}
-
-func (mb *Msgbox) Recv() {
-	mb.CallService(ServiceName, "Recv", mb.ID, mb.getLastMsgId()+1)
-}
-
-func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []Msg) {
-	gwlog.Debugf("%s: MsgBox.OnRecvMsg: %d -> %d: %d msgs", mb.Entity, beginMsgId, endMsgId, len(msgs))
-	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
-	for _, msg := range msgs {
-		gwutils.RunPanicless(func() {
-			mb.msghandler(msg)
-		})
-	}
-}
-
-func (mb *Msgbox) SetMsgHandler(handler func(msg Msg)) {
-	mb.msghandler = handler
-}
-
-func (mb *Msgbox) getLastMsgId() int64 {
-	return mb.Attrs.GetInt(_LastMsgboxMsgIdAttrKey)
-}
-
-func (mb *Msgbox) setLastMsgId(id int64) {
-	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, id)
-}
+//// Msgbox is used to send messages among entities: e.x. Msgbox{&a.Entity}.Send(targetID, msg, callback)
+//type Msgbox struct {
+//	entity.Component
+//	msghandler func(msg Msg)
+//}
+//
+//func (mb *Msgbox) DefineAttrs(desc *entity.EntityTypeDesc) {
+//	desc.DefineAttr(_LastMsgboxMsgIdAttrKey, "Persistent")
+//}
+//
+//func (mb *Msgbox) OnInit() {
+//	gwlog.Debugf("%s: initializing msgbox ...", mb.Entity)
+//	mb.Attrs.SetDefaultInt(_LastMsgboxMsgIdAttrKey, 0)
+//}
+//
+//func (mb *Msgbox) Send(targetID common.EntityID, msg Msg) {
+//	mb.CallService(ServiceName, "Send", targetID, msg)
+//}
+//
+//func (mb *Msgbox) Recv() {
+//	mb.CallService(ServiceName, "Recv", mb.ID, mb.getLastMsgId()+1)
+//}
+//
+//func (mb *Msgbox) MsgboxOnRecvMsg(beginMsgId int64, endMsgId int64, msgs []Msg) {
+//	gwlog.Debugf("%s: MsgBox.OnRecvMsg: %d -> %d: %d msgs", mb.Entity, beginMsgId, endMsgId, len(msgs))
+//	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, endMsgId)
+//	for _, msg := range msgs {
+//		gwutils.RunPanicless(func() {
+//			mb.msghandler(msg)
+//		})
+//	}
+//}
+//
+//func (mb *Msgbox) SetMsgHandler(handler func(msg Msg)) {
+//	mb.msghandler = handler
+//}
+//
+//func (mb *Msgbox) getLastMsgId() int64 {
+//	return mb.Attrs.GetInt(_LastMsgboxMsgIdAttrKey)
+//}
+//
+//func (mb *Msgbox) setLastMsgId(id int64) {
+//	mb.Attrs.SetInt(_LastMsgboxMsgIdAttrKey, id)
+//}

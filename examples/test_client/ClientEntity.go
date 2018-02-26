@@ -172,7 +172,7 @@ var (
 		{"DoSayInProfChannel", 5, time.Minute},
 		//{"DoTestListField", 10, time.Minute},
 		//{"DoTestPublish", 1, time.Minute},
-		//{"DoTestMsgbox", 10, time.Minute},
+		//{"DoTestMsgbox", 10, time.Minute}, // not work anymore
 	}
 )
 

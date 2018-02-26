@@ -19,10 +19,6 @@ type OnlineService struct {
 	maxlevel int
 }
 
-func (s *OnlineService) DefineAttrs(desc *entity.EntityTypeDesc) {
-
-}
-
 // OnInit initialize OnlineService fields
 func (s *OnlineService) OnInit() {
 	s.avatars = map[common.EntityID]*avatarInfo{}

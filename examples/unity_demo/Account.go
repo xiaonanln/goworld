@@ -13,10 +13,6 @@ type Account struct {
 	logIn         bool
 }
 
-func (a *Account) DefineAttrs(desc *entity.EntityTypeDesc) {
-
-}
-
 // Register_Client 是处理玩家注册请求的RPC函数
 func (a *Account) Register_Client(username string, password string) {
 	gwlog.Debugf("Register %s %s", username, password)

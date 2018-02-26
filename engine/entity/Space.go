@@ -63,7 +63,8 @@ func (space *Space) OnInit() {
 	space.entities = EntitySet{}
 	space.I = space.Entity.I.(ISpace)
 
-	space.callCompositiveMethod("OnSpaceInit")
+	space.I.OnSpaceInit()
+	//space.callCompositiveMethod("OnSpaceInit")
 }
 
 // OnSpaceInit is a compositive method for initializing space fields
@@ -86,7 +87,8 @@ func (space *Space) OnCreated() {
 	if consts.DEBUG_SPACES {
 		gwlog.Debugf("%s.OnCreated", space)
 	}
-	space.callCompositiveMethod("OnSpaceCreated")
+	space.I.OnSpaceCreated()
+	//space.callCompositiveMethod("OnSpaceCreated")
 }
 
 func (space *Space) UseTowerAOI(minX, maxX, minY, maxY Coord, towerRange Coord) {
@@ -128,7 +130,8 @@ func (space *Space) OnSpaceCreated() {
 
 // OnDestroy is called when Space entity is destroyed
 func (space *Space) OnDestroy() {
-	space.callCompositiveMethod("OnSpaceDestroy")
+	space.I.OnSpaceDestroy()
+	//space.callCompositiveMethod("OnSpaceDestroy")
 	// destroy all entities
 	for e := range space.entities {
 		e.Destroy()
@@ -190,8 +193,10 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 		space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
 
 		gwutils.RunPanicless(func() {
-			space.callCompositiveMethod("OnEntityEnterSpace", entity)
-			entity.callCompositiveMethod("OnEnterSpace")
+			space.I.OnEntityEnterSpace(entity)
+			//space.callCompositiveMethod("OnEntityEnterSpace", entity)
+			entity.I.OnEnterSpace()
+			//entity.callCompositiveMethod("OnEnterSpace")
 		})
 	} else {
 		// restoring ...
@@ -218,8 +223,10 @@ func (space *Space) leave(entity *Entity) {
 	space.entities.Del(entity)
 	entity.Space = nilSpace
 
-	space.callCompositiveMethod("OnEntityLeaveSpace", entity)
-	entity.callCompositiveMethod("OnLeaveSpace", space)
+	space.I.OnEntityLeaveSpace(entity)
+	//space.callCompositiveMethod("OnEntityLeaveSpace", entity)
+	entity.I.OnLeaveSpace(space)
+	//entity.callCompositiveMethod("OnLeaveSpace", space)
 }
 
 func (space *Space) move(entity *Entity, newPos Vector3) {

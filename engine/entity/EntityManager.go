@@ -27,14 +27,14 @@ var (
 
 // EntityTypeDesc is the entity type description for registering entity types
 type EntityTypeDesc struct {
-	isPersistent                      bool
-	useAOI                            bool
-	entityType                        reflect.Type
-	rpcDescs                          rpcDescMap
-	allClientAttrs                    common.StringSet
-	clientAttrs                       common.StringSet
-	persistentAttrs                   common.StringSet
-	compositiveMethodComponentIndices map[string][]int
+	isPersistent    bool
+	useAOI          bool
+	entityType      reflect.Type
+	rpcDescs        rpcDescMap
+	allClientAttrs  common.StringSet
+	clientAttrs     common.StringSet
+	persistentAttrs common.StringSet
+	//compositiveMethodComponentIndices map[string][]int
 	//definedAttrs                      bool
 }
 
@@ -46,7 +46,7 @@ func init() {
 	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
 }
 
-func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) {
+func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeDesc {
 	gwlog.Infof("        Attr %s = %v", attr, defs)
 	isAllClient, isClient, isPersistent := false, false, false
 
@@ -81,6 +81,7 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) {
 	if isPersistent {
 		desc.persistentAttrs.Add(attr)
 	}
+	return desc
 }
 
 type _EntityManager struct {
@@ -170,7 +171,7 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 }
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI bool) {
+func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -185,14 +186,14 @@ func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI b
 	// register the string of e
 	rpcDescs := rpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
-		isPersistent:                      isPersistent,
-		useAOI:                            useAOI,
-		entityType:                        entityType,
-		rpcDescs:                          rpcDescs,
-		clientAttrs:                       common.StringSet{},
-		allClientAttrs:                    common.StringSet{},
-		persistentAttrs:                   common.StringSet{},
-		compositiveMethodComponentIndices: map[string][]int{},
+		isPersistent:    isPersistent,
+		useAOI:          useAOI,
+		entityType:      entityType,
+		rpcDescs:        rpcDescs,
+		clientAttrs:     common.StringSet{},
+		allClientAttrs:  common.StringSet{},
+		persistentAttrs: common.StringSet{},
+		//compositiveMethodComponentIndices: map[string][]int{},
 	}
 	registeredEntityTypes[typeName] = entityTypeDesc
 
@@ -207,8 +208,11 @@ func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI b
 	//// define entity attrs
 	var e *Entity = reflect.Indirect(entityVal).FieldByName("Entity").Addr().Interface().(*Entity)
 	e.V = entityVal // set necessary values for callCompositiveMethod not to panic
+	e.I = entityVal.Interface().(IEntity)
 	e.typeDesc = entityTypeDesc
-	e.callCompositiveMethod("DefineAttrs", entityTypeDesc)
+	e.I.DefineAttrs(entityTypeDesc)
+	return entityTypeDesc
+	//e.callCompositiveMethod("DefineAttrs", entityTypeDesc)
 }
 
 var entityType = reflect.TypeOf(Entity{})
@@ -224,18 +228,18 @@ func isEntityType(t reflect.Type) bool {
 	return ok && entityField.Type == entityType
 }
 
-var componentType = reflect.TypeOf(Component{})
+//var componentType = reflect.TypeOf(Component{})
 
-func isComponentType(t reflect.Type) bool {
-	//if t == componentType {
-	//	return true
-	//}
-	if t.Kind() != reflect.Struct {
-		return false
-	}
-	componentField, ok := t.FieldByName("Component")
-	return ok && componentField.Type == componentType
-}
+//func isComponentType(t reflect.Type) bool {
+//	//if t == componentType {
+//	//	return true
+//	//}
+//	if t.Kind() != reflect.Struct {
+//		return false
+//	}
+//	componentField, ok := t.FieldByName("Component")
+//	return ok && componentField.Type == componentType
+//}
 
 type createCause int
 
@@ -302,15 +306,19 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 	}
 
 	gwlog.Debugf("Entity %s created, cause=%d, client=%s", entity, cause, client)
-	entity.callCompositiveMethod("OnAttrsReady")
+	entity.I.OnAttrsReady()
+	//entity.callCompositiveMethod("OnAttrsReady")
 
 	if cause == ccCreate {
-		entity.callCompositiveMethod("OnCreated")
+		entity.I.OnCreated()
+		//entity.callCompositiveMethod("OnCreated")
 	} else if cause == ccMigrate {
-		entity.callCompositiveMethod("OnMigrateIn")
+		entity.I.OnMigrateIn()
+		//entity.callCompositiveMethod("OnMigrateIn")
 	} else if cause == ccRestore {
 		// restore should be silent
-		entity.callCompositiveMethod("OnRestored")
+		entity.I.OnRestored()
+		//entity.callCompositiveMethod("OnRestored")
 	}
 
 	if space != nil {
@@ -519,7 +527,8 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 	for _, e := range entityManager.entities {
 
 		err := gwutils.CatchPanic(func() {
-			e.callCompositiveMethod("OnFreeze")
+			e.I.OnFreeze()
+			//e.callCompositiveMethod("OnFreeze")
 		})
 		if err != nil {
 			// OnFreeze failed
