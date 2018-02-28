@@ -22,8 +22,8 @@ func Run() {
 //
 // returns the entity type description object which can be used to define more properties
 // of entity type
-func RegisterEntity(typeName string, entityPtr entity.IEntity, isPersistent, useAOI bool) *entity.EntityTypeDesc {
-	return entity.RegisterEntity(typeName, entityPtr, isPersistent, useAOI)
+func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
+	return entity.RegisterEntity(typeName, entityPtr)
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server

@@ -46,6 +46,16 @@ func init() {
 	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
 }
 
+func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
+	desc.isPersistent = persistent
+	return desc
+}
+
+func (desc *EntityTypeDesc) SetUseAOI(useAOI bool) *EntityTypeDesc {
+	desc.useAOI = useAOI
+	return desc
+}
+
 func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeDesc {
 	gwlog.Infof("        Attr %s = %v", attr, defs)
 	isAllClient, isClient, isPersistent := false, false, false
@@ -171,7 +181,7 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 }
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI bool) *EntityTypeDesc {
+func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -186,8 +196,8 @@ func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI b
 	// register the string of e
 	rpcDescs := rpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
-		isPersistent:    isPersistent,
-		useAOI:          useAOI,
+		isPersistent:    false,
+		useAOI:          false,
 		entityType:      entityType,
 		rpcDescs:        rpcDescs,
 		clientAttrs:     common.StringSet{},
@@ -204,15 +214,11 @@ func RegisterEntity(typeName string, entity IEntity, isPersistent bool, useAOI b
 		rpcDescs.visit(method)
 	}
 
-	gwlog.Debugf(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
+	gwlog.Infof(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 	//// define entity attrs
-	var e *Entity = reflect.Indirect(entityVal).FieldByName("Entity").Addr().Interface().(*Entity)
-	e.V = entityVal // set necessary values for callCompositiveMethod not to panic
-	e.I = entityVal.Interface().(IEntity)
-	e.typeDesc = entityTypeDesc
-	e.I.DefineAttrs(entityTypeDesc)
+	entity.DescribeEntityType(entityTypeDesc)
 	return entityTypeDesc
-	//e.callCompositiveMethod("DefineAttrs", entityTypeDesc)
+	//e.callCompositiveMethod("DescribeEntityType", entityTypeDesc)
 }
 
 var entityType = reflect.TypeOf(Entity{})

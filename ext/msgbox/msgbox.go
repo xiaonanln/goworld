@@ -35,7 +35,8 @@ type MsgboxService struct {
 	entity.Entity
 }
 
-func (mbs *MsgboxService) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (mbs *MsgboxService) DescribeEntityType(desc *entity.EntityTypeDesc) {
+	desc.SetPersistent(true)
 	desc.DefineAttr("maxMsgId", "Persistent")
 }
 
@@ -51,7 +52,7 @@ func (mbs *MsgboxService) OnCreated() {
 
 // RegisterService registeres MsgboxService to goworld
 func RegisterService() {
-	goworld.RegisterEntity(ServiceName, &MsgboxService{}, true, false)
+	goworld.RegisterEntity(ServiceName, &MsgboxService{})
 }
 
 // Send requests MsgboxService to send a message to target entity
@@ -139,7 +140,7 @@ func (mbs *MsgboxService) getNextMsgId() int64 {
 //	msghandler func(msg Msg)
 //}
 //
-//func (mb *Msgbox) DefineAttrs(desc *entity.EntityTypeDesc) {
+//func (mb *Msgbox) DescribeEntityType(desc *entity.EntityTypeDesc) {
 //	desc.DefineAttr(_LastMsgboxMsgIdAttrKey, "Persistent")
 //}
 //

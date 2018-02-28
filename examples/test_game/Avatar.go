@@ -22,7 +22,8 @@ type Avatar struct {
 	//msgbox.Msgbox
 }
 
-func (a *Avatar) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
+	desc.SetPersistent(true).SetUseAOI(true)
 	desc.DefineAttr("name", "AllClients", "Persistent")
 	desc.DefineAttr("level", "AllClients", "Persistent")
 	desc.DefineAttr("prof", "AllClients", "Persistent")

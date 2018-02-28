@@ -46,7 +46,7 @@ func (space *Space) String() string {
 	}
 }
 
-func (space *Space) DefineAttrs(desc *EntityTypeDesc) {
+func (space *Space) DescribeEntityType(desc *EntityTypeDesc) {
 	desc.DefineAttr(_SPACE_KIND_ATTR_KEY, "AllClients")
 }
 

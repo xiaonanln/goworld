@@ -105,7 +105,7 @@ type IEntity interface {
 	OnClientConnected()    // Called when client is connected to entity (become player)
 	OnClientDisconnected() // Called when client disconnected
 
-	DefineAttrs(desc *EntityTypeDesc) // Define entity attributes in this function
+	DescribeEntityType(desc *EntityTypeDesc) // Define entity attributes in this function
 }
 
 func (e *Entity) String() string {
@@ -194,7 +194,7 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 
 	//if !e.typeDesc.definedAttrs {
 	//	// first time entity of this type is created, define attrs now
-	//	e.callCompositiveMethod("DefineAttrs", e.typeDesc)
+	//	e.callCompositiveMethod("DescribeEntityType", e.typeDesc)
 	//}
 
 	e.rawTimers = map[*timer.Timer]struct{}{}

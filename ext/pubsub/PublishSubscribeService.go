@@ -39,7 +39,7 @@ type PublishSubscribeService struct {
 	avatarWildcardSubscribings map[common.EntityID]common.StringSet
 }
 
-func (pss *PublishSubscribeService) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (pss *PublishSubscribeService) DescribeEntityType(desc *entity.EntityTypeDesc) {
 
 }
 
@@ -63,7 +63,7 @@ func (pss *PublishSubscribeService) OnCreated() {
 
 // RegisterService registeres PublishSubscribeService to goworld
 func RegisterService() {
-	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{}, false, false)
+	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{})
 }
 
 // Publish is called when Avatars login

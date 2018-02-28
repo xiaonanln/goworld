@@ -12,7 +12,8 @@ type Player struct {
 	entity.Entity
 }
 
-func (a *Player) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (a *Player) DescribeEntityType(desc *entity.EntityTypeDesc) {
+	desc.SetPersistent(true).SetUseAOI(true)
 	desc.DefineAttr("name", "AllClients", "Persistent")
 	desc.DefineAttr("lv", "AllClients", "Persistent")
 	desc.DefineAttr("hp", "AllClients")

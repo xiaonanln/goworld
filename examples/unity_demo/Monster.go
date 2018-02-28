@@ -18,7 +18,8 @@ type Monster struct {
 	lastAttackTime time.Time
 }
 
-func (monster *Monster) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (monster *Monster) DescribeEntityType(desc *entity.EntityTypeDesc) {
+	desc.SetUseAOI(true)
 	desc.DefineAttr("name", "AllClients")
 	desc.DefineAttr("lv", "AllClients")
 	desc.DefineAttr("hp", "AllClients")

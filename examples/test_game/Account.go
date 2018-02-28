@@ -17,7 +17,7 @@ type Account struct {
 	logining      bool
 }
 
-func (a *Account) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (a *Account) DescribeEntityType(desc *entity.EntityTypeDesc) {
 }
 
 func (a *Account) getAvatarID(username string, callback func(entityID common.EntityID, err error)) {

@@ -25,7 +25,7 @@ type TestComponent2 struct {
 //	gwlog.Panicf("should not goes here")
 //}
 
-func (e *TestEntity) DefineAttrs(desc *EntityTypeDesc) {
+func (e *TestEntity) DescribeEntityType(desc *EntityTypeDesc) {
 
 }
 

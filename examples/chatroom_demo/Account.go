@@ -13,7 +13,7 @@ type Account struct {
 	logining      bool
 }
 
-func (a *Account) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (a *Account) DescribeEntityType(desc *entity.EntityTypeDesc) {
 }
 
 // Register_Client 是处理玩家注册请求的RPC函数

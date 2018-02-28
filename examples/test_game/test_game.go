@@ -28,17 +28,17 @@ func main() {
 	goworld.RegisterSpace(&MySpace{}) // Register the space type
 
 	// Register each entity types
-	goworld.RegisterEntity("Account", &Account{}, false, false)
-	goworld.RegisterEntity("OnlineService", &OnlineService{}, false, false)
-	goworld.RegisterEntity("SpaceService", &SpaceService{}, false, false)
-	goworld.RegisterEntity("MailService", &MailService{}, true, false)
+	goworld.RegisterEntity("Account", &Account{})
+	goworld.RegisterEntity("OnlineService", &OnlineService{})
+	goworld.RegisterEntity("SpaceService", &SpaceService{})
+	goworld.RegisterEntity("MailService", &MailService{})
 	pubsub.RegisterService()
 	msgbox.RegisterService()
 
 	// Register Monster type and define attributes
-	goworld.RegisterEntity("Monster", &Monster{}, false, true)
+	goworld.RegisterEntity("Monster", &Monster{})
 	// Register Avatar type and define attributes
-	goworld.RegisterEntity("Avatar", &Avatar{}, true, true)
+	goworld.RegisterEntity("Avatar", &Avatar{})
 
 	// Run the game server
 	goworld.Run()

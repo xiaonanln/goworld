@@ -19,7 +19,7 @@ type OnlineService struct {
 	maxlevel int
 }
 
-func (s *OnlineService) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (s *OnlineService) DescribeEntityType(desc *entity.EntityTypeDesc) {
 }
 
 // OnInit initialize OnlineService fields

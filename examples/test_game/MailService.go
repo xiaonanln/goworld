@@ -24,7 +24,8 @@ type MailService struct {
 	mailPacker    netutil.MsgPacker
 }
 
-func (s *MailService) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (s *MailService) DescribeEntityType(desc *entity.EntityTypeDesc) {
+	desc.SetPersistent(true)
 	desc.DefineAttr("lastMailID", "Persistent")
 }
 

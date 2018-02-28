@@ -7,6 +7,7 @@ type Monster struct {
 	entity.Entity // Entity type should always inherit entity.Entity
 }
 
-func (m *Monster) DefineAttrs(desc *entity.EntityTypeDesc) {
+func (m *Monster) DescribeEntityType(desc *entity.EntityTypeDesc) {
+	desc.SetUseAOI(true)
 	desc.DefineAttr("name", "AllClients")
 }
