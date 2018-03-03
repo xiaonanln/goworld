@@ -3,7 +3,6 @@ package entitystorageredis
 import (
 	"io"
 
-	rediscluster "github.com/chasex/redis-go-cluster"
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
@@ -22,13 +21,6 @@ type redisEntityStorage struct {
 // OpenRedis opens redis as entity storage
 func OpenRedis(url string, dbindex int) (storagecommon.EntityStorage, error) {
 	c, err := redis.DialURL(url)
-	rediscluster.NewCluster(&rediscluster.Options{
-		StartNodes: []string{
-			"abc",
-			"def",
-		},
-	})
-
 	if err != nil {
 		return nil, errors.Wrap(err, "redis dail failed")
 	}

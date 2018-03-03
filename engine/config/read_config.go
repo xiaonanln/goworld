@@ -115,7 +115,7 @@ type KVDBConfig struct {
 	DB         string // MongoDB
 	Collection string // MongoDB
 	Driver     string // SQL Driver: e.x. mysql
-
+	StartNodes common.StringSet
 }
 
 // SetConfigFile sets the config file path (goworld.ini by default)
@@ -500,6 +500,7 @@ func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 }
 
 func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
+	config.StartNodes = common.StringSet{}
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "type" {
@@ -512,6 +513,8 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 			config.Collection = key.MustString(config.Collection)
 		} else if name == "driver" {
 			config.Driver = key.MustString(config.Driver)
+		} else if strings.HasPrefix(name, "start_nodes_") {
+			config.StartNodes.Add(key.MustString(""))
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -543,6 +546,15 @@ func validateKVDBConfig(config *KVDBConfig) {
 		_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
 		if err != nil {
 			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
+		}
+	} else if config.Type == "redis_cluster" {
+		if len(config.StartNodes) == 0 {
+			gwlog.Panicf("must have at least 1 start_nodes for [kvdb].redis_cluster")
+		}
+		for s := range config.StartNodes {
+			if s == "" {
+				gwlog.Panicf("start_nodes must not be empty")
+			}
 		}
 	} else if config.Type == "sql" {
 		if config.Driver == "" {
@@ -592,7 +604,7 @@ func validateStorageConfig(config *StorageConfig) {
 		}
 	} else if config.Type == "redis_cluster" {
 		if len(config.StartNodes) == 0 {
-			gwlog.Panicf("must have at least 1 start_nodes for redis_cluster")
+			gwlog.Panicf("must have at least 1 start_nodes for [storage].redis_cluster")
 		}
 		for s := range config.StartNodes {
 			if s == "" {
