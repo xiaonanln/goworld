@@ -5,7 +5,7 @@ import (
 
 	"time"
 
-	rediscluster "github.com/chasex/redis-go-cluster"
+	redis "github.com/chasex/redis-go-cluster"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )
@@ -15,12 +15,12 @@ const (
 )
 
 type redisKVDB struct {
-	c *rediscluster.Cluster
+	c *redis.Cluster
 }
 
 // OpenRedisKVDB opens Redis for KVDB backend
 func OpenRedisKVDB(startNodes []string) (kvdbtypes.KVDBEngine, error) {
-	c, err := rediscluster.NewCluster(&rediscluster.Options{
+	c, err := redis.NewCluster(&redis.Options{
 		StartNodes:   startNodes,
 		ConnTimeout:  10 * time.Second, // Connection timeout
 		ReadTimeout:  60 * time.Second, // Read timeout

@@ -5,8 +5,7 @@ import (
 
 	"time"
 
-	rediscluster "github.com/chasex/redis-go-cluster"
-	"github.com/garyburd/redigo/redis"
+	redis "github.com/chasex/redis-go-cluster"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -18,12 +17,12 @@ var (
 )
 
 type redisClusterEntityStorage struct {
-	c *rediscluster.Cluster
+	c *redis.Cluster
 }
 
 // OpenRedis opens redis as entity storage
 func OpenRedisCluster(startNodes []string) (storagecommon.EntityStorage, error) {
-	c, err := rediscluster.NewCluster(&rediscluster.Options{
+	c, err := redis.NewCluster(&redis.Options{
 		StartNodes:   startNodes,
 		ConnTimeout:  10 * time.Second, // Connection timeout
 		ReadTimeout:  60 * time.Second, // Read timeout
