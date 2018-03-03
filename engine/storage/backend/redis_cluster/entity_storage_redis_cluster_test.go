@@ -1,6 +1,7 @@
 package entitystoragerediscluster
 
 import (
+	"os"
 	"testing"
 
 	"github.com/xiaonanln/goworld/engine/common"
@@ -9,7 +10,12 @@ import (
 )
 
 func TestRedisEntityStorage(t *testing.T) {
-	es, err := OpenRedisCluster([]string{"redis://localhost:6379"})
+	if os.Getenv("TRAVIS") != "" {
+		t.Skipf("redis_cluster is not tested in Travis")
+		return
+	}
+
+	es, err := OpenRedisCluster([]string{"localhost:6379"})
 	if err != nil {
 		t.Error(err)
 	}
