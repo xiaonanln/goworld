@@ -14,10 +14,16 @@
   revision = "b7ed37b82869576c289d7d97fb2bbd8b64a0cb28"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/chasex/redis-go-cluster"
+  packages = ["."]
+  revision = "222d81891f1d3fa7cf8b5655020352c3e5b4ec0f"
+
+[[projects]]
   name = "github.com/garyburd/redigo"
   packages = ["internal","redis"]
-  revision = "d1ed5c67e5794de818ea85e6b522fda02623a484"
-  version = "v1.4.0"
+  revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
+  version = "v1.6.0"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -180,19 +186,19 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","ssh/terminal","tea","twofish","xtea"]
-  revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
+  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
+  revision = "22ae77b79946ea320088417e4d50825671d82d57"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
+  revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -215,6 +221,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f18031634df0bec4983207c9489fe3f68985cdaad793622dc7fb9af0d6166e98"
+  inputs-digest = "f1743ecf3d78fc5d341a29ee9df33cd290d6888f01265914597db402b815aaa3"
   solver-name = "gps-cdcl"
   solver-version = 1
