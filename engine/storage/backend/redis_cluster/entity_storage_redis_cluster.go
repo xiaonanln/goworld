@@ -1,7 +1,9 @@
-package entitystorageredis
+package entitystoragerediscluster
 
 import (
 	"io"
+
+	"time"
 
 	rediscluster "github.com/chasex/redis-go-cluster"
 	"github.com/garyburd/redigo/redis"
@@ -15,31 +17,26 @@ var (
 	dataPacker = netutil.MessagePackMsgPacker{}
 )
 
-type redisEntityStorage struct {
-	c redis.Conn
+type redisClusterEntityStorage struct {
+	c *rediscluster.Cluster
 }
 
 // OpenRedis opens redis as entity storage
-func OpenRedis(url string, dbindex int) (storagecommon.EntityStorage, error) {
-	c, err := redis.DialURL(url)
-	rediscluster.NewCluster(&rediscluster.Options{
-		StartNodes: []string{
-			"abc",
-			"def",
-		},
+func OpenRedisCluster(startNodes []string) (storagecommon.EntityStorage, error) {
+	c, err := rediscluster.NewCluster(&rediscluster.Options{
+		StartNodes:   startNodes,
+		ConnTimeout:  10 * time.Second, // Connection timeout
+		ReadTimeout:  60 * time.Second, // Read timeout
+		WriteTimeout: 60 * time.Second, // Write timeout
+		KeepAlive:    1,                // Maximum keep alive connecion in each node
+		AliveTime:    10 * time.Minute, // Keep alive timeout
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "redis dail failed")
+		return nil, errors.Wrap(err, "connect redis cluster failed")
 	}
 
-	if dbindex >= 0 {
-		if _, err := c.Do("SELECT", dbindex); err != nil {
-			return nil, errors.Wrap(err, "redis select db failed")
-		}
-	}
-
-	es := &redisEntityStorage{
+	es := &redisClusterEntityStorage{
 		c: c,
 	}
 
@@ -55,7 +52,7 @@ func packData(data interface{}) (b []byte, err error) {
 	return
 }
 
-func (es *redisEntityStorage) List(typeName string) ([]common.EntityID, error) {
+func (es *redisClusterEntityStorage) List(typeName string) ([]common.EntityID, error) {
 	keyMatch := typeName + "$*"
 	r, err := redis.Values(es.c.Do("SCAN", "0", "MATCH", keyMatch, "COUNT", 10000))
 	if err != nil {
@@ -90,7 +87,7 @@ func isZeroCursor(c interface{}) bool {
 	return string(c.([]byte)) == "0"
 }
 
-func (es *redisEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
+func (es *redisClusterEntityStorage) Write(typeName string, entityID common.EntityID, data interface{}) error {
 	b, err := packData(data)
 	if err != nil {
 		return err
@@ -100,7 +97,7 @@ func (es *redisEntityStorage) Write(typeName string, entityID common.EntityID, d
 	return err
 }
 
-func (es *redisEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
+func (es *redisClusterEntityStorage) Read(typeName string, entityID common.EntityID) (interface{}, error) {
 	b, err := redis.Bytes(es.c.Do("GET", entityKey(typeName, entityID)))
 	if err != nil {
 		return nil, err
@@ -112,16 +109,16 @@ func (es *redisEntityStorage) Read(typeName string, entityID common.EntityID) (i
 	return data, nil
 }
 
-func (es *redisEntityStorage) Exists(typeName string, entityID common.EntityID) (bool, error) {
+func (es *redisClusterEntityStorage) Exists(typeName string, entityID common.EntityID) (bool, error) {
 	key := entityKey(typeName, entityID)
 	exists, err := redis.Bool(es.c.Do("EXISTS", key))
 	return exists, err
 }
 
-func (es *redisEntityStorage) Close() {
+func (es *redisClusterEntityStorage) Close() {
 	es.c.Close()
 }
 
-func (es *redisEntityStorage) IsEOF(err error) bool {
+func (es *redisClusterEntityStorage) IsEOF(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }

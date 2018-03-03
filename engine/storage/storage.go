@@ -18,6 +18,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/storage/backend/mongodb"
 	"github.com/xiaonanln/goworld/engine/storage/backend/mysql"
 	"github.com/xiaonanln/goworld/engine/storage/backend/redis"
+	"github.com/xiaonanln/goworld/engine/storage/backend/redis_cluster"
 	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
@@ -148,6 +149,8 @@ func assureStorageEngineReady() (err error) {
 			}
 		}
 		storageEngine, err = entitystorageredis.OpenRedis(cfg.Url, dbindex)
+	} else if cfg.Type == "redis_cluster" {
+		storageEngine, err = entitystoragerediscluster.OpenRedisCluster(cfg.StartNodes.ToList())
 	} else if cfg.Type == "sql" {
 		if cfg.Driver == "mysql" {
 			storageEngine, err = entitystoragemysql.OpenMySQL(cfg.Url)
