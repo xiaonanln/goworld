@@ -19,7 +19,6 @@ import (
 // Avatar entity which is the player itself
 type Avatar struct {
 	entity.Entity // Entity type should always inherit entity.Entity
-	//msgbox.Msgbox
 }
 
 func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
@@ -248,15 +247,3 @@ func (a *Avatar) OnPublish(subject string, content string) {
 	gwlog.Debugf("OnPublish: publisher=%s, subject=%s, content=%s", publisher, subject, content)
 	a.CallClient("OnTestPublish", publisher, subject, content)
 }
-
-//func (a *Avatar) TestMsgbox_Client() {
-//	a.Msgbox.Send(a.ID, msgbox.Msg{
-//		"sender":  a.ID,
-//		"content": "hello",
-//	})
-//	a.Msgbox.Recv()
-//}
-
-//func (a *Avatar) handleMsgboxMsg(msg msgbox.Msg) {
-//	a.CallClient("OnRecvMsgboxMsg", msg)
-//}

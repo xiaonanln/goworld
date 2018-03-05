@@ -15,7 +15,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/post"
-	"github.com/xiaonanln/goworld/ext/msgbox"
 	"github.com/xiaonanln/typeconv"
 )
 
@@ -172,7 +171,6 @@ var (
 		{"DoSayInProfChannel", 5, time.Minute},
 		//{"DoTestListField", 10, time.Minute},
 		//{"DoTestPublish", 1, time.Minute},
-		//{"DoTestMsgbox", 10, time.Minute}, // not work anymore
 	}
 )
 
@@ -341,14 +339,6 @@ func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, 
 	if publisher == e.ID {
 		e.notifyThingDone("DoTestPublish")
 	}
-}
-
-func (e *clientEntity) DoTestMsgbox() {
-	e.CallServer("TestMsgbox")
-}
-
-func (e *clientEntity) OnRecvMsgboxMsg(msg msgbox.Msg) {
-	e.notifyThingDone("DoTestMsgbox")
 }
 
 func (e *clientEntity) onAccountCreated() {

@@ -6,7 +6,6 @@ import (
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/ext/msgbox"
 	"github.com/xiaonanln/goworld/ext/pubsub"
 )
 
@@ -33,7 +32,6 @@ func main() {
 	goworld.RegisterEntity("SpaceService", &SpaceService{})
 	goworld.RegisterEntity("MailService", &MailService{})
 	pubsub.RegisterService()
-	msgbox.RegisterService()
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{})
