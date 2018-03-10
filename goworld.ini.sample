@@ -45,8 +45,11 @@ position_sync_interval_ms=100 ; position sync: server -> client
 
 [game1]
 http_port=14001
+; ban_client=false
+
 [game2]
 http_port=14001
+ban_client=true
 
 [gate_common]
 ; gomaxprocs=0

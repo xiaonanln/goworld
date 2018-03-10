@@ -52,6 +52,7 @@ type GameConfig struct {
 	LogLevel               string
 	GoMaxProcs             int
 	PositionSyncIntervalMS int
+	BanClient              bool
 }
 
 // GateConfig defines fields of gate config
@@ -336,6 +337,8 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 			sc.GoMaxProcs = key.MustInt(sc.GoMaxProcs)
 		} else if name == "position_sync_interval_ms" {
 			sc.PositionSyncIntervalMS = key.MustInt(sc.PositionSyncIntervalMS)
+		} else if name == "ban_client" {
+			sc.BanClient = key.MustBool(sc.BanClient)
 		} else {
 			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
@@ -644,10 +647,18 @@ func validateConfig(config *GoWorldConfig) {
 		gwlog.Panicf("game not found in config file, must has at least 1 game")
 	}
 
+	hasNotBanClientGame := false
 	for gameid := 1; gameid <= gamesNum; gameid++ {
-		if _, ok := config.Games[gameid]; !ok {
+		if gameCfg, ok := config.Games[gameid]; ok {
+			if !gameCfg.BanClient {
+				hasNotBanClientGame = true //
+			}
+		} else {
 			gwlog.Panicf("found %d games in config file, but game%d is not found. gameid must be 1~%d", gamesNum, gameid, gamesNum)
 		}
+	}
+	if !hasNotBanClientGame {
+		gwlog.Panicf("must has at least 1 game with ban_client = false!")
 	}
 
 	gatesNum := len(config.Gates)
