@@ -78,7 +78,6 @@
 
 [[constraint]]
   name = "golang.org/x/net"
-  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
 
 [[constraint]]
   name = "gopkg.in/mgo.v2"

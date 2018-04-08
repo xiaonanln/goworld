@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   branch = "master"
@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
+  revision = "5e9692864e22d02ac79e2fa499cffb00520b4fea"
+  version = "v1.34.0"
 
 [[projects]]
   name = "github.com/go-ole/go-ole"
@@ -118,8 +118,8 @@
 [[projects]]
   name = "github.com/sevlyar/go-daemon"
   packages = ["."]
-  revision = "e49ef56654f54139c4dc0285f973f74e9649e729"
-  version = "v0.1.2"
+  revision = "97491df6ec974d292cb82c61906a1a4c6f29958b"
+  version = "v0.1.3"
 
 [[projects]]
   branch = "master"
@@ -180,24 +180,25 @@
   name = "github.com/xtaci/kcp-go"
   packages = ["."]
   revision = "42bc1dfefff592fdb3affa793980c4f6ab4213e5"
-  version = "v3.24"
+  version = "v3.25"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","ssh/terminal","tea","twofish","xtea"]
-  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
+  revision = "b2aa35443fbc700ab74c586ae79b81c171851023"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
+  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
+  revision = "3b87a42e500a6dc65dae1a55d0b641295971163e"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -220,6 +221,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2e5cc37c09a3b87feb1e320ff3e224b1c4b3d76e89c335eb4f5c4db24a648921"
+  inputs-digest = "f1743ecf3d78fc5d341a29ee9df33cd290d6888f01265914597db402b815aaa3"
   solver-name = "gps-cdcl"
   solver-version = 1
