@@ -198,8 +198,8 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 	post.Post(func() {
 		gs.clientProxies[cp.clientid] = cp
 		dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
-		go cp.serve()
 	})
+	cp.serve()
 }
 
 func (gs *GateService) checkClientHeartbeats() {

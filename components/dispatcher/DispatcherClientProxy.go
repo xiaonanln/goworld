@@ -5,7 +5,6 @@ import (
 
 	"fmt"
 
-	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -56,11 +55,12 @@ func (dcp *dispatcherClientProxy) serve() {
 			gwlog.Panic(err)
 		}
 
-		// pass the packet to the dispatcher service
-		if consts.DEBUG_PACKETS {
-			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
-		}
+		//
+		//if consts.DEBUG_PACKETS {
+		//	gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
+		//}
 
+		// pass the packet to the dispatcher service
 		dcp.owner.messageQueue <- dispatcherMessage{dcp, proto.Message{msgtype, pkt}}
 	}
 }
