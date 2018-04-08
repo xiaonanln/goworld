@@ -189,10 +189,9 @@
   revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
 
 [[projects]]
-  branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "22ae77b79946ea320088417e4d50825671d82d57"
+  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
 
 [[projects]]
   branch = "master"
@@ -221,6 +220,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f1743ecf3d78fc5d341a29ee9df33cd290d6888f01265914597db402b815aaa3"
+  inputs-digest = "2e5cc37c09a3b87feb1e320ff3e224b1c4b3d76e89c335eb4f5c4db24a648921"
   solver-name = "gps-cdcl"
   solver-version = 1
