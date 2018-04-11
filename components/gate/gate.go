@@ -91,7 +91,7 @@ func main() {
 		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
 	}
 
-	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, &dispatcherClientDelegate{})
+	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &dispatcherClientDelegate{})
 	//dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine

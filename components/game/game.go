@@ -107,7 +107,7 @@ func Run() {
 	gameService = newGameService(gameid)
 
 	gwlog.Infof("Start dispatchercluster ...")
-	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, &dispatcherClientDelegate{})
+	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, gameConfig.BanBootEntity, &dispatcherClientDelegate{})
 
 	setupSignals()
 

@@ -25,26 +25,26 @@ const (
 )
 
 type DispatcherConnMgr struct {
-	gid               uint16 // gateid or gameid
-	dctype            DispatcherClientType
-	dispid            uint16
-	_dispatcherClient *DispatcherClient
-	isReconnect       bool
-	isRestoreGame     bool
-	delegate          IDispatcherClientDelegate
+	gid                                         uint16 // gateid or gameid
+	dctype                                      DispatcherClientType
+	dispid                                      uint16
+	_dispatcherClient                           *DispatcherClient
+	isReconnect, isRestoreGame, isBanBootEntity bool // more properties for Game
+	delegate                                    IDispatcherClientDelegate
 }
 
 var (
 	errDispatcherNotConnected = errors.New("dispatcher not connected")
 )
 
-func NewDispatcherConnMgr(gid uint16, dctype DispatcherClientType, dispid uint16, isRestoreGame bool, delegate IDispatcherClientDelegate) *DispatcherConnMgr {
+func NewDispatcherConnMgr(gid uint16, dctype DispatcherClientType, dispid uint16, isRestoreGame, isBanBootEntity bool, delegate IDispatcherClientDelegate) *DispatcherConnMgr {
 	return &DispatcherConnMgr{
-		gid:           gid,
-		dctype:        dctype,
-		dispid:        dispid,
-		isRestoreGame: isRestoreGame,
-		delegate:      delegate,
+		gid:             gid,
+		dctype:          dctype,
+		dispid:          dispid,
+		isRestoreGame:   isRestoreGame,
+		isBanBootEntity: isBanBootEntity,
+		delegate:        delegate,
 	}
 }
 
@@ -75,7 +75,7 @@ func (dcm *DispatcherConnMgr) assureConnected() *DispatcherClient {
 		}
 		dcm.setDispatcherClient(dc)
 		if dcm.dctype == GameDispatcherClientType {
-			dc.SendSetGameID(dcm.gid, dcm.isReconnect, dcm.isRestoreGame)
+			dc.SendSetGameID(dcm.gid, dcm.isReconnect, dcm.isRestoreGame, dcm.isBanBootEntity)
 		} else {
 			dc.SendSetGateID(dcm.gid)
 		}

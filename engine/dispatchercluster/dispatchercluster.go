@@ -18,13 +18,13 @@ var (
 	gid             uint16
 )
 
-func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, isRestoreGame bool, delegate dispatcherclient.IDispatcherClientDelegate) {
+func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, isRestoreGame, isBanBootEntity bool, delegate dispatcherclient.IDispatcherClientDelegate) {
 	gid = _gid
 	dispIds := config.GetDispatcherIDs()
 	dispatcherNum = len(dispIds)
 	dispatcherConns = make([]*dispatcherclient.DispatcherConnMgr, dispatcherNum)
 	for _, dispid := range dispIds {
-		dispatcherConns[dispid-1] = dispatcherclient.NewDispatcherConnMgr(gid, dctype, dispid, isRestoreGame, delegate)
+		dispatcherConns[dispid-1] = dispatcherclient.NewDispatcherConnMgr(gid, dctype, dispid, isRestoreGame, isBanBootEntity, delegate)
 	}
 	for _, dispConn := range dispatcherConns {
 		dispConn.Connect()

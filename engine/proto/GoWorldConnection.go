@@ -33,12 +33,13 @@ func NewGoWorldConnection(conn netutil.Connection, compressConnection bool, comp
 }
 
 // SendSetGameID sends MT_SET_GAME_ID message
-func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isRestore bool) error {
+func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isRestore bool, isBanBootEntity bool) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(id)
 	packet.AppendBool(isReconnect)
 	packet.AppendBool(isRestore)
+	packet.AppendBool(isBanBootEntity)
 	return gwc.SendPacketRelease(packet)
 }
 
