@@ -159,10 +159,10 @@
   version = "v0.4"
 
 [[projects]]
+  branch = "master"
   name = "github.com/xiaonanln/go-xnsyncutil"
   packages = ["xnsyncutil"]
-  revision = "a141ba34d327c576ad8d8eb90322bb0e967f2db8"
-  version = "v0.0.4"
+  revision = "f004c49229c858b2b4479993d3ce2adc408828fc"
 
 [[projects]]
   name = "github.com/xiaonanln/goTimer"
@@ -221,6 +221,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f1743ecf3d78fc5d341a29ee9df33cd290d6888f01265914597db402b815aaa3"
+  inputs-digest = "f4a4ac2911aca747687bed032ddc0b53345e40f537a6770fd2bc95fcbc373e8d"
   solver-name = "gps-cdcl"
   solver-version = 1
