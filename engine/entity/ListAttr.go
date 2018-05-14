@@ -1,6 +1,9 @@
 package entity
 
-import "github.com/xiaonanln/goworld/engine/gwlog"
+import (
+	"github.com/xiaonanln/goworld/engine/gwlog"
+	"gopkg.in/mgo.v2/bson"
+)
 
 // ListAttr is a attribute for a list of attributes
 type ListAttr struct {
@@ -309,6 +312,10 @@ func (a *ListAttr) AssignList(l []interface{}) {
 		if iv, ok := v.(map[string]interface{}); ok {
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
+			a.append(ia)
+		} else if iv, ok := v.(bson.M); ok {
+			ia := NewMapAttr()
+			ia.AssignMap(map[string]interface{}(iv))
 			a.append(ia)
 		} else if iv, ok := v.([]interface{}); ok {
 			ia := NewListAttr()
