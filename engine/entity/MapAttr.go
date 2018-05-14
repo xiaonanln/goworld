@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/typeconv"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // MapAttr is a map attribute containing muiltiple attributes indexed by string keys
@@ -337,6 +338,10 @@ func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 		if iv, ok := v.(map[string]interface{}); ok {
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
+			a.set(k, ia)
+		} else if iv, ok := v.(bson.M); ok { // treat bson.M like map[string]interface{}
+			ia := NewMapAttr()
+			ia.AssignMap(map[string]interface{}(iv))
 			a.set(k, ia)
 		} else if iv, ok := v.([]interface{}); ok {
 			ia := NewListAttr()
