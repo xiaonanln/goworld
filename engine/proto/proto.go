@@ -65,6 +65,8 @@ const (
 
 	// MT_CALL_NIL_SPACES message is used to call nil spaces on all games
 	MT_CALL_NIL_SPACES
+	// MT_REGISTER_SERVICE message is used to register service types in dispatcher
+	MT_REGISTER_SERVICE
 )
 
 // Alias message types

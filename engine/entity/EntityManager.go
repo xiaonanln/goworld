@@ -652,3 +652,13 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 func Entities() EntityMap {
 	return entityManager.entities
 }
+
+// GetServiceNames returns all registered service type names
+func GetServiceNames() (names []string) {
+	for serviceName, etd := range registeredEntityTypes {
+		if etd.isService {
+			names = append(names, serviceName)
+		}
+	}
+	return
+}

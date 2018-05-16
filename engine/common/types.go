@@ -11,6 +11,8 @@ const ENTITYID_LENGTH = uuid.UUID_LENGTH
 // EntityID type
 type EntityID string
 
+const NilEntityID EntityID = ""
+
 // IsNil returns if EntityID is nil
 func (id EntityID) IsNil() bool {
 	return id == ""
