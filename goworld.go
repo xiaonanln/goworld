@@ -23,7 +23,7 @@ func Run() {
 // returns the entity type description object which can be used to define more properties
 // of entity type
 func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
-	return entity.RegisterEntity(typeName, entityPtr)
+	return entity.RegisterEntity(typeName, entityPtr, false)
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
@@ -108,6 +108,11 @@ func ListAttr() *entity.ListAttr {
 // All spaces will be created as an instance of this type
 func RegisterSpace(spacePtr entity.ISpace) {
 	entity.RegisterSpace(spacePtr)
+}
+
+// RegisterService registeres a service entity type
+func RegisterService(serviceName string, servicePtr entity.IService) {
+	entity.RegisterService(serviceName, servicePtr)
 }
 
 // Entities gets all entities as an EntityMap (do not modify it!)

@@ -58,7 +58,7 @@ func (pss *PublishSubscribeService) OnCreated() {
 	if !pss.Attrs.HasKey("wildcardSubscribers") {
 		pss.Attrs.SetMapAttr("wildcardSubscribers", goworld.MapAttr())
 	}
-	pss.DeclareService(ServiceName)
+
 }
 
 // RegisterService registeres PublishSubscribeService to goworld

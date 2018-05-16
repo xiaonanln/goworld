@@ -30,7 +30,6 @@ func (s *OnlineService) OnInit() {
 // OnCreated is called when OnlineService is created
 func (s *OnlineService) OnCreated() {
 	gwlog.Infof("Registering OnlineService ...")
-	s.DeclareService("OnlineService")
 }
 
 // CheckIn is called when Avatars login
