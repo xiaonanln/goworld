@@ -5,8 +5,6 @@ import (
 
 	"math/rand"
 
-	"os"
-
 	"strings"
 
 	"github.com/pkg/errors"
@@ -260,9 +258,6 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
-		if consts.DEBUG_MODE {
-			os.Exit(2)
-		}
 	}
 
 	if entityID == "" {

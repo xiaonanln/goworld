@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"os"
 
 	"time"
 
@@ -156,9 +155,6 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleStartFreezeGameAck(dispid)
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
-				if consts.DEBUG_MODE {
-					os.Exit(2)
-				}
 			}
 
 			pkt.Release()

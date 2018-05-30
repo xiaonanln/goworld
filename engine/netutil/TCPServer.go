@@ -4,9 +4,6 @@ import (
 	"net"
 	"time"
 
-	"os"
-
-	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -26,9 +23,6 @@ func ServeTCPForever(listenAddr string, delegate TCPServerDelegate) {
 	for {
 		err := serveTCPForeverOnce(listenAddr, delegate)
 		gwlog.Errorf("server@%s failed with error: %v, will restart after %s", listenAddr, err, _RESTART_TCP_SERVER_INTERVAL)
-		if consts.DEBUG_MODE {
-			os.Exit(2)
-		}
 		time.Sleep(_RESTART_TCP_SERVER_INTERVAL)
 	}
 }
