@@ -21,7 +21,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
-	"github.com/xiaonanln/goworld/engine/storage"
 )
 
 const (
@@ -159,7 +158,7 @@ func (gs *GameService) serveRoutine() {
 			} else if msgtype == proto.MT_CREATE_SERVICE_ENTITY {
 				serviceName := pkt.ReadVarStr()
 				eid := pkt.ReadEntityID()
-				gs.HandleCreateServiceEntity(serviceName, eid)
+
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 			}
@@ -347,19 +346,6 @@ func (gs *GameService) HandleStartFreezeGameAck(dispid uint16) {
 	}
 	// all acks are received, enter freezing state ...
 	gs.runState.Store(rsFreezing)
-}
-
-func (gs *GameService) HandleCreateServiceEntity(serviceName string, entityid common.EntityID) {
-	gwlog.Infof("Create service entity: service name = %s, entityid = %s", serviceName, entityid)
-	storage.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
-		if len(eids) == 0 {
-			gwlog.Infof("Creating new service entity ")
-		} else {
-			// already exists
-			serviceID := eids[0]
-			entity.LoadEntityLocally()
-		}
-	})
 }
 
 func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
