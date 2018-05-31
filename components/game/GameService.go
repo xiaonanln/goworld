@@ -155,10 +155,6 @@ func (gs *GameService) serveRoutine() {
 			} else if msgtype == proto.MT_START_FREEZE_GAME_ACK {
 				dispid := pkt.ReadUint16()
 				gs.HandleStartFreezeGameAck(dispid)
-			} else if msgtype == proto.MT_CREATE_SERVICE_ENTITY {
-				serviceName := pkt.ReadVarStr()
-				eid := pkt.ReadEntityID()
-
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 			}

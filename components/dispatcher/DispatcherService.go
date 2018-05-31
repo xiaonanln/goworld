@@ -826,15 +826,14 @@ func (service *DispatcherService) createServiceEntity(serviceName string) common
 	packet := netutil.NewPacket()
 
 	entityid := common.GenEntityID()
-	packet.AppendUint16(proto.MT_CREATE_SERVICE_ENTITY)
-	packet.AppendVarStr(serviceName)
+	packet.AppendUint16(proto.MT_CREATE_ENTITY_ANYWHERE)
 	packet.AppendEntityID(entityid)
+	packet.AppendVarStr(serviceName)
+	packet.AppendData(nil)
 
-	// send MT_CREATE_SERVICE_ENTITY back to random chosen game
 	game := service.chooseGame()
 	game.dispatchPacket(packet)
 	packet.Release()
 
 	gwlog.Infof("Service %s is registered but not created yet, creating on game %v ...", serviceName, game.gameid)
-	return entityid
 }

@@ -67,7 +67,6 @@ const (
 	MT_CALL_NIL_SPACES
 	// MT_REGISTER_SERVICE message is used to register service types in dispatcher
 	MT_REGISTER_SERVICE
-	MT_CREATE_SERVICE_ENTITY
 )
 
 // Alias message types
