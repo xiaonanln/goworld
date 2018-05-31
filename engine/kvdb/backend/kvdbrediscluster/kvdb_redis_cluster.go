@@ -46,30 +46,6 @@ func (db *redisKVDB) initialize(dbindex int) error {
 		}
 	}
 
-	//keyMatch := keyPrefix + "*"
-	//r, err := redis.Values(db.c.Do("SCAN", "0", "MATCH", keyMatch, "COUNT", 10000))
-	//if err != nil {
-	//	return err
-	//}
-	//for {
-	//	nextCursor := r[0]
-	//	keys, err := redis.Strings(r[1], nil)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	for _, key := range keys {
-	//		key := key[len(keyPrefix):]
-	//		db.keyTree.ReplaceOrInsert(keyTreeItem{key})
-	//	}
-	//
-	//	if db.isZeroCursor(nextCursor) {
-	//		break
-	//	}
-	//	r, err = redis.Values(db.c.Do("SCAN", nextCursor, "MATCH", keyMatch, "COUNT", 10000))
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
 	return nil
 }
 

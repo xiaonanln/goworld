@@ -106,10 +106,6 @@ const (
 )
 
 //  System level configurations
-const (
-	// DEBUG_MODE = true turns on debug mode
-	DEBUG_MODE = false
-)
 
 // Async configurations
 const (
