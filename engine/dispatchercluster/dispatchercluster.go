@@ -108,12 +108,6 @@ func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) (
 	return
 }
 
-func SendRegisterServices(serviceNames []string) {
-	for _, serviceName := range serviceNames {
-		SelectByServiceName(serviceName).SendRegisterService(serviceName)
-	}
-}
-
 func EntityIDToDispatcherID(entityid common.EntityID) uint16 {
 	return uint16((hashEntityID(entityid) % dispatcherNum) + 1)
 }
@@ -128,15 +122,8 @@ func SelectByGateID(gateid uint16) *dispatcherclient.DispatcherClient {
 	return dispatcherConns[idx].GetDispatcherClientForSend()
 }
 
-// SelectByDispatcherID choose the dispatcher client for the specified dispatcher
 func SelectByDispatcherID(dispid uint16) *dispatcherclient.DispatcherClient {
 	return dispatcherConns[dispid-1].GetDispatcherClientForSend()
-}
-
-// SelectByServiceName distribute services in dispatcher cluster
-func SelectByServiceName(serviceName string) *dispatcherclient.DispatcherClient {
-	idx := hashServiceName(serviceName) % dispatcherNum
-	return dispatcherConns[idx].GetDispatcherClientForSend()
 }
 
 func Select(dispidx int) *dispatcherclient.DispatcherClient {

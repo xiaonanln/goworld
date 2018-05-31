@@ -157,7 +157,6 @@ type DispatcherService struct {
 	targetGameOfClient        map[common.ClientID]uint16
 	entitySyncInfosToGame     []*netutil.Packet // cache entity sync infos to gates
 	ticker                    <-chan time.Time
-	serviceMap                map[string]common.EntityID // mapping from service name to entity ID
 }
 
 func newDispatcherService(dispid uint16) *DispatcherService {
@@ -182,7 +181,6 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
-		serviceMap:            map[string]common.EntityID{},
 	}
 
 	for i := range ds.games {
@@ -248,9 +246,6 @@ func (service *DispatcherService) messageLoop() {
 			} else if msgtype == proto.MT_START_FREEZE_GAME {
 				// freeze the game
 				service.handleStartFreezeGame(dcp, pkt)
-			} else if msgtype == proto.MT_REGISTER_SERVICE {
-				// register services from game
-				service.handleRegisterService(dcp, pkt)
 			} else {
 				gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 			}
@@ -360,8 +355,6 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		gwlog.Debugf("Game %d restored: %s", dcp.gameid, dcp)
 	}
 
-	service.checkCreateServiceEntities()
-
 	return
 }
 
@@ -392,14 +385,6 @@ func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientPro
 	pkt.AppendUint16(proto.MT_START_FREEZE_GAME_ACK)
 	pkt.AppendUint16(dispid)
 	dcp.SendPacket(pkt)
-}
-
-func (service *DispatcherService) handleRegisterService(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
-	// register service from game ...
-	serviceName := pkt.ReadVarStr()
-	if _, ok := service.serviceMap[serviceName]; !ok {
-		service.serviceMap[serviceName] = common.NilEntityID
-	}
 }
 
 func (service *DispatcherService) isAllGameClientsConnected() bool {
@@ -799,41 +784,4 @@ func (service *DispatcherService) recalcBootEntityCandidateGames() {
 		}
 	}
 	service.bootEntityCandidatesGames = candidates
-}
-
-func (service *DispatcherService) checkCreateServiceEntities() {
-	// Check all service names and create entity if necessary
-	gwlog.Debugf("%s check services, all games connected = %v", service, service.isAllGameClientsConnected())
-	if !service.isAllGameClientsConnected() {
-		// TODO: AUTO SCALING
-		return
-	}
-
-	createdServices := map[string]common.EntityID{}
-	for serviceName, entityID := range service.serviceMap {
-		if entityID.IsNil() {
-			// service is registered but not created yet, create it on some game
-			createdServices[serviceName] = service.createServiceEntity(serviceName)
-		}
-	}
-
-	for serviceName, entityID := range createdServices {
-		service.serviceMap[serviceName] = entityID
-	}
-}
-
-func (service *DispatcherService) createServiceEntity(serviceName string) common.EntityID {
-	packet := netutil.NewPacket()
-
-	entityid := common.GenEntityID()
-	packet.AppendUint16(proto.MT_CREATE_ENTITY_ANYWHERE)
-	packet.AppendEntityID(entityid)
-	packet.AppendVarStr(serviceName)
-	packet.AppendData(nil)
-
-	game := service.chooseGame()
-	game.dispatchPacket(packet)
-	packet.Release()
-
-	gwlog.Infof("Service %s is registered but not created yet, creating on game %v ...", serviceName, game.gameid)
 }

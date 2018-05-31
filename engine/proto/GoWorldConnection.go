@@ -352,14 +352,6 @@ func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendRegisterService sends MT_REGISTER_SERVICE message
-func (gwc *GoWorldConnection) SendRegisterService(name string) {
-	packet := netutil.NewPacket()
-	packet.AppendUint16(MT_REGISTER_SERVICE)
-	packet.AppendVarStr(name)
-	gwc.SendPacketRelease(packet)
-}
-
 // SendPacket send a packet to remote
 func (gwc *GoWorldConnection) SendPacket(packet *netutil.Packet) error {
 	return gwc.packetConn.SendPacket(packet)

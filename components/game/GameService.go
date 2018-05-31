@@ -65,8 +65,6 @@ func newGameService(gameid uint16) *GameService {
 func (gs *GameService) run(restore bool) {
 	gs.runState.Store(rsRunning)
 
-	gs.registerServices()
-
 	if !restore {
 		entity.CreateNilSpace(gameid) // create the nil space
 	} else {
@@ -446,12 +444,4 @@ func (gs *GameService) startFreeze() {
 	dispatcherNum := len(config.GetDispatcherIDs())
 	gs.dispatcherStartFreezeAcks = make([]bool, dispatcherNum)
 	dispatchercluster.SendStartFreezeGame(gameid)
-}
-func (gs *GameService) registerServices() {
-	serviceNames := entity.GetServiceNames()
-	if len(serviceNames) == 0 {
-		return
-	}
-	gwlog.Infof("Register services: %v", serviceNames)
-	dispatchercluster.SendRegisterServices(serviceNames)
 }
