@@ -8,6 +8,8 @@ import (
 
 	"net"
 
+	"os"
+
 	"crypto/tls"
 
 	"path"
@@ -245,7 +247,12 @@ func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.Ms
 		// kcp connected from client, need to do nothing here
 
 	} else {
-		gwlog.Panicf("unknown message type from client: %d", msgtype)
+		if consts.DEBUG_MODE {
+			gwlog.TraceError("unknown message type from client: %d", msgtype)
+			os.Exit(2)
+		} else {
+			gwlog.Panicf("unknown message type from client: %d", msgtype)
+		}
 	}
 
 }
@@ -280,6 +287,9 @@ func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packe
 		gs.handleCallFilteredClientProxies(packet)
 	} else {
 		gwlog.Panicf("%s: unknown msg type: %d", gs, msgtype)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 }
 

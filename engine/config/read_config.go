@@ -15,11 +15,14 @@ import (
 
 	"time"
 
+	"os"
+
 	"path"
 
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
@@ -567,6 +570,9 @@ func validateKVDBConfig(config *KVDBConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 }
 
@@ -617,6 +623,9 @@ func validateStorageConfig(config *StorageConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 }
 

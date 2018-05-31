@@ -248,6 +248,9 @@ func (service *DispatcherService) messageLoop() {
 				service.handleStartFreezeGame(dcp, pkt)
 			} else {
 				gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
+				if consts.DEBUG_MODE {
+					os.Exit(2)
+				}
 			}
 
 			pkt.Release()

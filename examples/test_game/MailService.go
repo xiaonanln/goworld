@@ -38,6 +38,7 @@ func (s *MailService) OnInit() {
 func (s *MailService) OnCreated() {
 	gwlog.Infof("Registering MailService ...")
 	s.Attrs.SetDefaultInt("lastMailID", 0)
+	s.DeclareService("MailService")
 }
 
 // SendMail handles send mail requests from avatars

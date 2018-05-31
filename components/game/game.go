@@ -34,13 +34,14 @@ import (
 )
 
 var (
-	gameid          uint16
-	configFile      string
-	logLevel        string
-	restore         bool
-	runInDaemonMode bool
-	gameService     *GameService
-	signalChan      = make(chan os.Signal, 1)
+	gameid                       uint16
+	configFile                   string
+	logLevel                     string
+	restore                      bool
+	runInDaemonMode              bool
+	gameService                  *GameService
+	signalChan                   = make(chan os.Signal, 1)
+	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
 )
 
 func parseArgs() {

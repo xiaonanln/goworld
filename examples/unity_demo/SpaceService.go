@@ -85,6 +85,7 @@ func (s *SpaceService) OnInit() {
 // OnCreated is called when entity is created
 func (s *SpaceService) OnCreated() {
 	gwlog.Infof("Registering SpaceService ...")
+	s.DeclareService("SpaceService")
 }
 
 // EnterSpace is called by avatar to enter space by kind

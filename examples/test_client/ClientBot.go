@@ -12,6 +12,8 @@ import (
 
 	"reflect"
 
+	"os"
+
 	"crypto/tls"
 
 	"github.com/xiaonanln/goworld/engine/common"
@@ -349,6 +351,9 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		//	bot.setClientID(clientid)
 	} else {
 		gwlog.Panicf("unknown msgtype: %v", msgtype)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 }
 

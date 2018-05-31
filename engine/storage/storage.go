@@ -3,6 +3,8 @@ package storage
 import (
 	"time"
 
+	"os"
+
 	"strconv"
 
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
@@ -157,6 +159,9 @@ func assureStorageEngineReady() (err error) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 
 	return

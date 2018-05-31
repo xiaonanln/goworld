@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"os"
+
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/common"
@@ -65,6 +67,9 @@ func (cp *ClientProxy) serve() {
 
 		if err := recover(); err != nil && !netutil.IsConnectionError(err.(error)) {
 			gwlog.TraceError("%s error: %s", cp, err.(error))
+			if consts.DEBUG_MODE {
+				os.Exit(2)
+			}
 		} else {
 			gwlog.Debugf("%s disconnected", cp)
 		}

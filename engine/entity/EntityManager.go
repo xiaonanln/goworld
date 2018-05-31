@@ -5,6 +5,8 @@ import (
 
 	"math/rand"
 
+	"os"
+
 	"strings"
 
 	"github.com/pkg/errors"
@@ -32,7 +34,6 @@ type EntityTypeDesc struct {
 	allClientAttrs  common.StringSet
 	clientAttrs     common.StringSet
 	persistentAttrs common.StringSet
-	isService       bool
 	//compositiveMethodComponentIndices map[string][]int
 	//definedAttrs                      bool
 }
@@ -180,7 +181,7 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 }
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityTypeDesc {
+func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -202,10 +203,8 @@ func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityType
 		clientAttrs:     common.StringSet{},
 		allClientAttrs:  common.StringSet{},
 		persistentAttrs: common.StringSet{},
-		isService:       isService,
 		//compositiveMethodComponentIndices: map[string][]int{},
 	}
-
 	registeredEntityTypes[typeName] = entityTypeDesc
 
 	entityPtrType := reflect.PtrTo(entityType)
@@ -218,9 +217,8 @@ func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityType
 	gwlog.Infof(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
 	//// define entity attrs
 	entity.DescribeEntityType(entityTypeDesc)
-
-	// now entity type is described
 	return entityTypeDesc
+	//e.callCompositiveMethod("DescribeEntityType", entityTypeDesc)
 }
 
 var entityType = reflect.TypeOf(Entity{})
@@ -262,6 +260,9 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
+		if consts.DEBUG_MODE {
+			os.Exit(2)
+		}
 	}
 
 	if entityID == "" {
@@ -364,23 +365,11 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) common.E
 
 // CreateEntityLocally creates new entity in the local game
 func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) common.EntityID {
-	entityTypeDesc, ok := registeredEntityTypes[typeName]
-	if !ok {
-		gwlog.Panicf("unknown entity type: %s", typeName)
-	} else if entityTypeDesc.isService {
-		gwlog.Panicf("should not create service entity manually: %s", typeName)
-	}
 	return createEntity(typeName, nil, Vector3{}, "", data, nil, client, ccCreate)
 }
 
 // CreateEntityAnywhere creates new entity in any game
 func CreateEntityAnywhere(typeName string) common.EntityID {
-	entityTypeDesc, ok := registeredEntityTypes[typeName]
-	if !ok {
-		gwlog.Panicf("unknown entity type: %s", typeName)
-	} else if entityTypeDesc.isService {
-		gwlog.Panicf("should not create service entity manually: %s", typeName)
-	}
 	return createEntityAnywhere(typeName, nil)
 }
 

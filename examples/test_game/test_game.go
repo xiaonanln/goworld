@@ -28,11 +28,10 @@ func main() {
 
 	// Register each entity types
 	goworld.RegisterEntity("Account", &Account{})
-	goworld.RegisterService("OnlineService", &OnlineService{})
-	//goworld.RegisterEntity("OnlineService", &OnlineService{})
-	//goworld.RegisterEntity("SpaceService", &SpaceService{})
-	//goworld.RegisterEntity("MailService", &MailService{})
-	//pubsub.RegisterService()
+	goworld.RegisterEntity("OnlineService", &OnlineService{})
+	goworld.RegisterEntity("SpaceService", &SpaceService{})
+	goworld.RegisterEntity("MailService", &MailService{})
+	pubsub.RegisterService()
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{})
