@@ -50,6 +50,8 @@ back to work but with the latest executable image. This feature enables updating
 go get github.com/xiaonanln/goworld/cmd/...
 ```
 
+**Require Go version >= 1.9**
+
 ### Install dependencies
 
 GoWorld uses [Dep](https://github.com/golang/dep) to manage packages. 
