@@ -11,8 +11,9 @@ type testService struct {
 
 func TestStartup(t *testing.T) {
 	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, time.Second*5)
 	Startup(ctx, []string{"http://127.0.0.1:2379"}, "/testns", &testService{})
-	time.Sleep(time.Second * 30)
+	<-ctx.Done()
 }
 
 func (ts *testService) ServiceType() string {
@@ -21,4 +22,12 @@ func (ts *testService) ServiceType() string {
 
 func (ts *testService) ServiceId() string {
 	return "testService"
+}
+
+func (ts *testService) ServiceAddr() string {
+	return "localhost:12345"
+}
+
+func (ts *testService) ServiceLeaseTTL() int64 {
+	return 2
 }
