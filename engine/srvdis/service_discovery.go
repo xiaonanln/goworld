@@ -21,6 +21,7 @@ type ServiceDelegate interface {
 	ServiceId() string
 	ServiceAddr() string
 	ServiceLeaseTTL() int64
+	DiscoverService(srvtype string, srvid string, srvaddr string)
 }
 
 func Startup(ctx context.Context, etcdEndPoints []string, namespace string, delegate ServiceDelegate) {
@@ -38,7 +39,7 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 
 		cli, err := clientv3.New(cfg)
 		if err != nil {
-			gwlog.Panic(err)
+			gwlog.Fatal(err)
 		}
 
 		defer cli.Close()
@@ -47,12 +48,13 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 		wait.Add(2)
 
 		go gwutils.RepeatUntilPanicless(func() {
-			registerRoutine(ctx, cli, delegate)
+			newctx, _ := context.WithTimeout(ctx, time.Second*2)
+			registerRoutine(newctx, cli, delegate)
 			wait.Done()
 		})
 
 		go gwutils.RepeatUntilPanicless(func() {
-			//watchRoutine(ctx, cli, delegate)
+			watchRoutine(ctx, cli, delegate)
 			wait.Done()
 		})
 

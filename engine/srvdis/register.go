@@ -3,8 +3,6 @@ package srvdis
 import (
 	"context"
 
-	"fmt"
-
 	"encoding/json"
 
 	"github.com/coreos/etcd/clientv3"
@@ -26,7 +24,7 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	srvId := delegate.ServiceId()
 	lease, err := cli.Grant(ctx, delegate.ServiceLeaseTTL())
 	if err != nil {
-		gwlog.Panic(err)
+		gwlog.Fatal(err)
 	}
 
 	servicePath := registerPath(srvType, srvId)
@@ -35,21 +33,20 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	}
 	registerInfoBytes, err := json.Marshal(&registerInfo)
 	if err != nil {
-		gwlog.Panic(err)
+		gwlog.Fatal(err)
 	}
 
 	registerInfoStr := string(registerInfoBytes)
-	gwlog.Infof("Register info for service %s: %s", servicePath, registerInfoStr)
 
-	gwlog.Debugf("Registering service %s with lease %v ...", servicePath, lease.ID)
-	_, err = kv.Put(ctx, servicePath, "xxx", clientv3.WithLease(lease.ID))
+	gwlog.Debugf("Registering service %s = %s with lease %v TTL %v ...", servicePath, registerInfoStr, lease.ID, lease.TTL)
+	_, err = kv.Put(ctx, servicePath, registerInfoStr, clientv3.WithLease(lease.ID))
 	if err != nil {
-		gwlog.Panic(err)
+		gwlog.Fatal(err)
 	}
 
 	ch, err := cli.KeepAlive(ctx, lease.ID)
 	if err != nil {
-		gwlog.Panic(err)
+		gwlog.Fatal(err)
 	}
 
 	for range ch {
@@ -57,8 +54,4 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	}
 
 	gwlog.Warnf("Service %s keep alive terminated.", servicePath)
-}
-
-func registerPath(srvType, srvId string) string {
-	return fmt.Sprintf("/services/%s/%s", srvType, srvId)
 }

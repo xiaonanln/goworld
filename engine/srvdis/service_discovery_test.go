@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 type testService struct {
@@ -30,4 +32,8 @@ func (ts *testService) ServiceAddr() string {
 
 func (ts *testService) ServiceLeaseTTL() int64 {
 	return 2
+}
+
+func (ts *testService) DiscoverService(srvtype string, srvid string, srvaddr string) {
+	gwlog.Infof("Service discovered: %s.%s", srvtype, srvid)
 }

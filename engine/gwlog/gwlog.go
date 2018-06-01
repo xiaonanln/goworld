@@ -89,6 +89,11 @@ func Fatalf(format string, args ...interface{}) {
 	sublog.Fatalf(format, args...)
 }
 
+// Fatal panics
+func Fatal(v interface{}) {
+	sublog.Fatal(v)
+}
+
 // Panic panics
 func Panic(v interface{}) {
 	panic(v)
