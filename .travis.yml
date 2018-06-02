@@ -11,6 +11,7 @@ services:
   - mysql
   - mongodb
   - redis-server
+  - etcd
 
 before_install:
   - DEP_OS_ARCH=`go env GOHOSTOS`-`go env GOHOSTARCH`
