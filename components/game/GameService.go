@@ -7,6 +7,8 @@ import (
 
 	"io/ioutil"
 
+	"os"
+
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/async"
@@ -75,7 +77,7 @@ func (gs *GameService) run(restore bool) {
 		}
 	}
 
-	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.GAME_STARTED_TAG)
+	fmt.Fprintf(os.Stderr, "%s\n", consts.GAME_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.serveRoutine)
 }
 

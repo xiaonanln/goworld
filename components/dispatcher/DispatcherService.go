@@ -286,7 +286,7 @@ func (service *DispatcherService) String() string {
 
 func (service *DispatcherService) run() {
 	host := fmt.Sprintf("%s:%d", service.config.BindIp, service.config.BindPort)
-	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.DISPATCHER_STARTED_TAG)
+	fmt.Fprintf(os.Stderr, "%s\n", consts.DISPATCHER_STARTED_TAG)
 	go gwutils.RepeatUntilPanicless(service.messageLoop)
 	netutil.ServeTCPForever(host, service)
 }

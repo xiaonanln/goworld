@@ -3,8 +3,6 @@ package gwlog
 import (
 	"runtime/debug"
 
-	"io"
-
 	"strings"
 
 	"encoding/json"
@@ -14,8 +12,6 @@ import (
 )
 
 var (
-	outputWriter io.Writer
-
 	// DebugLevel level
 	DebugLevel Level = Level(zap.DebugLevel)
 	// InfoLevel level
@@ -39,6 +35,7 @@ var (
 	Errorf logFormatFunc
 	Panicf logFormatFunc
 	Fatalf logFormatFunc
+	Error  func(args ...interface{})
 	Fatal  func(args ...interface{})
 	Panic  func(args ...interface{})
 )
@@ -46,12 +43,13 @@ var (
 type logFormatFunc func(format string, args ...interface{})
 
 // Level is type of log levels
-type Level zapcore.Level
+type Level = zapcore.Level
 
 var (
 	cfg    zap.Config
 	logger *zap.Logger
 	sugar  *zap.SugaredLogger
+	source string
 )
 
 func init() {
@@ -72,55 +70,34 @@ func init() {
 		panic(err)
 	}
 
-	logger, err = cfg.Build()
-	if err != nil {
-		panic(err)
-	}
-	setSugar(logger.Sugar())
+	rebuildLoggerFromCfg()
 }
 
 // SetSource sets the component name (dispatcher/gate/game) of gwlog module
-func SetSource(comp string) {
-	logger = logger.With(zap.String("source", comp))
-	setSugar(logger.Sugar())
-}
-
-func setSugar(sugar_ *zap.SugaredLogger) {
-	sugar = sugar_
-	Debugf = sugar.Debugf
-	Infof = sugar.Infof
-	Warnf = sugar.Warnf
-	Errorf = sugar.Errorf
-	Panicf = sugar.Panicf
-	Panic = sugar.Panic
-	Fatalf = sugar.Fatalf
-	Fatal = sugar.Fatal
+func SetSource(source_ string) {
+	source = source_
+	rebuildLoggerFromCfg()
 }
 
 // SetLevel sets the log level
 func SetLevel(lv Level) {
-	//zap.SetLevel(zapcore.Level(lv))
+	cfg.Level.SetLevel(lv)
 }
 
 // TraceError prints the stack and error
 func TraceError(format string, args ...interface{}) {
-	outputWriter.Write(debug.Stack())
+	Error(string(debug.Stack()))
 	Errorf(format, args...)
 }
 
 // SetOutput sets the output writer
-func SetOutput(out io.Writer) {
-	//outputWriter = out
-	//zap.SetOutput(outputWriter)
+func SetOutput(outputs []string) {
+	cfg.OutputPaths = outputs
+	rebuildLoggerFromCfg()
 }
 
-// GetOutput returns the output writer
-func GetOutput() io.Writer {
-	return outputWriter
-}
-
-// StringToLevel converts string to Levels
-func StringToLevel(s string) Level {
+// ParseLevel converts string to Levels
+func ParseLevel(s string) Level {
 	if strings.ToLower(s) == "debug" {
 		return DebugLevel
 	} else if strings.ToLower(s) == "info" {
@@ -134,6 +111,34 @@ func StringToLevel(s string) Level {
 	} else if strings.ToLower(s) == "fatal" {
 		return FatalLevel
 	}
-	Errorf("StringToLevel: unknown level: %s", s)
+	Errorf("ParseLevel: unknown level: %s", s)
 	return DebugLevel
+}
+
+func rebuildLoggerFromCfg() {
+	if newLogger, err := cfg.Build(); err == nil {
+		if logger != nil {
+			logger.Sync()
+		}
+		logger = newLogger
+		if source != "" {
+			logger = logger.With(zap.String("source", source))
+		}
+		setSugar(logger.Sugar())
+	} else {
+		panic(err)
+	}
+}
+
+func setSugar(sugar_ *zap.SugaredLogger) {
+	sugar = sugar_
+	Debugf = sugar.Debugf
+	Infof = sugar.Infof
+	Warnf = sugar.Warnf
+	Errorf = sugar.Errorf
+	Error = sugar.Error
+	Panicf = sugar.Panicf
+	Panic = sugar.Panic
+	Fatalf = sugar.Fatalf
+	Fatal = sugar.Fatal
 }
