@@ -34,6 +34,10 @@ func (ts *testService) ServiceLeaseTTL() int64 {
 	return 2
 }
 
-func (ts *testService) DiscoverService(srvtype string, srvid string, srvaddr string) {
-	gwlog.Infof("Service discovered: %s.%s", srvtype, srvid)
+func (ts *testService) OnServiceDiscovered(srvtype string, srvid string, srvaddr string) {
+	gwlog.Infof("testService: OnServiceDiscovered: %s.%s", srvtype, srvid)
+}
+
+func (ts *testService) OnServiceOutdated(srvtype string, srvid string) {
+	gwlog.Infof("testService: OnServiceOutdated: %s.%s", srvtype, srvid)
 }

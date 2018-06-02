@@ -32,7 +32,7 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 				//gwlog.Infof("watch resp: %v, created=%v, cancelled=%v, events=%q", resp, resp.Created, resp.Canceled, resp.Events[0].Kv.Key)
 				handlePutServiceRegisterData(delegate, event.Kv.Key, event.Kv.Value)
 			} else if event.Type == mvccpb.DELETE {
-				handleDeleteServiceRegisterData(event.Kv.Key)
+				handleDeleteServiceRegisterData(delegate, event.Kv.Key)
 			}
 		}
 	}
@@ -47,10 +47,11 @@ func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []by
 	}
 
 	gwlog.Infof("Service discoveried: %s.%s = %s", srvtype, srvid, registerInfo)
-	delegate.DiscoverService(srvtype, srvid, registerInfo.Addr)
+	delegate.OnServiceDiscovered(srvtype, srvid, registerInfo.Addr)
 }
 
-func handleDeleteServiceRegisterData(key []byte) {
+func handleDeleteServiceRegisterData(delegate ServiceDelegate, key []byte) {
 	srvtype, srvid := parseRegisterPath(key)
-	gwlog.Infof("Service outdated: %s.%s", srvtype, srvid)
+	gwlog.Warnf("Service outdated: %s.%s", srvtype, srvid)
+	delegate.OnServiceOutdated(srvtype, srvid)
 }

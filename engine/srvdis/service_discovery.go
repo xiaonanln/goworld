@@ -21,7 +21,8 @@ type ServiceDelegate interface {
 	ServiceId() string
 	ServiceAddr() string
 	ServiceLeaseTTL() int64
-	DiscoverService(srvtype string, srvid string, srvaddr string)
+	OnServiceDiscovered(srvtype string, srvid string, srvaddr string)
+	OnServiceOutdated(srvtype string, srvid string)
 }
 
 func Startup(ctx context.Context, etcdEndPoints []string, namespace string, delegate ServiceDelegate) {
