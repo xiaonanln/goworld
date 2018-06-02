@@ -5,22 +5,22 @@ import "testing"
 func TestGWLog(t *testing.T) {
 	SetSource("gwlog_test")
 
-	if lv, err := ParseLevel("debug"); err != nil || lv != DebugLevel {
+	if lv := StringToLevel("debug"); lv != DebugLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("info"); err != nil || lv != InfoLevel {
+	if lv := StringToLevel("info"); lv != InfoLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("warn"); err != nil || lv != WarnLevel {
+	if lv := StringToLevel("warn"); lv != WarnLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("error"); err != nil || lv != ErrorLevel {
+	if lv := StringToLevel("error"); lv != ErrorLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("panic"); err != nil || lv != PanicLevel {
+	if lv := StringToLevel("panic"); lv != PanicLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("fatal"); err != nil || lv != FatalLevel {
+	if lv := StringToLevel("fatal"); lv != FatalLevel {
 		t.Fail()
 	}
 
