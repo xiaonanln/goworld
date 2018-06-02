@@ -21,7 +21,7 @@ func RunPanicless(f func()) (panicless bool) {
 		err := recover()
 		panicless = err == nil
 		if err != nil {
-			gwlog.TraceError("%s panic: %s", f, err)
+			gwlog.TraceError("%v panic: %s", f, err)
 		}
 	}()
 
