@@ -10,6 +10,7 @@ import (
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/async"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -75,7 +76,7 @@ func (gs *GameService) run(restore bool) {
 		}
 	}
 
-	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.GAME_STARTED_TAG)
+	binutil.PrintSupervisorTag(consts.GAME_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.serveRoutine)
 }
 

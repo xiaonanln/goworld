@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"io"
-	"os"
-
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"golang.org/x/net/websocket"
 )
@@ -55,24 +52,44 @@ func setupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn), ce
 func SetupGWLog(component string, logLevel string, logFile string, logStderr bool) {
 	gwlog.SetSource(component)
 	gwlog.Infof("Set log level to %s", logLevel)
-	gwlog.SetLevel(gwlog.StringToLevel(logLevel))
+	gwlog.SetLevel(gwlog.ParseLevel(logLevel))
 
-	outputWriters := make([]io.Writer, 0, 2)
-	if logFile != "" {
-		fileWriter, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if err != nil {
-			gwlog.Fatalf("open log file %s failed: %v", logFile, err)
-		}
-		outputWriters = append(outputWriters, fileWriter)
-	}
-
+	var outputs []string
 	if logStderr {
-		outputWriters = append(outputWriters, os.Stderr)
+		outputs = append(outputs, "stderr")
 	}
+	if logFile != "" {
+		outputs = append(outputs, logFile)
+	}
+	gwlog.SetOutput(outputs)
 
-	if len(outputWriters) == 1 {
-		gwlog.SetOutput(outputWriters[0])
-	} else {
-		gwlog.SetOutput(io.MultiWriter(outputWriters...))
+	//outputWriters := make([]io.Writer, 0, 2)
+	//if logFile != "" {
+	//	fileWriter, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	//	if err != nil {
+	//		gwlog.Fatalf("open log file %s failed: %v", logFile, err)
+	//	}
+	//	outputWriters = append(outputWriters, fileWriter)
+	//}
+	//
+	//if logStderr {
+	//	outputWriters = append(outputWriters, os.Stderr)
+	//}
+	//
+	//if len(outputWriters) == 1 {
+	//	gwlog.SetOutput(outputWriters[0])
+	//} else {
+	//	gwlog.SetOutput(io.MultiWriter(outputWriters...))
+	//}
+}
+
+func PrintSupervisorTag(tag string) {
+	curlvl := gwlog.GetLevel()
+	if curlvl != gwlog.DebugLevel && curlvl != gwlog.InfoLevel {
+		gwlog.SetLevel(gwlog.InfoLevel)
+	}
+	gwlog.Infof("%s", tag)
+	if curlvl != gwlog.DebugLevel && curlvl != gwlog.InfoLevel {
+		gwlog.SetLevel(curlvl)
 	}
 }

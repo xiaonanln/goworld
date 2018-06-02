@@ -14,6 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -89,8 +90,7 @@ func (gs *GateService) run() {
 	}
 	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
 	gwlog.Infof("%s: positionSyncInterval = %s", gs, gs.positionSyncInterval)
-
-	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.GATE_STARTED_TAG)
+	binutil.PrintSupervisorTag(consts.GATE_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.mainRoutine)
 }
 

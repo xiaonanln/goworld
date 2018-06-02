@@ -12,6 +12,7 @@ import (
 	"math/rand"
 
 	"github.com/pkg/errors"
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -286,7 +287,7 @@ func (service *DispatcherService) String() string {
 
 func (service *DispatcherService) run() {
 	host := fmt.Sprintf("%s:%d", service.config.BindIp, service.config.BindPort)
-	fmt.Fprintf(gwlog.GetOutput(), "%s\n", consts.DISPATCHER_STARTED_TAG)
+	binutil.PrintSupervisorTag(consts.DISPATCHER_STARTED_TAG)
 	go gwutils.RepeatUntilPanicless(service.messageLoop)
 	netutil.ServeTCPForever(host, service)
 }
