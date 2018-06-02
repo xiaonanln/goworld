@@ -535,13 +535,11 @@ func validateKVDBConfig(config *KVDBConfig) {
 	} else if config.Type == "mongodb" {
 		// must set DB and Collection for mongodb
 		if config.Url == "" || config.DB == "" || config.Collection == "" {
-			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
-			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+			gwlog.Panicf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
 		}
 	} else if config.Type == "redis" {
 		if config.Url == "" {
-			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
-			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+			gwlog.Panicf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
 		}
 		_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
 		if err != nil {
@@ -558,12 +556,10 @@ func validateKVDBConfig(config *KVDBConfig) {
 		}
 	} else if config.Type == "sql" {
 		if config.Driver == "" {
-			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
-			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+			gwlog.Panicf("invalid %s KVDB config:\n %s", config.Type, DumpPretty(config))
 		}
 		if config.Url == "" {
-			fmt.Fprintf(gwlog.GetOutput(), "%s\n", DumpPretty(config))
-			gwlog.Panicf("invalid %s KVDB config above", config.Type)
+			gwlog.Panicf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)

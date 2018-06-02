@@ -4,30 +4,32 @@ import "testing"
 
 func TestGWLog(t *testing.T) {
 	SetSource("gwlog_test")
+	SetOutput([]string{"stderr", "gwlog_test.log"})
+	SetLevel(InfoLevel)
 
-	if lv, err := ParseLevel("debug"); err != nil || lv != DebugLevel {
+	if lv := ParseLevel("debug"); lv != DebugLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("info"); err != nil || lv != InfoLevel {
+	if lv := ParseLevel("info"); lv != InfoLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("warn"); err != nil || lv != WarnLevel {
+	if lv := ParseLevel("warn"); lv != WarnLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("error"); err != nil || lv != ErrorLevel {
+	if lv := ParseLevel("error"); lv != ErrorLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("panic"); err != nil || lv != PanicLevel {
+	if lv := ParseLevel("panic"); lv != PanicLevel {
 		t.Fail()
 	}
-	if lv, err := ParseLevel("fatal"); err != nil || lv != FatalLevel {
+	if lv := ParseLevel("fatal"); lv != FatalLevel {
 		t.Fail()
 	}
 
 	Debugf("this is a debug %d", 1)
 	Infof("this is an info %d", 2)
 	Warnf("this is a warning %d", 3)
-
+	TraceError("this is a trace error %d", 4)
 	func() {
 		defer func() {
 			_ = recover()
@@ -36,7 +38,9 @@ func TestGWLog(t *testing.T) {
 	}()
 
 	func() {
-		defer recover()
-		// Fatalf("this is a fatal %d", 5)
+		defer func() {
+			_ = recover()
+		}()
+		//Fatalf("this is a fatal %d", 5)
 	}()
 }
