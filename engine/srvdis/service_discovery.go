@@ -49,8 +49,7 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 		wait.Add(2)
 
 		go gwutils.RepeatUntilPanicless(func() {
-			newctx, _ := context.WithTimeout(ctx, time.Second*2)
-			registerRoutine(newctx, cli, delegate)
+			registerRoutine(ctx, cli, delegate)
 			wait.Done()
 		})
 

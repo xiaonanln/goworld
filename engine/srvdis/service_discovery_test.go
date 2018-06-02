@@ -9,13 +9,23 @@ import (
 )
 
 type testService struct {
+	services [][]string
 }
 
 func TestStartup(t *testing.T) {
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, time.Second*5)
-	Startup(ctx, []string{"http://127.0.0.1:2379"}, "/testns", &testService{})
+	ctx, _ = context.WithTimeout(ctx, time.Second*3)
+	ts := &testService{}
+	Startup(ctx, []string{"http://127.0.0.1:2379"}, "/testns", ts)
 	<-ctx.Done()
+	if len(ts.services) == 0 {
+		gwlog.Errorf("service discovery failed")
+	} else {
+		srv := ts.services[0]
+		if srv[0] != "testServiceType" || srv[1] != "testService" || srv[2] != "localhost:12345" {
+			gwlog.Errorf("service discovered, but wrong")
+		}
+	}
 }
 
 func (ts *testService) ServiceType() string {
@@ -35,7 +45,7 @@ func (ts *testService) ServiceLeaseTTL() int64 {
 }
 
 func (ts *testService) OnServiceDiscovered(srvtype string, srvid string, srvaddr string) {
-	gwlog.Infof("testService: OnServiceDiscovered: %s.%s", srvtype, srvid)
+	ts.services = append(ts.services, []string{srvtype, srvid, srvaddr})
 }
 
 func (ts *testService) OnServiceOutdated(srvtype string, srvid string) {
