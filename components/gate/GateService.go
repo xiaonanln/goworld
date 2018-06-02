@@ -134,7 +134,7 @@ func (gs *GateService) ServeTCPConnection(conn net.Conn) {
 func (gs *GateService) serveKCP(addr string) {
 	kcpListener, err := kcp.ListenWithOptions(addr, nil, 10, 3)
 	if err != nil {
-		gwlog.Panic(err)
+		gwlog.Fatal(errors.Wrap(err, "kcp listen failed"))
 	}
 
 	gwlog.Infof("Listening on KCP: %s ...", addr)

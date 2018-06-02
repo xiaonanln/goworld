@@ -4,6 +4,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
@@ -21,30 +22,29 @@ type TCPServerDelegate interface {
 // ServeTCPForever serves on specified address as TCP server, for ever ...
 func ServeTCPForever(listenAddr string, delegate TCPServerDelegate) {
 	for {
-		err := serveTCPForeverOnce(listenAddr, delegate)
-		gwlog.Errorf("server@%s failed with error: %v, will restart after %s", listenAddr, err, _RESTART_TCP_SERVER_INTERVAL)
+		serveTCPForeverOnce(listenAddr, delegate)
+		//gwlog.Errorf("server@%s failed with error: %v, will restart after %s", listenAddr, err, _RESTART_TCP_SERVER_INTERVAL)
 		time.Sleep(_RESTART_TCP_SERVER_INTERVAL)
 	}
 }
 
-func serveTCPForeverOnce(listenAddr string, delegate TCPServerDelegate) error {
+func serveTCPForeverOnce(listenAddr string, delegate TCPServerDelegate) {
 	defer func() {
 		if err := recover(); err != nil {
-			gwlog.TraceError("serveTCPImpl: paniced with error %s", err)
+			gwlog.TraceError("ServeTCPForever: panic with error %s", err)
 		}
 	}()
 
-	return ServeTCP(listenAddr, delegate)
-
+	ServeTCP(listenAddr, delegate)
 }
 
 // ServeTCP serves on specified address as TCP server
-func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
+func ServeTCP(listenAddr string, delegate TCPServerDelegate) {
 	ln, err := net.Listen("tcp", listenAddr)
 	gwlog.Infof("Listening on TCP: %s ...", listenAddr)
 
 	if err != nil {
-		return err
+		gwlog.Fatal(errors.Wrap(err, "tcp listen failed"))
 	}
 
 	defer ln.Close()
@@ -55,7 +55,7 @@ func ServeTCP(listenAddr string, delegate TCPServerDelegate) error {
 			if gwioutil.IsTimeoutError(err) {
 				continue
 			} else {
-				return err
+				gwlog.Panic(errors.Wrap(err, "tcp accept failed"))
 			}
 		}
 

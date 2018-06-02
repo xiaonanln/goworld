@@ -150,7 +150,7 @@ type DispatcherService struct {
 	config                    *config.DispatcherConfig
 	games                     []*gameDispatchInfo
 	bootEntityCandidatesGames []int
-	gates                     []*dispatcherClientProxy
+	gates                     map[uint16]*dispatcherClientProxy
 	messageQueue              chan dispatcherMessage
 	chooseClientIndex         int
 	entityDispatchInfos       map[common.EntityID]*entityDispatchInfo
@@ -163,7 +163,6 @@ type DispatcherService struct {
 func newDispatcherService(dispid uint16) *DispatcherService {
 	cfg := config.GetDispatcher(dispid)
 	gameCount := len(config.GetGameIDs())
-	gateCount := len(config.GetGateIDs())
 	entitySyncInfosToGame := make([]*netutil.Packet, gameCount)
 	for i := range entitySyncInfosToGame {
 		pkt := netutil.NewPacket()
@@ -175,7 +174,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		config:                cfg,
 		messageQueue:          make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
 		games:                 make([]*gameDispatchInfo, gameCount),
-		gates:                 make([]*dispatcherClientProxy, gateCount),
+		gates:                 map[uint16]*dispatcherClientProxy{},
 		chooseClientIndex:     0,
 		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
 		registeredServices:    map[string]entity.EntityIDSet{},
@@ -370,7 +369,7 @@ func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pk
 	dcp.gateid = gateid
 	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL) // TODO: why start autoflush after gameid is set ?
 
-	service.gates[gateid-1] = dcp
+	service.gates[gateid] = dcp
 }
 
 func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -412,7 +411,7 @@ func (service *DispatcherService) dispatchPacketToGame(gameid uint16, pkt *netut
 }
 
 func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *dispatcherClientProxy {
-	return service.gates[gateid-1]
+	return service.gates[gateid]
 }
 
 // Choose a dispatcher client for sending Anywhere packets
@@ -433,16 +432,23 @@ func (service *DispatcherService) handleDispatcherClientDisconnect(dcp *dispatch
 	gwlog.Warnf("%s disconnected", dcp)
 	if dcp.gateid > 0 {
 		// gate disconnected, notify all clients disconnected
-		service.handleGateDown(dcp.gateid)
+		service.handleGateDown(dcp)
 	}
 }
 
-func (service *DispatcherService) handleGateDown(gateid uint16) {
-	pkt := netutil.NewPacket()
-	pkt.AppendUint16(proto.MT_NOTIFY_GATE_DISCONNECTED)
-	pkt.AppendUint16(gateid)
-	service.broadcastToGames(pkt)
-	pkt.Release()
+func (service *DispatcherService) handleGateDown(dcp *dispatcherClientProxy) {
+	gateid := dcp.gateid
+
+	if olddcp := service.gates[gateid]; olddcp == dcp {
+		// should always goes here
+		delete(service.gates, gateid)
+		// notify all games of gate down
+		pkt := netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_NOTIFY_GATE_DISCONNECTED)
+		pkt.AppendUint16(dcp.gateid)
+		service.broadcastToGames(pkt)
+		pkt.Release()
+	}
 }
 
 // Entity is create on the target game
@@ -731,11 +737,11 @@ func (service *DispatcherService) broadcastToGamesExcept(pkt *netutil.Packet, ex
 }
 
 func (service *DispatcherService) broadcastToGates(pkt *netutil.Packet) {
-	for idx, dcp := range service.gates {
+	for gateid, dcp := range service.gates {
 		if dcp != nil {
 			dcp.SendPacket(pkt)
 		} else {
-			gwlog.Errorf("Gate %d is not connected to dispatcher when broadcasting", idx+1)
+			gwlog.Errorf("Gate %d is not connected to dispatcher when broadcasting", gateid)
 		}
 	}
 }
@@ -796,7 +802,8 @@ func (service *DispatcherService) ServiceId() string {
 }
 
 func (service *DispatcherService) ServiceAddr() string {
-	return ""
+	cfg := service.config
+	return fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 }
 
 func (service *DispatcherService) ServiceLeaseTTL() int64 {
