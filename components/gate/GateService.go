@@ -439,3 +439,27 @@ func (gs *GateService) terminate() {
 
 	gs.terminated.Signal()
 }
+
+func (gs *GateService) OnServiceDiscovered(srvtype, srvid, srvaddr string) {
+
+}
+
+func (gs *GateService) OnServiceOutdated(srvtype, srvid string) {
+
+}
+
+func (gs *GateService) ServiceType() string {
+	return "gate"
+}
+
+func (gs *GateService) ServiceId() string {
+	return fmt.Sprintf("gate%d", gateid)
+}
+
+func (gs *GateService) ServiceAddr() string {
+	return gs.listenAddr
+}
+
+func (gs *GateService) ServiceLeaseTTL() int64 {
+	return 10
+}

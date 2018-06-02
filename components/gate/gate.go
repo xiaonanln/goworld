@@ -20,6 +20,8 @@ import (
 
 	"path"
 
+	"context"
+
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
@@ -28,15 +30,17 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
 var (
-	gateid          uint16
-	configFile      string
-	logLevel        string
-	runInDaemonMode bool
-	gateService     *GateService
-	signalChan      = make(chan os.Signal, 1)
+	gateid                 uint16
+	configFile             string
+	logLevel               string
+	runInDaemonMode        bool
+	gateService            *GateService
+	signalChan             = make(chan os.Signal, 1)
+	gateCtx, cancelGateCtx = context.WithCancel(context.Background()) // the running context of gate
 )
 
 func parseArgs() {
@@ -91,6 +95,8 @@ func main() {
 		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
 	}
 
+	srvdis.Startup(gateCtx, []string{"http://127.0.0.1:2379"}, "/goworld", gateService)
+
 	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &dispatcherClientDelegate{})
 	//dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
@@ -113,6 +119,7 @@ func setupSignals() {
 				})
 
 				gateService.terminated.Wait()
+				cancelGateCtx()
 				gwlog.Infof("Gate %d terminated gracefully.", gateid)
 				os.Exit(0)
 			} else {

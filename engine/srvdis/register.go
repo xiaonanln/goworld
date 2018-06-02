@@ -50,7 +50,7 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	}
 
 	for range ch {
-		gwlog.Debugf("service %s keep alive ...", servicePath)
+		//gwlog.Debugf("service %s keep alive ...", servicePath)
 	}
 
 	gwlog.Warnf("Service %s keep alive terminated.", servicePath)

@@ -430,12 +430,6 @@ func (service *DispatcherService) chooseGameForBootEntity() *gameDispatchInfo {
 }
 
 func (service *DispatcherService) handleDispatcherClientDisconnect(dcp *dispatcherClientProxy) {
-	// nothing to do when client disconnected
-	defer func() {
-		if err := recover(); err != nil {
-			gwlog.Infof("handleDispatcherClientDisconnect paniced: %v", err)
-		}
-	}()
 	gwlog.Warnf("%s disconnected", dcp)
 	if dcp.gateid > 0 {
 		// gate disconnected, notify all clients disconnected
