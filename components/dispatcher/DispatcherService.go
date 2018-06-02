@@ -485,6 +485,7 @@ func (service *DispatcherService) handleNotifyClientConnected(dcp *dispatcherCli
 func (service *DispatcherService) handleNotifyClientDisconnected(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	clientid := pkt.ReadClientID() // client disconnected
 
+	// FIXME: target sid might be wrong if the owner entity is just migrating ...
 	targetSid := service.targetGameOfClient[clientid]
 	delete(service.targetGameOfClient, clientid)
 
@@ -702,7 +703,9 @@ func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, 
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
 
 	entityDispatchInfo.gameid = targetGame
-	service.targetGameOfClient[clientid] = targetGame // migrating also change target game of client
+	if hasClient {
+		service.targetGameOfClient[clientid] = targetGame // migrating also change target game of client
+	}
 
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("Target game of client %s is migrated to %v along with owner %s", clientid, targetGame, eid)
