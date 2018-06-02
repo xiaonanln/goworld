@@ -46,10 +46,11 @@ type logFormatFunc func(format string, args ...interface{})
 type Level = zapcore.Level
 
 var (
-	cfg    zap.Config
-	logger *zap.Logger
-	sugar  *zap.SugaredLogger
-	source string
+	cfg          zap.Config
+	logger       *zap.Logger
+	sugar        *zap.SugaredLogger
+	source       string
+	currentLevel Level
 )
 
 func init() {
@@ -65,6 +66,7 @@ func init() {
 			"levelEncoder": "lowercase"
 		}
 	}`)
+	currentLevel = DebugLevel
 
 	if err = json.Unmarshal(cfgJson, &cfg); err != nil {
 		panic(err)
@@ -81,7 +83,13 @@ func SetSource(source_ string) {
 
 // SetLevel sets the log level
 func SetLevel(lv Level) {
+	currentLevel = lv
 	cfg.Level.SetLevel(lv)
+}
+
+// GetLevel get the current log level
+func GetLevel() Level {
+	return currentLevel
 }
 
 // TraceError prints the stack and error

@@ -82,3 +82,14 @@ func SetupGWLog(component string, logLevel string, logFile string, logStderr boo
 	//	gwlog.SetOutput(io.MultiWriter(outputWriters...))
 	//}
 }
+
+func PrintSupervisorTag(tag string) {
+	curlvl := gwlog.GetLevel()
+	if curlvl != gwlog.DebugLevel && curlvl != gwlog.InfoLevel {
+		gwlog.SetLevel(gwlog.InfoLevel)
+	}
+	gwlog.Infof("%s", tag)
+	if curlvl != gwlog.DebugLevel && curlvl != gwlog.InfoLevel {
+		gwlog.SetLevel(curlvl)
+	}
+}
