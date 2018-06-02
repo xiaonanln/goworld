@@ -94,6 +94,7 @@ type GoWorldConfig struct {
 	Gates            map[int]*GateConfig
 	Storage          StorageConfig
 	KVDB             KVDBConfig
+	Etcd             EtcdConfig
 }
 
 // StorageConfig defines fields of storage config
@@ -114,6 +115,12 @@ type KVDBConfig struct {
 	Collection string // MongoDB
 	Driver     string // SQL Driver: e.x. mysql
 	StartNodes common.StringSet
+}
+
+// EtcdConfig defines fields of Etcd config
+type EtcdConfig struct {
+	Namespace string   `json:"namespace"`
+	EndPoints []string `json:"endpoints"`
 }
 
 // SetConfigFile sets the config file path (goworld.ini by default)
@@ -224,6 +231,11 @@ func GetKVDB() *KVDBConfig {
 	return &Get().KVDB
 }
 
+// GetEtcd returns the etcd config
+func GetEtcd() *EtcdConfig {
+	return &Get().Etcd
+}
+
 // DumpPretty format config to string in pretty format
 func DumpPretty(cfg interface{}) string {
 	s, err := json.MarshalIndent(cfg, "", "    ")
@@ -279,8 +291,11 @@ func readGoWorldConfig() *GoWorldConfig {
 		} else if secName == "kvdb" {
 			// kvdb config
 			readKVDBConfig(sec, &config.KVDB)
+		} else if secName == "etcd" {
+			// etcd config
+			readEtcdConfig(sec, &config.Etcd)
 		} else {
-			gwlog.Errorf("unknown section: %s", secName)
+			gwlog.Fatalf("unknown section: %s", secName)
 		}
 
 	}
@@ -563,6 +578,35 @@ func validateKVDBConfig(config *KVDBConfig) {
 		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", config.Type)
+	}
+}
+
+func readEtcdConfig(sec *ini.Section, cfg *EtcdConfig) {
+	cfg.Namespace = ""
+	cfg.EndPoints = []string{}
+	for _, key := range sec.Keys() {
+		name := strings.ToLower(key.Name())
+		if name == "namespace" {
+			cfg.Namespace = key.MustString(cfg.Namespace)
+		} else if strings.HasPrefix(name, "endpoint") {
+			endpoint := key.MustString("")
+			if endpoint != "" {
+				cfg.EndPoints = append(cfg.EndPoints, endpoint)
+			}
+		} else {
+			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+		}
+	}
+
+	validateEtcdConfig(cfg)
+}
+
+func validateEtcdConfig(cfg *EtcdConfig) {
+	if cfg.Namespace == "" {
+		gwlog.Warnf("etcd namespace is not set")
+	}
+	if len(cfg.EndPoints) == 0 {
+		gwlog.Fatalf("etcd entpoints is not configured")
 	}
 }
 

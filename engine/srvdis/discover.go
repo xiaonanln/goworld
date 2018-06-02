@@ -13,7 +13,10 @@ import (
 
 func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDelegate) {
 	kv := clientv3.NewKV(cli)
-	kv = namespace.NewKV(kv, srvdisNamespace)
+	if srvdisNamespace != "" {
+		kv = namespace.NewKV(kv, srvdisNamespace)
+	}
+
 	rangeResp, err := kv.Get(ctx, "/services/", clientv3.WithPrefix())
 	if err != nil {
 		gwlog.Fatal(err)
@@ -24,7 +27,10 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 	}
 
 	w := clientv3.NewWatcher(cli)
-	w = namespace.NewWatcher(w, srvdisNamespace)
+	if srvdisNamespace != "" {
+		w = namespace.NewWatcher(w, srvdisNamespace)
+	}
+
 	ch := w.Watch(ctx, "/services/", clientv3.WithPrefix(), clientv3.WithRev(rangeResp.Header.Revision+1))
 	for resp := range ch {
 		for _, event := range resp.Events {

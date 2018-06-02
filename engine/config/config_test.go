@@ -98,3 +98,8 @@ func TestGetGateIDs(t *testing.T) {
 func TestSetConfigFile(t *testing.T) {
 	SetConfigFile("goworld.ini")
 }
+
+func TestGetEtcd(t *testing.T) {
+	cfg := GetEtcd()
+	t.Logf("etcd config: %s", DumpPretty(cfg))
+}

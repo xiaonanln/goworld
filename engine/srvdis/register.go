@@ -18,7 +18,9 @@ type serviceRegsiterInfo struct {
 
 func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDelegate) {
 	kv := clientv3.NewKV(cli)
-	kv = namespace.NewKV(kv, srvdisNamespace)
+	if srvdisNamespace != "" {
+		kv = namespace.NewKV(kv, srvdisNamespace)
+	}
 
 	srvType := delegate.ServiceType()
 	srvId := delegate.ServiceId()

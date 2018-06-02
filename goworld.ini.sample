@@ -70,6 +70,10 @@ position_sync_interval_ms=100 ; position sync: client -> server
 port=15011
 http_port=15012
 
-[gate2]
-port=15021
-http_port=15022
+;[gate2]
+;port=15021
+;http_port=15022
+
+[etcd]
+namespace=/goworld
+endpoint1 = http://127.0.0.1:2379
