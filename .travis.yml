@@ -19,9 +19,9 @@ before_install:
   - export PATH=$PATH:/tmp/
   - chmod +x /tmp/dep
   - mysql -e 'CREATE DATABASE goworld;'
-  - curl -L  https://github.com/coreos/etcd/releases/download/v3.3.6/etcd-v3.3.6-linux-amd64.tar.gz -o etcd-v3.3.6-linux-amd64.tar.gz
-  - tar xzvf etcd-v3.3.6-linux-amd64.tar.gz
-  - ./etcd-v3.3.6-linux-amd64/etcd &
+  - curl -L  https://github.com/coreos/etcd/releases/download/v3.3.6/etcd-v3.3.6-linux-amd64.tar.gz -o /tmp/etcd-v3.3.6-linux-amd64.tar.gz
+  - tar xzvf etcd-v3.3.6-linux-amd64.tar.gz -C /tmp
+  - /tmp/etcd-v3.3.6-linux-amd64/etcd &
 
 install:
   - dep ensure
