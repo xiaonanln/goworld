@@ -5,10 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"sync"
+
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 type testService struct {
+	sync.Mutex
 	services [][]string
 }
 
@@ -18,6 +21,7 @@ func TestStartup(t *testing.T) {
 	ts := &testService{}
 	Startup(ctx, []string{"http://127.0.0.1:2379"}, "/testns", ts)
 	<-ctx.Done()
+	ts.Lock()
 	if len(ts.services) == 0 {
 		gwlog.Errorf("service discovery failed")
 	} else {
@@ -26,6 +30,7 @@ func TestStartup(t *testing.T) {
 			gwlog.Errorf("service discovered, but wrong")
 		}
 	}
+	ts.Unlock()
 }
 
 func (ts *testService) ServiceType() string {
@@ -45,7 +50,9 @@ func (ts *testService) ServiceLeaseTTL() int64 {
 }
 
 func (ts *testService) OnServiceDiscovered(srvtype string, srvid string, srvaddr string) {
+	ts.Lock()
 	ts.services = append(ts.services, []string{srvtype, srvid, srvaddr})
+	ts.Unlock()
 }
 
 func (ts *testService) OnServiceOutdated(srvtype string, srvid string) {
