@@ -51,12 +51,19 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 		wait.Add(2)
 
 		go gwutils.RepeatUntilPanicless(func() {
-			registerRoutine(ctx, cli, delegate)
+			if ctx.Err() == nil {
+				// context cancelled or exceed deadline
+				registerRoutine(ctx, cli, delegate)
+			}
+
 			wait.Done()
 		})
 
 		go gwutils.RepeatUntilPanicless(func() {
-			watchRoutine(ctx, cli, delegate)
+			if ctx.Err() == nil {
+				watchRoutine(ctx, cli, delegate)
+			}
+
 			wait.Done()
 		})
 
