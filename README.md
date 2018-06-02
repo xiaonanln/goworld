@@ -65,8 +65,7 @@ dep ensure
 ```
 
 **For Chinese only:** 
-中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.zip](http://goworldgs.com/goworld_files/vendor.zip)，并将其解压到goworld根目录下。
-不过vendor.zip里的内容有可能不是最新的。
+中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.tar.gz](http://goworldgs.com/goworld_files/vendor.tar.gz)，并将其解压到goworld根目录下。
 
 ## Manage GoWorld Servers
 Use command `goworld` to build, start, stop and reload game servers. 
