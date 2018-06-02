@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"context"
+
+	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/srvdis"
 	"golang.org/x/net/websocket"
 )
 
@@ -92,4 +96,9 @@ func PrintSupervisorTag(tag string) {
 	if curlvl != gwlog.DebugLevel && curlvl != gwlog.InfoLevel {
 		gwlog.SetLevel(curlvl)
 	}
+}
+
+func StartupServiceDiscovery(ctx context.Context, delegate srvdis.ServiceDelegate) {
+	etcdCfg := config.GetEtcd()
+	srvdis.Startup(ctx, etcdCfg.EndPoints, etcdCfg.Namespace, delegate)
 }

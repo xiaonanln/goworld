@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 )
@@ -30,8 +31,9 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 		srvdisNamespace = namespace
 
 		cfg := clientv3.Config{
-			Endpoints:   etcdEndPoints,
-			DialTimeout: time.Second,
+			Endpoints:            etcdEndPoints,
+			DialTimeout:          time.Second,
+			DialKeepAliveTimeout: time.Second,
 			//Transport: client.DefaultTransport,
 			// set timeout per request to fail fast when the target endpoint is unavailable
 			//HeaderTimeoutPerRequest: time.Second,
@@ -40,7 +42,7 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 
 		cli, err := clientv3.New(cfg)
 		if err != nil {
-			gwlog.Fatal(err)
+			gwlog.Fatal(errors.Wrap(err, "connect etcd failed"))
 		}
 
 		defer cli.Close()

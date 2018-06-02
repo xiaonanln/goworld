@@ -32,12 +32,12 @@ var (
 	// Warnf logs formatted warn message
 	Warnf logFormatFunc
 	// Errorf logs formatted error message
-	Errorf logFormatFunc
-	Panicf logFormatFunc
-	Fatalf logFormatFunc
-	Error  func(args ...interface{})
-	Fatal  func(args ...interface{})
-	Panic  func(args ...interface{})
+	Errorf   logFormatFunc
+	Panicf   logFormatFunc
+	Fatalf   logFormatFunc
+	Error    func(args ...interface{})
+	subfatal func(args ...interface{})
+	Panic    func(args ...interface{})
 )
 
 type logFormatFunc func(format string, args ...interface{})
@@ -148,5 +148,10 @@ func setSugar(sugar_ *zap.SugaredLogger) {
 	Panicf = sugar.Panicf
 	Panic = sugar.Panic
 	Fatalf = sugar.Fatalf
-	Fatal = sugar.Fatal
+	subfatal = sugar.Fatal
+}
+
+func Fatal(args ...interface{}) {
+	Errorf("%s", string(debug.Stack()))
+	subfatal(args...)
 }

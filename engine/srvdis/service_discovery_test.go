@@ -17,7 +17,7 @@ type testService struct {
 
 func TestStartup(t *testing.T) {
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, time.Second*3)
+	ctx, _ = context.WithTimeout(ctx, time.Second*10)
 	ts := &testService{}
 	Startup(ctx, []string{"http://127.0.0.1:2379"}, "/testns", ts)
 	<-ctx.Done()
