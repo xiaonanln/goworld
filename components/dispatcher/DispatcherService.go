@@ -780,3 +780,25 @@ func (service *DispatcherService) recalcBootEntityCandidateGames() {
 	}
 	service.bootEntityCandidatesGames = candidates
 }
+
+func (service *DispatcherService) OnServiceDiscovered(srvtype, srvid, srvaddr string) {
+}
+
+func (service *DispatcherService) OnServiceOutdated(srvtype, srvid string) {
+}
+
+func (service *DispatcherService) ServiceType() string {
+	return "dispatcher"
+}
+
+func (service *DispatcherService) ServiceId() string {
+	return fmt.Sprintf("dispatcher%d", dispid)
+}
+
+func (service *DispatcherService) ServiceAddr() string {
+	return ""
+}
+
+func (service *DispatcherService) ServiceLeaseTTL() int64 {
+	return 10
+}

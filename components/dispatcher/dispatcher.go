@@ -12,6 +12,8 @@ import (
 
 	"runtime/debug"
 
+	"context"
+
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -70,6 +72,7 @@ func main() {
 
 	dispatcherService = newDispatcherService(dispid)
 	setupSignals() // call setupSignals to avoid data race on `dispatcherService`
+	binutil.StartupServiceDiscovery(context.Background(), dispatcherService)
 	dispatcherService.run()
 }
 
