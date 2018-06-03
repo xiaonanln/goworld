@@ -66,7 +66,7 @@ func (cp *ClientProxy) serve() {
 		if err := recover(); err != nil && !netutil.IsConnectionError(err.(error)) {
 			gwlog.TraceError("%s error: %s", cp, err.(error))
 		} else {
-			gwlog.Debugf("%s disconnected", cp)
+			gwlog.Infof("%s disconnected", cp)
 		}
 	}()
 

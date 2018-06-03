@@ -35,7 +35,7 @@ func (dcp *dispatcherClientProxy) serve() {
 	defer func() {
 		dcp.Close()
 		post.Post(func() {
-			dcp.owner.handleDispatcherClientDisconnect(dcp)
+			dcp.owner.handleDispatcherClientDisconnected(dcp)
 		})
 		err := recover()
 		if err != nil && !netutil.IsConnectionError(err) {
