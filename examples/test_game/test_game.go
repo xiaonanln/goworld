@@ -27,15 +27,15 @@ func main() {
 
 	// Register each entity types
 	goworld.RegisterEntity("Account", &Account{})
-	goworld.RegisterEntity("OnlineService", &OnlineService{})
-	goworld.RegisterEntity("SpaceService", &SpaceService{})
-	goworld.RegisterEntity("MailService", &MailService{})
-	pubsub.RegisterService()
-
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{})
 	// Register Avatar type and define attributes
 	goworld.RegisterEntity("Avatar", &Avatar{})
+
+	goworld.RegisterService("OnlineService", &OnlineService{})
+	//goworld.RegisterEntity("SpaceService", &SpaceService{})
+	//goworld.RegisterEntity("MailService", &MailService{})
+	//pubsub.RegisterService()
 
 	// Run the game server
 	goworld.Run()

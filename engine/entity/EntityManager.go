@@ -181,7 +181,7 @@ func (em *_EntityManager) chooseServiceProvider(serviceName string) common.Entit
 // RegisterEntity registers custom entity type and define entity behaviors
 func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
-		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
+		gwlog.Fatalf("RegisterEntity: Entity type %s already registered", typeName)
 	}
 
 	entityVal := reflect.ValueOf(entity)

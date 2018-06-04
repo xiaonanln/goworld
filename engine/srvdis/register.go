@@ -13,7 +13,7 @@ import (
 
 var ()
 
-type serviceRegsiterInfo struct {
+type serviceRegisterInfo struct {
 	Addr string `json:"addr"`
 }
 
@@ -31,7 +31,7 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	}
 
 	servicePath := registerPath(srvType, srvId)
-	registerInfo := serviceRegsiterInfo{
+	registerInfo := serviceRegisterInfo{
 		Addr: delegate.ServiceAddr(),
 	}
 	registerInfoBytes, err := json.Marshal(&registerInfo)

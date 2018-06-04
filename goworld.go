@@ -7,6 +7,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
+	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
@@ -148,4 +149,9 @@ func PutKVDB(key string, val string, callback kvdb.KVDBPutCallback) {
 // GetOrPut gets value of key from KVDB, if val not exists or is "", put key-value to KVDB.
 func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 	kvdb.GetOrPut(key, val, callback)
+}
+
+// RegisterService registers a service class
+func RegisterService(typeName string, entityPtr entity.IEntity) {
+	service.RegisterService(typeName, entityPtr)
 }
