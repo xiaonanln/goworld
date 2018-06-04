@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 func start(sid ServerID) {
@@ -105,9 +106,11 @@ func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Dura
 	for time.Now().Before(timeoutTime) {
 		time.Sleep(time.Millisecond * 200)
 		if isTagInFile(logFile, tag) {
+			gwlog.Debugf("found tag in file %s", logFile)
 			cmd.Process.Release()
 			return
 		}
+		gwlog.Debugf("not found tag in file %s", logFile)
 	}
 
 	err = errors.Errorf("wait started tag timeout")
