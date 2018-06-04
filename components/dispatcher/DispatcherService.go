@@ -825,7 +825,7 @@ func (service *DispatcherService) OnServiceOutdated(srvtype, srvid string) {
 }
 
 func (service *DispatcherService) ServiceType() string {
-	return "dispatcher"
+	return "component/dispatcher"
 }
 
 func (service *DispatcherService) ServiceId() string {

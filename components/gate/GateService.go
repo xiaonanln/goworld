@@ -449,7 +449,7 @@ func (gs *GateService) OnServiceOutdated(srvtype, srvid string) {
 }
 
 func (gs *GateService) ServiceType() string {
-	return "gate"
+	return "component/gate"
 }
 
 func (gs *GateService) ServiceId() string {
