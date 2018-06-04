@@ -19,6 +19,8 @@ import (
 
 	"fmt"
 
+	"context"
+
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
@@ -111,6 +113,7 @@ func Run() {
 
 	setupSignals()
 
+	binutil.StartupServiceDiscovery(context.Background(), gameService)
 	gwlog.Infof("Game service start running ...")
 	gameService.run(restore)
 }

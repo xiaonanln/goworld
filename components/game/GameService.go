@@ -446,3 +446,27 @@ func (gs *GameService) startFreeze() {
 	gs.dispatcherStartFreezeAcks = make([]bool, dispatcherNum)
 	dispatchercluster.SendStartFreezeGame(gameid)
 }
+
+func (gs *GameService) OnServiceDiscovered(srvtype, srvid, srvaddr string) {
+
+}
+
+func (gs *GameService) OnServiceOutdated(srvtype, srvid string) {
+
+}
+
+func (gs *GameService) ServiceType() string {
+	return "component/game"
+}
+
+func (gs *GameService) ServiceId() string {
+	return fmt.Sprintf("game%d", gameid)
+}
+
+func (gs *GameService) ServiceAddr() string {
+	return ""
+}
+
+func (gs *GameService) ServiceLeaseTTL() int64 {
+	return 10
+}
