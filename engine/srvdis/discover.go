@@ -17,7 +17,7 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 		kv = namespace.NewKV(kv, srvdisNamespace)
 	}
 
-	rangeResp, err := kv.Get(ctx, "/service/", clientv3.WithPrefix())
+	rangeResp, err := kv.Get(ctx, "/srvdis/", clientv3.WithPrefix())
 	if err != nil {
 		gwlog.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 		w = namespace.NewWatcher(w, srvdisNamespace)
 	}
 
-	ch := w.Watch(ctx, "/service/", clientv3.WithPrefix(), clientv3.WithRev(rangeResp.Header.Revision+1))
+	ch := w.Watch(ctx, "/srvdis/", clientv3.WithPrefix(), clientv3.WithRev(rangeResp.Header.Revision+1))
 	for resp := range ch {
 		for _, event := range resp.Events {
 			if event.Type == mvccpb.PUT {
