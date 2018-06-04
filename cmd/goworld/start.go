@@ -96,6 +96,7 @@ func startGate(gateid uint16) {
 }
 
 func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Duration) (err error) {
+	clearLogFile(logFile)
 	err = cmd.Start()
 	if err != nil {
 		return
@@ -112,6 +113,10 @@ func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Dura
 
 	err = errors.Errorf("wait started tag timeout")
 	return
+}
+
+func clearLogFile(logFile string) {
+	ioutil.WriteFile(logFile, []byte{}, 0644)
 }
 
 func isTagInFile(filename string, tag string) bool {
