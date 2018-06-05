@@ -5,6 +5,8 @@ import (
 
 	"encoding/json"
 
+	"strings"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -12,16 +14,16 @@ import (
 )
 
 type serviceTypeMgr struct {
-	services map[string]serviceRegisterInfo
+	services map[string]ServiceRegisterInfo
 }
 
 func newServiceTypeMgr() *serviceTypeMgr {
 	return &serviceTypeMgr{
-		services: map[string]serviceRegisterInfo{},
+		services: map[string]ServiceRegisterInfo{},
 	}
 }
 
-func (mgr *serviceTypeMgr) registerService(srvid string, info serviceRegisterInfo) {
+func (mgr *serviceTypeMgr) registerService(srvid string, info ServiceRegisterInfo) {
 	mgr.services[srvid] = info
 }
 
@@ -32,6 +34,29 @@ func (mgr *serviceTypeMgr) unregisterService(srvid string) {
 var (
 	aliveServicesByType = map[string]*serviceTypeMgr{}
 )
+
+func VisitServicesByType(srvtype string, cb func(srvid string, info ServiceRegisterInfo)) {
+	mgr := aliveServicesByType[srvtype]
+	if mgr == nil {
+		return
+	}
+
+	for srvid, info := range mgr.services {
+		cb(srvid, info)
+	}
+}
+
+func VisitServicesByTypePrefix(srvtypePrefix string, cb func(srvtype, srvid string, info ServiceRegisterInfo)) {
+	for srvtype, mgr := range aliveServicesByType {
+		if !strings.HasPrefix(srvtype, srvtypePrefix) {
+			continue
+		}
+
+		for srvid, info := range mgr.services {
+			cb(srvtype, srvid, info)
+		}
+	}
+}
 
 func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDelegate) {
 	kv := clientv3.NewKV(cli)
@@ -68,7 +93,7 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 
 func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []byte) {
 	srvtype, srvid := parseRegisterPath(key)
-	var registerInfo serviceRegisterInfo
+	var registerInfo ServiceRegisterInfo
 	err := json.Unmarshal(val, &registerInfo)
 	if err != nil {
 		gwlog.Panic(err)

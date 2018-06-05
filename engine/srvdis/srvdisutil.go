@@ -12,7 +12,13 @@ func registerPath(srvType, srvId string) string {
 func parseRegisterPath(key []byte) (srvtype, srvid string) {
 	srvpath := string(key[len("/srvdis/"):])
 	srvpathSp := strings.Split(srvpath, "/")
-	srvtype = srvpathSp[0]
-	srvid = srvpathSp[1]
+	n := len(srvpathSp)
+	if n == 2 {
+		srvtype = srvpathSp[0]
+		srvid = srvpathSp[1]
+	} else { // len(srvpathSp) > 2
+		srvtype = strings.Join(srvpathSp[:n-1], "/")
+		srvid = srvpathSp[n-1]
+	}
 	return
 }
