@@ -14,11 +14,14 @@ import (
 
 	"context"
 
+	"fmt"
+
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/post"
+	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
 var (
@@ -73,6 +76,9 @@ func main() {
 	dispatcherService = newDispatcherService(dispid)
 	setupSignals() // call setupSignals to avoid data race on `dispatcherService`
 	binutil.StartupServiceDiscovery(context.Background(), dispatcherService)
+	srvdis.Register("component/dispatcher", fmt.Sprintf("dispatcher%d", dispid), srvdis.ServiceRegisterInfo{
+		Addr: "",
+	})
 	dispatcherService.run()
 }
 
