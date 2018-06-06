@@ -17,12 +17,13 @@ type testService struct {
 
 func TestStartup(t *testing.T) {
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, time.Second*10)
+	ctx, _ = context.WithTimeout(ctx, time.Second*5)
 	ts := &testService{}
 	Startup(ctx, []string{"http://127.0.0.1:2379"}, "/testns", 2, ts)
 	Register("testServiceType", "testService", ServiceRegisterInfo{"localhost:12345"})
 
 	<-ctx.Done()
+	time.Sleep(time.Second)
 	ts.Lock()
 	if len(ts.services) == 0 {
 		t.Errorf("service discovery failed")
