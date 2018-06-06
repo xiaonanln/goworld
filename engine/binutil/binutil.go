@@ -100,5 +100,5 @@ func PrintSupervisorTag(tag string) {
 
 func StartupServiceDiscovery(ctx context.Context, delegate srvdis.ServiceDelegate) {
 	etcdCfg := config.GetEtcd()
-	srvdis.Startup(ctx, etcdCfg.EndPoints, etcdCfg.Namespace, delegate)
+	srvdis.Startup(ctx, etcdCfg.EndPoints, etcdCfg.Namespace, 10, delegate)
 }

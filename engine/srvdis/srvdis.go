@@ -17,20 +17,20 @@ var (
 	srvdisClient    *clientv3.Client
 	srvdisKV        clientv3.KV
 	srvdisCtx       context.Context
+	srvdisLeaseTTL  int64
+	serviceDelegate ServiceDelegate
 )
 
 type ServiceDelegate interface {
-	ServiceType() string
-	ServiceId() string
-	ServiceAddr() string
-	ServiceLeaseTTL() int64
 	OnServiceDiscovered(srvtype string, srvid string, srvaddr string)
 	OnServiceOutdated(srvtype string, srvid string)
 }
 
-func Startup(ctx context.Context, etcdEndPoints []string, namespace_ string, delegate ServiceDelegate) {
+func Startup(ctx context.Context, etcdEndPoints []string, namespace_ string, leaseTTL int64, delegate ServiceDelegate) {
 	srvdisCtx = ctx
 	srvdisNamespace = namespace_
+	srvdisLeaseTTL = leaseTTL
+	serviceDelegate = delegate
 
 	go func() {
 		var err error
@@ -53,22 +53,22 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace_ string, del
 
 		srvdisKV = clientv3.NewKV(srvdisClient)
 		if srvdisNamespace != "" {
-			srvdisKV = namespace.NewKV(kv, srvdisNamespace)
+			srvdisKV = namespace.NewKV(srvdisKV, srvdisNamespace)
 		}
 
 		go gwutils.RepeatUntilPanicless(func() {
-			if ctx.Err() == nil {
+			if srvdisCtx.Err() == nil {
 				// context cancelled or exceed deadline
-				registerRoutine(ctx, srvdisClient, delegate)
+				registerRoutine()
 			}
 		})
 
 		go gwutils.RepeatUntilPanicless(func() {
-			if ctx.Err() == nil {
-				watchRoutine(ctx, srvdisClient, delegate)
+			if srvdisCtx.Err() == nil {
+				watchRoutine()
 			}
 		})
 
-		<-ctx.Done()
+		<-srvdisCtx.Done()
 	}()
 }

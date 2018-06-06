@@ -1,8 +1,6 @@
 package srvdis
 
 import (
-	"context"
-
 	"encoding/json"
 
 	"strings"
@@ -58,34 +56,34 @@ func VisitServicesByTypePrefix(srvtypePrefix string, cb func(srvtype, srvid stri
 	}
 }
 
-func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDelegate) {
-	kv := clientv3.NewKV(cli)
+func watchRoutine() {
+	kv := clientv3.NewKV(srvdisClient)
 	if srvdisNamespace != "" {
 		kv = namespace.NewKV(kv, srvdisNamespace)
 	}
 
-	rangeResp, err := kv.Get(ctx, "/srvdis/", clientv3.WithPrefix())
+	rangeResp, err := kv.Get(srvdisCtx, "/srvdis/", clientv3.WithPrefix())
 	if err != nil {
 		gwlog.Fatal(err)
 	}
 
 	for _, kv := range rangeResp.Kvs {
-		handlePutServiceRegisterData(delegate, kv.Key, kv.Value)
+		handlePutServiceRegisterData(serviceDelegate, kv.Key, kv.Value, kv.Lease)
 	}
 
-	w := clientv3.NewWatcher(cli)
+	w := clientv3.NewWatcher(srvdisClient)
 	if srvdisNamespace != "" {
 		w = namespace.NewWatcher(w, srvdisNamespace)
 	}
 
-	ch := w.Watch(ctx, "/srvdis/", clientv3.WithPrefix(), clientv3.WithRev(rangeResp.Header.Revision+1))
+	ch := w.Watch(srvdisCtx, "/srvdis/", clientv3.WithPrefix(), clientv3.WithRev(rangeResp.Header.Revision+1))
 	for resp := range ch {
 		for _, event := range resp.Events {
 			if event.Type == mvccpb.PUT {
 				//gwlog.Infof("watch resp: %v, created=%v, cancelled=%v, events=%q", resp, resp.Created, resp.Canceled, resp.Events[0].Kv.Key)
-				handlePutServiceRegisterData(delegate, event.Kv.Key, event.Kv.Value, event.Kv.Lease)
+				handlePutServiceRegisterData(serviceDelegate, event.Kv.Key, event.Kv.Value, event.Kv.Lease)
 			} else if event.Type == mvccpb.DELETE {
-				handleDeleteServiceRegisterData(delegate, event.Kv.Key)
+				handleDeleteServiceRegisterData(serviceDelegate, event.Kv.Key, event.PrevKv.Lease)
 			}
 		}
 	}
@@ -110,7 +108,7 @@ func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []by
 	delegate.OnServiceDiscovered(srvtype, srvid, registerInfo.Addr)
 }
 
-func handleDeleteServiceRegisterData(delegate ServiceDelegate, key []byte) {
+func handleDeleteServiceRegisterData(delegate ServiceDelegate, key []byte, prevLeaseID int64) {
 	srvtype, srvid := parseRegisterPath(key)
 
 	srvtypemgr := aliveServicesByType[srvtype]
