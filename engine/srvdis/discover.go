@@ -83,7 +83,7 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 		for _, event := range resp.Events {
 			if event.Type == mvccpb.PUT {
 				//gwlog.Infof("watch resp: %v, created=%v, cancelled=%v, events=%q", resp, resp.Created, resp.Canceled, resp.Events[0].Kv.Key)
-				handlePutServiceRegisterData(delegate, event.Kv.Key, event.Kv.Value)
+				handlePutServiceRegisterData(delegate, event.Kv.Key, event.Kv.Value, event.Kv.Lease)
 			} else if event.Type == mvccpb.DELETE {
 				handleDeleteServiceRegisterData(delegate, event.Kv.Key)
 			}
@@ -91,7 +91,7 @@ func watchRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDel
 	}
 }
 
-func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []byte) {
+func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []byte, leaseID int64) {
 	srvtype, srvid := parseRegisterPath(key)
 	var registerInfo ServiceRegisterInfo
 	err := json.Unmarshal(val, &registerInfo)

@@ -5,9 +5,8 @@ import (
 
 	"context"
 
-	"sync"
-
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
@@ -15,6 +14,9 @@ import (
 
 var (
 	srvdisNamespace string
+	srvdisClient    *clientv3.Client
+	srvdisKV        clientv3.KV
+	srvdisCtx       context.Context
 )
 
 type ServiceDelegate interface {
@@ -26,10 +28,12 @@ type ServiceDelegate interface {
 	OnServiceOutdated(srvtype string, srvid string)
 }
 
-func Startup(ctx context.Context, etcdEndPoints []string, namespace string, delegate ServiceDelegate) {
-	go func() {
-		srvdisNamespace = namespace
+func Startup(ctx context.Context, etcdEndPoints []string, namespace_ string, delegate ServiceDelegate) {
+	srvdisCtx = ctx
+	srvdisNamespace = namespace_
 
+	go func() {
+		var err error
 		cfg := clientv3.Config{
 			Endpoints:            etcdEndPoints,
 			DialTimeout:          time.Second,
@@ -40,33 +44,31 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace string, dele
 			Context: ctx,
 		}
 
-		cli, err := clientv3.New(cfg)
+		srvdisClient, err = clientv3.New(cfg)
 		if err != nil {
 			gwlog.Fatal(errors.Wrap(err, "connect etcd failed"))
 		}
 
-		defer cli.Close()
+		defer srvdisClient.Close()
 
-		var wait sync.WaitGroup
-		wait.Add(2)
+		srvdisKV = clientv3.NewKV(srvdisClient)
+		if srvdisNamespace != "" {
+			srvdisKV = namespace.NewKV(kv, srvdisNamespace)
+		}
 
 		go gwutils.RepeatUntilPanicless(func() {
 			if ctx.Err() == nil {
 				// context cancelled or exceed deadline
-				registerRoutine(ctx, cli, delegate)
+				registerRoutine(ctx, srvdisClient, delegate)
 			}
-
-			wait.Done()
 		})
 
 		go gwutils.RepeatUntilPanicless(func() {
 			if ctx.Err() == nil {
-				watchRoutine(ctx, cli, delegate)
+				watchRoutine(ctx, srvdisClient, delegate)
 			}
-
-			wait.Done()
 		})
 
-		wait.Wait()
+		<-ctx.Done()
 	}()
 }

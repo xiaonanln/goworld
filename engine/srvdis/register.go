@@ -9,12 +9,22 @@ import (
 	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"encoding/gob"
 )
 
 var ()
 
 type ServiceRegisterInfo struct {
 	Addr string `json:"addr"`
+}
+
+func (info ServiceRegisterInfo) String() string {
+	bytes, err := json.Marshal(info)
+	if err != nil {
+		gwlog.Panic(errors.Wrap(err, "srvdis: marshal register info failed"))
+	}
+
+	return string(bytes)
 }
 
 func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate ServiceDelegate) {
@@ -34,12 +44,7 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	registerInfo := ServiceRegisterInfo{
 		Addr: delegate.ServiceAddr(),
 	}
-	registerInfoBytes, err := json.Marshal(&registerInfo)
-	if err != nil {
-		gwlog.Panic(errors.Wrap(err, "srvdis: marshal register info failed"))
-	}
-
-	registerInfoStr := string(registerInfoBytes)
+	registerInfoStr := registerInfo.String()
 
 	gwlog.Debugf("Registering service %s = %s with lease %v TTL %v ...", servicePath, registerInfoStr, lease.ID, lease.TTL)
 	_, err = kv.Put(ctx, servicePath, registerInfoStr, clientv3.WithLease(lease.ID))
@@ -60,4 +65,14 @@ func registerRoutine(ctx context.Context, cli *clientv3.Client, delegate Service
 	if ctxerr == nil {
 		gwlog.Panicf("srvdis: %s: keep alive terminated, is etcd down?", servicePath)
 	}
+}
+
+func Register(srvtype, srvid string, info ServiceRegisterInfo) {
+	regKey := registerPath(srvtype, srvid)
+	regData := info.String()
+	srvdisKV.Txn(context.Background()).If(
+		clientv3.Compare(clientv3.LeaseValue(regKey), "=", clientv3.NoLease),
+	).Then(
+		clientv3.OpPut(regKey, regData, )
+	)
 }
