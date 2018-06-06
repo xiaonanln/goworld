@@ -35,6 +35,31 @@ func RepeatUntilPanicless(f func()) {
 	}
 }
 
+// PanicFree makes the function panic-free
+func PanicFree(f func(), errors ...error) func() {
+	return func() {
+		defer func() {
+			_err := recover()
+			if len(errors) == 0 {
+				// ignore all errors
+				gwlog.Errorf("%v panic: %s", f, _err)
+			} else if err, ok := _err.(error); ok {
+				// check if err in errors
+				for _, ignoreErr := range errors {
+					if ignoreErr == err {
+						gwlog.Errorf("%v panic: %s", f, err)
+						return
+					}
+				}
+				panic(err)
+			} else {
+				panic(_err)
+			}
+		}()
+		f()
+	}
+}
+
 // NextLargerKey finds the next key that is larger than the specified key,
 // but smaller than any other keys that is larger than the specified key
 func NextLargerKey(key string) string {
