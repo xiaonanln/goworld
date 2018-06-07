@@ -103,7 +103,7 @@ func testCompressor(t *testing.T, cr Compressor) {
 		}
 
 		if string(rb) != string(b) {
-			t.Errorf("original data and restored data mismatch", len(b), len(rb))
+			t.Errorf("original data and restored data mismatch: %d & %d", len(b), len(rb))
 		}
 
 		dataSize = dataSize * 2

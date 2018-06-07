@@ -164,12 +164,13 @@ type _Something struct {
 
 var (
 	_DO_THINGS = []*_Something{
-		//{"DoEnterRandomSpace", 20, time.Minute},
+		{"DoEnterRandomSpace", 20, time.Minute},
+		{"DoEnterRandomNilSpace", 10, time.Minute},
 		//{"DoSendMail", 5, time.Minute},
 		//{"DoGetMails", 10, time.Minute},
 		{"DoSayInWorldChannel", 5, time.Minute},
 		{"DoSayInProfChannel", 5, time.Minute},
-		//{"DoTestListField", 10, time.Minute},
+		{"DoTestListField", 10, time.Minute},
 		//{"DoTestPublish", 1, time.Minute},
 	}
 )
@@ -256,6 +257,18 @@ func (e *clientEntity) DoEnterRandomSpace() {
 	}
 
 	e.CallServer("EnterSpace", spaceKind)
+}
+
+func (e *clientEntity) DoEnterRandomNilSpace() {
+	e.CallServer("EnterRandomNilSpace")
+	//gameIDs := goworld.ListGameIDs()
+	//idx := rand.Intn(len(gameIDs))
+	//targetGameID := gameIDs[idx]
+	//nilSpaceID := goworld.GetNilSpaceID(targetGameID)
+}
+
+func (e *clientEntity) OnEnterRandomNilSpace() {
+	e.notifyThingDone("DoEnterRandomNilSpace")
 }
 
 func (e *clientEntity) DoSendMail() {

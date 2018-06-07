@@ -45,6 +45,19 @@ func GenUUID() string {
 	return _UUIDEncoding.EncodeToString(b)
 }
 
+func GenFixedUUID(b []byte) string {
+	bl := len(b)
+	if bl > 12 {
+		b = b[:12]
+	} else if bl < 12 {
+		nb := make([]byte, 12)
+		copy(nb[12-bl:], b)
+		b = nb
+	}
+
+	return _UUIDEncoding.EncodeToString(b)
+}
+
 // objectIdCounter is atomically incremented when generating a new ObjectId
 // using NewObjectId() function. It's used as a counter part of an id.
 var objectIdCounter uint32
