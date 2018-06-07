@@ -5,7 +5,6 @@ import (
 
 	"time"
 
-	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/srvdis"
 )
@@ -37,7 +36,7 @@ func checkComponentService(componentType, componentId string, info srvdis.Servic
 		}
 	})
 
-	gwlog.Debugf("checkComponentService: %s %s found %v isMine %v", componentType, componentId, componentServiceFound, isComponentServiceMine)
+	//gwlog.Debugf("checkComponentService: %s %s found %v isMine %v", componentType, componentId, componentServiceFound, isComponentServiceMine)
 	if !componentServiceFound || !isComponentServiceMine {
 		srvdis.Register(componentType, componentId, info, false)
 	}

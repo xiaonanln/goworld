@@ -30,6 +30,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
 var (
@@ -99,6 +100,9 @@ func main() {
 	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &dispatcherClientDelegate{})
 	//dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
 	setupSignals()
+	binutil.StartupCheckServices(gateCtx, "component/gate", fmt.Sprintf("gate%d", gateid), srvdis.ServiceRegisterInfo{
+		Addr: "",
+	})
 	gateService.run() // run gate service in another goroutine
 }
 
