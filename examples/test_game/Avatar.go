@@ -31,6 +31,7 @@ func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
 	desc.DefineAttr("spaceKind", "Persistent")
 	desc.DefineAttr("lastMailID", "Persistent")
 	desc.DefineAttr("testListField", "AllClients")
+	desc.DefineAttr("enteringNilSpace")
 }
 
 func (a *Avatar) OnInit() {
@@ -73,6 +74,7 @@ func (a *Avatar) setDefaultAttrs() {
 	a.Attrs.SetDefaultInt("lastMailID", 0)
 	a.Attrs.SetDefaultMapAttr("mails", goworld.MapAttr())
 	a.Attrs.SetDefaultListAttr("testListField", goworld.ListAttr())
+	a.Attrs.SetDefaultBool("enteringNilSpace", false)
 }
 
 // TestListField_Client is a test RPC for client
@@ -161,9 +163,26 @@ func (a *Avatar) EnterRandomNilSpace_Client() {
 	gameid := gameIDs[rand.Intn(len(gameIDs))]
 	nilSpaceID := goworld.GetNilSpaceID(gameid)
 	gwlog.Debugf("%s EnterRandomNilSpace: %s on game%d", a, nilSpaceID, gameid)
+	a.Attrs.SetBool("enteringNilSpace", true)
+
 	//goworld.GetEntity()
-	//a.EnterSpace(nilSpaceID, entity.Vector3{})
-	a.CallClient("OnEnterRandomNilSpace")
+	if goworld.GetSpace(nilSpaceID) != nil {
+		// the nil space is local
+		a.Attrs.SetBool("enteringNilSpace", false)
+		a.EnterSpace(nilSpaceID, goworld.Vector3{})
+		a.CallClient("OnEnterRandomNilSpace")
+	} else {
+		a.EnterSpace(nilSpaceID, goworld.Vector3{})
+	}
+}
+
+// OnDestroy is called when avatar is destroying
+func (a *Avatar) OnMigrateIn() {
+	gwlog.Debugf("%s OnMigrateIn ...", a)
+	if a.Attrs.GetBool("enteringNilSpace") {
+		a.Attrs.Del("enteringNilSpace")
+		a.CallClient("OnEnterRandomNilSpace")
+	}
 }
 
 // OnDestroy is called when avatar is destroying
