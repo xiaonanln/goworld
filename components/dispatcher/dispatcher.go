@@ -76,9 +76,7 @@ func main() {
 	dispatcherService = newDispatcherService(dispid)
 	setupSignals() // call setupSignals to avoid data race on `dispatcherService`
 	binutil.StartupServiceDiscovery(context.Background(), dispatcherService)
-	srvdis.Register("component/dispatcher", fmt.Sprintf("dispatcher%d", dispid), srvdis.ServiceRegisterInfo{
-		Addr: "",
-	})
+	binutil.StartupCheckServices(context.TODO(), "component/dispatcher", fmt.Sprintf("dispatcher%d", dispid), srvdis.ServiceRegisterInfo{})
 	dispatcherService.run()
 }
 

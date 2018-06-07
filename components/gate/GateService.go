@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -91,7 +92,7 @@ func (gs *GateService) run() {
 	gs.positionSyncInterval = time.Millisecond * time.Duration(cfg.PositionSyncIntervalMS)
 	gwlog.Infof("%s: positionSyncInterval = %s", gs, gs.positionSyncInterval)
 	binutil.PrintSupervisorTag(consts.GATE_STARTED_TAG)
-	gwutils.RepeatUntilPanicless(gs.mainRoutine)
+	gwutils.RepeatUntilPanicless(context.TODO(), gs.mainRoutine)
 }
 
 func (gs *GateService) setupTLSConfig(cfg *config.GateConfig) {
@@ -139,7 +140,7 @@ func (gs *GateService) serveKCP(addr string) {
 
 	gwlog.Infof("Listening on KCP: %s ...", addr)
 
-	gwutils.RepeatUntilPanicless(func() {
+	gwutils.RepeatUntilPanicless(context.TODO(), func() {
 		for {
 			conn, err := kcpListener.AcceptKCP()
 			if err != nil {

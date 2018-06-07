@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"fmt"
 
 	"time"
@@ -77,7 +78,7 @@ func (gs *GameService) run(restore bool) {
 	}
 
 	binutil.PrintSupervisorTag(consts.GAME_STARTED_TAG)
-	gwutils.RepeatUntilPanicless(gs.serveRoutine)
+	gwutils.RepeatUntilPanicless(context.TODO(), gs.serveRoutine)
 }
 
 func (gs *GameService) serveRoutine() {

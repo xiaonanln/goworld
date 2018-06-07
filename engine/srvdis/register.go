@@ -3,14 +3,17 @@ package srvdis
 import (
 	"encoding/json"
 
+	"sync/atomic"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 type registerChanItem struct {
-	srvtype, srvid string
-	info           ServiceRegisterInfo
+	srvtype, srvid     string
+	info               ServiceRegisterInfo
+	registerIfNotExist bool
 }
 
 var (
@@ -18,7 +21,8 @@ var (
 )
 
 type ServiceRegisterInfo struct {
-	Addr string `json:"addr"`
+	Addr      string `json:"addr,omitempty"`
+	IsMyLease bool   `json:"-"`
 }
 
 func (info ServiceRegisterInfo) String() string {
@@ -35,6 +39,8 @@ func registerRoutine() {
 	if err != nil {
 		gwlog.Panic(errors.Wrap(err, "srvdis: grant lease failed"))
 	}
+
+	atomic.StoreInt64(&currentLeaseID, int64(lease.ID))
 
 	ch, err := srvdisClient.KeepAlive(srvdisCtx, lease.ID)
 	if err != nil {
@@ -55,12 +61,17 @@ forloop:
 			srvtype, srvid := regItem.srvtype, regItem.srvid
 			regKey := registerPath(srvtype, srvid)
 			regData := regItem.info.String()
-			//register the service atomically
-			srvdisKV.Txn(srvdisCtx).If(
-				clientv3.Compare(clientv3.LeaseValue(regKey), "=", clientv3.NoLease),
-			).Then(
-				clientv3.OpPut(regKey, regData, clientv3.WithLease(lease.ID)),
-			).Commit()
+			if regItem.registerIfNotExist {
+				// register the service atomically
+				srvdisKV.Txn(srvdisCtx).If(
+					clientv3.Compare(clientv3.LeaseValue(regKey), "=", clientv3.NoLease),
+				).Then(
+					clientv3.OpPut(regKey, regData, clientv3.WithLease(lease.ID)),
+				).Commit()
+			} else {
+				// register the service and override existing data
+				srvdisKV.Put(srvdisCtx, regKey, regData, clientv3.WithLease(lease.ID))
+			}
 			break
 		}
 	}
@@ -71,6 +82,6 @@ forloop:
 	}
 }
 
-func Register(srvtype, srvid string, info ServiceRegisterInfo) {
-	registerChan <- registerChanItem{srvtype, srvid, info}
+func Register(srvtype, srvid string, info ServiceRegisterInfo, registerIfNotExist bool) {
+	registerChan <- registerChanItem{srvtype, srvid, info, registerIfNotExist}
 }

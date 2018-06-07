@@ -1,6 +1,10 @@
 package gwutils
 
-import "github.com/xiaonanln/goworld/engine/gwlog"
+import (
+	"context"
+
+	"github.com/xiaonanln/goworld/engine/gwlog"
+)
 
 // CatchPanic calls a function and returns the error if function paniced
 func CatchPanic(f func()) (err interface{}) {
@@ -30,8 +34,12 @@ func RunPanicless(f func()) (panicless bool) {
 }
 
 // RepeatUntilPanicless runs the function repeatly until there is no panic
-func RepeatUntilPanicless(f func()) {
+func RepeatUntilPanicless(ctx context.Context, f func()) {
 	for !RunPanicless(f) {
+		if ctx.Err() != nil {
+			// context is over
+			break
+		}
 	}
 }
 

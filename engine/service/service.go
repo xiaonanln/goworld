@@ -26,9 +26,6 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 
 func init() {
 	timer.AddTimer(checkServicesInterval, checkServices)
-	//go gwutils.RepeatUntilPanicless(func() {
-	//	serviceMgrRoutine()
-	//})
 }
 
 func checkServices() {

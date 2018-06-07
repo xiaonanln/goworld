@@ -19,6 +19,7 @@ var (
 	srvdisCtx       context.Context
 	srvdisLeaseTTL  int64
 	serviceDelegate ServiceDelegate
+	currentLeaseID  int64
 )
 
 type ServiceDelegate interface {
@@ -56,18 +57,8 @@ func Startup(ctx context.Context, etcdEndPoints []string, namespace_ string, lea
 			srvdisKV = namespace.NewKV(srvdisKV, srvdisNamespace)
 		}
 
-		go gwutils.RepeatUntilPanicless(func() {
-			if srvdisCtx.Err() == nil {
-				// context cancelled or exceed deadline
-				registerRoutine()
-			}
-		})
-
-		go gwutils.RepeatUntilPanicless(func() {
-			if srvdisCtx.Err() == nil {
-				watchRoutine()
-			}
-		})
+		go gwutils.RepeatUntilPanicless(srvdisCtx, registerRoutine)
+		go gwutils.RepeatUntilPanicless(srvdisCtx, watchRoutine)
 
 		<-srvdisCtx.Done()
 	}()

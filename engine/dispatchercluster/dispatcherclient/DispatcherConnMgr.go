@@ -18,6 +18,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -108,7 +109,7 @@ type IDispatcherClientDelegate interface {
 // Initialize the dispatcher client, only called by engine
 func (dcm *DispatcherConnMgr) Connect() {
 	dcm.assureConnected()
-	go gwutils.RepeatUntilPanicless(dcm.serveDispatcherClient) // start the recv routine
+	go gwutils.RepeatUntilPanicless(context.TODO(), dcm.serveDispatcherClient) // start the recv routine
 }
 
 // GetDispatcherClientForSend returns the current dispatcher client for sending messages

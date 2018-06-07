@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"net"
@@ -276,7 +277,7 @@ func (service *DispatcherService) String() string {
 func (service *DispatcherService) run() {
 	host := fmt.Sprintf("%s:%d", service.config.BindIp, service.config.BindPort)
 	binutil.PrintSupervisorTag(consts.DISPATCHER_STARTED_TAG)
-	go gwutils.RepeatUntilPanicless(service.messageLoop)
+	go gwutils.RepeatUntilPanicless(context.TODO(), service.messageLoop)
 	netutil.ServeTCPForever(host, service)
 }
 

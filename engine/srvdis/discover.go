@@ -5,6 +5,10 @@ import (
 
 	"strings"
 
+	"sync"
+
+	"sync/atomic"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -30,10 +34,14 @@ func (mgr *serviceTypeMgr) unregisterService(srvid string) {
 }
 
 var (
+	aliveServicesLock   sync.RWMutex
 	aliveServicesByType = map[string]*serviceTypeMgr{}
 )
 
 func VisitServicesByType(srvtype string, cb func(srvid string, info ServiceRegisterInfo)) {
+	aliveServicesLock.RLock()
+	defer aliveServicesLock.RUnlock()
+
 	mgr := aliveServicesByType[srvtype]
 	if mgr == nil {
 		return
@@ -45,6 +53,8 @@ func VisitServicesByType(srvtype string, cb func(srvid string, info ServiceRegis
 }
 
 func VisitServicesByTypePrefix(srvtypePrefix string, cb func(srvtype, srvid string, info ServiceRegisterInfo)) {
+	aliveServicesLock.RLock()
+	defer aliveServicesLock.RUnlock()
 	for srvtype, mgr := range aliveServicesByType {
 		if !strings.HasPrefix(srvtype, srvtypePrefix) {
 			continue
@@ -83,7 +93,8 @@ func watchRoutine() {
 				//gwlog.Infof("watch resp: %v, created=%v, cancelled=%v, events=%q", resp, resp.Created, resp.Canceled, resp.Events[0].Kv.Key)
 				handlePutServiceRegisterData(serviceDelegate, event.Kv.Key, event.Kv.Value, event.Kv.Lease)
 			} else if event.Type == mvccpb.DELETE {
-				handleDeleteServiceRegisterData(serviceDelegate, event.Kv.Key, event.PrevKv.Lease)
+				gwlog.Warnf("DELETE Kv %+v Lease %d PrevKv %+v", event.Kv, event.Kv.Lease, event.PrevKv)
+				handleDeleteServiceRegisterData(serviceDelegate, event.Kv.Key)
 			}
 		}
 	}
@@ -97,6 +108,10 @@ func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []by
 		gwlog.Panic(err)
 	}
 
+	registerInfo.IsMyLease = leaseID == atomic.LoadInt64(&currentLeaseID)
+
+	aliveServicesLock.Lock()
+	defer aliveServicesLock.Unlock()
 	srvtypemgr := aliveServicesByType[srvtype]
 	if srvtypemgr == nil {
 		srvtypemgr = newServiceTypeMgr()
@@ -104,13 +119,15 @@ func handlePutServiceRegisterData(delegate ServiceDelegate, key []byte, val []by
 	}
 
 	srvtypemgr.registerService(srvid, registerInfo)
-	gwlog.Infof("Service discoveried: %s.%s = %s", srvtype, srvid, registerInfo)
+	gwlog.Infof("Service discoveried: %s.%s = %+v, IsMyLease %v", srvtype, srvid, registerInfo, registerInfo.IsMyLease)
 	delegate.OnServiceDiscovered(srvtype, srvid, registerInfo.Addr)
 }
 
-func handleDeleteServiceRegisterData(delegate ServiceDelegate, key []byte, prevLeaseID int64) {
+func handleDeleteServiceRegisterData(delegate ServiceDelegate, key []byte) {
 	srvtype, srvid := parseRegisterPath(key)
 
+	aliveServicesLock.Lock()
+	defer aliveServicesLock.Unlock()
 	srvtypemgr := aliveServicesByType[srvtype]
 	if srvtypemgr == nil {
 		gwlog.Warnf("service %s.%s outdated, not not registered", srvtype, srvid)

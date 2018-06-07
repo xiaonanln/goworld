@@ -10,6 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -30,7 +31,7 @@ func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, isRes
 		dispConn.Connect()
 	}
 
-	go gwutils.RepeatUntilPanicless(autoFlushRoutine)
+	go gwutils.RepeatUntilPanicless(context.TODO(), autoFlushRoutine)
 }
 
 func SendNotifyDestroyEntity(id common.EntityID) error {
