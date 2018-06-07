@@ -40,3 +40,7 @@ func RegisterSpace(spacePtr ISpace) {
 
 	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr)
 }
+
+func GetSpace(id common.EntityID) *Space {
+	return spaceManager.spaces[id]
+}

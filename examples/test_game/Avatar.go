@@ -156,6 +156,16 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
 }
 
+func (a *Avatar) EnterRandomNilSpace_Client() {
+	gameIDs := goworld.ListGameIDs()
+	gameid := gameIDs[rand.Intn(len(gameIDs))]
+	nilSpaceID := goworld.GetNilSpaceID(gameid)
+	gwlog.Debugf("%s EnterRandomNilSpace: %s on game%d", a, nilSpaceID, gameid)
+	//goworld.GetEntity()
+	//a.EnterSpace(nilSpaceID, entity.Vector3{})
+	a.CallClient("OnEnterRandomNilSpace")
+}
+
 // OnDestroy is called when avatar is destroying
 func (a *Avatar) OnDestroy() {
 	a.CallService("OnlineService", "CheckOut", a.ID)

@@ -3,12 +3,19 @@ package goworld
 import (
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
+
+// Export useful types
+type Vector3 = entity.Vector3
+type Entity = entity.Entity
+type Space = entity.Space
+type EntityID = common.EntityID
 
 // Run runs the server endless loop
 //
@@ -27,7 +34,7 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTyp
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
-func CreateSpaceAnywhere(kind int) common.EntityID {
+func CreateSpaceAnywhere(kind int) EntityID {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
@@ -37,7 +44,7 @@ func CreateSpaceAnywhere(kind int) common.EntityID {
 // CreateSpaceLocally creates a space with specified kind in the local game server
 //
 // returns the space EntityID
-func CreateSpaceLocally(kind int) common.EntityID {
+func CreateSpaceLocally(kind int) EntityID {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
@@ -47,17 +54,17 @@ func CreateSpaceLocally(kind int) common.EntityID {
 // CreateEntityLocally creates a entity on the local server
 //
 // returns EntityID
-func CreateEntityLocally(typeName string) common.EntityID {
+func CreateEntityLocally(typeName string) EntityID {
 	return entity.CreateEntityLocally(typeName, nil, nil)
 }
 
 // CreateEntityAnywhere creates a entity on any server
-func CreateEntityAnywhere(typeName string) common.EntityID {
+func CreateEntityAnywhere(typeName string) EntityID {
 	return entity.CreateEntityAnywhere(typeName)
 }
 
 // LoadEntityAnywhere loads the specified entity from entity storage
-func LoadEntityAnywhere(typeName string, entityID common.EntityID) {
+func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	entity.LoadEntityAnywhere(typeName, entityID)
 }
 
@@ -76,13 +83,18 @@ func ListEntityIDs(typeName string, callback storage.ListCallbackFunc) {
 // Exists checks if entityID exists in entity storage
 //
 // returns result in callback
-func Exists(typeName string, entityID common.EntityID, callback storage.ExistsCallbackFunc) {
+func Exists(typeName string, entityID EntityID, callback storage.ExistsCallbackFunc) {
 	storage.Exists(typeName, entityID, callback)
 }
 
 // GetEntity gets the entity by EntityID
-func GetEntity(id common.EntityID) *entity.Entity {
+func GetEntity(id EntityID) *Entity {
 	return entity.GetEntity(id)
+}
+
+// GetSpace gets the space by ID
+func GetSpace(id EntityID) *Space {
+	return entity.GetSpace(id)
 }
 
 // GetGameID gets the local server ID
@@ -116,7 +128,7 @@ func Entities() entity.EntityMap {
 }
 
 // Call other entities
-func Call(id common.EntityID, method string, args ...interface{}) {
+func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
@@ -131,7 +143,7 @@ func CallNilSpaces(method string, args ...interface{}) {
 }
 
 // GetNilSpaceID returns the Entity ID of nil space on the specified game
-func GetNilSpaceID(gameid uint16) common.EntityID {
+func GetNilSpaceID(gameid uint16) EntityID {
 	return entity.GetNilSpaceID(gameid)
 }
 
@@ -153,4 +165,9 @@ func PutKVDB(key string, val string, callback kvdb.KVDBPutCallback) {
 // GetOrPut gets value of key from KVDB, if val not exists or is "", put key-value to KVDB.
 func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 	kvdb.GetOrPut(key, val, callback)
+}
+
+// ListGameIDs returns all game IDs
+func ListGameIDs() []uint16 {
+	return config.GetGameIDs()
 }
