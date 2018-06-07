@@ -130,6 +130,11 @@ func CallNilSpaces(method string, args ...interface{}) {
 	entity.CallNilSpaces(method, args, game.GetGameID())
 }
 
+// GetNilSpaceID returns the Entity ID of nil space on the specified game
+func GetNilSpaceID(gameid uint16) common.EntityID {
+	return entity.GetNilSpaceID(gameid)
+}
+
 // Post posts a callback to be executed
 func Post(callback post.PostCallback) {
 	post.Post(callback)

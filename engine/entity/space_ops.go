@@ -1,7 +1,10 @@
 package entity
 
 import (
+	"strconv"
+
 	"github.com/xiaonanln/goworld/engine/common"
+	"github.com/xiaonanln/goworld/engine/uuid"
 )
 
 // CreateSpaceLocally creates a space in the local game server
@@ -20,7 +23,15 @@ func CreateSpaceAnywhere(kind int) common.EntityID {
 
 // CreateNilSpace creates the nil space
 func CreateNilSpace(gameid uint16) common.EntityID {
-	return createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, "", map[string]interface{}{
+	spaceID := GetNilSpaceID(gameid)
+	return createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, spaceID, map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: 0,
 	}, nil, nil, ccCreate)
+}
+
+// GetNilSpaceEntityID returns the EntityID for Nil Space on the specified game
+// GoWorld uses fixed EntityID for nil spaces on each game
+func GetNilSpaceID(gameid uint16) common.EntityID {
+	gameidStr := strconv.Itoa(int(gameid))
+	return common.EntityID(uuid.GenFixedUUID([]byte(gameidStr)))
 }
