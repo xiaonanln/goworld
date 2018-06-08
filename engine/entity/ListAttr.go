@@ -64,10 +64,11 @@ func (a *ListAttr) clearOwner() {
 
 	// clear owner of children recursively
 	for _, v := range a.items {
-		if ma, ok := v.(*MapAttr); ok {
-			ma.clearOwner()
-		} else if la, ok := v.(*ListAttr); ok {
-			la.clearOwner()
+		switch a := v.(type) {
+		case *MapAttr:
+			a.clearOwner()
+		case *ListAttr:
+			a.clearOwner()
 		}
 	}
 }
@@ -85,10 +86,11 @@ func (a *ListAttr) setOwner(owner *Entity, flag attrFlag) {
 
 	// set owner of children recursively
 	for _, v := range a.items {
-		if ma, ok := v.(*MapAttr); ok {
-			ma.setOwner(owner, flag)
-		} else if la, ok := v.(*ListAttr); ok {
-			la.setOwner(owner, flag)
+		switch a := v.(type) {
+		case *MapAttr:
+			a.setOwner(owner, flag)
+		case *ListAttr:
+			a.setOwner(owner, flag)
 		}
 	}
 }
@@ -96,22 +98,23 @@ func (a *ListAttr) setOwner(owner *Entity, flag attrFlag) {
 // Set sets item value
 func (a *ListAttr) set(index int, val interface{}) {
 	a.items[index] = val
-	if sa, ok := val.(*MapAttr); ok {
-		// val is ListAttr, set parent and owner accordingly
+	switch sa := val.(type) {
+	case *MapAttr:
+		// val is MapAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
 		sa.setParent(a.owner, a, index, a.flag)
 		a.sendListAttrChangeToClients(index, sa.ToMap())
-	} else if sa, ok := val.(*ListAttr); ok {
+	case *ListAttr:
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in index %d", index)
 		}
 
 		sa.setParent(a.owner, a, index, a.flag)
 		a.sendListAttrChangeToClients(index, sa.ToList())
-	} else {
+	default:
 		a.sendListAttrChangeToClients(index, val)
 	}
 }
@@ -225,9 +228,10 @@ func (a *ListAttr) pop() interface{} {
 	val := a.items[size-1]
 	a.items = a.items[:size-1]
 
-	if sa, ok := val.(*MapAttr); ok {
+	switch sa := val.(type) {
+	case *MapAttr:
 		sa.clearParent()
-	} else if sa, ok := val.(*ListAttr); ok {
+	case *ListAttr:
 		sa.clearParent()
 	}
 
@@ -266,7 +270,8 @@ func (a *ListAttr) append(val interface{}) {
 	a.items = append(a.items, val)
 	index := len(a.items) - 1
 
-	if sa, ok := val.(*MapAttr); ok {
+	switch sa := val.(type) {
+	case *MapAttr:
 		// val is ListAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in append")
@@ -278,14 +283,14 @@ func (a *ListAttr) append(val interface{}) {
 		sa.flag = a.flag
 
 		a.sendListAttrAppendToClients(sa.ToMap())
-	} else if sa, ok := val.(*ListAttr); ok {
+	case *ListAttr:
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in append")
 		}
 
 		sa.setParent(a.owner, a, index, a.flag)
 		a.sendListAttrAppendToClients(sa.ToList())
-	} else {
+	default:
 		a.sendListAttrAppendToClients(val)
 	}
 }
@@ -325,11 +330,12 @@ func (a *ListAttr) ToList() []interface{} {
 	l := make([]interface{}, len(a.items))
 
 	for i, v := range a.items {
-		if ma, ok := v.(*MapAttr); ok {
-			l[i] = ma.ToMap()
-		} else if la, ok := v.(*ListAttr); ok {
-			l[i] = la.ToList()
-		} else {
+		switch a := v.(type) {
+		case *MapAttr:
+			l[i] = a.ToMap()
+		case *ListAttr:
+			l[i] = a.ToList()
+		default:
 			l[i] = v
 		}
 	}
@@ -339,19 +345,20 @@ func (a *ListAttr) ToList() []interface{} {
 // AssignList assigns slice to ListAttr, recursively
 func (a *ListAttr) AssignList(l []interface{}) {
 	for _, v := range l {
-		if iv, ok := v.(map[string]interface{}); ok {
+		switch iv := v.(type) {
+		case map[string]interface{}:
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
 			a.append(ia)
-		} else if iv, ok := v.(bson.M); ok {
+		case bson.M:
 			ia := NewMapAttr()
 			ia.AssignMap(map[string]interface{}(iv))
 			a.append(ia)
-		} else if iv, ok := v.([]interface{}); ok {
+		case []interface{}:
 			ia := NewListAttr()
 			ia.AssignList(iv)
 			a.append(ia)
-		} else {
+		default:
 			a.append(uniformAttrType(v))
 		}
 	}

@@ -39,13 +39,10 @@ func (a *MapAttr) String() string {
 		switch a := v.(type) {
 		case *MapAttr:
 			sb.WriteString(a.String())
-			break
 		case *ListAttr:
 			sb.WriteString(a.String())
-			break
 		default:
 			fmt.Fprintf(&sb, "%#v", v)
-			break
 		}
 		isFirstField = false
 	}
@@ -87,7 +84,8 @@ func (a *MapAttr) ForEach(f func(key string, val interface{})) {
 func (a *MapAttr) set(key string, val interface{}) {
 	var flag attrFlag
 	a.attrs[key] = val
-	if sa, ok := val.(*MapAttr); ok {
+	switch sa := val.(type) {
+	case *MapAttr:
 		// val is MapAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("MapAttr reused in key %s", key)
@@ -100,7 +98,7 @@ func (a *MapAttr) set(key string, val interface{}) {
 		}
 		sa.setParent(a.owner, a, key, flag)
 		a.sendAttrChangeToClients(key, sa.ToMap())
-	} else if sa, ok := val.(*ListAttr); ok {
+	case *ListAttr:
 		// val is ListATtr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
 			gwlog.Panicf("ListAttr reused in key %s", key)
@@ -113,7 +111,7 @@ func (a *MapAttr) set(key string, val interface{}) {
 		}
 		sa.setParent(a.owner, a, key, flag)
 		a.sendAttrChangeToClients(key, sa.ToList())
-	} else {
+	default:
 		a.sendAttrChangeToClients(key, val)
 	}
 }
@@ -295,9 +293,10 @@ func (a *MapAttr) pop(key string) interface{} {
 	}
 
 	delete(a.attrs, key)
-	if sa, ok := val.(*MapAttr); ok {
+	switch sa := val.(type) {
+	case *MapAttr:
 		sa.clearParent()
-	} else if sa, ok := val.(*ListAttr); ok {
+	case *ListAttr:
 		sa.clearParent()
 	}
 
@@ -411,11 +410,12 @@ func (a *MapAttr) PopListAttr(key string) *ListAttr {
 func (a *MapAttr) ToMap() map[string]interface{} {
 	doc := map[string]interface{}{}
 	for k, v := range a.attrs {
-		if a, ok := v.(*MapAttr); ok {
+		switch a := v.(type) {
+		case *MapAttr:
 			doc[k] = a.ToMap()
-		} else if a, ok := v.(*ListAttr); ok {
+		case *ListAttr:
 			doc[k] = a.ToList()
-		} else {
+		default:
 			doc[k] = v
 		}
 	}
@@ -430,11 +430,12 @@ func (a *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interface
 			continue
 		}
 
-		if a, ok := v.(*MapAttr); ok {
+		switch a := v.(type) {
+		case *MapAttr:
 			doc[k] = a.ToMap()
-		} else if a, ok := v.(*ListAttr); ok {
+		case *ListAttr:
 			doc[k] = a.ToList()
-		} else {
+		default:
 			doc[k] = v
 		}
 	}
@@ -444,21 +445,21 @@ func (a *MapAttr) ToMapWithFilter(filter func(string) bool) map[string]interface
 // AssignMap assigns native map to MapAttr recursively
 func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 	for k, v := range doc {
-		if iv, ok := v.(map[string]interface{}); ok {
+		switch iv := v.(type) {
+		case map[string]interface{}:
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
 			a.set(k, ia)
-		} else if iv, ok := v.(bson.M); ok { // treat bson.M like map[string]interface{}
+		case bson.M:
 			ia := NewMapAttr()
 			ia.AssignMap(map[string]interface{}(iv))
 			a.set(k, ia)
-		} else if iv, ok := v.([]interface{}); ok {
+		case []interface{}:
 			ia := NewListAttr()
 			ia.AssignList(iv)
 			a.set(k, ia)
-		} else {
-			v = uniformAttrType(v)
-			a.set(k, v)
+		default:
+			a.set(k, uniformAttrType(v))
 		}
 	}
 }
@@ -497,10 +498,11 @@ func (a *MapAttr) clearOwner() {
 
 	// clear owner of children recursively
 	for _, v := range a.attrs {
-		if ma, ok := v.(*MapAttr); ok {
-			ma.clearOwner()
-		} else if la, ok := v.(*ListAttr); ok {
-			la.clearOwner()
+		switch a := v.(type) {
+		case *MapAttr:
+			a.clearOwner()
+		case *ListAttr:
+			a.clearOwner()
 		}
 	}
 }
@@ -517,10 +519,11 @@ func (a *MapAttr) setOwner(owner *Entity, flag attrFlag) {
 
 	// set owner of children recursively
 	for _, v := range a.attrs {
-		if ma, ok := v.(*MapAttr); ok {
-			ma.setOwner(owner, flag)
-		} else if la, ok := v.(*ListAttr); ok {
-			la.setOwner(owner, flag)
+		switch a := v.(type) {
+		case *MapAttr:
+			a.setOwner(owner, flag)
+		case *ListAttr:
+			a.setOwner(owner, flag)
 		}
 	}
 }

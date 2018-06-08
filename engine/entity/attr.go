@@ -11,21 +11,23 @@ const (
 
 func getPathFromOwner(a interface{}, path []interface{}) []interface{} {
 	for {
-		if ma, ok := a.(*MapAttr); ok {
+		switch ma := a.(type) {
+		case *MapAttr:
 			if ma.parent != nil {
 				path = append(path, ma.pkey)
 				a = ma.parent
 			} else {
 				break
 			}
-		} else {
-			la := a.(*ListAttr)
-			if la.parent != nil {
-				path = append(path, la.pkey)
-				a = la.parent
+		case *ListAttr:
+			if ma.parent != nil {
+				path = append(path, ma.pkey)
+				a = ma.parent
 			} else {
 				break
 			}
+		default:
+			gwlog.Panicf("getPathFromOwner: invalid parent type: %T", a)
 		}
 	}
 
