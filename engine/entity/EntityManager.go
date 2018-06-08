@@ -282,7 +282,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 		if cause == ccCreate {
 			entity.loadPersistentData(data)
 		} else {
-			entity.LoadMigrateData(data)
+			entity.loadMigrateData(data)
 		}
 	} else {
 		entity.Save() // save immediately after creation

@@ -464,7 +464,7 @@ func (a *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(st
 			ia.AssignList(iv)
 			a.set(k, ia)
 		} else {
-			a.set(k, v)
+			a.set(k, uniformAttrType(v))
 		}
 	}
 }

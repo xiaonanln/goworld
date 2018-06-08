@@ -690,7 +690,7 @@ func (e *Entity) getPersistentData() map[string]interface{} {
 //
 // Load persistent data to attributes
 func (e *Entity) loadPersistentData(data map[string]interface{}) {
-	e.Attrs.AssignMap(data)
+	e.Attrs.AssignMapWithFilter(data, e.typeDesc.persistentAttrs.Contains)
 }
 
 func (e *Entity) getClientData() map[string]interface{} {
@@ -706,8 +706,8 @@ func (e *Entity) GetMigrateData() map[string]interface{} {
 	return e.Attrs.ToMap() // all attrs are migrated, without filter
 }
 
-// LoadMigrateData loads migrate data
-func (e *Entity) LoadMigrateData(data map[string]interface{}) {
+// loadMigrateData loads migrate data
+func (e *Entity) loadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
 
