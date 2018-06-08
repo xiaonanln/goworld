@@ -322,7 +322,7 @@ func (a *ListAttr) AssignList(l []interface{}) {
 			ia.AssignList(iv)
 			a.append(ia)
 		} else {
-			a.append(v)
+			a.append(uniformAttrType(v))
 		}
 	}
 }
