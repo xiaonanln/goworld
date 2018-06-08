@@ -150,6 +150,15 @@ func GetNilSpaceID(gameid uint16) EntityID {
 	return entity.GetNilSpaceID(gameid)
 }
 
+// GetNilSpace returns the nil space on this game
+// Nil space is a special space with Kind = 0. Nil space is the default space for all created entities.
+// Each game has one nil space with fixed EntityID for each game, which can be acquired by calling `GetNilSpaceID`
+//
+// Since nil game exists on each game with fixed EntityID, an entity can migrate to target game by calling `e.EnterSpace(GetNilSpaceID(gameid), Vector3{})`
+func GetNilSpace() *Space {
+	return entity.GetNilSpace()
+}
+
 // GetKVDB gets value of key from KVDB
 func GetKVDB(key string, callback kvdb.KVDBGetCallback) {
 	kvdb.Get(key, callback)
