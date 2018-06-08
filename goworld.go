@@ -150,11 +150,6 @@ func GetNilSpaceID(gameid uint16) EntityID {
 	return entity.GetNilSpaceID(gameid)
 }
 
-// Post posts a callback to be executed
-func Post(callback post.PostCallback) {
-	post.Post(callback)
-}
-
 // GetKVDB gets value of key from KVDB
 func GetKVDB(key string, callback kvdb.KVDBGetCallback) {
 	kvdb.Get(key, callback)
@@ -183,4 +178,10 @@ func AddCallback(d time.Duration, callback func()) {
 // AddTimer adds a repeat timer to be executed every specified duration
 func AddTimer(d time.Duration, callback func()) {
 	timer.AddTimer(d, callback)
+}
+
+// Post posts a callback to be executed
+// It is almost same as AddCallback(0, callback)
+func Post(callback post.PostCallback) {
+	post.Post(callback)
 }
