@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"strconv"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -94,4 +96,21 @@ func TestMapAttr(t *testing.T) {
 	t.Logf("bson.M convert to %v", sm)
 	sl := m.GetListAttr("list")
 	t.Logf("list convert to %v", sl)
+}
+
+func BenchmarkConvertBsonMToMap(b *testing.B) {
+	m := bson.M{
+		"a": 1,
+		"b": 2,
+	}
+	for i := 0; i < 100000; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		mm := map[string]interface{}(m) // if there is copy here, it will consume a lot of time
+		mm["a"] = 1
+		mm["b"] = 1
+	}
 }
