@@ -941,6 +941,25 @@ func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 	}
 }
 
+func (e *Entity) sendMapAttrClearToClients(ma *MapAttr) {
+	if ma == e.Attrs {
+		// this is the root attr
+		gwlog.Panicf("outmost e.Attrs can not be cleared")
+	}
+	flag := ma.flag
+
+	if flag&afAllClient != 0 {
+		path := ma.getPathFromOwner()
+		e.client.sendNotifyMapAttrClear(e.ID, path)
+		for neighbor := range e.Neighbors {
+			neighbor.client.sendNotifyMapAttrClear(e.ID, path)
+		}
+	} else if flag&afClient != 0 {
+		path := ma.getPathFromOwner()
+		e.client.sendNotifyMapAttrClear(e.ID, path)
+	}
+}
+
 func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interface{}) {
 	flag := la.flag
 

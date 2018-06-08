@@ -86,6 +86,14 @@ func (client *GameClient) sendNotifyMapAttrDel(entityID common.EntityID, path []
 	dispatchercluster.SelectByGateID(client.gateid).SendNotifyMapAttrDelOnClient(client.gateid, client.clientid, entityID, path, key)
 }
 
+func (client *GameClient) sendNotifyMapAttrClear(entityID common.EntityID, path []interface{}) {
+	if client == nil {
+		return
+	}
+
+	dispatchercluster.SelectByGateID(client.gateid).SendNotifyMapAttrClearOnClient(client.gateid, client.clientid, entityID, path)
+}
+
 // sendNotifyListAttrChange notifies client of ListAttr item changing
 func (client *GameClient) sendNotifyListAttrChange(entityID common.EntityID, path []interface{}, index uint32, val interface{}) {
 	if client == nil {

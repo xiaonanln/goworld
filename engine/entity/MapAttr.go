@@ -200,6 +200,12 @@ func (a *MapAttr) sendAttrDelToClients(key string) {
 	}
 }
 
+func (a *MapAttr) sendAttrClearToClients() {
+	if a.owner != nil {
+		a.owner.sendMapAttrClearToClients(a)
+	}
+}
+
 func (a *MapAttr) getPathFromOwner() []interface{} {
 	if a.path == nil {
 		a.path = a._getPathFromOwner()
@@ -294,9 +300,9 @@ func (a *MapAttr) pop(key string) interface{} {
 	delete(a.attrs, key)
 	switch sa := val.(type) {
 	case *MapAttr:
-		sa.clearParent()
+		sa.removeFromParent()
 	case *ListAttr:
-		sa.clearParent()
+		sa.removeFromParent()
 	}
 
 	a.sendAttrDelToClients(key)
@@ -368,42 +374,25 @@ func (a *MapAttr) PopListAttr(key string) *ListAttr {
 	}
 }
 
-//// Clear removes all key-values from the MapAttr
-//func (a *MapAttr) Clear() {
-//	val, ok := a.attrs[key]
-//	if !ok {
-//		gwlog.Panicf("key not exists: %s", key)
-//	}
-//
-//	delete(a.attrs, key)
-//	if sa, ok := val.(*MapAttr); ok {
-//		sa.clearParent()
-//	} else if sa, ok := val.(*ListAttr); ok {
-//		sa.clearParent()
-//	}
-//
-//	a.sendAttrDelToClients(key)
-//	return val
-//}
+// Clear removes all key-values from the MapAttr
+func (a *MapAttr) Clear() {
+	if len(a.attrs) == 0 {
+		return
+	}
 
-//// GetKeys returns all keys of MapAttr as slice of strings
-//func (a *MapAttr) GetKeys() []string {
-//	size := len(a.attrs)
-//	keys := make([]string, 0, size)
-//	for k := range a.attrs {
-//		keys = append(keys, k)
-//	}
-//	return keys
-//}
-//
-//func (a *MapAttr) GetValues() []interface{} {
-//	size := len(a.attrs)
-//	vals := make([]interface{}, 0, size)
-//	for _, v := range a.attrs {
-//		vals = append(vals, v)
-//	}
-//	return vals
-//}
+	var curattrs map[string]interface{}
+	curattrs, a.attrs = a.attrs, map[string]interface{}{}
+	for _, v := range curattrs {
+		switch sa := v.(type) {
+		case *MapAttr:
+			sa.removeFromParent()
+		case *ListAttr:
+			sa.removeFromParent()
+		}
+	}
+
+	a.sendAttrClearToClients()
+}
 
 // ToMap converts MapAttr to native map, recursively
 func (a *MapAttr) ToMap() map[string]interface{} {
@@ -480,7 +469,7 @@ func (a *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(st
 	}
 }
 
-func (a *MapAttr) clearParent() {
+func (a *MapAttr) removeFromParent() {
 	a.parent = nil
 	a.pkey = nil
 	a.clearOwner()

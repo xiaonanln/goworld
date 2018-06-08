@@ -49,7 +49,7 @@ func (a *ListAttr) Size() int {
 	return len(a.items)
 }
 
-func (a *ListAttr) clearParent() {
+func (a *ListAttr) removeFromParent() {
 	a.parent = nil
 	a.pkey = nil
 
@@ -229,9 +229,9 @@ func (a *ListAttr) pop() interface{} {
 
 	switch sa := val.(type) {
 	case *MapAttr:
-		sa.clearParent()
+		sa.removeFromParent()
 	case *ListAttr:
-		sa.clearParent()
+		sa.removeFromParent()
 	}
 
 	a.sendListAttrPopToClients()

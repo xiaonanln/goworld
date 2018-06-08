@@ -211,6 +211,17 @@ func (gwc *GoWorldConnection) SendNotifyMapAttrDelOnClient(gateid uint16, client
 	return gwc.SendPacketRelease(packet)
 }
 
+// SendNotifyMapAttrClearOnClient sends MT_NOTIFY_MAP_ATTR_CLEAR_ON_CLIENT message
+func (gwc *GoWorldConnection) SendNotifyMapAttrClearOnClient(gateid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}) error {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_NOTIFY_MAP_ATTR_CLEAR_ON_CLIENT)
+	packet.AppendUint16(gateid)
+	packet.AppendClientID(clientid)
+	packet.AppendEntityID(entityid)
+	packet.AppendData(path)
+	return gwc.SendPacketRelease(packet)
+}
+
 // SendNotifyListAttrChangeOnClient sends MT_NOTIFY_LIST_ATTR_CHANGE_ON_CLIENT message
 func (gwc *GoWorldConnection) SendNotifyListAttrChangeOnClient(gateid uint16, clientid common.ClientID, entityid common.EntityID, path []interface{}, index uint32, val interface{}) error {
 	packet := gwc.packetConn.NewPacket()
