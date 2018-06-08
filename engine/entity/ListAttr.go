@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -13,6 +16,33 @@ type ListAttr struct {
 	path   []interface{}
 	flag   attrFlag
 	items  []interface{}
+}
+
+func (a *ListAttr) String() string {
+	var sb strings.Builder
+	sb.WriteString("ListAttr{")
+	isFirstField := true
+	for _, v := range a.items {
+		if !isFirstField {
+			sb.WriteString(", ")
+		}
+
+		switch a := v.(type) {
+		case *MapAttr:
+			sb.WriteString(a.String())
+			break
+		case *ListAttr:
+			sb.WriteString(a.String())
+			break
+		default:
+			fmt.Fprintf(&sb, "%#v", v)
+			break
+		}
+		isFirstField = false
+	}
+
+	sb.WriteString("}")
+	return sb.String()
 }
 
 // Size returns size of ListAttr
