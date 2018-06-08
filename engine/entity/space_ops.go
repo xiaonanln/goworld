@@ -35,3 +35,7 @@ func GetNilSpaceID(gameid uint16) common.EntityID {
 	gameidStr := strconv.Itoa(int(gameid))
 	return common.EntityID(uuid.GenFixedUUID([]byte(gameidStr)))
 }
+
+func GetNilSpace() *Space {
+	return nilSpace
+}

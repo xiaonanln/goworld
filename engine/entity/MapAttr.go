@@ -1,6 +1,10 @@
 package entity
 
 import (
+	"strings"
+
+	"fmt"
+
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -18,6 +22,35 @@ type MapAttr struct {
 // Size returns the size of MapAttr
 func (a *MapAttr) Size() int {
 	return len(a.attrs)
+}
+
+// String convert MapAttr to readable string
+func (a *MapAttr) String() string {
+	var sb strings.Builder
+	sb.WriteString("MapAttr{")
+	isFirstField := true
+	for k, v := range a.attrs {
+		if !isFirstField {
+			sb.WriteString(", ")
+		}
+
+		fmt.Fprintf(&sb, "%#v", k)
+		sb.WriteString(": ")
+		switch a := v.(type) {
+		case *MapAttr:
+			sb.WriteString(a.String())
+			break
+		case *ListAttr:
+			sb.WriteString(a.String())
+			break
+		default:
+			fmt.Fprintf(&sb, "%#v", v)
+			break
+		}
+		isFirstField = false
+	}
+	sb.WriteString("}")
+	return sb.String()
 }
 
 // HasKey returns if the key exists in MapAttr

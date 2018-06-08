@@ -1,6 +1,9 @@
 package goworld
 
 import (
+	"time"
+
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -147,9 +150,13 @@ func GetNilSpaceID(gameid uint16) EntityID {
 	return entity.GetNilSpaceID(gameid)
 }
 
-// Post posts a callback to be executed
-func Post(callback post.PostCallback) {
-	post.Post(callback)
+// GetNilSpace returns the nil space on this game
+// Nil space is a special space with Kind = 0. Nil space is the default space for all created entities.
+// Each game has one nil space with fixed EntityID for each game, which can be acquired by calling `GetNilSpaceID`
+//
+// Since nil game exists on each game with fixed EntityID, an entity can migrate to target game by calling `e.EnterSpace(GetNilSpaceID(gameid), Vector3{})`
+func GetNilSpace() *Space {
+	return entity.GetNilSpace()
 }
 
 // GetKVDB gets value of key from KVDB
@@ -170,4 +177,20 @@ func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 // ListGameIDs returns all game IDs
 func ListGameIDs() []uint16 {
 	return config.GetGameIDs()
+}
+
+// AddTimer adds a timer to be executed after specified duration
+func AddCallback(d time.Duration, callback func()) {
+	timer.AddCallback(d, callback)
+}
+
+// AddTimer adds a repeat timer to be executed every specified duration
+func AddTimer(d time.Duration, callback func()) {
+	timer.AddTimer(d, callback)
+}
+
+// Post posts a callback to be executed
+// It is almost same as AddCallback(0, callback)
+func Post(callback post.PostCallback) {
+	post.Post(callback)
 }
