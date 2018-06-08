@@ -2,7 +2,6 @@ package entity
 
 import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/typeconv"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -188,8 +187,8 @@ func (a *MapAttr) _getPathFromOwner() []interface{} {
 	return getPathFromOwner(a.parent, path)
 }
 
-// Get returns the attribute of specified key in MapAttr
-func (a *MapAttr) Get(key string) interface{} {
+// get returns the attribute of specified key in MapAttr
+func (a *MapAttr) get(key string) interface{} {
 	val, ok := a.attrs[key]
 	if !ok {
 		gwlog.Panicf("key not exists: %s", key)
@@ -199,44 +198,67 @@ func (a *MapAttr) Get(key string) interface{} {
 
 // GetInt returns the attribute of specified key in MapAttr as int64
 func (a *MapAttr) GetInt(key string) int64 {
-	return typeconv.Int(a.Get(key))
+	if val, ok := a.attrs[key]; ok {
+		return val.(int64)
+	} else {
+		return 0
+	}
 }
 
 // GetStr returns the attribute of specified key in MapAttr as string
 func (a *MapAttr) GetStr(key string) string {
-	val := a.Get(key)
-	return val.(string)
+	if val, ok := a.attrs[key]; ok {
+		return val.(string)
+	} else {
+		return ""
+	}
 }
 
 // GetFloat returns the attribute of specified key in MapAttr as float64
 func (a *MapAttr) GetFloat(key string) float64 {
-	val := a.Get(key)
-	return val.(float64)
+	if val, ok := a.attrs[key]; ok {
+		return val.(float64)
+	} else {
+		return 0
+	}
 }
 
 // GetBool returns the attribute of specified key in MapAttr as bool
 func (a *MapAttr) GetBool(key string) bool {
-	val := a.Get(key)
-	return val.(bool)
+	if val, ok := a.attrs[key]; ok {
+		return val.(bool)
+	} else {
+		return false
+	}
 }
 
 // GetMapAttr returns the attribute of specified key in MapAttr as MapAttr
 func (a *MapAttr) GetMapAttr(key string) *MapAttr {
-	val := a.Get(key)
-	return val.(*MapAttr)
+	if val, ok := a.attrs[key]; ok {
+		return val.(*MapAttr)
+	} else {
+		v := NewMapAttr()
+		a.set(key, v)
+		return v
+	}
 }
 
 // GetListAttr returns the attribute of specified key in MapAttr as ListAttr
 func (a *MapAttr) GetListAttr(key string) *ListAttr {
-	val := a.Get(key)
-	return val.(*ListAttr)
+	if val, ok := a.attrs[key]; ok {
+		return val.(*ListAttr)
+	} else {
+		v := NewListAttr()
+		a.set(key, v)
+		return v
+	}
 }
 
 // Pop deletes a key in MapAttr and returns the attribute
-func (a *MapAttr) Pop(key string) interface{} {
+func (a *MapAttr) pop(key string) interface{} {
 	val, ok := a.attrs[key]
 	if !ok {
-		gwlog.Panicf("key not exists: %s", key)
+		return nil
 	}
 
 	delete(a.attrs, key)
@@ -252,13 +274,67 @@ func (a *MapAttr) Pop(key string) interface{} {
 
 // Del deletes a key in MapAttr
 func (a *MapAttr) Del(key string) {
-	a.Pop(key)
+	a.pop(key)
+}
+
+// PopInt deletes a key in MapAttr and returns the attribute as int64
+func (a *MapAttr) PopInt(key string) int64 {
+	val := a.pop(key)
+	if val != nil {
+		return val.(int64)
+	} else {
+		return 0
+	}
+}
+
+// PopFloat deletes a key in MapAttr and returns the attribute as float64
+func (a *MapAttr) PopFloat(key string) float64 {
+	val := a.pop(key)
+	if val != nil {
+		return val.(float64)
+	} else {
+		return 0.0
+	}
+}
+
+// PopBool deletes a key in MapAttr and returns the attribute as bool
+func (a *MapAttr) PopBool(key string) bool {
+	val := a.pop(key)
+	if val != nil {
+		return val.(bool)
+	} else {
+		return false
+	}
+}
+
+// PopStr deletes a key in MapAttr and returns the attribute as str
+func (a *MapAttr) PopStr(key string) string {
+	val := a.pop(key)
+	if val != nil {
+		return val.(string)
+	} else {
+		return ""
+	}
 }
 
 // PopMapAttr deletes a key in MapAttr and returns the attribute as MapAttr
 func (a *MapAttr) PopMapAttr(key string) *MapAttr {
-	val := a.Pop(key)
-	return val.(*MapAttr)
+	val := a.pop(key)
+	if val != nil {
+		return val.(*MapAttr)
+	} else {
+		return nil
+	}
+}
+
+// PopListAttr deletes a key in MapAttr and returns the attribute as MapAttr
+func (a *MapAttr) PopListAttr(key string) *ListAttr {
+	val := a.pop(key)
+	if val != nil {
+		return val.(*ListAttr)
+	} else {
+		return nil
+	}
 }
 
 //// Clear removes all key-values from the MapAttr
@@ -348,6 +424,7 @@ func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 			ia.AssignList(iv)
 			a.set(k, ia)
 		} else {
+			v = uniformAttrType(v)
 			a.set(k, v)
 		}
 	}
