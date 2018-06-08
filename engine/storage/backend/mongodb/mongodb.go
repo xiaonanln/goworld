@@ -58,18 +58,40 @@ func (es *mongoDBEntityStorge) Read(typeName string, entityID common.EntityID) (
 	if err != nil {
 		return nil, err
 	}
-	return map[string]interface{}(doc["data"].(bson.M)), nil
+	return es.convertM2Map(doc["data"].(bson.M)), nil
 }
 
-//func (es *mongoDBEntityStorge) convertM2Map(m bson.M) map[string]interface{} {
-//	ma := map[string]interface{}(m)
-//	for k, v := range ma {
-//		if m, ok := v.(bson.M); ok {
-//			ma[k] = es.convertM2Map(m)
-//		}
-//	}
-//	return ma
-//}
+func (es *mongoDBEntityStorge) convertM2Map(m bson.M) map[string]interface{} {
+	ma := map[string]interface{}(m)
+	es.convertM2MapInMap(ma)
+	return ma
+}
+
+func (es *mongoDBEntityStorge) convertM2MapInMap(m map[string]interface{}) {
+	for k, v := range m {
+		switch im := v.(type) {
+		case bson.M:
+			m[k] = es.convertM2Map(im)
+		case map[string]interface{}:
+			es.convertM2MapInMap(im)
+		case []interface{}:
+			es.convertM2MapInList(im)
+		}
+	}
+}
+
+func (es *mongoDBEntityStorge) convertM2MapInList(l []interface{}) {
+	for i, v := range l {
+		switch im := v.(type) {
+		case bson.M:
+			l[i] = es.convertM2Map(im)
+		case map[string]interface{}:
+			es.convertM2MapInMap(im)
+		case []interface{}:
+			es.convertM2MapInList(im)
+		}
+	}
+}
 
 func (es *mongoDBEntityStorge) getCollection(typeName string) *mgo.Collection {
 	return es.db.C(typeName)

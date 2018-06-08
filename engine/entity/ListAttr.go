@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // ListAttr is a attribute for a list of attributes
@@ -349,10 +348,6 @@ func (a *ListAttr) AssignList(l []interface{}) {
 		case map[string]interface{}:
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
-			a.append(ia)
-		case bson.M:
-			ia := NewMapAttr()
-			ia.AssignMap(map[string]interface{}(iv))
 			a.append(ia)
 		case []interface{}:
 			ia := NewListAttr()

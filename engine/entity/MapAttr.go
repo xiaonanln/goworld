@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // MapAttr is a map attribute containing muiltiple attributes indexed by string keys
@@ -449,10 +448,6 @@ func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 		case map[string]interface{}:
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
-			a.set(k, ia)
-		case bson.M:
-			ia := NewMapAttr()
-			ia.AssignMap(map[string]interface{}(iv))
 			a.set(k, ia)
 		case []interface{}:
 			ia := NewListAttr()

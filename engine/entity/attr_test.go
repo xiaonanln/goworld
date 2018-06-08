@@ -26,12 +26,6 @@ func TestMapAttr(t *testing.T) {
 		"float64": float64(64.0),
 		"bool":    true,
 		"string":  "xxx",
-		"bson.M": bson.M{
-			"a": 1, "b": 2,
-			"innerM1": bson.M{
-				"a": 1, "b": 2,
-			},
-		},
 		"subM": map[string]interface{}{
 			"a": 1, "b": 2,
 			"innerM1": map[string]interface{}{
@@ -89,11 +83,6 @@ func TestMapAttr(t *testing.T) {
 	if math.Abs(m.GetFloat("not exist key")-0.0) >= 0.000001 {
 		t.Fatalf("wrong value")
 	}
-	if !m.HasKey("bson.M") {
-		t.Fatalf("should has key")
-	}
-	sm := m.GetMapAttr("bson.M")
-	t.Logf("bson.M convert to %v", sm)
 	sl := m.GetListAttr("list")
 	t.Logf("list convert to %v", sl)
 }
