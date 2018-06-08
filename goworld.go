@@ -1,6 +1,9 @@
 package goworld
 
 import (
+	"time"
+
+	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -170,4 +173,14 @@ func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 // ListGameIDs returns all game IDs
 func ListGameIDs() []uint16 {
 	return config.GetGameIDs()
+}
+
+// AddTimer adds a timer to be executed after specified duration
+func AddCallback(d time.Duration, callback func()) {
+	timer.AddCallback(d, callback)
+}
+
+// AddTimer adds a repeat timer to be executed every specified duration
+func AddTimer(d time.Duration, callback func()) {
+	timer.AddTimer(d, callback)
 }
