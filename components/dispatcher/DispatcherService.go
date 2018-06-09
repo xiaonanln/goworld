@@ -96,6 +96,9 @@ type gameDispatchInfo struct {
 
 func (gdi *gameDispatchInfo) setClientProxy(clientProxy *dispatcherClientProxy) (oldClientProxy *dispatcherClientProxy) {
 	oldClientProxy, gdi._clientProxy = gdi._clientProxy, clientProxy
+	if gdi._clientProxy != nil && !gdi.isBlocked() {
+		gdi.sendPendingPackets()
+	}
 	return
 }
 
@@ -112,12 +115,16 @@ func (gdi *gameDispatchInfo) isConnected() bool {
 }
 
 func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
-	if !gdi.isBlocked() {
+	if !gdi.isBlocked() && gdi._clientProxy != nil {
 		return gdi._clientProxy.SendPacket(pkt)
 	} else {
 		if len(gdi.pendingPacketQueue) < consts.GAME_PENDING_PACKET_QUEUE_MAX_LEN {
 			gdi.pendingPacketQueue = append(gdi.pendingPacketQueue, pkt)
 			pkt.AddRefCount(1)
+
+			if len(gdi.pendingPacketQueue)%1 == 0 {
+				gwlog.Warnf("game %d pending packet count = %d, blocked = %v, clientproxy = %s", gdi.gameid, len(gdi.pendingPacketQueue), gdi.isBlocked(), gdi._clientProxy)
+			}
 			return nil
 		} else {
 			return errors.Errorf("packet to game %d is dropped", gdi.gameid)
@@ -129,13 +136,19 @@ func (gdi *gameDispatchInfo) unblock() {
 	if !gdi.blockUntilTime.IsZero() {
 		gdi.blockUntilTime = time.Time{}
 
-		// send the cached calls to target game
-		var pendingPackets []*netutil.Packet
-		pendingPackets, gdi.pendingPacketQueue = gdi.pendingPacketQueue, nil
-		for _, pkt := range pendingPackets {
-			gdi._clientProxy.SendPacket(pkt)
-			pkt.Release()
+		if gdi._clientProxy != nil {
+			gdi.sendPendingPackets()
 		}
+	}
+}
+
+func (gdi *gameDispatchInfo) sendPendingPackets() {
+	// send the cached calls to target game
+	var pendingPackets []*netutil.Packet
+	pendingPackets, gdi.pendingPacketQueue = gdi.pendingPacketQueue, nil
+	for _, pkt := range pendingPackets {
+		gdi._clientProxy.SendPacket(pkt)
+		pkt.Release()
 	}
 }
 
@@ -367,8 +380,17 @@ func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pk
 	if dcp.gameid > 0 || dcp.gateid > 0 {
 		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 	}
+
 	dcp.gateid = gateid
 	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL) // TODO: why start autoflush after gameid is set ?
+	gwlog.Infof("Gate %d is connected: %s", gateid, dcp)
+
+	olddcp := service.gates[gateid-1]
+	if olddcp != nil {
+		gwlog.Warnf("Gate %d connection %s is replaced by new connection %s", gateid, olddcp, dcp)
+		olddcp.Close()
+		service.handleGateDown(olddcp)
+	}
 
 	service.gates[gateid-1] = dcp
 }
@@ -433,22 +455,39 @@ func (service *DispatcherService) handleDispatcherClientDisconnect(dcp *dispatch
 	// nothing to do when client disconnected
 	defer func() {
 		if err := recover(); err != nil {
-			gwlog.Infof("handleDispatcherClientDisconnect paniced: %v", err)
+			gwlog.Errorf("handleDispatcherClientDisconnect paniced: %v", err)
 		}
 	}()
 	gwlog.Warnf("%s disconnected", dcp)
 	if dcp.gateid > 0 {
 		// gate disconnected, notify all clients disconnected
-		service.handleGateDown(dcp.gateid)
+		service.handleGateDown(dcp)
+	} else if dcp.gameid > 0 {
+		service.handleGameDown(dcp)
 	}
 }
 
-func (service *DispatcherService) handleGateDown(gateid uint16) {
+func (service *DispatcherService) handleGateDown(dcp *dispatcherClientProxy) {
+	gateid := dcp.gateid
+	gwlog.Warnf("Gate %d connection %s is down!", gateid, dcp)
+
+	curdcp := service.gates[gateid-1]
+	if curdcp != dcp {
+		gwlog.Errorf("Gate %d connection %s is down, but the current connection is %s", gateid, dcp, curdcp)
+		return
+	}
+
+	service.gates[gateid-1] = nil
+
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(proto.MT_NOTIFY_GATE_DISCONNECTED)
 	pkt.AppendUint16(gateid)
 	service.broadcastToGames(pkt)
 	pkt.Release()
+}
+
+func (service *DispatcherService) handleGameDown(dcp *dispatcherClientProxy) {
+
 }
 
 // Entity is create on the target game

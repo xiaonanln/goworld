@@ -60,7 +60,6 @@ type Entity struct {
 	lastTimerId EntityTimerID
 
 	client            *GameClient
-	declaredServices  common.StringSet
 	syncingFromClient bool
 
 	Attrs *MapAttr
@@ -199,7 +198,6 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
-	e.declaredServices = common.StringSet{}
 	e.filterProps = map[string]string{}
 
 	attrs := NewMapAttr()
@@ -608,8 +606,6 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 
 // DeclareService declares global service for service entity
 func (e *Entity) DeclareService(serviceName string) {
-	e.declaredServices.Add(serviceName)
-
 	dispatchercluster.SendDeclareService(e.ID, serviceName)
 }
 

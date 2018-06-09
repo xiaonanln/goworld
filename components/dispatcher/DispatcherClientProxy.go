@@ -8,6 +8,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
+	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
@@ -33,7 +34,9 @@ func (dcp *dispatcherClientProxy) serve() {
 	// Serve the dispatcher client from server / gate
 	defer func() {
 		dcp.Close()
-		dcp.owner.handleDispatcherClientDisconnect(dcp)
+		post.Post(func() {
+			dcp.owner.handleDispatcherClientDisconnect(dcp)
+		})
 		err := recover()
 		if err != nil && !netutil.IsConnectionError(err) {
 			gwlog.TraceError("Client %s paniced with error: %v", dcp, err)
