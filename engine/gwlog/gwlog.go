@@ -7,6 +7,8 @@ import (
 
 	"encoding/json"
 
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -25,19 +27,19 @@ var (
 	// FatalLevel level
 	FatalLevel Level = Level(zap.FatalLevel)
 
-	// Debugf logs formatted debug message
-	Debugf logFormatFunc
-	// Infof logs formatted info message
-	Infof logFormatFunc
-	// Warnf logs formatted warn message
-	Warnf logFormatFunc
-	// Errorf logs formatted error message
-	Errorf logFormatFunc
-	Panicf logFormatFunc
-	Fatalf logFormatFunc
-	Error  func(args ...interface{})
-	Fatal  func(args ...interface{})
-	Panic  func(args ...interface{})
+	//// Debugf logs formatted debug message
+	//Debugf logFormatFunc
+	//// Infof logs formatted info message
+	//Infof logFormatFunc
+	//// Warnf logs formatted warn message
+	//Warnf logFormatFunc
+	//// Errorf logs formatted error message
+	//Errorf logFormatFunc
+	//Panicf logFormatFunc
+	//Fatalf logFormatFunc
+	//Error  func(args ...interface{})
+	//Fatal  func(args ...interface{})
+	//Panic  func(args ...interface{})
 )
 
 type logFormatFunc func(format string, args ...interface{})
@@ -71,7 +73,7 @@ func init() {
 	if err = json.Unmarshal(cfgJson, &cfg); err != nil {
 		panic(err)
 	}
-
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	rebuildLoggerFromCfg()
 }
 
@@ -129,6 +131,7 @@ func rebuildLoggerFromCfg() {
 			logger.Sync()
 		}
 		logger = newLogger
+		//logger = logger.With(zap.Time("ts", time.Now()))
 		if source != "" {
 			logger = logger.With(zap.String("source", source))
 		}
@@ -138,15 +141,42 @@ func rebuildLoggerFromCfg() {
 	}
 }
 
+func Debugf(format string, args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Debugf(format, args...)
+}
+
+func Infof(format string, args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Infof(format, args...)
+}
+
+func Warnf(format string, args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Warnf(format, args...)
+}
+
+func Errorf(format string, args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Errorf(format, args...)
+}
+
+func Panicf(format string, args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Panicf(format, args...)
+}
+
+func Fatalf(format string, args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Fatalf(format, args...)
+}
+
+func Error(args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Error(args...)
+}
+
+func Panic(args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Panic(args...)
+}
+
+func Fatal(args ...interface{}) {
+	sugar.With(zap.Time("ts", time.Now())).Fatal(args...)
+}
+
 func setSugar(sugar_ *zap.SugaredLogger) {
 	sugar = sugar_
-	Debugf = sugar.Debugf
-	Infof = sugar.Infof
-	Warnf = sugar.Warnf
-	Errorf = sugar.Errorf
-	Error = sugar.Error
-	Panicf = sugar.Panicf
-	Panic = sugar.Panic
-	Fatalf = sugar.Fatalf
-	Fatal = sugar.Fatal
 }
