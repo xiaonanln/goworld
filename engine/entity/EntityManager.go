@@ -331,7 +331,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 
 func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, pos Vector3) {
 	// load the data from storage
-	storage.Load(typeName, entityID, func(data interface{}, err error) {
+	storage.Load(typeName, entityID, func(_data interface{}, err error) {
 		// callback runs in main routine
 		if err != nil {
 			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
@@ -344,7 +344,19 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 			return
 		}
 
-		createEntity(typeName, space, pos, entityID, data.(map[string]interface{}), nil, nil, ccCreate)
+		data := _data.(map[string]interface{})
+		// need to remove NOT persistent fields from data
+		entityTypeDesc := registeredEntityTypes[typeName]
+		removeFields := []string{}
+		for k, _ := range data {
+			if !entityTypeDesc.persistentAttrs.Contains(k) {
+				removeFields = append(removeFields, k)
+			}
+		}
+		for _, f := range removeFields {
+			delete(data, f)
+		}
+		createEntity(typeName, space, pos, entityID, data, nil, nil, ccCreate)
 	})
 }
 

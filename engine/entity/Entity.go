@@ -690,7 +690,7 @@ func (e *Entity) getPersistentData() map[string]interface{} {
 //
 // Load persistent data to attributes
 func (e *Entity) loadPersistentData(data map[string]interface{}) {
-	e.Attrs.AssignMapWithFilter(data, e.typeDesc.persistentAttrs.Contains)
+	e.Attrs.AssignMap(data)
 }
 
 func (e *Entity) getClientData() map[string]interface{} {
