@@ -39,23 +39,25 @@ type GameService struct {
 	//registeredServices map[string]entity.EntityIDSet
 
 	packetQueue                    chan proto.Message
-	isAllGamesConnected            bool
 	runState                       xnsyncutil.AtomicInt
 	nextCollectEntitySyncInfosTime time.Time
 	dispatcherStartFreezeAcks      []bool
 	positionSyncInterval           time.Duration
 	ticker                         <-chan time.Time
-	connectedGames                 []uint16
+	isGameConnected                []bool
 	//collectEntitySyncInfosRequest chan struct{}
 	//collectEntitySycnInfosReply   chan interface{}
 }
 
 func newGameService(gameid uint16) *GameService {
+	//cfg := config.GetGame(gameid)
+	totalGameNum := config.GetGamesNum()
 	return &GameService{
 		id: gameid,
 		//registeredServices: map[string]entity.EntityIDSet{},
-		packetQueue: make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
-		ticker:      time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
+		packetQueue:     make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
+		ticker:          time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
+		isGameConnected: make([]bool, totalGameNum),
 		//terminated:         xnsyncutil.NewOneTimeCond(),
 		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
 		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
@@ -98,66 +100,69 @@ func (gs *GameService) serveRoutine() {
 		select {
 		case item := <-gs.packetQueue:
 			msgtype, pkt := item.MsgType, item.Packet
-			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
+			switch msgtype {
+			case proto.MT_SYNC_POSITION_YAW_FROM_CLIENT:
 				gs.HandleSyncPositionYawFromClient(pkt)
-			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
+			case proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT:
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
 				clientid := pkt.ReadClientID()
 				gs.HandleCallEntityMethod(eid, method, args, clientid)
-			} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
+			case proto.MT_CALL_ENTITY_METHOD:
 				eid := pkt.ReadEntityID()
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
 				gs.HandleCallEntityMethod(eid, method, args, "")
-			} else if msgtype == proto.MT_QUERY_SPACE_GAMEID_FOR_MIGRATE_ACK {
+			case proto.MT_QUERY_SPACE_GAMEID_FOR_MIGRATE_ACK:
 				gs.HandleQuerySpaceGameIDForMigrateAck(pkt)
-			} else if msgtype == proto.MT_MIGRATE_REQUEST_ACK {
+			case proto.MT_MIGRATE_REQUEST_ACK:
 				gs.HandleMigrateRequestAck(pkt)
-			} else if msgtype == proto.MT_REAL_MIGRATE {
+			case proto.MT_REAL_MIGRATE:
 				gs.HandleRealMigrate(pkt)
-			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
+			case proto.MT_NOTIFY_CLIENT_CONNECTED:
 				clientid := pkt.ReadClientID()
 				gid := pkt.ReadUint16()
 				gs.HandleNotifyClientConnected(clientid, gid)
-			} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
+			case proto.MT_NOTIFY_CLIENT_DISCONNECTED:
 				clientid := pkt.ReadClientID()
 				gs.HandleNotifyClientDisconnected(clientid)
-			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
+			case proto.MT_LOAD_ENTITY_ANYWHERE:
 				eid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
 				gs.HandleLoadEntityAnywhere(typeName, eid)
-			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
+			case proto.MT_CREATE_ENTITY_ANYWHERE:
 				entityid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
 				var data map[string]interface{}
 				pkt.ReadData(&data)
 				gs.HandleCreateEntityAnywhere(entityid, typeName, data)
-			} else if msgtype == proto.MT_CALL_NIL_SPACES {
+			case proto.MT_CALL_NIL_SPACES:
 				_ = pkt.ReadUint16() // ignore except gameid
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
 				gs.HandleCallNilSpaces(method, args)
-			} else if msgtype == proto.MT_DECLARE_SERVICE {
+			case proto.MT_DECLARE_SERVICE:
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
 				gs.HandleDeclareService(eid, serviceName)
-			} else if msgtype == proto.MT_UNDECLARE_SERVICE {
+			case proto.MT_UNDECLARE_SERVICE:
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
 				gs.HandleUndeclareService(eid, serviceName)
-			} else if msgtype == proto.MT_NOTIFY_ALL_GAMES_CONNECTED {
-				gs.handleNotifyAllGamesConnected()
-			} else if msgtype == proto.MT_NOTIFY_GATE_DISCONNECTED {
+				//case proto.MT_NOTIFY_ALL_GAMES_CONNECTED:
+				//	gs.handleNotifyAllGamesConnected()
+			case proto.MT_NOTIFY_GATE_DISCONNECTED:
 				gateid := pkt.ReadUint16()
 				gs.HandleGateDisconnected(gateid)
-			} else if msgtype == proto.MT_START_FREEZE_GAME_ACK {
+			case proto.MT_START_FREEZE_GAME_ACK:
 				dispid := pkt.ReadUint16()
 				gs.HandleStartFreezeGameAck(dispid)
-			} else if msgtype == proto.MT_SET_GAME_ID_ACK {
+			case proto.MT_NOTIFY_GAME_CONNECTED:
+				gs.handleNotifyGameConnected(pkt)
+			case proto.MT_SET_GAME_ID_ACK:
 				gs.handleSetGameIDAck(pkt)
-			} else {
+			default:
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 			}
 
@@ -325,10 +330,10 @@ func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceN
 	entity.OnUndeclareService(serviceName, entityID)
 }
 
-func (gs *GameService) handleNotifyAllGamesConnected() {
-	// all games are connected
-	entity.OnAllGamesConnected()
-}
+//func (gs *GameService) handleNotifyAllGamesConnected() {
+//	// all games are connected
+//	entity.OnAllGamesConnected()
+//}
 
 func (gs *GameService) HandleGateDisconnected(gateid uint16) {
 	entity.OnGateDisconnected(gateid)
@@ -346,15 +351,55 @@ func (gs *GameService) HandleStartFreezeGameAck(dispid uint16) {
 	gs.runState.Store(rsFreezing)
 }
 
-func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
-	gameNum := int(pkt.ReadUint16())
-	gs.connectedGames = gs.connectedGames[:0]
-	for i := 0; i < gameNum; i++ {
-		gameid := pkt.ReadUint16()
-		gs.connectedGames = append(gs.connectedGames, gameid)
+func (gs *GameService) handleNotifyGameConnected(pkt *netutil.Packet) {
+	gameid := pkt.ReadUint16() // the new connected game
+	if int(gameid) > config.GetGamesNum() {
+		gwlog.Panicf("%s: handle notify game connected: gameid %d is out of range", gs, gameid)
+		return
 	}
 
-	gwlog.Infof("%s: set game ID ack received, connected games: %v", gs, gs.connectedGames)
+	if gs.isGameConnected[gameid-1] {
+		// should not happen
+		gwlog.Errorf("%s: handle notify game connected: game%d is connected, but it was already connected", gs, gameid)
+		return
+	}
+
+	gs.isGameConnected[gameid-1] = true
+	if gs.isAllGamesConnected() {
+		entity.OnAllGamesConnected()
+	}
+}
+
+func (gs *GameService) isAllGamesConnected() bool {
+	for _, connected := range gs.isGameConnected {
+		if !connected {
+			return false
+		}
+	}
+	return true
+}
+
+func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
+	gameNum := int(pkt.ReadUint16())
+	for i := range gs.isGameConnected {
+		gs.isGameConnected[i] = false // set all games to be not connected
+	}
+	numConnectedGames := 0
+	for i := 0; i < gameNum; i++ {
+		gameid := pkt.ReadUint16()
+		if int(gameid) > len(gs.isGameConnected) {
+			gwlog.Errorf("%s: set game ID ack: gameid %s is out of range", gs, gameid)
+			continue
+		}
+		gs.isGameConnected[gameid-1] = true
+		numConnectedGames += 1
+	}
+
+	gwlog.Infof("%s: set game ID ack received, connected games: %v", gs, numConnectedGames)
+	if gs.isAllGamesConnected() {
+		// all games are connected
+		entity.OnAllGamesConnected()
+	}
 }
 
 func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
@@ -462,5 +507,5 @@ func (gs *GameService) startFreeze() {
 }
 
 func ConnectedGamesNum() int {
-	return len(gameService.connectedGames)
+	return len(gameService.isGameConnected)
 }

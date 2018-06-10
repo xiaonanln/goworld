@@ -193,6 +193,11 @@ func GetGameIDs() []uint16 {
 	return res
 }
 
+// GetGameNum returns the number of games
+func GetGamesNum() int {
+	return len(Get().Games)
+}
+
 // GetGateIDs returns all gate IDs
 func GetGateIDs() []uint16 {
 	cfg := Get()
@@ -207,6 +212,11 @@ func GetGateIDs() []uint16 {
 		res[i] = uint16(id)
 	}
 	return res
+}
+
+// GetGatesNum returns the number of gates
+func GetGatesNum() int {
+	return len(Get().Gates)
 }
 
 // GetDispatcher returns the dispatcher config

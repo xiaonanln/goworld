@@ -175,8 +175,8 @@ type DispatcherService struct {
 
 func newDispatcherService(dispid uint16) *DispatcherService {
 	cfg := config.GetDispatcher(dispid)
-	gameCount := len(config.GetGameIDs())
-	gateCount := len(config.GetGateIDs())
+	gameCount := config.GetGamesNum()
+	gateCount := config.GetGatesNum()
 	entitySyncInfosToGame := make([]*netutil.Packet, gameCount)
 	for i := range entitySyncInfosToGame {
 		pkt := netutil.NewPacket()
@@ -212,56 +212,58 @@ func (service *DispatcherService) messageLoop() {
 			dcp := msg.dcp
 			msgtype := msg.MsgType
 			pkt := msg.Packet
-
-			if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
-				service.handleSyncPositionYawFromClient(dcp, pkt)
-			} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
-				service.handleSyncPositionYawOnClients(dcp, pkt)
-			} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
-				service.handleCallEntityMethod(dcp, pkt)
-			} else if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
+			if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 				service.handleDoSomethingOnSpecifiedClient(dcp, pkt)
-			} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
-				service.handleCallEntityMethodFromClient(dcp, pkt)
-			} else if msgtype == proto.MT_QUERY_SPACE_GAMEID_FOR_MIGRATE {
-				service.handleQuerySpaceGameIDForMigrate(dcp, pkt)
-			} else if msgtype == proto.MT_MIGRATE_REQUEST {
-				service.handleMigrateRequest(dcp, pkt)
-			} else if msgtype == proto.MT_REAL_MIGRATE {
-				service.handleRealMigrate(dcp, pkt)
-			} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {
-				service.handleCallFilteredClientProxies(dcp, pkt)
-			} else if msgtype == proto.MT_NOTIFY_CLIENT_CONNECTED {
-				service.handleNotifyClientConnected(dcp, pkt)
-			} else if msgtype == proto.MT_NOTIFY_CLIENT_DISCONNECTED {
-				service.handleNotifyClientDisconnected(dcp, pkt)
-			} else if msgtype == proto.MT_LOAD_ENTITY_ANYWHERE {
-				service.handleLoadEntityAnywhere(dcp, pkt)
-			} else if msgtype == proto.MT_NOTIFY_CREATE_ENTITY {
-				eid := pkt.ReadEntityID()
-				service.handleNotifyCreateEntity(dcp, pkt, eid)
-			} else if msgtype == proto.MT_NOTIFY_DESTROY_ENTITY {
-				eid := pkt.ReadEntityID()
-				service.handleNotifyDestroyEntity(dcp, pkt, eid)
-			} else if msgtype == proto.MT_CREATE_ENTITY_ANYWHERE {
-				service.handleCreateEntityAnywhere(dcp, pkt)
-			} else if msgtype == proto.MT_CALL_NIL_SPACES {
-				service.handleCallNilSpaces(dcp, pkt)
-			} else if msgtype == proto.MT_CANCEL_MIGRATE {
-				service.handleCancelMigrate(dcp, pkt)
-			} else if msgtype == proto.MT_DECLARE_SERVICE {
-				service.handleDeclareService(dcp, pkt)
-			} else if msgtype == proto.MT_SET_GAME_ID {
-				// this is a game server
-				service.handleSetGameID(dcp, pkt)
-			} else if msgtype == proto.MT_SET_GATE_ID {
-				// this is a gate
-				service.handleSetGateID(dcp, pkt)
-			} else if msgtype == proto.MT_START_FREEZE_GAME {
-				// freeze the game
-				service.handleStartFreezeGame(dcp, pkt)
 			} else {
-				gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
+				switch msgtype {
+				case proto.MT_SYNC_POSITION_YAW_FROM_CLIENT:
+					service.handleSyncPositionYawFromClient(dcp, pkt)
+				case proto.MT_SYNC_POSITION_YAW_ON_CLIENTS:
+					service.handleSyncPositionYawOnClients(dcp, pkt)
+				case proto.MT_CALL_ENTITY_METHOD:
+					service.handleCallEntityMethod(dcp, pkt)
+				case proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT:
+					service.handleCallEntityMethodFromClient(dcp, pkt)
+				case proto.MT_QUERY_SPACE_GAMEID_FOR_MIGRATE:
+					service.handleQuerySpaceGameIDForMigrate(dcp, pkt)
+				case proto.MT_MIGRATE_REQUEST:
+					service.handleMigrateRequest(dcp, pkt)
+				case proto.MT_REAL_MIGRATE:
+					service.handleRealMigrate(dcp, pkt)
+				case proto.MT_CALL_FILTERED_CLIENTS:
+					service.handleCallFilteredClientProxies(dcp, pkt)
+				case proto.MT_NOTIFY_CLIENT_CONNECTED:
+					service.handleNotifyClientConnected(dcp, pkt)
+				case proto.MT_NOTIFY_CLIENT_DISCONNECTED:
+					service.handleNotifyClientDisconnected(dcp, pkt)
+				case proto.MT_LOAD_ENTITY_ANYWHERE:
+					service.handleLoadEntityAnywhere(dcp, pkt)
+				case proto.MT_NOTIFY_CREATE_ENTITY:
+					eid := pkt.ReadEntityID()
+					service.handleNotifyCreateEntity(dcp, pkt, eid)
+				case proto.MT_NOTIFY_DESTROY_ENTITY:
+					eid := pkt.ReadEntityID()
+					service.handleNotifyDestroyEntity(dcp, pkt, eid)
+				case proto.MT_CREATE_ENTITY_ANYWHERE:
+					service.handleCreateEntityAnywhere(dcp, pkt)
+				case proto.MT_CALL_NIL_SPACES:
+					service.handleCallNilSpaces(dcp, pkt)
+				case proto.MT_CANCEL_MIGRATE:
+					service.handleCancelMigrate(dcp, pkt)
+				case proto.MT_DECLARE_SERVICE:
+					service.handleDeclareService(dcp, pkt)
+				case proto.MT_SET_GAME_ID:
+					// this is a game server
+					service.handleSetGameID(dcp, pkt)
+				case proto.MT_SET_GATE_ID:
+					// this is a gate
+					service.handleSetGateID(dcp, pkt)
+				case proto.MT_START_FREEZE_GAME:
+					// freeze the game
+					service.handleStartFreezeGame(dcp, pkt)
+				default:
+					gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
+				}
 			}
 
 			pkt.Release()

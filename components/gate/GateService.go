@@ -234,17 +234,16 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 // HandleDispatcherClientPacket handles packets received by dispatcher client
 func (gs *GateService) handleClientProxyPacket(cp *ClientProxy, msgtype proto.MsgType, pkt *netutil.Packet) {
 	cp.heartbeatTime = time.Now()
-
-	if msgtype == proto.MT_SYNC_POSITION_YAW_FROM_CLIENT {
+	switch msgtype {
+	case proto.MT_SYNC_POSITION_YAW_FROM_CLIENT:
 		gs.handleSyncPositionYawFromClient(pkt)
-	} else if msgtype == proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT {
+	case proto.MT_CALL_ENTITY_METHOD_FROM_CLIENT:
 		pkt.AppendClientID(cp.clientid) // append cp to the packet
 		eid := pkt.ReadEntityID()
 		dispatchercluster.SelectByEntityID(eid).SendPacket(pkt)
-	} else if msgtype == proto.MT_HEARTBEAT_FROM_CLIENT {
+	case proto.MT_HEARTBEAT_FROM_CLIENT:
 		// kcp connected from client, need to do nothing here
-
-	} else {
+	default:
 		gwlog.Panicf("unknown message type from client: %d", msgtype)
 	}
 
