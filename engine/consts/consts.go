@@ -68,11 +68,11 @@ const (
 	// ENTER_SPACE_REQUEST_TIMEOUT is the timeout for enter space request
 	ENTER_SPACE_REQUEST_TIMEOUT = DISPATCHER_MIGRATE_TIMEOUT + time.Minute // enter space should finish in limited seconds
 	// DISPATCHER_MIGRATE_TIMEOUT is timeout for entity migration
-	DISPATCHER_MIGRATE_TIMEOUT = time.Minute * 5
+	DISPATCHER_MIGRATE_TIMEOUT = time.Minute
 	// DISPATCHER_LOAD_TIMEOUT is timeout for loading entity
 	DISPATCHER_LOAD_TIMEOUT = time.Minute
 	// DISPATCHER_FREEZE_GAME_TIMEOUT is timeout for freezing & restoring game
-	DISPATCHER_FREEZE_GAME_TIMEOUT = time.Minute * 5
+	DISPATCHER_FREEZE_GAME_TIMEOUT = time.Second * 10
 	// For Storage
 	// For Operation Monitor
 	// OPMON_DUMP_INTERVAL is the interval to print opmon infos to output
