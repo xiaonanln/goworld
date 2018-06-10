@@ -88,15 +88,15 @@ func (info *entityDispatchInfo) unblock() {
 
 type gameDispatchInfo struct {
 	gameid             uint16
-	_clientProxy       *dispatcherClientProxy
+	clientProxy        *dispatcherClientProxy
 	blockUntilTime     time.Time // game can be blocked
 	pendingPacketQueue []*netutil.Packet
 	isBanBootEntity    bool
 }
 
-func (gdi *gameDispatchInfo) setClientProxy(clientProxy *dispatcherClientProxy) (oldClientProxy *dispatcherClientProxy) {
-	oldClientProxy, gdi._clientProxy = gdi._clientProxy, clientProxy
-	if gdi._clientProxy != nil && !gdi.isBlocked() {
+func (gdi *gameDispatchInfo) setClientProxy(clientProxy *dispatcherClientProxy) {
+	gdi.clientProxy = clientProxy
+	if gdi.clientProxy != nil && !gdi.isBlocked() {
 		gdi.sendPendingPackets()
 	}
 	return
@@ -111,19 +111,19 @@ func (gdi *gameDispatchInfo) isBlocked() bool {
 }
 
 func (gdi *gameDispatchInfo) isConnected() bool {
-	return gdi._clientProxy != nil
+	return gdi.clientProxy != nil
 }
 
 func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
-	if !gdi.isBlocked() && gdi._clientProxy != nil {
-		return gdi._clientProxy.SendPacket(pkt)
+	if !gdi.isBlocked() && gdi.clientProxy != nil {
+		return gdi.clientProxy.SendPacket(pkt)
 	} else {
 		if len(gdi.pendingPacketQueue) < consts.GAME_PENDING_PACKET_QUEUE_MAX_LEN {
 			gdi.pendingPacketQueue = append(gdi.pendingPacketQueue, pkt)
 			pkt.AddRefCount(1)
 
 			if len(gdi.pendingPacketQueue)%1 == 0 {
-				gwlog.Warnf("game %d pending packet count = %d, blocked = %v, clientproxy = %s", gdi.gameid, len(gdi.pendingPacketQueue), gdi.isBlocked(), gdi._clientProxy)
+				gwlog.Warnf("game %d pending packet count = %d, blocked = %v, clientProxy = %s", gdi.gameid, len(gdi.pendingPacketQueue), gdi.isBlocked(), gdi.clientProxy)
 			}
 			return nil
 		} else {
@@ -136,7 +136,7 @@ func (gdi *gameDispatchInfo) unblock() {
 	if !gdi.blockUntilTime.IsZero() {
 		gdi.blockUntilTime = time.Time{}
 
-		if gdi._clientProxy != nil {
+		if gdi.clientProxy != nil {
 			gdi.sendPendingPackets()
 		}
 	}
@@ -147,7 +147,7 @@ func (gdi *gameDispatchInfo) sendPendingPackets() {
 	var pendingPackets []*netutil.Packet
 	pendingPackets, gdi.pendingPacketQueue = gdi.pendingPacketQueue, nil
 	for _, pkt := range pendingPackets {
-		gdi._clientProxy.SendPacket(pkt)
+		gdi.clientProxy.SendPacket(pkt)
 		pkt.Release()
 	}
 }
@@ -322,6 +322,8 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	isRestore := pkt.ReadBool()
 	isBanBootEntity := pkt.ReadBool()
 
+	gwlog.Infof("%s: connection %s set gameid=%d, isReconnect=%v, isRestore=%v, isBanBootEntity=%v", service, dcp, gameid, isReconnect, isRestore, isBanBootEntity)
+
 	if gameid <= 0 {
 		gwlog.Panicf("invalid gameid: %d", gameid)
 	}
@@ -336,40 +338,63 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	}
 
 	gdi := service.games[gameid-1]
+	if gdi.clientProxy != nil {
+		gdi.clientProxy.Close()
+		service.handleGameDisconnected(gdi.clientProxy)
+	}
+
 	oldIsBanBootEntity := gdi.isBanBootEntity
 	gdi.isBanBootEntity = isBanBootEntity
-	olddcp := gdi.setClientProxy(dcp) // should be nil, unless reconnect
-
-	gdi.unblock() // unlock game dispatch info if new game is connected
+	gdi.setClientProxy(dcp) // should be nil, unless reconnect
+	gdi.unblock()           // unlock game dispatch info if new game is connected
 	if oldIsBanBootEntity != isBanBootEntity {
 		service.recalcBootGames() // recalc if necessary
 	}
 
-	if !isRestore {
-		// notify all games that all games connected to dispatcher now!
-		if service.dispid == 1 && service.isAllGameClientsConnected() {
-			pkt.ClearPayload() // reuse this packet
-			pkt.AppendUint16(proto.MT_NOTIFY_ALL_GAMES_CONNECTED)
-			if olddcp == nil {
-				// for the first time that all games connected to dispatcher, notify all games
-				gwlog.Infof("All games(%d) are connected", len(service.games))
-				service.broadcastToGames(pkt)
-			} else { // dispatcher reconnected, only notify this game
-				dcp.SendPacket(pkt)
-			}
+	// reuse the packet to send SET_GAMEID_ACK with all connected gameids
+	connectedGameIDs := service.getConnectedGameIDs()
+	dcp.SendSetGameIDAck(connectedGameIDs)
+	service.sendNotifyGameConnected(gameid)
+
+	//if !isRestore {
+	//	// notify all games that all games connected to dispatcher now!
+	//	if service.dispid == 1 && service.isAllGameClientsConnected() {
+	//		pkt.ClearPayload() // reuse this packet
+	//		pkt.AppendUint16(proto.MT_NOTIFY_ALL_GAMES_CONNECTED)
+	//		if olddcp == nil {
+	//			// for the first time that all games connected to dispatcher, notify all games
+	//			gwlog.Infof("All games(%d) are connected", len(service.games))
+	//			service.broadcastToGames(pkt)
+	//		} else { // dispatcher reconnected, only notify this game
+	//			dcp.SendPacket(pkt)
+	//		}
+	//	}
+	//}
+	//
+	//if olddcp != nil && !isReconnect && !isRestore {
+	//	// game was connected, but a new instance is replaced, so we need to wipe the entities on that game
+	//	service.cleanupEntitiesOfGame(gameid)
+	//}
+	return
+}
+
+func (service *DispatcherService) getConnectedGameIDs() (gameids []uint16) {
+	for _, gdi := range service.games {
+		if gdi.clientProxy != nil {
+			gameids = append(gameids, gdi.gameid)
 		}
 	}
-
-	if olddcp != nil && !isReconnect && !isRestore {
-		// game was connected, but a new instance is replaced, so we need to wipe the entities on that game
-		service.cleanupEntitiesOfGame(gameid)
-	}
-
-	if isRestore {
-		gwlog.Debugf("Game %d restored: %s", dcp.gameid, dcp)
-	}
-
 	return
+}
+
+//
+//func (service *DispatcherService) sendSetGameIDAck(pkt *netutil.Packet) {
+//}
+
+func (service *DispatcherService) sendNotifyGameConnected(gameid uint16) {
+	pkt := proto.MakeNotifyGameConnectedPacket(gameid)
+	service.broadcastToGamesExcept(pkt, gameid)
+	pkt.Release()
 }
 
 func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -389,7 +414,7 @@ func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pk
 	if olddcp != nil {
 		gwlog.Warnf("Gate %d connection %s is replaced by new connection %s", gateid, olddcp, dcp)
 		olddcp.Close()
-		service.handleGateDown(olddcp)
+		service.handleGateDisconnected(olddcp)
 	}
 
 	service.gates[gateid-1] = dcp
@@ -461,13 +486,13 @@ func (service *DispatcherService) handleDispatcherClientDisconnect(dcp *dispatch
 	gwlog.Warnf("%s disconnected", dcp)
 	if dcp.gateid > 0 {
 		// gate disconnected, notify all clients disconnected
-		service.handleGateDown(dcp)
+		service.handleGateDisconnected(dcp)
 	} else if dcp.gameid > 0 {
-		service.handleGameDown(dcp)
+		service.handleGameDisconnected(dcp)
 	}
 }
 
-func (service *DispatcherService) handleGateDown(dcp *dispatcherClientProxy) {
+func (service *DispatcherService) handleGateDisconnected(dcp *dispatcherClientProxy) {
 	gateid := dcp.gateid
 	gwlog.Warnf("Gate %d connection %s is down!", gateid, dcp)
 
@@ -486,8 +511,60 @@ func (service *DispatcherService) handleGateDown(dcp *dispatcherClientProxy) {
 	pkt.Release()
 }
 
-func (service *DispatcherService) handleGameDown(dcp *dispatcherClientProxy) {
+func (service *DispatcherService) handleGameDisconnected(dcp *dispatcherClientProxy) {
+	gameid := dcp.gameid
+	gwlog.Errorf("%s: game %d is down: %s", service, gameid, dcp)
+	gdi := service.games[gameid-1]
+	if dcp != gdi.clientProxy {
+		// this connection is not the current connection
+		return
+	}
 
+	gdi.clientProxy = nil // connection down, set clientProxy = nil
+	if gdi.isBlocked() {
+		// game is freezed, wait for restore
+	} else {
+		// game is down, we need to clear all
+		service.cleanupGameInfo(gameid)
+	}
+
+}
+
+func (service *DispatcherService) cleanupGameInfo(gameid uint16) {
+	// clear all entities and other infos for the game
+	service.cleanupEntitiesOfGame(gameid)
+}
+
+func (service *DispatcherService) cleanupEntitiesOfGame(gameid uint16) {
+	cleanEids := entity.EntityIDSet{} // get all clean eids
+	for eid, dispatchInfo := range service.entityDispatchInfos {
+		if dispatchInfo.gameid == gameid {
+			cleanEids.Add(eid)
+		}
+	}
+
+	// for all services whose entity is cleaned, notify all games that the service is down
+	undeclaredServices := common.StringSet{}
+	for serviceName, serviceEids := range service.registeredServices {
+		var serviceRemoveEids []common.EntityID
+		for serviceEid := range serviceEids {
+			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
+				undeclaredServices.Add(serviceName)
+				serviceRemoveEids = append(serviceRemoveEids, serviceEid)
+				service.handleServiceDown(serviceName, serviceEid)
+			}
+		}
+
+		for _, eid := range serviceRemoveEids {
+			serviceEids.Del(eid)
+		}
+	}
+
+	for eid := range cleanEids {
+		delete(service.entityDispatchInfos, eid)
+	}
+
+	gwlog.Infof("%s: game%d is down, %d entities cleaned, undeclare services: %s", service, gameid, len(cleanEids), undeclaredServices)
 }
 
 // Entity is create on the target game
@@ -586,6 +663,7 @@ func (service *DispatcherService) handleDeclareService(dcp *dispatcherClientProx
 }
 
 func (service *DispatcherService) handleServiceDown(serviceName string, eid common.EntityID) {
+	gwlog.Warnf("%s: service %s: entity %s is down!", service, serviceName, eid)
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
 	pkt.AppendEntityID(eid)
@@ -785,37 +863,6 @@ func (service *DispatcherService) broadcastToGates(pkt *netutil.Packet) {
 	}
 }
 
-func (service *DispatcherService) cleanupEntitiesOfGame(targetGame uint16) {
-	cleanEids := entity.EntityIDSet{} // get all clean eids
-	for eid, dispatchInfo := range service.entityDispatchInfos {
-		if dispatchInfo.gameid == targetGame {
-			cleanEids.Add(eid)
-		}
-	}
-
-	// for all services whose entity is cleaned, notify all games that the service is down
-	undeclaredServices := common.StringSet{}
-	for serviceName, serviceEids := range service.registeredServices {
-		var cleanEidsOfGame []common.EntityID
-		for serviceEid := range serviceEids {
-			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
-				undeclaredServices.Add(serviceName)
-				cleanEidsOfGame = append(cleanEidsOfGame, serviceEid)
-				service.handleServiceDown(serviceName, serviceEid)
-			}
-		}
-
-		for _, eid := range cleanEidsOfGame {
-			serviceEids.Del(eid)
-		}
-	}
-
-	for eid := range cleanEids {
-		delete(service.entityDispatchInfos, eid)
-	}
-
-	gwlog.Infof("Game %d is rebooted, %d entities cleaned, undeclare services: %s", targetGame, len(cleanEids), undeclaredServices)
-}
 func (service *DispatcherService) recalcBootGames() {
 	var candidates []int
 	for i, gdi := range service.games {

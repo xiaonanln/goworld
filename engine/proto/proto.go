@@ -46,7 +46,7 @@ const (
 	// MT_SYNC_POSITION_YAW_FROM_CLIENT is a message type for clients
 	MT_SYNC_POSITION_YAW_FROM_CLIENT
 	// MT_NOTIFY_ALL_GAMES_CONNECTED is a message type to notify all games connected
-	MT_NOTIFY_ALL_GAMES_CONNECTED
+	MT_NOTIFY_ALL_GAMES_CONNECTED // NOT USED ANYMORE
 	// MT_NOTIFY_GATE_DISCONNECTED is a message type to notify gate disconnected
 	MT_NOTIFY_GATE_DISCONNECTED
 	// MT_START_FREEZE_GAME is a message type for hot swapping
@@ -65,6 +65,10 @@ const (
 
 	// MT_CALL_NIL_SPACES message is used to call nil spaces on all games
 	MT_CALL_NIL_SPACES
+	// MT_SET_GAME_ID_ACK is sent by dispatcher to game to ACK MT_SET_GAME_ID message
+	MT_SET_GAME_ID_ACK
+	// MT_NOTIFY_GAME_CONNECTED is sent by dispatcher to game to notify new game connected
+	MT_NOTIFY_GAME_CONNECTED
 )
 
 // Alias message types

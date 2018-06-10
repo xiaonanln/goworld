@@ -45,6 +45,7 @@ type GameService struct {
 	dispatcherStartFreezeAcks      []bool
 	positionSyncInterval           time.Duration
 	ticker                         <-chan time.Time
+	connectedGames                 []uint16
 	//collectEntitySyncInfosRequest chan struct{}
 	//collectEntitySycnInfosReply   chan interface{}
 }
@@ -154,6 +155,8 @@ func (gs *GameService) serveRoutine() {
 			} else if msgtype == proto.MT_START_FREEZE_GAME_ACK {
 				dispid := pkt.ReadUint16()
 				gs.HandleStartFreezeGameAck(dispid)
+			} else if msgtype == proto.MT_SET_GAME_ID_ACK {
+				gs.handleSetGameIDAck(pkt)
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 			}
@@ -343,6 +346,17 @@ func (gs *GameService) HandleStartFreezeGameAck(dispid uint16) {
 	gs.runState.Store(rsFreezing)
 }
 
+func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
+	gameNum := int(pkt.ReadUint16())
+	gs.connectedGames = gs.connectedGames[:0]
+	for i := 0; i < gameNum; i++ {
+		gameid := pkt.ReadUint16()
+		gs.connectedGames = append(gs.connectedGames, gameid)
+	}
+
+	gwlog.Infof("%s: set game ID ack received, connected games: %v", gs, gs.connectedGames)
+}
+
 func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
 	//gwlog.Infof("handleSyncPositionYawFromClient: payload %d", len(pkt.UnreadPayload()))
 	payload := pkt.UnreadPayload()
@@ -445,4 +459,8 @@ func (gs *GameService) startFreeze() {
 	dispatcherNum := len(config.GetDispatcherIDs())
 	gs.dispatcherStartFreezeAcks = make([]bool, dispatcherNum)
 	dispatchercluster.SendStartFreezeGame(gameid)
+}
+
+func ConnectedGamesNum() int {
+	return len(gameService.connectedGames)
 }

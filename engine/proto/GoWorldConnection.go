@@ -363,6 +363,23 @@ func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
 	return gwc.SendPacketRelease(packet)
 }
 
+func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {
+	pkt := netutil.NewPacket()
+	pkt.AppendUint16(MT_NOTIFY_GAME_CONNECTED)
+	pkt.AppendUint16(gameid)
+	return pkt
+}
+
+func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16) error {
+	pkt := netutil.NewPacket()
+	pkt.AppendUint16(MT_SET_GAME_ID_ACK)
+	pkt.AppendUint16(uint16(len(connectedGameIDs)))
+	for _, gameid := range connectedGameIDs {
+		pkt.AppendUint16(gameid)
+	}
+	return gwc.SendPacketRelease(pkt)
+}
+
 // SendPacket send a packet to remote
 func (gwc *GoWorldConnection) SendPacket(packet *netutil.Packet) error {
 	return gwc.packetConn.SendPacket(packet)
