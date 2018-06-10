@@ -203,13 +203,16 @@ func (gs *GameService) waitPostsComplete() {
 
 func (gs *GameService) doTerminate() {
 	// wait for all posts to complete
+	gwlog.Infof("Waiting for posts to complete ...")
 	gs.waitPostsComplete()
 	// wait for all async to clear
+	gwlog.Infof("Waiting for async tasks to complete ...")
 	for async.WaitClear() { // wait for all async to stop
 		gs.waitPostsComplete()
 	}
 
 	// destroy all entities
+	gwlog.Infof("Destroying all entities ...")
 	entity.OnGameTerminating()
 	gwlog.Infof("All entities saved & destroyed, game service terminated.")
 	gs.runState.Store(rsTerminated)

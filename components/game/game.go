@@ -181,7 +181,7 @@ func waitGameServiceStateSatisfied(s func(rs int) bool) {
 			break
 		}
 		waitCounter++
-		if waitCounter%10 == 0 {
+		if waitCounter%100 == 0 {
 			gwlog.Infof("game service status: %d", state)
 		}
 		time.Sleep(time.Millisecond * 10)
