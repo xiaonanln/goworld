@@ -502,6 +502,10 @@ var allGamesConnected bool
 
 // OnAllGamesConnected is called when all games are connected to dispatcher cluster
 func OnAllGamesConnected() {
+	if allGamesConnected {
+		gwlog.Warnf("all games connected, but not for the first time")
+		return
+	}
 
 	allGamesConnected = true
 	gwlog.Infof("all games connected, nil space = %s", nilSpace)
