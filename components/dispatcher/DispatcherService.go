@@ -190,6 +190,7 @@ type DispatcherService struct {
 	chooseClientIndex     int
 	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
 	registeredServices    map[string]entity.EntityIDSet
+	entityIDToServices    map[common.EntityID]common.StringSet
 	targetGameOfClient    map[common.ClientID]uint16
 	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
@@ -213,6 +214,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		gates:                 make([]*dispatcherClientProxy, gateCount),
 		chooseClientIndex:     0,
 		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
+		entityIDToServices:    map[common.EntityID]common.StringSet{},
 		registeredServices:    map[string]entity.EntityIDSet{},
 		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
@@ -570,28 +572,28 @@ func (service *DispatcherService) cleanupEntitiesOfGame(gameid uint16) {
 		}
 	}
 
-	// for all services whose entity is cleaned, notify all games that the service is down
-	undeclaredServices := common.StringSet{}
-	for serviceName, serviceEids := range service.registeredServices {
-		var serviceRemoveEids []common.EntityID
-		for serviceEid := range serviceEids {
-			if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
-				undeclaredServices.Add(serviceName)
-				serviceRemoveEids = append(serviceRemoveEids, serviceEid)
-				service.handleServiceDown(gameid, serviceName, serviceEid)
-			}
-		}
-
-		for _, eid := range serviceRemoveEids {
-			serviceEids.Del(eid)
-		}
-	}
+	//// for all services whose entity is cleaned, notify all games that the service is down
+	//undeclaredServices := common.StringSet{}
+	//for serviceName, serviceEids := range service.registeredServices {
+	//	var serviceRemoveEids []common.EntityID
+	//	for serviceEid := range serviceEids {
+	//		if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
+	//			undeclaredServices.Add(serviceName)
+	//			serviceRemoveEids = append(serviceRemoveEids, serviceEid)
+	//			service.handleServiceDown(gameid, serviceName, serviceEid)
+	//		}
+	//	}
+	//
+	//	for _, eid := range serviceRemoveEids {
+	//		serviceEids.Del(eid)
+	//	}
+	//}
 
 	for eid := range cleanEids {
-		delete(service.entityDispatchInfos, eid)
+		service.cleanupEntityInfo(eid)
 	}
 
-	gwlog.Infof("%s: game%d is down, %d entities cleaned, undeclare services: %s", service, gameid, len(cleanEids), undeclaredServices)
+	gwlog.Infof("%s: game%d is down, %d entities cleaned", service, gameid, len(cleanEids))
 }
 
 // Entity is create on the target game
@@ -608,7 +610,18 @@ func (service *DispatcherService) handleNotifyDestroyEntity(dcp *dispatcherClien
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleNotifyDestroyEntity: dcp=%s, entityID=%s", service, dcp, entityID)
 	}
+	service.cleanupEntityInfo(entityID)
+}
+
+func (service *DispatcherService) cleanupEntityInfo(entityID common.EntityID) {
 	service.delEntityDispatchInfo(entityID)
+	if services, ok := service.entityIDToServices[entityID]; ok {
+		for serviceName := range services {
+			service.registeredServices[serviceName].Del(entityID)
+		}
+		delete(service.entityIDToServices, entityID)
+		gwlog.Warnf("%s: entity %s is cleaned up, undeclared servies %v", service, entityID, services.ToList())
+	}
 }
 
 func (service *DispatcherService) handleNotifyClientConnected(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -681,12 +694,22 @@ func (service *DispatcherService) handleDeclareService(dcp *dispatcherClientProx
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
 	entityDispatchInfo.gameid = dcp.gameid
 
-	if _, ok := service.registeredServices[serviceName]; !ok {
-		service.registeredServices[serviceName] = entity.EntityIDSet{}
+	eids, ok := service.registeredServices[serviceName]
+	if !ok {
+		eids = entity.EntityIDSet{}
+		service.registeredServices[serviceName] = eids
 	}
 
-	service.registeredServices[serviceName].Add(entityID)
-	service.broadcastToGames(pkt)
+	if !eids.Contains(entityID) {
+		eids.Add(entityID)
+		services, ok := service.entityIDToServices[entityID]
+		if !ok {
+			services = common.StringSet{}
+			service.entityIDToServices[entityID] = services
+		}
+		services.Add(serviceName)
+		service.broadcastToGames(pkt)
+	}
 }
 
 func (service *DispatcherService) handleServiceDown(gameid uint16, serviceName string, eid common.EntityID) {
