@@ -159,18 +159,18 @@ type dispatcherMessage struct {
 
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
-	dispid                    uint16
-	config                    *config.DispatcherConfig
-	games                     []*gameDispatchInfo
-	bootEntityCandidatesGames []int
-	gates                     []*dispatcherClientProxy
-	messageQueue              chan dispatcherMessage
-	chooseClientIndex         int
-	entityDispatchInfos       map[common.EntityID]*entityDispatchInfo
-	registeredServices        map[string]entity.EntityIDSet
-	targetGameOfClient        map[common.ClientID]uint16
-	entitySyncInfosToGame     []*netutil.Packet // cache entity sync infos to gates
-	ticker                    <-chan time.Time
+	dispid                uint16
+	config                *config.DispatcherConfig
+	games                 []*gameDispatchInfo
+	bootGames             []int
+	gates                 []*dispatcherClientProxy
+	messageQueue          chan dispatcherMessage
+	chooseClientIndex     int
+	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
+	registeredServices    map[string]entity.EntityIDSet
+	targetGameOfClient    map[common.ClientID]uint16
+	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
+	ticker                <-chan time.Time
 }
 
 func newDispatcherService(dispid uint16) *DispatcherService {
@@ -200,7 +200,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 	for i := range ds.games {
 		ds.games[i] = &gameDispatchInfo{gameid: uint16(i + 1)}
 	}
-	ds.recalcBootEntityCandidateGames()
+	ds.recalcBootGames()
 
 	return ds
 }
@@ -342,7 +342,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 
 	gdi.unblock() // unlock game dispatch info if new game is connected
 	if oldIsBanBootEntity != isBanBootEntity {
-		service.recalcBootEntityCandidateGames() // recalc if necessary
+		service.recalcBootGames() // recalc if necessary
 	}
 
 	if !isRestore {
@@ -446,7 +446,7 @@ func (service *DispatcherService) chooseGame() *gameDispatchInfo {
 
 // Choose a dispatcher client for sending Anywhere packets
 func (service *DispatcherService) chooseGameForBootEntity() *gameDispatchInfo {
-	idx := service.bootEntityCandidatesGames[rand.Intn(len(service.bootEntityCandidatesGames))]
+	idx := service.bootGames[rand.Intn(len(service.bootGames))]
 	gdi := service.games[idx]
 	return gdi
 }
@@ -816,12 +816,12 @@ func (service *DispatcherService) cleanupEntitiesOfGame(targetGame uint16) {
 
 	gwlog.Infof("Game %d is rebooted, %d entities cleaned, undeclare services: %s", targetGame, len(cleanEids), undeclaredServices)
 }
-func (service *DispatcherService) recalcBootEntityCandidateGames() {
+func (service *DispatcherService) recalcBootGames() {
 	var candidates []int
 	for i, gdi := range service.games {
 		if !gdi.isBanBootEntity {
 			candidates = append(candidates, i)
 		}
 	}
-	service.bootEntityCandidatesGames = candidates
+	service.bootGames = candidates
 }
