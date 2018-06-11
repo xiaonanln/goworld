@@ -95,14 +95,14 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 type _EntityManager struct {
 	entities           EntityMap
 	ownerOfClient      map[common.ClientID]common.EntityID
-	registeredServices map[string]EntityIDSet
+	registeredServices map[string]common.EntityIDSet
 }
 
 func newEntityManager() *_EntityManager {
 	return &_EntityManager{
 		entities:           EntityMap{},
 		ownerOfClient:      map[common.ClientID]common.EntityID{},
-		registeredServices: map[string]EntityIDSet{},
+		registeredServices: map[string]common.EntityIDSet{},
 	}
 }
 
@@ -148,7 +148,7 @@ func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 func (em *_EntityManager) onDeclareService(serviceName string, eid common.EntityID) {
 	eids, ok := em.registeredServices[serviceName]
 	if !ok {
-		eids = EntityIDSet{}
+		eids = common.EntityIDSet{}
 		em.registeredServices[serviceName] = eids
 	}
 	eids.Add(eid)
@@ -406,6 +406,7 @@ func OnClientDisconnected(clientid common.ClientID) {
 
 // OnDeclareService is called by engine when service is declared
 func OnDeclareService(serviceName string, entityid common.EntityID) {
+	gwlog.Infof("Entity %s declares service %s.", entityid, serviceName)
 	entityManager.onDeclareService(serviceName, entityid)
 }
 
@@ -415,7 +416,7 @@ func OnUndeclareService(serviceName string, entityid common.EntityID) {
 }
 
 // GetServiceProviders returns all service providers
-func GetServiceProviders(serviceName string) EntityIDSet {
+func GetServiceProviders(serviceName string) common.EntityIDSet {
 	return entityManager.registeredServices[serviceName]
 }
 
@@ -637,7 +638,7 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	})
 
 	for serviceName, _eids := range freeze.Services {
-		eids := EntityIDSet{}
+		eids := common.EntityIDSet{}
 		for _, eid := range _eids {
 			eids.Add(eid)
 		}

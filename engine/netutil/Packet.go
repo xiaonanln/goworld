@@ -472,6 +472,22 @@ func (p *Packet) ReadStringList() []string {
 	return list
 }
 
+func (p *Packet) AppendEntityIDSet(eids common.EntityIDSet) {
+	p.AppendUint32(uint32(len(eids)))
+	for eid := range eids {
+		p.AppendEntityID(eid)
+	}
+}
+
+func (p *Packet) ReadEntityIDSet() common.EntityIDSet {
+	size := p.ReadUint32()
+	eids := make(common.EntityIDSet, size)
+	for i := uint32(0); i < size; i++ {
+		eids.Add(p.ReadEntityID())
+	}
+	return eids
+}
+
 // GetPayloadLen returns the payload length
 func (p *Packet) GetPayloadLen() uint32 {
 	return *(*uint32)(unsafe.Pointer(&p.bytes[0])) & _PAYLOAD_LEN_MASK

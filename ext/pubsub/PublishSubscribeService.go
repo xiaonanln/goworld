@@ -13,14 +13,14 @@ const (
 )
 
 type subscribing struct {
-	subscribers         entity.EntityIDSet
-	wildcardSubscribers entity.EntityIDSet
+	subscribers         common.EntityIDSet
+	wildcardSubscribers common.EntityIDSet
 }
 
 func newSubscribing() *subscribing {
 	return &subscribing{
-		subscribers:         entity.EntityIDSet{},
-		wildcardSubscribers: entity.EntityIDSet{},
+		subscribers:         common.EntityIDSet{},
+		wildcardSubscribers: common.EntityIDSet{},
 	}
 }
 

@@ -36,7 +36,7 @@ const (
 type GameService struct {
 	config *config.GameConfig
 	id     uint16
-	//registeredServices map[string]entity.EntityIDSet
+	//registeredServices map[string]common.EntityIDSet
 
 	packetQueue                    chan proto.Message
 	runState                       xnsyncutil.AtomicInt
@@ -54,7 +54,7 @@ func newGameService(gameid uint16) *GameService {
 	totalGameNum := config.GetGamesNum()
 	return &GameService{
 		id: gameid,
-		//registeredServices: map[string]entity.EntityIDSet{},
+		//registeredServices: map[string]common.EntityIDSet{},
 		packetQueue:     make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
 		ticker:          time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
 		isGameConnected: make([]bool, totalGameNum),
@@ -398,7 +398,21 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		numConnectedGames += 1
 	}
 
-	gwlog.Infof("%s: set game ID ack received, connected games: %v", gs, numConnectedGames)
+	rejectEntitiesNum := pkt.ReadUint32()
+	rejectEntities := make([]common.EntityID, 0, rejectEntitiesNum)
+	for i := uint32(0); i < rejectEntitiesNum; i++ {
+		rejectEntities = append(rejectEntities, pkt.ReadEntityID())
+	}
+
+	registeredServicesNum := pkt.ReadUint32()
+	registeredServices := make(map[string]common.EntityIDSet, registeredServicesNum)
+	for i := uint32(0); i < registeredServicesNum; i++ {
+		serviceName := pkt.ReadVarStr()
+		eids := pkt.ReadEntityIDSet()
+		registeredServices[serviceName] = eids
+	}
+
+	gwlog.Infof("%s: set game ID ack received, connected games: %v, reject entities: %d, registered services: %v", gs, numConnectedGames, rejectEntitiesNum, registeredServices)
 	if gs.isAllGamesConnected() {
 		// all games are connected
 		entity.OnAllGamesConnected()

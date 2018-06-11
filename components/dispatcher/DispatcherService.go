@@ -16,7 +16,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -189,7 +188,7 @@ type DispatcherService struct {
 	messageQueue          chan dispatcherMessage
 	chooseClientIndex     int
 	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
-	registeredServices    map[string]entity.EntityIDSet
+	registeredServices    map[string]common.EntityIDSet
 	entityIDToServices    map[common.EntityID]common.StringSet
 	targetGameOfClient    map[common.ClientID]uint16
 	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
@@ -215,7 +214,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		chooseClientIndex:     0,
 		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
 		entityIDToServices:    map[common.EntityID]common.StringSet{},
-		registeredServices:    map[string]entity.EntityIDSet{},
+		registeredServices:    map[string]common.EntityIDSet{},
 		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
@@ -399,7 +398,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		}
 	}
 
-	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d", service, dcp, gameid, numEntities, len(rejectEntities))
+	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d, services = %v", service, dcp, gameid, numEntities, len(rejectEntities), service.registeredServices)
 	// reuse the packet to send SET_GAMEID_ACK with all connected gameids
 	connectedGameIDs := service.getConnectedGameIDs()
 	dcp.SendSetGameIDAck(connectedGameIDs, rejectEntities, service.registeredServices)
@@ -569,7 +568,7 @@ func (service *DispatcherService) cleanupGameInfo(gameid uint16, gdi *gameDispat
 }
 
 func (service *DispatcherService) cleanupEntitiesOfGame(gameid uint16) {
-	cleanEids := entity.EntityIDSet{} // get all clean eids
+	cleanEids := common.EntityIDSet{} // get all clean eids
 	for eid, dispatchInfo := range service.entityDispatchInfos {
 		if dispatchInfo.gameid == gameid {
 			cleanEids.Add(eid)
@@ -700,7 +699,7 @@ func (service *DispatcherService) handleDeclareService(dcp *dispatcherClientProx
 
 	eids, ok := service.registeredServices[serviceName]
 	if !ok {
-		eids = entity.EntityIDSet{}
+		eids = common.EntityIDSet{}
 		service.registeredServices[serviceName] = eids
 	}
 

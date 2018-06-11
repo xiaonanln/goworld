@@ -72,7 +72,7 @@ func LoadEntityAnywhere(typeName string, entityID EntityID) {
 }
 
 // GetServiceProviders get the set of EntityIDs that provides the specified service
-func GetServiceProviders(serviceName string) entity.EntityIDSet {
+func GetServiceProviders(serviceName string) common.EntityIDSet {
 	return entity.GetServiceProviders(serviceName)
 }
 

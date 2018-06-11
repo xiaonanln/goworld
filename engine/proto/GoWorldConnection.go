@@ -376,16 +376,23 @@ func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {
 	return pkt
 }
 
-func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, rejectEntities []common.EntityID) error {
+func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, rejectEntities []common.EntityID, registeredServices map[string]common.EntityIDSet) error {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(MT_SET_GAME_ID_ACK)
 	pkt.AppendUint16(uint16(len(connectedGameIDs)))
 	for _, gameid := range connectedGameIDs {
 		pkt.AppendUint16(gameid)
 	}
+	// put rejected entity IDs to the packet
 	pkt.AppendUint32(uint32(len(rejectEntities)))
 	for _, eid := range rejectEntities {
 		pkt.AppendEntityID(eid)
+	}
+	// put all services to the packet
+	pkt.AppendUint32(uint32(len(registeredServices)))
+	for serviceName, eids := range registeredServices {
+		pkt.AppendVarStr(serviceName)
+		pkt.AppendEntityIDSet(eids)
 	}
 
 	return gwc.SendPacketRelease(pkt)

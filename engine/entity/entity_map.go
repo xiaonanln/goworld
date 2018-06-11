@@ -74,31 +74,3 @@ func (es EntitySet) String() string {
 	b.WriteString("}")
 	return b.String()
 }
-
-// EntityIDSet is the data structure for a set of entity IDs
-type EntityIDSet map[common.EntityID]struct{}
-
-// Add adds an entity ID to EntityIDSet
-func (es EntityIDSet) Add(id common.EntityID) {
-	es[id] = struct{}{}
-}
-
-// Del removes an entity ID from EntityIDSet
-func (es EntityIDSet) Del(id common.EntityID) {
-	delete(es, id)
-}
-
-// Contains checks if entity ID is in EntityIDSet
-func (es EntityIDSet) Contains(id common.EntityID) bool {
-	_, ok := es[id]
-	return ok
-}
-
-// ToList convert EntityIDSet to a slice of entity IDs
-func (es EntityIDSet) ToList() []common.EntityID {
-	list := make([]common.EntityID, 0, len(es))
-	for eid := range es {
-		list = append(list, eid)
-	}
-	return list
-}
