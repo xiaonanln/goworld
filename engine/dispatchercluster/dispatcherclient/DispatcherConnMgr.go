@@ -11,6 +11,7 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
@@ -75,7 +76,7 @@ func (dcm *DispatcherConnMgr) assureConnected() *DispatcherClient {
 		}
 		dcm.setDispatcherClient(dc)
 		if dcm.dctype == GameDispatcherClientType {
-			dc.SendSetGameID(dcm.gid, dcm.isReconnect, dcm.isRestoreGame, dcm.isBanBootEntity)
+			dc.SendSetGameID(dcm.gid, dcm.isReconnect, dcm.isRestoreGame, dcm.isBanBootEntity, dcm.delegate.GetEntityIDsForDispatcher(dcm.dispid))
 		} else {
 			dc.SendSetGateID(dcm.gid)
 		}
@@ -103,6 +104,7 @@ func (dcm *DispatcherConnMgr) connectDispatchClient() (*DispatcherClient, error)
 type IDispatcherClientDelegate interface {
 	HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet)
 	HandleDispatcherClientDisconnect()
+	GetEntityIDsForDispatcher(dispid uint16) []common.EntityID
 }
 
 // Initialize the dispatcher client, only called by engine

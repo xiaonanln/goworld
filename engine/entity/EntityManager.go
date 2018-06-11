@@ -504,6 +504,7 @@ var allGamesConnected bool
 func OnAllGamesConnected() {
 	if allGamesConnected {
 		gwlog.Warnf("all games connected, but not for the first time")
+		gwlog.Warnf("registered services: %+v", entityManager.registeredServices)
 		return
 	}
 

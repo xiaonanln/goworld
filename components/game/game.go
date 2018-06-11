@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/engine/binutil"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
@@ -34,14 +35,13 @@ import (
 )
 
 var (
-	gameid                       uint16
-	configFile                   string
-	logLevel                     string
-	restore                      bool
-	runInDaemonMode              bool
-	gameService                  *GameService
-	signalChan                   = make(chan os.Signal, 1)
-	gameDispatcherClientDelegate = &dispatcherClientDelegate{}
+	gameid          uint16
+	configFile      string
+	logLevel        string
+	restore         bool
+	runInDaemonMode bool
+	gameService     *GameService
+	signalChan      = make(chan os.Signal, 1)
 )
 
 func parseArgs() {
@@ -107,7 +107,7 @@ func Run() {
 	gameService = newGameService(gameid)
 
 	gwlog.Infof("Start dispatchercluster ...")
-	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, gameConfig.BanBootEntity, &dispatcherClientDelegate{})
+	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, gameConfig.BanBootEntity, &_GameDispatcherClientDelegate{})
 
 	setupSignals()
 
@@ -195,20 +195,29 @@ func waitEntityStorageFinish() {
 	gwlog.Infof("*** DB OK ***")
 }
 
-type dispatcherClientDelegate struct {
+type _GameDispatcherClientDelegate struct {
 }
 
 var lastWarnGateServiceQueueLen = 0
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
+func (delegate *_GameDispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	gameService.packetQueue <- proto.Message{ // may block the dispatcher client routine
 		MsgType: msgtype,
 		Packet:  packet,
 	}
 }
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
+func (delegate *_GameDispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
+}
+
+func (delegate *_GameDispatcherClientDelegate) GetEntityIDsForDispatcher(dispid uint16) (eids []common.EntityID) {
+	for eid := range entity.Entities() {
+		if dispatchercluster.EntityIDToDispatcherID(eid) == dispid {
+			eids = append(eids, eid)
+		}
+	}
+	return
 }
 
 // GetGameID returns the current Game Server ID

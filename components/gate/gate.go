@@ -21,6 +21,7 @@ import (
 	"path"
 
 	"github.com/xiaonanln/goworld/engine/binutil"
+	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
@@ -91,8 +92,8 @@ func main() {
 		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
 	}
 
-	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &dispatcherClientDelegate{})
-	//dispatcherclient.Initialize(&dispatcherClientDelegate{}, true)
+	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &gateDispatcherClientDelegate{})
+	//dispatcherclient.Initialize(&gateDispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
 }
@@ -122,18 +123,22 @@ func setupSignals() {
 	}()
 }
 
-type dispatcherClientDelegate struct {
+type gateDispatcherClientDelegate struct {
 }
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
+func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	gateService.dispatcherClientPacketQueue <- proto.Message{msgtype, packet}
 }
 
-func (delegate *dispatcherClientDelegate) HandleDispatcherClientDisconnect() {
+func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	//gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
 	// if gate is disconnected from dispatcher, we just quit
 	gwlog.Infof("Disconnected from dispatcher, gate has to quit.")
 	signalChan <- syscall.SIGTERM // let gate quit
+}
+
+func (deleget *gateDispatcherClientDelegate) GetEntityIDsForDispatcher(dispid uint16) []common.EntityID {
+	return nil
 }
 
 // GetGateID gets the gate ID

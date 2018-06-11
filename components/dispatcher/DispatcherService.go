@@ -347,8 +347,12 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	isReconnect := pkt.ReadBool()
 	isRestore := pkt.ReadBool()
 	isBanBootEntity := pkt.ReadBool()
+	numEntities := pkt.ReadUint32() // number of entities on the game
+	//for i := uint32(0); i < numEntities; i++ {
+	//	eid := pkt.ReadEntityID()
+	//}
 
-	gwlog.Infof("%s: connection %s set gameid=%d, isReconnect=%v, isRestore=%v, isBanBootEntity=%v", service, dcp, gameid, isReconnect, isRestore, isBanBootEntity)
+	gwlog.Infof("%s: connection %s set gameid=%d, isReconnect=%v, isRestore=%v, isBanBootEntity=%v, numEntities=%d", service, dcp, gameid, isReconnect, isRestore, isBanBootEntity, numEntities)
 
 	if gameid <= 0 {
 		gwlog.Panicf("invalid gameid: %d", gameid)
@@ -377,30 +381,30 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		service.recalcBootGames() // recalc if necessary
 	}
 
+	// restore all entities for the game from the packet
+	var rejectEntities []common.EntityID
+	for i := uint32(0); i < numEntities; i++ {
+		eid := pkt.ReadEntityID()
+		edi := service.setEntityDispatcherInfoForWrite(eid)
+		if edi.gameid == gameid {
+			// the current game for the entity is not changed
+			edi.unblock()
+		} else if edi.gameid == 0 {
+			// the entity has no game yet, set to this game
+			edi.gameid = gameid
+			edi.unblock()
+		} else {
+			// the entity is on other game ... need to tell the game to destroy his version of entity
+			rejectEntities = append(rejectEntities, eid)
+		}
+	}
+
+	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d", service, dcp, gameid, numEntities, len(rejectEntities))
 	// reuse the packet to send SET_GAMEID_ACK with all connected gameids
 	connectedGameIDs := service.getConnectedGameIDs()
-	dcp.SendSetGameIDAck(connectedGameIDs)
+	dcp.SendSetGameIDAck(connectedGameIDs, rejectEntities, service.registeredServices)
 	service.sendNotifyGameConnected(gameid)
 
-	//if !isRestore {
-	//	// notify all games that all games connected to dispatcher now!
-	//	if service.dispid == 1 && service.isAllGameClientsConnected() {
-	//		pkt.ClearPayload() // reuse this packet
-	//		pkt.AppendUint16(proto.MT_NOTIFY_ALL_GAMES_CONNECTED)
-	//		if olddcp == nil {
-	//			// for the first time that all games connected to dispatcher, notify all games
-	//			gwlog.Infof("All games(%d) are connected", len(service.games))
-	//			service.broadcastToGames(pkt)
-	//		} else { // dispatcher reconnected, only notify this game
-	//			dcp.SendPacket(pkt)
-	//		}
-	//	}
-	//}
-	//
-	//if olddcp != nil && !isReconnect && !isRestore {
-	//	// game was connected, but a new instance is replaced, so we need to wipe the entities on that game
-	//	service.cleanupEntitiesOfGame(gameid)
-	//}
 	return
 }
 

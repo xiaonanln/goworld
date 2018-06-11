@@ -33,13 +33,19 @@ func NewGoWorldConnection(conn netutil.Connection, compressConnection bool, comp
 }
 
 // SendSetGameID sends MT_SET_GAME_ID message
-func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isRestore bool, isBanBootEntity bool) error {
+func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isRestore bool, isBanBootEntity bool,
+	eids []common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SET_GAME_ID)
 	packet.AppendUint16(id)
 	packet.AppendBool(isReconnect)
 	packet.AppendBool(isRestore)
 	packet.AppendBool(isBanBootEntity)
+	// put all entity IDs to the packet
+	packet.AppendUint32(uint32(len(eids)))
+	for _, eid := range eids {
+		packet.AppendEntityID(eid)
+	}
 	return gwc.SendPacketRelease(packet)
 }
 
@@ -370,13 +376,18 @@ func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {
 	return pkt
 }
 
-func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16) error {
+func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, rejectEntities []common.EntityID) error {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(MT_SET_GAME_ID_ACK)
 	pkt.AppendUint16(uint16(len(connectedGameIDs)))
 	for _, gameid := range connectedGameIDs {
 		pkt.AppendUint16(gameid)
 	}
+	pkt.AppendUint32(uint32(len(rejectEntities)))
+	for _, eid := range rejectEntities {
+		pkt.AppendEntityID(eid)
+	}
+
 	return gwc.SendPacketRelease(pkt)
 }
 

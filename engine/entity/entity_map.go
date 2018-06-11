@@ -24,6 +24,22 @@ func (em EntityMap) Get(id common.EntityID) *Entity {
 	return em[id]
 }
 
+// Keys return keys of the EntityMap in a slice
+func (em EntityMap) Keys() (keys []common.EntityID) {
+	for eid := range em {
+		keys = append(keys, eid)
+	}
+	return
+}
+
+// Values return values of the EntityMap in a slice
+func (em EntityMap) Values() (vals []*Entity) {
+	for _, e := range em {
+		vals = append(vals, e)
+	}
+	return
+}
+
 // EntitySet is the data structure for a set of entities
 type EntitySet map[*Entity]struct{}
 
