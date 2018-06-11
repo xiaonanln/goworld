@@ -29,13 +29,10 @@ func (a *ListAttr) String() string {
 		switch a := v.(type) {
 		case *MapAttr:
 			sb.WriteString(a.String())
-			break
 		case *ListAttr:
 			sb.WriteString(a.String())
-			break
 		default:
 			fmt.Fprintf(&sb, "%#v", v)
-			break
 		}
 		isFirstField = false
 	}
