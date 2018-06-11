@@ -620,7 +620,11 @@ func (service *DispatcherService) cleanupEntityInfo(entityID common.EntityID) {
 	service.delEntityDispatchInfo(entityID)
 	if services, ok := service.entityIDToServices[entityID]; ok {
 		for serviceName := range services {
-			service.registeredServices[serviceName].Del(entityID)
+			serviceEids := service.registeredServices[serviceName]
+			serviceEids.Del(entityID)
+			if len(serviceEids) == 0 {
+				delete(service.registeredServices, serviceName)
+			}
 		}
 		delete(service.entityIDToServices, entityID)
 		gwlog.Warnf("%s: entity %s is cleaned up, undeclared servies %v", service, entityID, services.ToList())
