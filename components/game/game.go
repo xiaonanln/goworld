@@ -141,7 +141,7 @@ func setupSignals() {
 				gwlog.Infof("Game %d shutdown gracefully.", gameid)
 				os.Exit(0)
 			} else if sig == binutil.FreezeSignal {
-				// SIGUSR1 => dump game and close
+				// SIGHUP => dump game and close
 				// freezing game ...
 				gwlog.Infof("Freezing game service ...")
 

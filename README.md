@@ -41,7 +41,7 @@ The games manages all entities and runs all game logic.
 The dispatcher is responsible for redirecting packets among games and between games and gates.  
 
 The game processes are **hot-swappable**. 
-We can swap a game by sending SIGUSR1 to the process and restart the process with **-restore** parameter to bring game 
+We can swap a game by sending `SIGHUP` to the process and restart the process with **-restore** parameter to bring game 
 back to work but with the latest executable image. This feature enables updating server-side logic or fixing server bugs
  transparently without significant interference of online players. 
 
