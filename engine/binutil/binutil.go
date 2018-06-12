@@ -3,9 +3,15 @@ package binutil
 import (
 	"fmt"
 	"net/http"
+	"syscall"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"golang.org/x/net/websocket"
+)
+
+const (
+	// FreezeSignal syscall used to freeze server
+	FreezeSignal = syscall.SIGHUP
 )
 
 // SetupHTTPServer starts the HTTP server for go tool pprof and websockets

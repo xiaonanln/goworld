@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 )
 
@@ -27,6 +28,6 @@ func reload(sid ServerID) {
 		showMsgAndQuit("found %d games, but should have %d", ss.NumGamesRunning, config.GetGamesNum())
 	}
 
-	stopGames(ss, FreezeSignal)
+	stopGames(ss, binutil.FreezeSignal)
 	startGames(sid, true)
 }

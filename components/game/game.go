@@ -117,8 +117,8 @@ func Run() {
 
 func setupSignals() {
 	gwlog.Infof("Setup signals ...")
-	signal.Ignore(syscall.Signal(12), syscall.SIGPIPE)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.Signal(10))
+	signal.Ignore(syscall.Signal(12), syscall.SIGPIPE, syscall.Signal(10))
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, binutil.FreezeSignal)
 
 	go func() {
 		for {
@@ -140,7 +140,7 @@ func setupSignals() {
 
 				gwlog.Infof("Game %d shutdown gracefully.", gameid)
 				os.Exit(0)
-			} else if sig == syscall.Signal(10) {
+			} else if sig == binutil.FreezeSignal {
 				// SIGUSR1 => dump game and close
 				// freezing game ...
 				gwlog.Infof("Freezing game service ...")
