@@ -14,5 +14,5 @@ const (
 	// StopSignal syscall used to stop server
 	StopSignal = syscall.SIGKILL
 	// FreezeSignal syscall used to freeze server
-	FreezeSignal = syscall.SIGINT
+	FreezeSignal = syscall.Signal(10)
 )
