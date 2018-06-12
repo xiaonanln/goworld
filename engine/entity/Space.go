@@ -91,6 +91,13 @@ func (space *Space) OnCreated() {
 	//space.callCompositiveMethod("OnSpaceCreated")
 }
 
+func (space *Space) UseXZListAOI() {
+	if space.aoiMgr != nil || len(space.entities) > 0 {
+		gwlog.Panicf("%s is already using AOI", space)
+	}
+
+	space.aoiMgr = aoi.NewXZListAOICalculator()
+}
 func (space *Space) UseTowerAOI(minX, maxX, minY, maxY Coord, towerRange Coord) {
 	if space.aoiMgr != nil || len(space.entities) > 0 {
 		gwlog.Panicf("%s is already using AOI", space)
