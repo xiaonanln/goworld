@@ -141,6 +141,7 @@ func Select(dispidx int) *dispatcherclient.DispatcherClient {
 //}
 
 func autoFlushRoutine() {
+	// TODO: each dipsatcher client flush by itself
 	for {
 		time.Sleep(10 * time.Millisecond)
 		for _, dispconn := range dispatcherConns {
