@@ -145,7 +145,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 		}
 	}
 
-	entityManager.del(e.ID)
+	entityManager.del(e)
 	e.destroyed = true
 }
 
@@ -602,11 +602,6 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 	}
 
 	rpcDesc.Func.Call(in)
-}
-
-// DeclareService declares global service for service entity
-func (e *Entity) DeclareService(serviceName string) {
-	dispatchercluster.SendDeclareService(e.ID, serviceName)
 }
 
 // OnInit is called when entity is initializing

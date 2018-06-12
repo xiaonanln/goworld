@@ -31,6 +31,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
@@ -110,7 +111,7 @@ func Run() {
 	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, gameConfig.BanBootEntity, &_GameDispatcherClientDelegate{})
 
 	setupSignals()
-
+	service.Startup(gameid)
 	gwlog.Infof("Game service start running ...")
 	gameService.run(restore)
 }

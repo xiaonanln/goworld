@@ -42,6 +42,7 @@ func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isResto
 	packet.AppendBool(isRestore)
 	packet.AppendBool(isBanBootEntity)
 	// put all entity IDs to the packet
+	// TODO: use AppendEntityIDList
 	packet.AppendUint32(uint32(len(eids)))
 	for _, eid := range eids {
 		packet.AppendEntityID(eid)
@@ -108,12 +109,12 @@ func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID c
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendDeclareService sends MT_DECLARE_SERVICE message
-func (gwc *GoWorldConnection) SendDeclareService(id common.EntityID, serviceName string) error {
+// SendSrvdisRegister
+func (gwc *GoWorldConnection) SendSrvdisRegister(srvid string, info string) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_DECLARE_SERVICE)
-	packet.AppendEntityID(id)
-	packet.AppendVarStr(serviceName)
+	packet.AppendUint16(MT_SRVDIS_REGISTER)
+	packet.AppendVarStr(srvid)
+	packet.AppendVarStr(info)
 	return gwc.SendPacketRelease(packet)
 }
 
@@ -376,7 +377,7 @@ func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {
 	return pkt
 }
 
-func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, rejectEntities []common.EntityID, registeredServices map[string]common.EntityIDSet) error {
+func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, rejectEntities []common.EntityID, srvdisRegisterMap map[string]string) error {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(MT_SET_GAME_ID_ACK)
 	pkt.AppendUint16(uint16(len(connectedGameIDs)))
@@ -389,12 +390,7 @@ func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, reject
 		pkt.AppendEntityID(eid)
 	}
 	// put all services to the packet
-	pkt.AppendUint32(uint32(len(registeredServices)))
-	for serviceName, eids := range registeredServices {
-		pkt.AppendVarStr(serviceName)
-		pkt.AppendEntityIDSet(eids)
-	}
-
+	pkt.AppendMapStringString(srvdisRegisterMap)
 	return gwc.SendPacketRelease(pkt)
 }
 

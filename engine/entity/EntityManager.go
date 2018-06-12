@@ -3,8 +3,6 @@ package entity
 import (
 	"reflect"
 
-	"math/rand"
-
 	"strings"
 
 	"github.com/pkg/errors"
@@ -93,29 +91,47 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 }
 
 type _EntityManager struct {
-	entities           EntityMap
-	ownerOfClient      map[common.ClientID]common.EntityID
-	registeredServices map[string]common.EntityIDSet
+	entities       EntityMap
+	entitiesByType map[string]EntityMap
+	ownerOfClient  map[common.ClientID]common.EntityID
 }
 
 func newEntityManager() *_EntityManager {
 	return &_EntityManager{
-		entities:           EntityMap{},
-		ownerOfClient:      map[common.ClientID]common.EntityID{},
-		registeredServices: map[string]common.EntityIDSet{},
+		entities:       EntityMap{},
+		entitiesByType: map[string]EntityMap{},
+		ownerOfClient:  map[common.ClientID]common.EntityID{},
 	}
 }
 
 func (em *_EntityManager) put(entity *Entity) {
 	em.entities.Add(entity)
+	etype := entity.TypeName
+	eid := entity.ID
+	if entities, ok := em.entitiesByType[etype]; ok {
+		entities.Add(entity)
+	} else {
+		em.entitiesByType[etype] = EntityMap{eid: entity}
+	}
 }
 
-func (em *_EntityManager) del(entityID common.EntityID) {
-	em.entities.Del(entityID)
+func (em *_EntityManager) del(e *Entity) {
+	eid := e.ID
+	em.entities.Del(eid)
+	if entities, ok := em.entitiesByType[e.TypeName]; ok {
+		entities.Del(eid)
+	}
 }
 
 func (em *_EntityManager) get(id common.EntityID) *Entity {
 	return em.entities.Get(id)
+}
+
+func (em *_EntityManager) traverseByType(etype string, cb func(e *Entity)) {
+	entities := em.entitiesByType[etype]
+	for _, e := range entities {
+		cb(e)
+	}
 }
 
 func (em *_EntityManager) onEntityLoseClient(clientid common.ClientID) {
@@ -146,42 +162,42 @@ func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 }
 
 func (em *_EntityManager) onDeclareService(serviceName string, eid common.EntityID) {
-	eids, ok := em.registeredServices[serviceName]
-	if !ok {
-		eids = common.EntityIDSet{}
-		em.registeredServices[serviceName] = eids
-	}
-	eids.Add(eid)
+	//eids, ok := em.registeredServices[serviceName]
+	//if !ok {
+	//	eids = common.EntityIDSet{}
+	//	em.registeredServices[serviceName] = eids
+	//}
+	//eids.Add(eid)
 }
 
 func (em *_EntityManager) onUndeclareService(serviceName string, eid common.EntityID) {
-	eids, ok := em.registeredServices[serviceName]
-	if ok {
-		eids.Del(eid)
-	}
+	//eids, ok := em.registeredServices[serviceName]
+	//if ok {
+	//	eids.Del(eid)
+	//}
 }
 
 func (em *_EntityManager) chooseServiceProvider(serviceName string) common.EntityID {
-	// choose one entity ID of service providers randomly
-	eids, ok := em.registeredServices[serviceName]
-	if !ok {
-		gwlog.Panicf("service not found: %s", serviceName)
-	}
-
-	r := rand.Intn(len(eids)) // get a random one
-	for eid := range eids {
-		if r == 0 {
-			return eid
-		}
-		r -= 1
-	}
+	//// choose one entity ID of service providers randomly
+	//eids, ok := em.registeredServices[serviceName]
+	//if !ok {
+	//	gwlog.Panicf("service not found: %s", serviceName)
+	//}
+	//
+	//r := rand.Intn(len(eids)) // get a random one
+	//for eid := range eids {
+	//	if r == 0 {
+	//		return eid
+	//	}
+	//	r -= 1
+	//}
 	return "" // never goes here
 }
 
 // RegisterEntity registers custom entity type and define entity behaviors
 func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
-		gwlog.Panicf("RegisterEntity: Entity type %s already registered", typeName)
+		gwlog.Fatalf("RegisterEntity: Entity type %s already registered", typeName)
 	}
 
 	entityVal := reflect.ValueOf(entity)
@@ -417,7 +433,8 @@ func OnUndeclareService(serviceName string, entityid common.EntityID) {
 
 // GetServiceProviders returns all service providers
 func GetServiceProviders(serviceName string) common.EntityIDSet {
-	return entityManager.registeredServices[serviceName]
+	//return entityManager.registeredServices[serviceName]
+	return common.EntityIDSet{}
 }
 
 func Call(id common.EntityID, method string, args []interface{}) {
@@ -492,6 +509,15 @@ func GetEntity(id common.EntityID) *Entity {
 	return entityManager.get(id)
 }
 
+func GetEntitiesByType(etype string) EntityMap {
+	return entityManager.entitiesByType[etype]
+}
+
+// TraverseEntityByType traverses entities of the specified type
+func TraverseEntityByType(etype string, cb func(e *Entity)) {
+	entityManager.traverseByType(etype, cb)
+}
+
 // OnGameTerminating is called when game is terminating
 func OnGameTerminating() {
 	for _, e := range entityManager.entities {
@@ -505,7 +531,7 @@ var allGamesConnected bool
 func OnAllGamesConnected() {
 	if allGamesConnected {
 		gwlog.Warnf("all games connected, but not for the first time")
-		gwlog.Warnf("registered services: %+v", entityManager.registeredServices)
+		//gwlog.Warnf("registered services: %+v", entityManager.registeredServices)
 		return
 	}
 
@@ -570,11 +596,11 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 	}
 
 	freeze.Entities = entityFreezeInfos
-	registeredServices := make(map[string][]common.EntityID, len(entityManager.registeredServices))
-	for serviceName, eids := range entityManager.registeredServices {
-		registeredServices[serviceName] = eids.ToList()
-	}
-	freeze.Services = registeredServices
+	//registeredServices := make(map[string][]common.EntityID, len(entityManager.registeredServices))
+	//for serviceName, eids := range entityManager.registeredServices {
+	//	registeredServices[serviceName] = eids.ToList()
+	//}
+	//freeze.Services = registeredServices
 
 	return &freeze, nil
 }
@@ -637,13 +663,13 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 		return typeName != _SPACE_ENTITY_TYPE
 	})
 
-	for serviceName, _eids := range freeze.Services {
-		eids := common.EntityIDSet{}
-		for _, eid := range _eids {
-			eids.Add(eid)
-		}
-		entityManager.registeredServices[serviceName] = eids
-	}
+	//for serviceName, _eids := range freeze.Services {
+	//	eids := common.EntityIDSet{}
+	//	for _, eid := range _eids {
+	//		eids.Add(eid)
+	//	}
+	//	entityManager.registeredServices[serviceName] = eids
+	//}
 
 	return nil
 }

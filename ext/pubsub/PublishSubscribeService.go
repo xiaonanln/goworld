@@ -58,12 +58,11 @@ func (pss *PublishSubscribeService) OnCreated() {
 	if !pss.Attrs.HasKey("wildcardSubscribers") {
 		pss.Attrs.SetMapAttr("wildcardSubscribers", goworld.MapAttr())
 	}
-	pss.DeclareService(ServiceName)
 }
 
 // RegisterService registeres PublishSubscribeService to goworld
 func RegisterService() {
-	goworld.RegisterEntity(ServiceName, &PublishSubscribeService{})
+	goworld.RegisterService(ServiceName, &PublishSubscribeService{})
 }
 
 // Publish is called when Avatars login

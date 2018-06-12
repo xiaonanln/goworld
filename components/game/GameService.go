@@ -22,6 +22,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
 const (
@@ -142,10 +143,8 @@ func (gs *GameService) serveRoutine() {
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
 				gs.HandleCallNilSpaces(method, args)
-			case proto.MT_DECLARE_SERVICE:
-				eid := pkt.ReadEntityID()
-				serviceName := pkt.ReadVarStr()
-				gs.HandleDeclareService(eid, serviceName)
+			case proto.MT_SRVDIS_REGISTER:
+				gs.HandleSrvdisRegister(pkt)
 			case proto.MT_UNDECLARE_SERVICE:
 				eid := pkt.ReadEntityID()
 				serviceName := pkt.ReadVarStr()
@@ -317,12 +316,13 @@ func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common
 	entity.LoadEntityLocally(typeName, entityID)
 }
 
-func (gs *GameService) HandleDeclareService(entityID common.EntityID, serviceName string) {
+func (gs *GameService) HandleSrvdisRegister(pkt *netutil.Packet) {
 	// tell the entity that it is registered successfully
-	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleDeclareService: %s declares %s", gs, entityID, serviceName)
-	}
-	entity.OnDeclareService(serviceName, entityID)
+	srvid := pkt.ReadVarStr()
+	srvinfo := pkt.ReadVarStr()
+	gwlog.Infof("%s srvdis register: %s => %s", gs, srvid, srvinfo)
+
+	srvdis.WatchSrvdisRegister(srvid, srvinfo)
 }
 
 func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
@@ -404,15 +404,12 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		rejectEntities = append(rejectEntities, pkt.ReadEntityID())
 	}
 
-	registeredServicesNum := pkt.ReadUint32()
-	registeredServices := make(map[string]common.EntityIDSet, registeredServicesNum)
-	for i := uint32(0); i < registeredServicesNum; i++ {
-		serviceName := pkt.ReadVarStr()
-		eids := pkt.ReadEntityIDSet()
-		registeredServices[serviceName] = eids
+	srvdisMap := pkt.ReadMapStringString()
+	for srvid, srvinfo := range srvdisMap {
+		srvdis.WatchSrvdisRegister(srvid, srvinfo)
 	}
 
-	gwlog.Infof("%s: set game ID ack received, connected games: %v, reject entities: %d, registered services: %v", gs, numConnectedGames, rejectEntitiesNum, registeredServices)
+	gwlog.Infof("%s: set game ID ack received, connected games: %v, reject entities: %d, srvdis map: %+v", gs, numConnectedGames, rejectEntitiesNum, srvdisMap)
 	if gs.isAllGamesConnected() {
 		// all games are connected
 		entity.OnAllGamesConnected()

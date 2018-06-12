@@ -180,16 +180,16 @@ type dispatcherMessage struct {
 
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
-	dispid                uint16
-	config                *config.DispatcherConfig
-	games                 []*gameDispatchInfo
-	bootGames             []int
-	gates                 []*dispatcherClientProxy
-	messageQueue          chan dispatcherMessage
-	chooseClientIndex     int
-	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
-	registeredServices    map[string]common.EntityIDSet
-	entityIDToServices    map[common.EntityID]common.StringSet
+	dispid              uint16
+	config              *config.DispatcherConfig
+	games               []*gameDispatchInfo
+	bootGames           []int
+	gates               []*dispatcherClientProxy
+	messageQueue        chan dispatcherMessage
+	chooseClientIndex   int
+	entityDispatchInfos map[common.EntityID]*entityDispatchInfo
+	srvdisRegisterMap   map[string]string
+	//entityIDToServices    map[common.EntityID]common.StringSet
 	targetGameOfClient    map[common.ClientID]uint16
 	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
@@ -206,15 +206,15 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		entitySyncInfosToGame[i] = pkt
 	}
 	ds := &DispatcherService{
-		dispid:                dispid,
-		config:                cfg,
-		messageQueue:          make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
-		games:                 make([]*gameDispatchInfo, gameCount),
-		gates:                 make([]*dispatcherClientProxy, gateCount),
-		chooseClientIndex:     0,
-		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
-		entityIDToServices:    map[common.EntityID]common.StringSet{},
-		registeredServices:    map[string]common.EntityIDSet{},
+		dispid:              dispid,
+		config:              cfg,
+		messageQueue:        make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
+		games:               make([]*gameDispatchInfo, gameCount),
+		gates:               make([]*dispatcherClientProxy, gateCount),
+		chooseClientIndex:   0,
+		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
+		//entityIDToServices:    map[common.EntityID]common.StringSet{},
+		srvdisRegisterMap:     map[string]string{},
 		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
@@ -273,8 +273,8 @@ func (service *DispatcherService) messageLoop() {
 					service.handleCallNilSpaces(dcp, pkt)
 				case proto.MT_CANCEL_MIGRATE:
 					service.handleCancelMigrate(dcp, pkt)
-				case proto.MT_DECLARE_SERVICE:
-					service.handleDeclareService(dcp, pkt)
+				case proto.MT_SRVDIS_REGISTER:
+					service.handleSrvdisRegister(dcp, pkt)
 				case proto.MT_SET_GAME_ID:
 					// this is a game server
 					service.handleSetGameID(dcp, pkt)
@@ -398,10 +398,10 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		}
 	}
 
-	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d, services = %v", service, dcp, gameid, numEntities, len(rejectEntities), service.registeredServices)
+	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d, services = %v", service, dcp, gameid, numEntities, len(rejectEntities), service.srvdisRegisterMap)
 	// reuse the packet to send SET_GAMEID_ACK with all connected gameids
 	connectedGameIDs := service.getConnectedGameIDs()
-	dcp.SendSetGameIDAck(connectedGameIDs, rejectEntities, service.registeredServices)
+	dcp.SendSetGameIDAck(connectedGameIDs, rejectEntities, service.srvdisRegisterMap)
 	service.sendNotifyGameConnected(gameid)
 
 	return
@@ -577,7 +577,7 @@ func (service *DispatcherService) cleanupEntitiesOfGame(gameid uint16) {
 
 	//// for all services whose entity is cleaned, notify all games that the service is down
 	//undeclaredServices := common.StringSet{}
-	//for serviceName, serviceEids := range service.registeredServices {
+	//for serviceName, serviceEids := range service.srvdisRegisterMap {
 	//	var serviceRemoveEids []common.EntityID
 	//	for serviceEid := range serviceEids {
 	//		if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
@@ -618,17 +618,17 @@ func (service *DispatcherService) handleNotifyDestroyEntity(dcp *dispatcherClien
 
 func (service *DispatcherService) cleanupEntityInfo(entityID common.EntityID) {
 	service.delEntityDispatchInfo(entityID)
-	if services, ok := service.entityIDToServices[entityID]; ok {
-		for serviceName := range services {
-			serviceEids := service.registeredServices[serviceName]
-			serviceEids.Del(entityID)
-			if len(serviceEids) == 0 {
-				delete(service.registeredServices, serviceName)
-			}
-		}
-		delete(service.entityIDToServices, entityID)
-		gwlog.Warnf("%s: entity %s is cleaned up, undeclared servies %v", service, entityID, services.ToList())
-	}
+	//if services, ok := service.entityIDToServices[entityID]; ok {
+	//	for serviceName := range services {
+	//		serviceEids := service.srvdisRegisterMap[serviceName]
+	//		serviceEids.Del(entityID)
+	//		if len(serviceEids) == 0 {
+	//			delete(service.srvdisRegisterMap, serviceName)
+	//		}
+	//	}
+	//	delete(service.entityIDToServices, entityID)
+	//	gwlog.Warnf("%s: entity %s is cleaned up, undeclared servies %v", service, entityID, services.ToList())
+	//}
 }
 
 func (service *DispatcherService) handleNotifyClientConnected(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -691,31 +691,18 @@ func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClie
 	gdi.dispatchPacket(pkt)
 }
 
-func (service *DispatcherService) handleDeclareService(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
-	entityID := pkt.ReadEntityID()
-	serviceName := pkt.ReadVarStr()
-	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleDeclareService: dcp=%s, entityID=%s, serviceName=%s", service, dcp, entityID, serviceName)
-	}
+func (service *DispatcherService) handleSrvdisRegister(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+	srvid := pkt.ReadVarStr()
+	srvinfo := pkt.ReadVarStr()
 
-	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityID)
-	entityDispatchInfo.gameid = dcp.gameid
+	curinfo := service.srvdisRegisterMap[srvid]
 
-	eids, ok := service.registeredServices[serviceName]
-	if !ok {
-		eids = common.EntityIDSet{}
-		service.registeredServices[serviceName] = eids
-	}
-
-	if !eids.Contains(entityID) {
-		eids.Add(entityID)
-		services, ok := service.entityIDToServices[entityID]
-		if !ok {
-			services = common.StringSet{}
-			service.entityIDToServices[entityID] = services
-		}
-		services.Add(serviceName)
+	if curinfo == "" {
+		service.srvdisRegisterMap[srvid] = srvinfo
 		service.broadcastToGames(pkt)
+		gwlog.Infof("%s: srvdis register %s = %s, register ok", service, srvid, srvinfo)
+	} else {
+		gwlog.Infof("%s: srvdis register %s = %s, curinfo=%s, register failed", service, srvid, srvinfo, curinfo)
 	}
 }
 

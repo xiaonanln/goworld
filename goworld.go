@@ -11,6 +11,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
+	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
@@ -34,6 +35,12 @@ func Run() {
 // of entity type
 func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
 	return entity.RegisterEntity(typeName, entityPtr)
+}
+
+// RegisterService registeres an service type
+// After registeration, the service entity will be created automatically on some game
+func RegisterService(typeName string, entityPtr entity.IEntity) {
+	service.RegisterService(typeName, entityPtr)
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server

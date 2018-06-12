@@ -413,6 +413,25 @@ func (p *Packet) ReadVarBytes() []byte {
 	return p.ReadBytes(blen)
 }
 
+func (p *Packet) AppendMapStringString(m map[string]string) {
+	p.AppendUint32(uint32(len(m)))
+	for k, v := range m {
+		p.AppendVarStr(k)
+		p.AppendVarStr(v)
+	}
+}
+
+func (p *Packet) ReadMapStringString() map[string]string {
+	size := p.ReadUint32()
+	m := make(map[string]string, size)
+	for i := uint32(0); i < size; i++ {
+		k := p.ReadVarStr()
+		v := p.ReadVarStr()
+		m[k] = v
+	}
+	return m
+}
+
 // AppendData appends one data of any type to the end of payload
 func (p *Packet) AppendData(msg interface{}) {
 	dataBytes, err := MSG_PACKER.PackMsg(msg, nil)

@@ -37,10 +37,6 @@ func SendNotifyDestroyEntity(id common.EntityID) error {
 	return SelectByEntityID(id).SendNotifyDestroyEntity(id)
 }
 
-func SendDeclareService(id common.EntityID, serviceName string) error {
-	return SelectByEntityID(id).SendDeclareService(id, serviceName)
-}
-
 func SendClearClientFilterProp(gateid uint16, clientid common.ClientID) (err error) {
 	return SelectByGateID(gateid).SendClearClientFilterProp(gateid, clientid)
 }
@@ -89,6 +85,10 @@ func SendStartFreezeGame(gameid uint16) (anyerror error) {
 	return
 }
 
+func SendSrvdisRegister(srvid string, info string) {
+	SelectBySrvID(srvid).SendSrvdisRegister(srvid, info)
+}
+
 func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) (anyerror error) {
 	// construct one packet for multiple sending
 	packet := netutil.NewPacket()
@@ -124,6 +124,11 @@ func SelectByGateID(gateid uint16) *dispatcherclient.DispatcherClient {
 
 func SelectByDispatcherID(dispid uint16) *dispatcherclient.DispatcherClient {
 	return dispatcherConns[dispid-1].GetDispatcherClientForSend()
+}
+
+func SelectBySrvID(srvid string) *dispatcherclient.DispatcherClient {
+	idx := hashSrvID(srvid) % dispatcherNum
+	return dispatcherConns[idx].GetDispatcherClientForSend()
 }
 
 func Select(dispidx int) *dispatcherclient.DispatcherClient {
