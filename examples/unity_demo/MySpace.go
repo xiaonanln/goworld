@@ -25,7 +25,7 @@ type MySpace struct {
 func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
 	space.UseTowerAOI(-1000, 1000, -1000, 1000, 10)
-	space.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
+	goworld.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 	space.AddTimer(time.Second*5, "DumpEntityStatus")
 	space.AddTimer(time.Second*5, "SummonMonsters")
 	//M := 10
@@ -88,7 +88,7 @@ func (space *MySpace) CheckForDestroy() {
 		gwlog.Panicf("Player count should be 0, but is %d", avatarCount)
 	}
 
-	space.CallService("SpaceService", "RequestDestroy", space.Kind, space.ID)
+	goworld.CallService("SpaceService", "RequestDestroy", space.Kind, space.ID)
 }
 
 func (space *MySpace) clearDestroyCheckTimer() {

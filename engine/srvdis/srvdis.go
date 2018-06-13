@@ -30,3 +30,15 @@ func WatchSrvdisRegister(srvid string, srvinfo string) {
 	gwlog.Infof("srvdis: watch %s = %s", srvid, srvinfo)
 	srvmap[srvid] = srvinfo
 }
+
+func ClearByDispatcher(dispid uint16) {
+	removeSrvIDs := []string(nil)
+	for srvid, _ := range srvmap {
+		if dispatchercluster.SrvIDToDispatcherID(srvid) == dispid {
+			removeSrvIDs = append(removeSrvIDs, srvid)
+		}
+	}
+	for _, srvid := range removeSrvIDs {
+		delete(srvmap, srvid)
+	}
+}

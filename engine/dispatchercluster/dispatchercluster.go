@@ -112,6 +112,10 @@ func EntityIDToDispatcherID(entityid common.EntityID) uint16 {
 	return uint16((hashEntityID(entityid) % dispatcherNum) + 1)
 }
 
+func SrvIDToDispatcherID(srvid string) uint16 {
+	return uint16((hashSrvID(srvid) % dispatcherNum) + 1)
+}
+
 func SelectByEntityID(entityid common.EntityID) *dispatcherclient.DispatcherClient {
 	idx := hashEntityID(entityid) % dispatcherNum
 	return dispatcherConns[idx].GetDispatcherClientForSend()

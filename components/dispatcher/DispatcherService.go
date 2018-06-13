@@ -401,7 +401,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d, services = %v", service, dcp, gameid, numEntities, len(rejectEntities), service.srvdisRegisterMap)
 	// reuse the packet to send SET_GAMEID_ACK with all connected gameids
 	connectedGameIDs := service.getConnectedGameIDs()
-	dcp.SendSetGameIDAck(connectedGameIDs, rejectEntities, service.srvdisRegisterMap)
+	dcp.SendSetGameIDAck(service.dispid, connectedGameIDs, rejectEntities, service.srvdisRegisterMap)
 	service.sendNotifyGameConnected(gameid)
 
 	return

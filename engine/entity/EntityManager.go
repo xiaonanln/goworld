@@ -161,39 +161,6 @@ func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 	}
 }
 
-func (em *_EntityManager) onDeclareService(serviceName string, eid common.EntityID) {
-	//eids, ok := em.registeredServices[serviceName]
-	//if !ok {
-	//	eids = common.EntityIDSet{}
-	//	em.registeredServices[serviceName] = eids
-	//}
-	//eids.Add(eid)
-}
-
-func (em *_EntityManager) onUndeclareService(serviceName string, eid common.EntityID) {
-	//eids, ok := em.registeredServices[serviceName]
-	//if ok {
-	//	eids.Del(eid)
-	//}
-}
-
-func (em *_EntityManager) chooseServiceProvider(serviceName string) common.EntityID {
-	//// choose one entity ID of service providers randomly
-	//eids, ok := em.registeredServices[serviceName]
-	//if !ok {
-	//	gwlog.Panicf("service not found: %s", serviceName)
-	//}
-	//
-	//r := rand.Intn(len(eids)) // get a random one
-	//for eid := range eids {
-	//	if r == 0 {
-	//		return eid
-	//	}
-	//	r -= 1
-	//}
-	return "" // never goes here
-}
-
 // RegisterEntity registers custom entity type and define entity behaviors
 func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
@@ -420,23 +387,6 @@ func OnClientDisconnected(clientid common.ClientID) {
 	entityManager.onClientDisconnected(clientid) // pop the owner eid
 }
 
-// OnDeclareService is called by engine when service is declared
-func OnDeclareService(serviceName string, entityid common.EntityID) {
-	gwlog.Infof("Entity %s declares service %s.", entityid, serviceName)
-	entityManager.onDeclareService(serviceName, entityid)
-}
-
-// OnUndeclareService is called by engine when service is undeclared
-func OnUndeclareService(serviceName string, entityid common.EntityID) {
-	entityManager.onUndeclareService(serviceName, entityid)
-}
-
-// GetServiceProviders returns all service providers
-func GetServiceProviders(serviceName string) common.EntityIDSet {
-	//return entityManager.registeredServices[serviceName]
-	return common.EntityIDSet{}
-}
-
 func Call(id common.EntityID, method string, args []interface{}) {
 	if consts.OPTIMIZE_LOCAL_ENTITY_CALL {
 		e := entityManager.get(id)
@@ -450,11 +400,6 @@ func Call(id common.EntityID, method string, args []interface{}) {
 	} else {
 		callRemote(id, method, args)
 	}
-}
-
-func CallService(serviceName string, method string, args []interface{}) {
-	serviceEid := entityManager.chooseServiceProvider(serviceName)
-	Call(serviceEid, method, args)
 }
 
 func CallNilSpaces(method string, args []interface{}, gameid uint16) {

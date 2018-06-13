@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
@@ -52,7 +53,7 @@ func (p *Player) enterSpace(spaceKind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Infof("%s enter space from %d => %d", p, p.Space.Kind, spaceKind)
 	}
-	p.CallService("SpaceService", "EnterSpace", p.ID, spaceKind)
+	goworld.CallService("SpaceService", "EnterSpace", p.ID, spaceKind)
 }
 
 // OnClientConnected is called when client is connected

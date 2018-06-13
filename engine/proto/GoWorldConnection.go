@@ -378,9 +378,10 @@ func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {
 	return pkt
 }
 
-func (gwc *GoWorldConnection) SendSetGameIDAck(connectedGameIDs []uint16, rejectEntities []common.EntityID, srvdisRegisterMap map[string]string) error {
+func (gwc *GoWorldConnection) SendSetGameIDAck(dispid uint16, connectedGameIDs []uint16, rejectEntities []common.EntityID, srvdisRegisterMap map[string]string) error {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(MT_SET_GAME_ID_ACK)
+	pkt.AppendUint16(dispid)
 	pkt.AppendUint16(uint16(len(connectedGameIDs)))
 	for _, gameid := range connectedGameIDs {
 		pkt.AppendUint16(gameid)

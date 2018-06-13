@@ -145,12 +145,12 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleCallNilSpaces(method, args)
 			case proto.MT_SRVDIS_REGISTER:
 				gs.HandleSrvdisRegister(pkt)
-			case proto.MT_UNDECLARE_SERVICE:
-				eid := pkt.ReadEntityID()
-				serviceName := pkt.ReadVarStr()
-				gs.HandleUndeclareService(eid, serviceName)
-				//case proto.MT_NOTIFY_ALL_GAMES_CONNECTED:
-				//	gs.handleNotifyAllGamesConnected()
+			//case proto.MT_UNDECLARE_SERVICE:
+			//	eid := pkt.ReadEntityID()
+			//	serviceName := pkt.ReadVarStr()
+			//	gs.HandleUndeclareService(eid, serviceName)
+			//case proto.MT_NOTIFY_ALL_GAMES_CONNECTED:
+			//	gs.handleNotifyAllGamesConnected()
 			case proto.MT_NOTIFY_GATE_DISCONNECTED:
 				gateid := pkt.ReadUint16()
 				gs.HandleGateDisconnected(gateid)
@@ -326,19 +326,6 @@ func (gs *GameService) HandleSrvdisRegister(pkt *netutil.Packet) {
 	srvdis.WatchSrvdisRegister(srvid, srvinfo)
 }
 
-func (gs *GameService) HandleUndeclareService(entityID common.EntityID, serviceName string) {
-	// tell the entity that it is registered successfully
-	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.HandleUndeclareService: %s undeclares %s", gs, entityID, serviceName)
-	}
-	entity.OnUndeclareService(serviceName, entityID)
-}
-
-//func (gs *GameService) handleNotifyAllGamesConnected() {
-//	// all games are connected
-//	entity.OnAllGamesConnected()
-//}
-
 func (gs *GameService) HandleGateDisconnected(gateid uint16) {
 	entity.OnGateDisconnected(gateid)
 }
@@ -384,6 +371,7 @@ func (gs *GameService) isAllGamesConnected() bool {
 }
 
 func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
+	dispid := pkt.ReadUint16() // dispatcher  that sent the SET_GAME_ID_ACK
 	gameNum := int(pkt.ReadUint16())
 	for i := range gs.isGameConnected {
 		gs.isGameConnected[i] = false // set all games to be not connected
@@ -406,6 +394,7 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 	}
 
 	srvdisMap := pkt.ReadMapStringString()
+	srvdis.ClearByDispatcher(dispid)
 	for srvid, srvinfo := range srvdisMap {
 		srvdis.WatchSrvdisRegister(srvid, srvinfo)
 	}

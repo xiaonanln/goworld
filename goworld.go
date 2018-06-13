@@ -78,11 +78,6 @@ func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	entity.LoadEntityAnywhere(typeName, entityID)
 }
 
-// GetServiceProviders get the set of EntityIDs that provides the specified service
-func GetServiceProviders(serviceName string) common.EntityIDSet {
-	return entity.GetServiceProviders(serviceName)
-}
-
 // ListEntityIDs gets all saved entity ids in storage, may take long time and block the main routine
 //
 // returns result in callback
@@ -142,9 +137,14 @@ func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
-// CallService calls a service provider
+// CallService calls a service entity
 func CallService(serviceName string, method string, args ...interface{}) {
-	entity.CallService(serviceName, method, args)
+	service.CallService(serviceName, method, args)
+}
+
+// GetServiceEntityID returns the entityid of the service
+func GetServiceEntityID(serviceName string) common.EntityID {
+	return service.GetServiceEntityID(serviceName)
 }
 
 // CallNilSpaces calls methods of all nil spaces on all games

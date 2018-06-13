@@ -487,11 +487,6 @@ func (e *Entity) Call(id common.EntityID, method string, args ...interface{}) {
 	Call(id, method, args)
 }
 
-// CallService calls a service provider
-func (e *Entity) CallService(serviceName string, method string, args ...interface{}) {
-	CallService(serviceName, method, args)
-}
-
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
 	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v, syncing %v", e, x, y, z, yaw, e.syncingFromClient)
 	if e.syncingFromClient {

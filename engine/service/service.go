@@ -24,13 +24,14 @@ const (
 )
 
 var (
-	registeredServices = map[string]*entity.EntityTypeDesc{}
+	registeredServices = common.StringSet{}
 	gameid             uint16
+	serviceMap         = map[string]common.EntityID{} // ServiceName -> Entity ID
 )
 
 func RegisterService(typeName string, entityPtr entity.IEntity) {
-	td := entity.RegisterEntity(typeName, entityPtr)
-	registeredServices[typeName] = td
+	entity.RegisterEntity(typeName, entityPtr)
+	registeredServices.Add(typeName)
 }
 
 func Startup(gameid_ uint16) {
@@ -47,6 +48,7 @@ func checkServices() {
 	gwlog.Infof("checking services ...")
 	dispRegisteredServices := map[string]*serviceInfo{} // all services that are registered on dispatchers
 	needLocalServiceEntities := common.StringSet{}
+	newServiceMap := make(map[string]common.EntityID, len(registeredServices))
 
 	getServiceInfo := func(serviceName string) *serviceInfo {
 		info := dispRegisteredServices[serviceName]
@@ -73,8 +75,6 @@ func checkServices() {
 
 			if int(gameid) == targetGameID {
 				needLocalServiceEntities.Add(serviceName)
-				//serviceEntities := entity.GetEntitiesByType(serviceName)
-				//gwlog.Infof("service: %s should be created on game%d, local entities: %+v", serviceName, targetGameID, serviceEntities)
 			}
 		} else if len(servicePath) == 2 {
 			// ServiceName/EntityID = Xxxx
@@ -90,6 +90,13 @@ func checkServices() {
 			gwlog.Panic(servicePath)
 		}
 	})
+
+	for serviceName, info := range dispRegisteredServices {
+		if info.Registered && !info.EntityID.IsNil() {
+			newServiceMap[serviceName] = info.EntityID
+		}
+	}
+	serviceMap = newServiceMap
 
 	for serviceName := range needLocalServiceEntities {
 		serviceEntities := entity.GetEntitiesByType(serviceName)
@@ -130,4 +137,18 @@ func createServiceEntity(serviceName string) {
 
 func getSrvID(serviceName string) string {
 	return serviceSrvdisPrefix + serviceName
+}
+
+func CallService(serviceName string, method string, args []interface{}) {
+	serviceEid := serviceMap[serviceName]
+	if serviceEid.IsNil() {
+		gwlog.Errorf("CallService %s.%s: service entity is not created yet!", serviceName, method)
+		return
+	}
+
+	entity.Call(serviceEid, method, args)
+}
+
+func GetServiceEntityID(serviceName string) common.EntityID {
+	return serviceMap[serviceName]
 }
