@@ -30,7 +30,7 @@ var (
 )
 
 func RegisterService(typeName string, entityPtr entity.IEntity) {
-	entity.RegisterEntity(typeName, entityPtr)
+	entity.RegisterEntity(typeName, entityPtr, true)
 	registeredServices.Add(typeName)
 }
 
@@ -130,9 +130,18 @@ func checkServices() {
 	}
 }
 func createServiceEntity(serviceName string) {
-	eid := entity.CreateEntityLocally(serviceName, nil, nil)
-	gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
-	srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
+	desc := entity.GetEntityTypeDesc(serviceName)
+	if desc == nil {
+		gwlog.Panicf("create service entity locally failed: service %s is not registered", serviceName)
+	}
+
+	if !desc.IsPersistent {
+		eid := entity.CreateEntityLocally(serviceName, nil, nil)
+		gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
+		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
+	} else {
+		createPersistentServiceEntity(serviceName)
+	}
 }
 
 func getSrvID(serviceName string) string {

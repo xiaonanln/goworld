@@ -38,7 +38,7 @@ func RegisterSpace(spacePtr ISpace) {
 	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
 	spaceType = spaceVal.Type()
 
-	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr)
+	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr, false)
 }
 
 func GetSpace(id common.EntityID) *Space {

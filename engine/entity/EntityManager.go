@@ -23,7 +23,8 @@ var (
 
 // EntityTypeDesc is the entity type description for registering entity types
 type EntityTypeDesc struct {
-	isPersistent    bool
+	isService       bool
+	IsPersistent    bool
 	useAOI          bool
 	entityType      reflect.Type
 	rpcDescs        rpcDescMap
@@ -43,7 +44,11 @@ func init() {
 }
 
 func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
-	desc.isPersistent = persistent
+	if desc.isService && persistent {
+		gwlog.Panicf("Service entity can not be persistent (will be fixed in the future)!")
+	}
+
+	desc.IsPersistent = persistent
 	return desc
 }
 
@@ -72,7 +77,7 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 		} else if def == "persistent" {
 			isPersistent = true
 			// make sure non-persistent entity has no persistent attributes
-			if !desc.isPersistent {
+			if !desc.IsPersistent {
 				gwlog.Fatalf("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
 			}
 		}
@@ -162,7 +167,7 @@ func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 }
 
 // RegisterEntity registers custom entity type and define entity behaviors
-func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
+func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityTypeDesc {
 	if _, ok := registeredEntityTypes[typeName]; ok {
 		gwlog.Fatalf("RegisterEntity: Entity type %s already registered", typeName)
 	}
@@ -177,7 +182,8 @@ func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	// register the string of e
 	rpcDescs := rpcDescMap{}
 	entityTypeDesc := &EntityTypeDesc{
-		isPersistent:    false,
+		isService:       isService,
+		IsPersistent:    false,
 		useAOI:          false,
 		entityType:      entityType,
 		rpcDescs:        rpcDescs,
@@ -200,6 +206,10 @@ func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 	entity.DescribeEntityType(entityTypeDesc)
 	return entityTypeDesc
 	//e.callCompositiveMethod("DescribeEntityType", entityTypeDesc)
+}
+
+func GetEntityTypeDesc(typeName string) *EntityTypeDesc {
+	return registeredEntityTypes[typeName]
 }
 
 var entityType = reflect.TypeOf(Entity{})
@@ -369,8 +379,6 @@ func OnCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[
 }
 
 // LoadEntityLocally loads entity in the local game.
-//
-// LoadEntityLocally has no effect if entity already exists on any game
 func LoadEntityLocally(typeName string, entityID common.EntityID) {
 	loadEntityLocally(typeName, entityID, nil, Vector3{})
 }

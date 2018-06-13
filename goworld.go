@@ -34,7 +34,7 @@ func Run() {
 // returns the entity type description object which can be used to define more properties
 // of entity type
 func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTypeDesc {
-	return entity.RegisterEntity(typeName, entityPtr)
+	return entity.RegisterEntity(typeName, entityPtr, false)
 }
 
 // RegisterService registeres an service type

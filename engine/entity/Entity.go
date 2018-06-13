@@ -662,7 +662,7 @@ func (e *Entity) OnDestroy() {
 //
 // Default implementation check entity for persistent attributes
 func (e *Entity) IsPersistent() bool {
-	return e.typeDesc.isPersistent
+	return e.typeDesc.IsPersistent
 }
 
 // getPersistentData gets the persistent data
