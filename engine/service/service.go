@@ -11,12 +11,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goTimer"
-	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/srvdis"
-	"github.com/xiaonanln/goworld/engine/storage"
 )
 
 const (
@@ -70,7 +68,9 @@ func checkServices() {
 		serviceEntities := entity.GetEntitiesByType(serviceName)
 		if len(serviceEntities) == 0 {
 			createServiceEntity(serviceName)
-		}
+		} else if
+
+
 	}
 
 	for serviceName := range registeredServices {
@@ -81,17 +81,7 @@ func checkServices() {
 	}
 }
 func createServiceEntity(serviceName string) {
-	storage.ListEntityIDs(serviceName, func(eids []common.EntityID, err error) {
-		gwlog.Infof("Found saved %s ids: %v", serviceName, eids)
-
-		if len(eids) == 0 {
-			goworld.CreateEntityLocally(serviceName)
-		} else {
-			// already exists
-			serviceID := eids[0]
-			goworld.LoadEntityAnywhere(serviceName, serviceID)
-		}
-	})
+	eid := entity.CreateEntityLocally(serviceName, nil, nil)
 }
 
 func getSrvID(serviceName string) string {

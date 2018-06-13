@@ -1,7 +1,6 @@
 package dispatchercluster
 
 import (
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"github.com/xiaonanln/goworld/engine/common"
 )
 
@@ -17,7 +16,7 @@ func hashGateID(gateid uint16) int {
 }
 
 func hashString(s string) int {
-	h := util.Hash([]byte(s), 0xbc9f1d34)
+	h := common.Hash([]byte(s), 0xbc9f1d34)
 	return int(h)
 }
 
