@@ -144,7 +144,7 @@ func checkServerStarted() {
 
 func isAllServicesReady() bool {
 	for _, serviceName := range _SERVICE_NAMES {
-		if len(goworld.GetServiceProviders(serviceName)) == 0 {
+		if goworld.GetServiceEntityID(serviceName).IsNil() {
 			gwlog.Infof("%s is not ready ...", serviceName)
 			return false
 		}
