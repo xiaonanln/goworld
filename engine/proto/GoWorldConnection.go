@@ -110,11 +110,12 @@ func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID c
 }
 
 // SendSrvdisRegister
-func (gwc *GoWorldConnection) SendSrvdisRegister(srvid string, info string) error {
+func (gwc *GoWorldConnection) SendSrvdisRegister(srvid string, info string, force bool) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_SRVDIS_REGISTER)
 	packet.AppendVarStr(srvid)
 	packet.AppendVarStr(info)
+	packet.AppendBool(force)
 	return gwc.SendPacketRelease(packet)
 }
 

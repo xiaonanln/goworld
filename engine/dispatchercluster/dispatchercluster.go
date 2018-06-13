@@ -85,8 +85,8 @@ func SendStartFreezeGame(gameid uint16) (anyerror error) {
 	return
 }
 
-func SendSrvdisRegister(srvid string, info string) {
-	SelectBySrvID(srvid).SendSrvdisRegister(srvid, info)
+func SendSrvdisRegister(srvid string, info string, force bool) {
+	SelectBySrvID(srvid).SendSrvdisRegister(srvid, info, force)
 }
 
 func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) (anyerror error) {

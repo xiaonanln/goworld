@@ -694,15 +694,16 @@ func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClie
 func (service *DispatcherService) handleSrvdisRegister(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	srvid := pkt.ReadVarStr()
 	srvinfo := pkt.ReadVarStr()
+	force := pkt.ReadBool()
 
 	curinfo := service.srvdisRegisterMap[srvid]
 
-	if curinfo == "" {
+	if force || curinfo == "" {
 		service.srvdisRegisterMap[srvid] = srvinfo
 		service.broadcastToGames(pkt)
-		gwlog.Infof("%s: srvdis register %s = %s, register ok", service, srvid, srvinfo)
+		gwlog.Infof("%s: srvdis register %s = %s, force %v, register ok", service, srvid, srvinfo, force)
 	} else {
-		gwlog.Infof("%s: srvdis register %s = %s, curinfo=%s, register failed", service, srvid, srvinfo, curinfo)
+		gwlog.Infof("%s: srvdis register %s = %s, force %v, curinfo=%s, register failed", service, srvid, srvinfo, force, curinfo)
 	}
 }
 

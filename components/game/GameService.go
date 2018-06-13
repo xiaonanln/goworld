@@ -320,7 +320,8 @@ func (gs *GameService) HandleSrvdisRegister(pkt *netutil.Packet) {
 	// tell the entity that it is registered successfully
 	srvid := pkt.ReadVarStr()
 	srvinfo := pkt.ReadVarStr()
-	gwlog.Infof("%s srvdis register: %s => %s", gs, srvid, srvinfo)
+	force := pkt.ReadBool() // force is not useful here
+	gwlog.Infof("%s srvdis register: %s => %s, force %v", gs, srvid, srvinfo, force)
 
 	srvdis.WatchSrvdisRegister(srvid, srvinfo)
 }
