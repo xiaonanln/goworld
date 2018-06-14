@@ -15,6 +15,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/srvdis"
+	"github.com/xiaonanln/goworld/engine/storage"
 )
 
 const (
@@ -142,6 +143,32 @@ func createServiceEntity(serviceName string) {
 	} else {
 		createPersistentServiceEntity(serviceName)
 	}
+}
+
+func createPersistentServiceEntity(serviceName string) {
+	storage.ListEntityIDs(serviceName, func(ids []common.EntityID, err error) {
+		if err != nil {
+			gwlog.Panic(errors.Wrap(err, "storage.ListEntityIDs failed"))
+		}
+
+		if len(entity.GetEntitiesByType(serviceName)) > 0 {
+			// service exists now
+			gwlog.Warnf("Was creating service %s, but found existing: %v", serviceName, entity.GetEntitiesByType(serviceName))
+			return
+		}
+
+		var eid common.EntityID
+		if len(ids) == 0 {
+			eid = entity.CreateEntityLocally(serviceName, nil, nil)
+			gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
+		} else {
+			eid = ids[0]
+			entity.LoadEntityLocally(serviceName, eid)
+			gwlog.Infof("Loaded service entity: %s: %s", serviceName, eid)
+		}
+
+		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
+	})
 }
 
 func getSrvID(serviceName string) string {

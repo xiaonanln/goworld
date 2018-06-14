@@ -44,10 +44,6 @@ func init() {
 }
 
 func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
-	if desc.isService && persistent {
-		gwlog.Panicf("Service entity can not be persistent (will be fixed in the future)!")
-	}
-
 	desc.IsPersistent = persistent
 	return desc
 }
@@ -327,14 +323,19 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 	storage.Load(typeName, entityID, func(_data interface{}, err error) {
 		// callback runs in main routine
 		if err != nil {
-			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
 			dispatchercluster.SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
+			gwlog.Panicf("load entity %s.%s failed: %s", typeName, entityID, err)
+		}
+
+		ex := entityManager.get(entityID) // existing entity
+		if ex != nil {
+			// should not happen because dispatcher won't allow, but just in case
+			gwlog.Panicf("load entity %s.%s failed: %s already exists", typeName, entityID, ex)
 		}
 
 		if space != nil && space.IsDestroyed() {
 			// Space might be destroy during the Load process, so cancel the entity creation
-			dispatchercluster.SendNotifyDestroyEntity(entityID) // load entity failed, tell dispatcher
-			return
+			space = nil // if space is destroyed before creation, just use nil space
 		}
 
 		data := _data.(map[string]interface{})
