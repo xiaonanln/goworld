@@ -67,19 +67,8 @@ func newGameService(gameid uint16) *GameService {
 	}
 }
 
-func (gs *GameService) run(restore bool) {
+func (gs *GameService) run() {
 	gs.runState.Store(rsRunning)
-
-	if !restore {
-		entity.CreateNilSpace(gameid) // create the nil space
-	} else {
-		// restoring from freezed states
-		err := gs.doRestore()
-		if err != nil {
-			gwlog.Fatalf("Restore from freezed states failed: %+v", err)
-		}
-	}
-
 	binutil.PrintSupervisorTag(consts.GAME_STARTED_TAG)
 	gwutils.RepeatUntilPanicless(gs.serveRoutine)
 }
@@ -273,30 +262,6 @@ func (gs *GameService) doFreeze() {
 	for {
 		time.Sleep(time.Second)
 	}
-}
-
-func freezeFilename(gameid uint16) string {
-	return fmt.Sprintf("game%d_freezed.dat", gameid)
-}
-
-func (gs *GameService) doRestore() error {
-	t0 := time.Now()
-	freezeFilename := freezeFilename(gameid)
-	data, err := ioutil.ReadFile(freezeFilename)
-	if err != nil {
-		return err
-	}
-
-	t1 := time.Now()
-	var freezeEntity entity.FreezeData
-	freezePacker.UnpackMsg(data, &freezeEntity)
-	t2 := time.Now()
-
-	err = entity.RestoreFreezedEntities(&freezeEntity)
-	t3 := time.Now()
-
-	gwlog.Infof("Restored game service: load = %s, unpack = %s, restore = %s", t1.Sub(t0), t2.Sub(t1), t3.Sub(t2))
-	return err
 }
 
 func (gs *GameService) String() string {

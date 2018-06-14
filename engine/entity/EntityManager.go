@@ -281,7 +281,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 		entity.setupSaveTimer()
 	}
 
-	if cause == ccCreate || cause == ccRestore {
+	if cause == ccCreate {
 		dispatchercluster.SendNotifyCreateEntity(entityID)
 	}
 
@@ -515,7 +515,6 @@ func SaveAllEntities() {
 // FreezeData is the data structure for storing entity freeze data
 type FreezeData struct {
 	Entities map[common.EntityID]*entityFreezeData
-	Services map[string][]common.EntityID
 }
 
 // Freeze freezes the entity system and returns all freeze data
@@ -617,14 +616,6 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	restoreEntities(func(typeName string, spaceKind int64) bool {
 		return typeName != _SPACE_ENTITY_TYPE
 	})
-
-	//for serviceName, _eids := range freeze.Services {
-	//	eids := common.EntityIDSet{}
-	//	for _, eid := range _eids {
-	//		eids.Add(eid)
-	//	}
-	//	entityManager.registeredServices[serviceName] = eids
-	//}
 
 	return nil
 }

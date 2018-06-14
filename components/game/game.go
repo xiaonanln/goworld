@@ -111,9 +111,19 @@ func Run() {
 	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, gameConfig.BanBootEntity, &_GameDispatcherClientDelegate{})
 
 	setupSignals()
+	if !restore {
+		entity.CreateNilSpace(gameid) // create the nil space
+	} else {
+		// restoring from freezed states
+		err := restoreFreezedEntities()
+		if err != nil {
+			gwlog.Fatalf("Restore from freezed states failed: %+v", err)
+		}
+	}
+
 	service.Startup(gameid)
 	gwlog.Infof("Game service start running ...")
-	gameService.run(restore)
+	gameService.run()
 }
 
 func setupSignals() {
