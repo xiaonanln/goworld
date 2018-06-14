@@ -35,8 +35,8 @@ const (
 	MT_CALL_ENTITY_METHOD
 	// MT_CREATE_ENTITY_ANYWHERE is a message type for creating entities
 	MT_CREATE_ENTITY_ANYWHERE
-	// MT_LOAD_ENTITY_ANYWHERE is a message type loading entities
-	MT_LOAD_ENTITY_ANYWHERE
+	// MT_LOAD_ENTITY_SOMEWHERE is a message type loading entities
+	MT_LOAD_ENTITY_SOMEWHERE
 	// MT_NOTIFY_CLIENT_CONNECTED is a message type for clients
 	MT_NOTIFY_CLIENT_CONNECTED
 	// MT_NOTIFY_CLIENT_DISCONNECTED is a message type for clients

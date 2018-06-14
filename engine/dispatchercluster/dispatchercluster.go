@@ -68,7 +68,11 @@ func SendNotifyCreateEntity(id common.EntityID) error {
 }
 
 func SendLoadEntityAnywhere(typeName string, entityID common.EntityID) error {
-	return SelectByEntityID(entityID).SendLoadEntityAnywhere(typeName, entityID)
+	return SelectByEntityID(entityID).SendLoadEntitySomewhere(typeName, entityID, 0)
+}
+
+func SendLoadEntityOnGame(typeName string, entityID common.EntityID, gameid uint16) error {
+	return SelectByEntityID(entityID).SendLoadEntitySomewhere(typeName, entityID, gameid)
 }
 
 func SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) error {

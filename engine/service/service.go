@@ -163,8 +163,9 @@ func createPersistentServiceEntity(serviceName string) {
 			gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
 		} else {
 			eid = ids[0]
-			entity.LoadEntityLocally(serviceName, eid)
-			gwlog.Infof("Loaded service entity: %s: %s", serviceName, eid)
+			// try to load entity on the current game, but we need to tell dispatcher first
+			entity.LoadEntityOnGame(serviceName, eid, gameid)
+			gwlog.Infof("Loading service entity: %s: %s", serviceName, eid)
 		}
 
 		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)

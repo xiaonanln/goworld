@@ -259,8 +259,8 @@ func (service *DispatcherService) messageLoop() {
 					service.handleNotifyClientConnected(dcp, pkt)
 				case proto.MT_NOTIFY_CLIENT_DISCONNECTED:
 					service.handleNotifyClientDisconnected(dcp, pkt)
-				case proto.MT_LOAD_ENTITY_ANYWHERE:
-					service.handleLoadEntityAnywhere(dcp, pkt)
+				case proto.MT_LOAD_ENTITY_SOMEWHERE:
+					service.handleLoadEntitySomewhere(dcp, pkt)
 				case proto.MT_NOTIFY_CREATE_ENTITY:
 					eid := pkt.ReadEntityID()
 					service.handleNotifyCreateEntity(dcp, pkt, eid)
@@ -660,21 +660,30 @@ func (service *DispatcherService) handleNotifyClientDisconnected(dcp *dispatcher
 	}
 }
 
-func (service *DispatcherService) handleLoadEntityAnywhere(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+func (service *DispatcherService) handleLoadEntitySomewhere(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	//typeName := pkt.ReadVarStr()
 	//eid := pkt.ReadEntityID()
 	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleLoadEntityAnywhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
+		gwlog.Debugf("%s.handleLoadEntitySomewhere: dcp=%s, pkt=%v", service, dcp, pkt.Payload())
 	}
-	eid := pkt.ReadEntityID() // field 1
+	gameid := pkt.ReadUint16() // the target game to create entity or 0 for anywhere
+	eid := pkt.ReadEntityID()  // field 1
 
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
 
 	if entityDispatchInfo.gameid == 0 { // entity not loaded, try load now
-		dgi := service.chooseGame()
-		entityDispatchInfo.gameid = dgi.gameid
+		var gdi *gameDispatchInfo
+		if gameid == 0 {
+			gdi = service.chooseGame()
+		} else {
+			gdi = service.games[gameid-1]
+		}
+
+		entityDispatchInfo.gameid = gdi.gameid
 		entityDispatchInfo.blockRPC(consts.DISPATCHER_LOAD_TIMEOUT)
-		dgi.dispatchPacket(pkt)
+		gdi.dispatchPacket(pkt)
+	} else if gameid != 0 && gameid != entityDispatchInfo.gameid {
+		gwlog.Warnf("%s: try to load entity on game%d, but already created on game%d", service, gameid, entityDispatchInfo.gameid)
 	}
 }
 

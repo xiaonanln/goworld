@@ -100,10 +100,11 @@ func (gwc *GoWorldConnection) SendCreateEntityAnywhere(entityid common.EntityID,
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendLoadEntityAnywhere sends MT_LOAD_ENTITY_ANYWHERE message
-func (gwc *GoWorldConnection) SendLoadEntityAnywhere(typeName string, entityID common.EntityID) error {
+// SendLoadEntitySomewhere sends MT_LOAD_ENTITY_SOMEWHERE message
+func (gwc *GoWorldConnection) SendLoadEntitySomewhere(typeName string, entityID common.EntityID, gameid uint16) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_LOAD_ENTITY_ANYWHERE)
+	packet.AppendUint16(MT_LOAD_ENTITY_SOMEWHERE)
+	packet.AppendUint16(gameid)
 	packet.AppendEntityID(entityID)
 	packet.AppendVarStr(typeName)
 	return gwc.SendPacketRelease(packet)

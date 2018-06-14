@@ -128,10 +128,11 @@ func (gs *GameService) serveRoutine() {
 			case proto.MT_NOTIFY_CLIENT_DISCONNECTED:
 				clientid := pkt.ReadClientID()
 				gs.HandleNotifyClientDisconnected(clientid)
-			case proto.MT_LOAD_ENTITY_ANYWHERE:
+			case proto.MT_LOAD_ENTITY_SOMEWHERE:
+				_ = pkt.ReadUint16()
 				eid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
-				gs.HandleLoadEntityAnywhere(typeName, eid)
+				gs.HandleLoadEntitySomewhere(typeName, eid)
 			case proto.MT_CREATE_ENTITY_ANYWHERE:
 				entityid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
@@ -309,11 +310,11 @@ func (gs *GameService) HandleCreateEntityAnywhere(entityid common.EntityID, type
 	entity.OnCreateEntityAnywhere(entityid, typeName, data)
 }
 
-func (gs *GameService) HandleLoadEntityAnywhere(typeName string, entityID common.EntityID) {
+func (gs *GameService) HandleLoadEntitySomewhere(typeName string, entityID common.EntityID) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleLoadEntityAnywhere: typeName=%s, entityID=%s", gs, typeName, entityID)
 	}
-	entity.LoadEntityLocally(typeName, entityID)
+	entity.OnLoadEntitySomewhere(typeName, entityID)
 }
 
 func (gs *GameService) HandleSrvdisRegister(pkt *netutil.Packet) {

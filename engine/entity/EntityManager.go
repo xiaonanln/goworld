@@ -354,10 +354,6 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 	})
 }
 
-func loadEntityAnywhere(typeName string, entityID common.EntityID) {
-	dispatchercluster.SendLoadEntityAnywhere(typeName, entityID)
-}
-
 func createEntityAnywhere(typeName string, data map[string]interface{}) common.EntityID {
 	entityid := common.GenEntityID()
 	dispatchercluster.SendCreateEntityAnywhere(entityid, typeName, data)
@@ -379,8 +375,8 @@ func OnCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[
 	createEntity(typeName, nil, Vector3{}, entityid, data, nil, nil, ccCreate)
 }
 
-// LoadEntityLocally loads entity in the local game.
-func LoadEntityLocally(typeName string, entityID common.EntityID) {
+// OnLoadEntitySomewhere loads entity in the local game.
+func OnLoadEntitySomewhere(typeName string, entityID common.EntityID) {
 	loadEntityLocally(typeName, entityID, nil, Vector3{})
 }
 
@@ -388,7 +384,12 @@ func LoadEntityLocally(typeName string, entityID common.EntityID) {
 //
 // LoadEntityAnywhere has no effect if entity already exists on any game
 func LoadEntityAnywhere(typeName string, entityID common.EntityID) {
-	loadEntityAnywhere(typeName, entityID)
+	dispatchercluster.SendLoadEntityAnywhere(typeName, entityID)
+}
+
+// LoadEntityOnGame
+func LoadEntityOnGame(typeName string, entityID common.EntityID, gameid uint16) {
+	dispatchercluster.SendLoadEntityOnGame(typeName, entityID, gameid)
 }
 
 // OnClientDisconnected is called by engine when client is disconnected
