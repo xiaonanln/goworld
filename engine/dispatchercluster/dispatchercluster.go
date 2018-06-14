@@ -20,8 +20,16 @@ var (
 
 func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, isRestoreGame, isBanBootEntity bool, delegate dispatcherclient.IDispatcherClientDelegate) {
 	gid = _gid
+	if gid == 0 {
+		gwlog.Fatalf("gid is 0")
+	}
+
 	dispIds := config.GetDispatcherIDs()
 	dispatcherNum = len(dispIds)
+	if dispatcherNum == 0 {
+		gwlog.Fatalf("dispatcher number is 0")
+	}
+
 	dispatcherConns = make([]*dispatcherclient.DispatcherConnMgr, dispatcherNum)
 	for _, dispid := range dispIds {
 		dispatcherConns[dispid-1] = dispatcherclient.NewDispatcherConnMgr(gid, dctype, dispid, isRestoreGame, isBanBootEntity, delegate)
@@ -64,7 +72,12 @@ func SendCallFilterClientProxies(op proto.FilterClientsOpType, key, val string, 
 }
 
 func SendNotifyCreateEntity(id common.EntityID) error {
-	return SelectByEntityID(id).SendNotifyCreateEntity(id)
+	if gid != 0 {
+		return SelectByEntityID(id).SendNotifyCreateEntity(id)
+	} else {
+		// goes here when creating nil space or restoring freezed entities
+		return nil
+	}
 }
 
 func SendLoadEntityAnywhere(typeName string, entityID common.EntityID) error {
