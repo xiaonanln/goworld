@@ -220,20 +220,16 @@ func (space *Space) leave(entity *Entity) {
 		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
 	}
 
-	if space.aoiMgr == nil {
-		return
-	}
-
-	space.aoiMgr.Leave(&entity.aoi)
-	entity.client.sendDestroyEntity(&space.Entity)
 	// remove from Space entities
 	space.entities.Del(entity)
 	entity.Space = nilSpace
 
-	space.I.OnEntityLeaveSpace(entity)
-	//space.callCompositiveMethod("OnEntityLeaveSpace", entity)
-	entity.I.OnLeaveSpace(space)
-	//entity.callCompositiveMethod("OnLeaveSpace", space)
+	if space.aoiMgr != nil {
+		space.aoiMgr.Leave(&entity.aoi)
+		entity.client.sendDestroyEntity(&space.Entity)
+		space.I.OnEntityLeaveSpace(entity)
+		entity.I.OnLeaveSpace(space)
+	}
 }
 
 func (space *Space) move(entity *Entity, newPos Vector3) {

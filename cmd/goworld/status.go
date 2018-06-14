@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/keybase/go-ps"
+	"github.com/shirou/gopsutil/process"
 	"github.com/xiaonanln/goworld/engine/config"
+	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 // ServerStatus represents the status of a server
@@ -14,10 +16,11 @@ type ServerStatus struct {
 	NumDispatcherRunning int
 	NumGatesRunning      int
 	NumGamesRunning      int
-	DispatcherProcs      []ps.Process
-	GateProcs            []ps.Process
-	GameProcs            []ps.Process
-	ServerID             ServerID
+
+	DispatcherProcs []ps.Process
+	GateProcs       []ps.Process
+	GameProcs       []ps.Process
+	ServerID        ServerID
 }
 
 // IsRunning returns if a server is running
@@ -86,6 +89,8 @@ func detectServerStatus() *ServerStatus {
 }
 
 func status() {
+	pids := process.Pids()
+	gwlog.Infof("pids pids")
 	ss := detectServerStatus()
 	showServerStatus(ss)
 }
