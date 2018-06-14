@@ -111,6 +111,18 @@ func checkServices() {
 	}
 	serviceMap = newServiceMap
 
+	// destroy all service entities that is on this game, but is not verified by dispatcher
+	for serviceName := range registeredServices {
+		if !needLocalServiceEntities.Contains(serviceName) {
+			// this service should not be local
+			serviceEntities := entity.GetEntitiesByType(serviceName)
+			for _, e := range serviceEntities {
+				e.Destroy()
+			}
+		}
+	}
+
+	// create all service entities that should be created on this game
 	for serviceName := range needLocalServiceEntities {
 		serviceEntities := entity.GetEntitiesByType(serviceName)
 		if len(serviceEntities) == 0 {
@@ -135,6 +147,7 @@ func checkServices() {
 		}
 	}
 
+	// register all service types that are not registered to dispatcher yet
 	for serviceName := range registeredServices {
 		if !getServiceInfo(serviceName).Registered {
 			gwlog.Warnf("service: %s not found, registering srvdis ...", serviceName)
