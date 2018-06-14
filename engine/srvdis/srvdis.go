@@ -5,12 +5,14 @@ import (
 
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/post"
 )
 
 type RegisterCallback func(ok bool)
 
 var (
-	srvmap = map[string]string{}
+	srvmap        = map[string]string{}
+	postCallbacks []post.PostCallback
 )
 
 func Register(srvid string, srvinfo string, force bool) {
@@ -29,6 +31,10 @@ func TraverseByPrefix(prefix string, cb func(srvid string, srvinfo string)) {
 func WatchSrvdisRegister(srvid string, srvinfo string) {
 	gwlog.Infof("srvdis: watch %s = %s", srvid, srvinfo)
 	srvmap[srvid] = srvinfo
+
+	for _, c := range postCallbacks {
+		post.Post(c)
+	}
 }
 
 func ClearByDispatcher(dispid uint16) {
@@ -41,4 +47,12 @@ func ClearByDispatcher(dispid uint16) {
 	for _, srvid := range removeSrvIDs {
 		delete(srvmap, srvid)
 	}
+
+	for _, c := range postCallbacks {
+		post.Post(c)
+	}
+}
+
+func AddPostCallback(cb post.PostCallback) {
+	postCallbacks = append(postCallbacks, cb)
 }

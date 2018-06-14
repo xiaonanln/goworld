@@ -19,15 +19,17 @@ import (
 )
 
 const (
-	checkServicesInterval  = time.Second * 5
-	serviceSrvdisPrefix    = "Service/"
-	serviceSrvdisPrefixLen = len(serviceSrvdisPrefix)
+	checkServicesInterval   = time.Second * 60
+	serviceSrvdisPrefix     = "Service/"
+	serviceSrvdisPrefixLen  = len(serviceSrvdisPrefix)
+	checkServicesLaterDelay = time.Millisecond * 200
 )
 
 var (
 	registeredServices = common.StringSet{}
 	gameid             uint16
 	serviceMap         = map[string]common.EntityID{} // ServiceName -> Entity ID
+	checkTimer         *timer.Timer
 )
 
 func RegisterService(typeName string, entityPtr entity.IEntity) {
@@ -37,6 +39,7 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 
 func Startup(gameid_ uint16) {
 	gameid = gameid_
+	srvdis.AddPostCallback(checkServicesLater)
 	timer.AddTimer(checkServicesInterval, checkServices)
 }
 
@@ -45,8 +48,17 @@ type serviceInfo struct {
 	EntityID   common.EntityID
 }
 
+func checkServicesLater() {
+	if checkTimer == nil || !checkTimer.IsActive() {
+		checkTimer = timer.AddCallback(checkServicesLaterDelay, func() {
+			checkTimer = nil
+			checkServices()
+		})
+	}
+}
+
 func checkServices() {
-	gwlog.Infof("checking services ...")
+	gwlog.Infof("service: checking services ...")
 	dispRegisteredServices := map[string]*serviceInfo{} // all services that are registered on dispatchers
 	needLocalServiceEntities := common.StringSet{}
 	newServiceMap := make(map[string]common.EntityID, len(registeredServices))
