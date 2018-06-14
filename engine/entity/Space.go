@@ -179,7 +179,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	}
 
 	if entity.Space != nilSpace {
-		gwlog.Panicf("%s.enter(%s): current Space is not nil", space, entity)
+		gwlog.Panicf("%s.enter(%s): current space is not nil, but %s", space, entity, entity.Space)
 	}
 
 	if space.IsNil() || !entity.IsUseAOI() { // enter nil space does nothing
