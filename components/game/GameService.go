@@ -393,6 +393,13 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 	for i := uint32(0); i < rejectEntitiesNum; i++ {
 		rejectEntities = append(rejectEntities, pkt.ReadEntityID())
 	}
+	// remove all rejected entities
+	for _, eid := range rejectEntities {
+		e := entity.GetEntity(eid)
+		if e != nil {
+			e.Destroy()
+		}
+	}
 
 	srvdisMap := pkt.ReadMapStringString()
 	srvdis.ClearByDispatcher(dispid)

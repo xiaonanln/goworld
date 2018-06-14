@@ -145,8 +145,8 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 		}
 	}
 
-	entityManager.del(e)
 	e.destroyed = true
+	entityManager.del(e)
 }
 
 // IsDestroyed returns if the entity is destroyed
