@@ -715,7 +715,6 @@ type entityFreezeData struct {
 	Yaw       Yaw
 	SpaceID   common.EntityID
 	Client    *clientData
-	ESR       *enteringSpaceRequestData
 }
 
 // GetFreezeData gets freezed data
@@ -733,10 +732,6 @@ func (e *Entity) GetFreezeData() *entityFreezeData {
 			ClientID: e.client.clientid,
 			GateID:   e.client.gateid,
 		}
-	}
-
-	if !e.enteringSpaceRequest.SpaceID.IsNil() {
-		data.ESR = &enteringSpaceRequestData{e.enteringSpaceRequest.SpaceID, e.enteringSpaceRequest.EnterPos}
 	}
 
 	return data

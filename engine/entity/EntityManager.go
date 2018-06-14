@@ -11,7 +11,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
-	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/storage"
 	"github.com/xiaonanln/typeconv"
 )
@@ -590,15 +589,6 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 				}
 				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, client, ccRestore)
 				gwlog.Debugf("Restored %s<%s> in space %s", typeName, eid, space)
-
-				if info.ESR != nil { // entity was entering space before freeze, so restore entering space
-					post.Post(func() {
-						entity := GetEntity(eid)
-						if entity != nil {
-							entity.EnterSpace(info.ESR.SpaceID, info.ESR.EnterPos)
-						}
-					})
-				}
 			}
 		}
 	}
