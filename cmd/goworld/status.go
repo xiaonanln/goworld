@@ -6,9 +6,7 @@ import (
 	"strings"
 
 	"github.com/keybase/go-ps"
-	"github.com/shirou/gopsutil/process"
 	"github.com/xiaonanln/goworld/engine/config"
-	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 // ServerStatus represents the status of a server
@@ -89,8 +87,6 @@ func detectServerStatus() *ServerStatus {
 }
 
 func status() {
-	pids := process.Pids()
-	gwlog.Infof("pids pids")
 	ss := detectServerStatus()
 	showServerStatus(ss)
 }
