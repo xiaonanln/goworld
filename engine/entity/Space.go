@@ -182,7 +182,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 		gwlog.Panicf("%s.enter(%s): current space is not nil, but %s", space, entity, entity.Space)
 	}
 
-	if space.IsNil() || !entity.IsUseAOI() { // enter nil space does nothing
+	if space.IsNil() { // enter nil space does nothing
 		return
 	}
 
@@ -190,14 +190,13 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	space.entities.Add(entity)
 
 	entity.syncInfoFlag |= sifSyncOwnClient | sifSyncNeighborClients
-	if space.aoiMgr == nil {
-		return
-	}
 
 	if !isRestore {
 		entity.client.sendCreateEntity(&space.Entity, false) // create Space entity before every other entities
 
-		space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
+		if space.aoiMgr != nil && entity.IsUseAOI() {
+			space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
+		}
 
 		gwutils.RunPanicless(func() {
 			space.I.OnEntityEnterSpace(entity)
@@ -207,10 +206,13 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 		})
 	} else {
 		// restoring ...
-		client := entity.client
-		entity.client = nil
-		space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
-		entity.client = client
+		if space.aoiMgr != nil && entity.IsUseAOI() {
+			client := entity.client
+			entity.client = nil
+			space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
+			entity.client = client
+		}
+
 	}
 	//space.verifyAOICorrectness(entity)
 }
@@ -220,16 +222,24 @@ func (space *Space) leave(entity *Entity) {
 		gwlog.Panicf("%s.leave(%s): entity is not in this Space", space, entity)
 	}
 
+	if space.IsNil() {
+		// leaving nil space does nothing
+		return
+	}
+
 	// remove from Space entities
 	space.entities.Del(entity)
 	entity.Space = nilSpace
 
-	if space.aoiMgr != nil {
+	if space.aoiMgr != nil && entity.IsUseAOI() {
 		space.aoiMgr.Leave(&entity.aoi)
-		entity.client.sendDestroyEntity(&space.Entity)
+	}
+
+	entity.client.sendDestroyEntity(&space.Entity)
+	gwutils.RunPanicless(func() {
 		space.I.OnEntityLeaveSpace(entity)
 		entity.I.OnLeaveSpace(space)
-	}
+	})
 }
 
 func (space *Space) move(entity *Entity, newPos Vector3) {
@@ -239,32 +249,7 @@ func (space *Space) move(entity *Entity, newPos Vector3) {
 
 	entity.Position = newPos
 	space.aoiMgr.Moved(&entity.aoi, aoi.Coord(newPos.X), aoi.Coord(newPos.Z))
-	//space.verifyAOICorrectness(entity)
-	//opmon.Finish(time.Millisecond * 10)
 }
-
-//func (space *Space) verifyAOICorrectness(entity *Entity) {
-//	if space.IsNil() {
-//		return
-//	}
-//
-//	for e := range space.entities {
-//		if e.aoi.markVal != 0 {
-//			gwlog.Fatalf("%s: wrong aoi mark val = %d", e.aoi.markVal)
-//		}
-//
-//		if e == entity {
-//			continue
-//		}
-//
-//		isNeighbor := e.aoi.pos.X >= entity.aoi.pos.X-_DEFAULT_AOI_DISTANCE && e.aoi.pos.X <= entity.aoi.pos.X+_DEFAULT_AOI_DISTANCE && e.aoi.pos.Z >= entity.aoi.pos.Z-_DEFAULT_AOI_DISTANCE && e.aoi.pos.Z <= entity.aoi.pos.Z+_DEFAULT_AOI_DISTANCE
-//		if entity.aoi.neighbors.Contains(e) && !isNeighbor {
-//			gwlog.Fatalf("space %s: %s: wrong neighbor: %s, pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
-//		} else if !entity.aoi.neighbors.Contains(e) && isNeighbor {
-//			gwlog.Fatalf("space %s: %s: wrong not neighbor: %s: pos=%v, %v", space, entity, e, entity.GetPosition(), e.GetPosition())
-//		}
-//	}
-//}
 
 // OnEntityEnterSpace is called when entity enters space
 //
