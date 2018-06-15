@@ -5,7 +5,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/keybase/go-ps"
+	"github.com/xiaonanln/goworld/cmd/goworld/process"
 )
 
 func stop(sid ServerID) {
@@ -65,12 +65,10 @@ func stopGates(ss *ServerStatus, signal syscall.Signal) {
 	}
 }
 
-func stopProc(proc ps.Process, signal syscall.Signal) {
+func stopProc(proc process.Process, signal syscall.Signal) {
 	showMsg("stop process %s pid=%d", proc.Executable(), proc.Pid())
-	osproc, err := os.FindProcess(proc.Pid())
-	checkErrorOrQuit(err, "stop process failed")
 
-	osproc.Signal(signal)
+	proc.Signal(signal)
 	for {
 		time.Sleep(time.Millisecond * 100)
 		if !checkProcessRunning(proc) {
@@ -79,9 +77,9 @@ func stopProc(proc ps.Process, signal syscall.Signal) {
 	}
 }
 
-func checkProcessRunning(proc ps.Process) bool {
+func checkProcessRunning(proc process.Process) bool {
 	pid := proc.Pid()
-	procs, err := ps.Processes()
+	procs, err := process.Processes()
 	checkErrorOrQuit(err, "list processes failed")
 	for _, _proc := range procs {
 		if _proc.Pid() == pid {

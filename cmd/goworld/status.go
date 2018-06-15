@@ -1,11 +1,10 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/keybase/go-ps"
+	"github.com/xiaonanln/goworld/cmd/goworld/process"
 	"github.com/xiaonanln/goworld/engine/config"
 )
 
@@ -15,9 +14,9 @@ type ServerStatus struct {
 	NumGatesRunning      int
 	NumGamesRunning      int
 
-	DispatcherProcs []ps.Process
-	GateProcs       []ps.Process
-	GameProcs       []ps.Process
+	DispatcherProcs []process.Process
+	GateProcs       []process.Process
+	GameProcs       []process.Process
 	ServerID        ServerID
 }
 
@@ -26,29 +25,29 @@ func (ss *ServerStatus) IsRunning() bool {
 	return ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 || ss.NumGamesRunning > 0
 }
 
-func getProcPath(proc ps.Process) (string, error) {
-	path, err := proc.Path()
-
-	if err == nil {
-		return path, nil
-	}
-
-	if pathErr, ok := err.(*os.PathError); ok {
-		path = pathErr.Path
-		if strings.HasSuffix(path, " (deleted)") {
-			path = path[:len(path)-10]
-			return path, nil
-		}
-	}
-	return "", err
-}
+//func getProcPath(proc process.Process) (string, error) {
+//	path, err := proc.Path()
+//
+//	if err == nil {
+//		return path, nil
+//	}
+//
+//	if pathErr, ok := err.(*os.PathError); ok {
+//		path = pathErr.Path
+//		if strings.HasSuffix(path, " (deleted)") {
+//			path = path[:len(path)-10]
+//			return path, nil
+//		}
+//	}
+//	return "", err
+//}
 
 func detectServerStatus() *ServerStatus {
 	ss := &ServerStatus{}
-	procs, err := ps.Processes()
+	procs, err := process.Processes()
 	checkErrorOrQuit(err, "list processes failed")
 	for _, proc := range procs {
-		path, err := getProcPath(proc)
+		path, err := proc.Path()
 		if err != nil {
 			continue
 		}
@@ -98,12 +97,12 @@ func showServerStatus(ss *ServerStatus) {
 		ss.ServerID,
 	)
 
-	var listProcs []ps.Process
+	var listProcs []process.Process
 	listProcs = append(listProcs, ss.DispatcherProcs...)
 	listProcs = append(listProcs, ss.GameProcs...)
 	listProcs = append(listProcs, ss.GateProcs...)
 	for _, proc := range listProcs {
-		path, err := getProcPath(proc)
+		path, err := proc.Path()
 		if err != nil {
 			path = "[" + proc.Executable() + "]"
 		}

@@ -27,6 +27,8 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 * **Multiple Communication Protocols**: supports TCP, [KCP](https://github.com/skywind3000/kcp) and WebSocket
 * **Traffic Compression & Encryption**: traffic between clients and servers can be compressed and encrypted
 
+**Requires Go 1.10.x**
+
 ## Architecture
 ![GoWorld Architecture](http://goworldgs.com/public/img/goworld_arch.png "GoWorld Architecture")
 
