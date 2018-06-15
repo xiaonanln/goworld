@@ -12,7 +12,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
   * [Manage GoWorld Servers](#manage-goworld-servers)
   * [Demos](#demos)
     * [Chatroom Demo](#chatroom-demo)
-    * [Unity Demo](#unity-demo)
+    * [Unity Demo](#unity-demo): [GoWorldUnityDemo.zip](https://pan.baidu.com/s/1MSs8cUAXUnQPTUCN-lIpHg) 
 ---------------------------------------
 >  中文资料：
 > [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
