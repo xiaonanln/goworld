@@ -148,3 +148,6 @@ goworld start examples/unity_demo
 Unity demo client implements the client-server protocol in C#. 
 The client for unity demo is hosted at [https://github.com/xiaonanln/goworld-unity-demo](https://github.com/xiaonanln/goworld-unity-demo).
 The project was created and built in [Unity 2017.1](https://unity3d.com/). 
+
+You can try the demo by downloading [GoWorldUnityDemo.zip](https://pan.baidu.com/s/1MSs8cUAXUnQPTUCN-lIpHg). 
+The demo connects to a goworld server on Amazon EC2 instance. 
