@@ -4,7 +4,6 @@ import (
 	"syscall"
 
 	psutil_process "github.com/shirou/gopsutil/process"
-	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
 type Process interface {
@@ -30,11 +29,6 @@ func (p process) Path() (string, error) {
 	return p.Process.Exe()
 }
 
-func (p process) Test() {
-	name, err := p.Process.Name()
-	gwlog.Infof("process %s name %s err %v", p, name, err)
-}
-
 func Processes() ([]Process, error) {
 	var procs []Process
 
@@ -45,7 +39,6 @@ func Processes() ([]Process, error) {
 
 	for _, _p := range ps {
 		p := &process{_p}
-		p.Test()
 		procs = append(procs, p)
 	}
 	return procs, nil
