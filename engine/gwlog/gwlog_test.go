@@ -5,7 +5,7 @@ import "testing"
 func TestGWLog(t *testing.T) {
 	SetSource("gwlog_test")
 	SetOutput([]string{"stderr", "gwlog_test.log"})
-	SetLevel(InfoLevel)
+	SetLevel(DebugLevel)
 
 	if lv := ParseLevel("debug"); lv != DebugLevel {
 		t.Fail()
@@ -27,6 +27,8 @@ func TestGWLog(t *testing.T) {
 	}
 
 	Debugf("this is a debug %d", 1)
+	SetLevel(InfoLevel)
+	Debugf("SHOULD NOT SEE THIS!")
 	Infof("this is an info %d", 2)
 	Warnf("this is a warning %d", 3)
 	TraceError("this is a trace error %d", 4)
