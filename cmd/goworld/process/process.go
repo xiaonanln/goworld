@@ -30,10 +30,6 @@ func (p process) Path() (string, error) {
 	return p.Process.Exe()
 }
 
-func (p process) Signal(sig syscall.Signal) {
-	p.Process.SendSignal(sig)
-}
-
 func (p process) Test() {
 	name, err := p.Process.Name()
 	gwlog.Infof("process %s name %s err %v", p, name, err)
