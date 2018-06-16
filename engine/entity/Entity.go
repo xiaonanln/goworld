@@ -993,6 +993,11 @@ func (e *Entity) GetInt(key string) int64 {
 	return e.Attrs.GetInt(key)
 }
 
+// GetBool gets an outtermost attribute as int
+func (e *Entity) GetBool(key string) bool {
+	return e.Attrs.GetBool(key)
+}
+
 // GetStr gets an outtermost attribute as string
 func (e *Entity) GetStr(key string) string {
 	return e.Attrs.GetStr(key)

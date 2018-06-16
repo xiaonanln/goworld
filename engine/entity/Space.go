@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	_SPACE_ENTITY_TYPE   = "__space__"
-	_SPACE_KIND_ATTR_KEY = "_K"
+	_SPACE_ENTITY_TYPE    = "__space__"
+	_SPACE_KIND_ATTR_KEY  = "_K"
+	_SPACE_ENABLE_AOI_KEY = "_EnableAOI"
 
 	_DEFAULT_AOI_DISTANCE = 100
 )
@@ -91,24 +92,33 @@ func (space *Space) OnCreated() {
 	//space.callCompositiveMethod("OnSpaceCreated")
 }
 
-func (space *Space) UseXZListAOI() {
-	if space.aoiMgr != nil || len(space.entities) > 0 {
+func (space *Space) EnableAOI() {
+	if space.aoiMgr != nil {
+		return
+	}
+
+	if len(space.entities) > 0 {
 		gwlog.Panicf("%s is already using AOI", space)
 	}
 
+	space.Attrs.SetBool(_SPACE_ENABLE_AOI_KEY, true)
 	space.aoiMgr = aoi.NewXZListAOICalculator()
 }
-func (space *Space) UseTowerAOI(minX, maxX, minY, maxY Coord, towerRange Coord) {
-	if space.aoiMgr != nil || len(space.entities) > 0 {
-		gwlog.Panicf("%s is already using AOI", space)
-	}
 
-	space.aoiMgr = aoi.NewTowerAOIManager(aoi.Coord(minX), aoi.Coord(maxX), aoi.Coord(minY), aoi.Coord(maxY), aoi.Coord(towerRange))
-}
+//func (space *Space) UseTowerAOI(minX, maxX, minY, maxY Coord, towerRange Coord) {
+//	if space.aoiMgr != nil || len(space.entities) > 0 {
+//		gwlog.Panicf("%s is already using AOI", space)
+//	}
+//
+//	space.aoiMgr = aoi.NewTowerAOIManager(aoi.Coord(minX), aoi.Coord(maxX), aoi.Coord(minY), aoi.Coord(maxY), aoi.Coord(towerRange))
+//}
 
 // OnRestored is called when space entity is restored
 func (space *Space) OnRestored() {
 	space.onSpaceCreated()
+	if space.GetBool(_SPACE_KIND_ATTR_KEY) {
+		space.EnableAOI()
+	}
 }
 
 func (space *Space) onSpaceCreated() {

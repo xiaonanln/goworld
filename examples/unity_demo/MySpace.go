@@ -23,7 +23,8 @@ type MySpace struct {
 // OnSpaceCreated is called when the space is created
 func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
-	space.UseTowerAOI(-1000, 1000, -1000, 1000, 10)
+	space.EnableAOI()
+
 	goworld.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 	space.AddTimer(time.Second*5, "DumpEntityStatus")
 	space.AddTimer(time.Second*5, "SummonMonsters")
