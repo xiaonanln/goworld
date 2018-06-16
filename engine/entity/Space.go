@@ -258,6 +258,7 @@ func (space *Space) move(entity *Entity, newPos Vector3) {
 
 	entity.Position = newPos
 	space.aoiMgr.Moved(&entity.aoi, aoi.Coord(newPos.X), aoi.Coord(newPos.Z))
+	gwlog.Debugf("%s: %s move to %v", space, entity, newPos)
 }
 
 // OnEntityEnterSpace is called when entity enters space
