@@ -496,6 +496,7 @@ func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
 
 // SetClientSyncing set if entity infos (position, yaw) is syncing with client
 func (e *Entity) SetClientSyncing(syncing bool) {
+	// FIXME: syncingFromClient property is not perserved after restore game ...
 	e.syncingFromClient = syncing
 }
 
