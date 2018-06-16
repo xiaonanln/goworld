@@ -188,6 +188,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 
 	entity.Space = space
 	space.entities.Add(entity)
+	entity.Position = pos
 
 	entity.syncInfoFlag |= sifSyncOwnClient | sifSyncNeighborClients
 
