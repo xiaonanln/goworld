@@ -219,10 +219,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	} else {
 		// restoring ...
 		if space.aoiMgr != nil && entity.IsUseAOI() {
-			client := entity.client
-			entity.client = nil
 			space.aoiMgr.Enter(&entity.aoi, aoi.Coord(pos.X), aoi.Coord(pos.Z))
-			entity.client = client
 		}
 
 	}

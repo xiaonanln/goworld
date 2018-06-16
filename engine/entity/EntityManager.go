@@ -568,6 +568,7 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 
 	}()
 
+	clients := map[common.EntityID]*GameClient{} // save all the clients when restoring entities
 	restoreEntities := func(filter func(typeName string, spaceKind int64) bool) {
 		for eid, info := range freeze.Entities {
 			typeName := info.Type
@@ -587,7 +588,8 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 				if info.Client != nil {
 					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
 				}
-				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, client, ccRestore)
+				clients[eid] = client // save the client to the map
+				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, nil, ccRestore)
 				gwlog.Debugf("Restored %s<%s> in space %s", typeName, eid, space)
 			}
 		}
@@ -606,6 +608,17 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	restoreEntities(func(typeName string, spaceKind int64) bool {
 		return typeName != _SPACE_ENTITY_TYPE
 	})
+
+	// restore clients to all entities
+	for eid, client := range clients {
+		e := entityManager.get(eid)
+		if e != nil {
+			e.client = client // assign client quietly if migrate
+			entityManager.onEntityGetClient(e.ID, client.clientid)
+		} else {
+			gwlog.Errorf("entity %s restore failed? can not set client %s", eid, client)
+		}
+	}
 
 	return nil
 }
