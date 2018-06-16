@@ -116,6 +116,7 @@ func (space *Space) EnableAOI() {
 // OnRestored is called when space entity is restored
 func (space *Space) OnRestored() {
 	space.onSpaceCreated()
+	gwlog.Debugf("space %s restored: atts=%+v", space, space.Attrs)
 	if space.GetBool(_SPACE_KIND_ATTR_KEY) {
 		space.EnableAOI()
 	}
