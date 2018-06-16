@@ -587,8 +587,8 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 				var client *GameClient
 				if info.Client != nil {
 					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
+					clients[eid] = client // save the client to the map
 				}
-				clients[eid] = client // save the client to the map
 				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, nil, ccRestore)
 				gwlog.Debugf("Restored %s<%s> in space %s", typeName, eid, space)
 			}
