@@ -731,24 +731,7 @@ func (e *Entity) loadMigrateData(data map[string]interface{}) {
 
 // getFreezeData gets freezed data
 func (e *Entity) getFreezeData() *entityMigrateData {
-	data := &entityMigrateData{
-		Type:              e.TypeName,
-		TimerData:         e.dumpTimers(),
-		Attrs:             e.Attrs.ToMap(),
-		Pos:               e.Position,
-		Yaw:               e.yaw,
-		SpaceID:           e.Space.ID,
-		SyncInfoFlag:      e.syncInfoFlag,
-		SyncingFromClient: e.syncingFromClient,
-	}
-	if e.client != nil {
-		data.Client = &clientData{
-			ClientID: e.client.clientid,
-			GateID:   e.client.gateid,
-		}
-	}
-
-	return data
+	return e.GetMigrateData(e.Space.ID)
 }
 
 // Client related utilities

@@ -302,6 +302,8 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 	entity = reflect.Indirect(entityInstance).FieldByName("Entity").Addr().Interface().(*Entity)
 	entity.init(typeName, entityID, entityInstance)
 	entity.Space = nilSpace
+	entity.Position = mdata.Pos
+	entity.yaw = mdata.Yaw
 
 	entityManager.put(entity)
 	entity.loadMigrateData(mdata.Attrs)
