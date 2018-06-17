@@ -25,23 +25,6 @@ func (ss *ServerStatus) IsRunning() bool {
 	return ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 || ss.NumGamesRunning > 0
 }
 
-//func getProcPath(proc process.Process) (string, error) {
-//	path, err := proc.Path()
-//
-//	if err == nil {
-//		return path, nil
-//	}
-//
-//	if pathErr, ok := err.(*os.PathError); ok {
-//		path = pathErr.Path
-//		if strings.HasSuffix(path, " (deleted)") {
-//			path = path[:len(path)-10]
-//			return path, nil
-//		}
-//	}
-//	return "", err
-//}
-
 func detectServerStatus() *ServerStatus {
 	ss := &ServerStatus{}
 	procs, err := process.Processes()
@@ -50,6 +33,22 @@ func detectServerStatus() *ServerStatus {
 		path, err := proc.Path()
 		if err != nil {
 			continue
+		}
+
+		if !isexists(path) {
+			cmdline, err := proc.CmdlineSlice()
+			if err != nil {
+				continue
+			}
+			path = cmdline[0]
+			if !filepath.IsAbs(path) {
+				cwd, err := proc.Cwd()
+				if err != nil {
+					continue
+				}
+				path = filepath.Join(cwd, path)
+			}
+
 		}
 
 		relpath, err := filepath.Rel(env.GoWorldRoot, path)

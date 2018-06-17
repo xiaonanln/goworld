@@ -9,7 +9,7 @@ func TestProcesses(t *testing.T) {
 	}
 
 	for _, p := range ps {
-		exe, err := p.Path()
-		t.Logf("process %s, err %v", exe, err)
+		cmdline, err := p.CmdlineSlice()
+		t.Logf("process %+s, err %v", cmdline, err)
 	}
 }

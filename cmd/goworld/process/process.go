@@ -10,6 +10,8 @@ type Process interface {
 	Pid() int32
 	Executable() string
 	Path() (string, error)
+	CmdlineSlice() ([]string, error)
+	Cwd() (string, error)
 	Signal(sig syscall.Signal)
 }
 
@@ -29,6 +31,9 @@ func (p process) Path() (string, error) {
 	return p.Process.Exe()
 }
 
+func (p process) test() {
+}
+
 func Processes() ([]Process, error) {
 	var procs []Process
 
@@ -39,6 +44,7 @@ func Processes() ([]Process, error) {
 
 	for _, _p := range ps {
 		p := &process{_p}
+		p.test()
 		procs = append(procs, p)
 	}
 	return procs, nil
