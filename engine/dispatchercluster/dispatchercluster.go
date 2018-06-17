@@ -56,6 +56,7 @@ func SendRealMigrate(eid common.EntityID, targetGame uint16, data []byte) error 
 	return SelectByEntityID(eid).SendRealMigrate(eid, targetGame, data)
 }
 func SendCallFilterClientProxies(op proto.FilterClientsOpType, key, val string, method string, args []interface{}) (anyerror error) {
+	// TODO: broadcast one packet instead of sending multiple packets
 	for _, dcm := range dispatcherConns {
 		err := dcm.GetDispatcherClientForSend().SendCallFilterClientProxies(op, key, val, method, args)
 		if err != nil && anyerror == nil {
@@ -87,6 +88,7 @@ func SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data ma
 }
 
 func SendStartFreezeGame(gameid uint16) (anyerror error) {
+	// TODO: broadcast one packet instead of sending multiple packets
 	for _, dcm := range dispatcherConns {
 		err := dcm.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
 		if err != nil {
@@ -149,13 +151,3 @@ func SelectBySrvID(srvid string) *dispatcherclient.DispatcherClient {
 func Select(dispidx int) *dispatcherclient.DispatcherClient {
 	return dispatcherConns[dispidx].GetDispatcherClientForSend()
 }
-
-//func Flush(reason string) (anyerror error) {
-//	for _, dispconn := range dispatcherConns {
-//		err := dispconn.GetDispatcherClientForSend().Flush(reason)
-//		if err != nil {
-//			anyerror = err
-//		}
-//	}
-//	return
-//}
