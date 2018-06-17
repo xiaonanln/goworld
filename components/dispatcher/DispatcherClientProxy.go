@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
@@ -27,6 +28,7 @@ func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *dispatc
 		GoWorldConnection: gwc,
 		owner:             owner,
 	}
+	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
 	return dcp
 }
 

@@ -42,7 +42,7 @@ func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isResto
 	packet.AppendBool(isRestore)
 	packet.AppendBool(isBanBootEntity)
 	// put all entity IDs to the packet
-	// TODO: use AppendEntityIDList
+	// TODO: use AppendEntityIDList ?
 	packet.AppendUint32(uint32(len(eids)))
 	for _, eid := range eids {
 		packet.AppendEntityID(eid)
