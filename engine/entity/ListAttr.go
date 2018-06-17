@@ -118,7 +118,7 @@ func (a *ListAttr) set(index int, val interface{}) {
 func (a *ListAttr) sendListAttrChangeToClients(index int, val interface{}) {
 	owner := a.owner
 	if owner != nil {
-		// send the change to owner's client
+		// send the change to owner's Client
 		owner.sendListAttrChangeToClients(a, index, val)
 	}
 }

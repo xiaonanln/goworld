@@ -9,7 +9,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 )
 
-// GameClient represents the game client of entity
+// GameClient represents the game Client of entity
 //
 // Each entity can have at most one GameClient, and GameClient can be given to other entities
 type GameClient struct {
@@ -64,7 +64,7 @@ func (client *GameClient) call(entityID common.EntityID, method string, args []i
 	dispatchercluster.SelectByGateID(client.gateid).SendCallEntityMethodOnClient(client.gateid, client.clientid, entityID, method, args)
 }
 
-// sendNotifyMapAttrChange updates MapAttr change to client entity
+// sendNotifyMapAttrChange updates MapAttr change to Client entity
 func (client *GameClient) sendNotifyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {
 	if client == nil {
 		return
@@ -75,7 +75,7 @@ func (client *GameClient) sendNotifyMapAttrChange(entityID common.EntityID, path
 	dispatchercluster.SelectByGateID(client.gateid).SendNotifyMapAttrChangeOnClient(client.gateid, client.clientid, entityID, path, key, val)
 }
 
-// sendNotifyMapAttrDel updates MapAttr delete to client entity
+// sendNotifyMapAttrDel updates MapAttr delete to Client entity
 func (client *GameClient) sendNotifyMapAttrDel(entityID common.EntityID, path []interface{}, key string) {
 	if client == nil {
 		return
@@ -94,7 +94,7 @@ func (client *GameClient) sendNotifyMapAttrClear(entityID common.EntityID, path 
 	dispatchercluster.SelectByGateID(client.gateid).SendNotifyMapAttrClearOnClient(client.gateid, client.clientid, entityID, path)
 }
 
-// sendNotifyListAttrChange notifies client of ListAttr item changing
+// sendNotifyListAttrChange notifies Client of ListAttr item changing
 func (client *GameClient) sendNotifyListAttrChange(entityID common.EntityID, path []interface{}, index uint32, val interface{}) {
 	if client == nil {
 		return
@@ -105,7 +105,7 @@ func (client *GameClient) sendNotifyListAttrChange(entityID common.EntityID, pat
 	dispatchercluster.SelectByGateID(client.gateid).SendNotifyListAttrChangeOnClient(client.gateid, client.clientid, entityID, path, index, val)
 }
 
-// sendNotifyListAttrPop notify client of ListAttr popping
+// sendNotifyListAttrPop notify Client of ListAttr popping
 func (client *GameClient) sendNotifyListAttrPop(entityID common.EntityID, path []interface{}) {
 	if client == nil {
 		return

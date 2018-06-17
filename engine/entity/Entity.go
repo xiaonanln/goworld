@@ -28,7 +28,7 @@ var (
 	saveInterval time.Duration
 )
 
-// Yaw is the type of entity yaw
+// Yaw is the type of entity Yaw
 type Yaw float32
 
 type entityTimerInfo struct {
@@ -79,14 +79,14 @@ type clientData struct {
 // entity info that should be migrated
 type entityMigrateData struct {
 	Type              string                 `msgpack:"T"`
-	attrs             map[string]interface{} `msgpack:"A"`
-	client            *clientData            `msgpack:"C,omitempty"`
-	pos               Vector3                `msgpack:"pos"`
-	yaw               Yaw                    `msgpack:"yaw"`
-	timerData         []byte                 `msgpack:"TD,omitempty"`
-	spaceID           common.EntityID        `msgpack:"SP"`
-	syncingFromClient bool                   `msgpack""SFC`
-	syncInfoFlag      syncInfoFlag           `msgpack:"SIF"`
+	Attrs             map[string]interface{} `msgpack:"A"`
+	Client            *clientData            `msgpack:"C,omitempty"`
+	Pos               Vector3                `msgpack:"Pos"`
+	Yaw               Yaw                    `msgpack:"Yaw"`
+	TimerData         []byte                 `msgpack:"TD,omitempty"`
+	SpaceID           common.EntityID        `msgpack:"SP"`
+	SyncingFromClient bool                   `msgpack""SFC`
+	SyncInfoFlag      syncInfoFlag           `msgpack:"SIF"`
 }
 
 type syncInfoFlag int
@@ -114,8 +114,8 @@ type IEntity interface {
 	OnEnterSpace()             // Called when entity leaves space
 	OnLeaveSpace(space *Space) // Called when entity enters space
 	// Client Notifications
-	OnClientConnected()    // Called when client is connected to entity (become player)
-	OnClientDisconnected() // Called when client disconnected
+	OnClientConnected()    // Called when Client is connected to entity (become player)
+	OnClientDisconnected() // Called when Client disconnected
 
 	DescribeEntityType(desc *EntityTypeDesc) // Define entity attributes in this function
 }
@@ -149,7 +149,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.rawTimers = nil // prohibit further use
 
 	if !isMigrate {
-		e.SetClient(nil) // always set client to nil before destroy
+		e.SetClient(nil) // always set Client to nil before destroy
 		e.Save()
 	} else {
 		if e.client != nil {
@@ -205,7 +205,7 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 	e.typeDesc = registeredEntityTypes[typeName]
 
 	//if !e.typeDesc.definedAttrs {
-	//	// first time entity of this type is created, define attrs now
+	//	// first time entity of this type is created, define Attrs now
 	//	e.callCompositiveMethod("DescribeEntityType", e.typeDesc)
 	//}
 
@@ -501,15 +501,15 @@ func (e *Entity) Call(id common.EntityID, method string, args ...interface{}) {
 }
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
-	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v, syncing %v", e, x, y, z, yaw, e.syncingFromClient)
+	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, Yaw %v, syncing %v", e, x, y, z, Yaw, e.SyncingFromClient)
 	if e.syncingFromClient {
 		e.setPositionYaw(Vector3{x, y, z}, yaw, true)
 	}
 }
 
-// SetClientSyncing set if entity infos (position, yaw) is syncing with client
+// SetClientSyncing set if entity infos (position, Yaw) is syncing with Client
 func (e *Entity) SetClientSyncing(syncing bool) {
-	// FIXME: syncingFromClient property is not perserved after restore game ...
+	// FIXME: SyncingFromClient property is not perserved after restore game ...
 	e.syncingFromClient = syncing
 }
 
@@ -705,17 +705,17 @@ func (e *Entity) getAllClientData() map[string]interface{} {
 func (e *Entity) GetMigrateData(spaceid common.EntityID) *entityMigrateData {
 	md := &entityMigrateData{
 		Type:              e.TypeName,
-		attrs:             e.Attrs.ToMap(), // all attrs are migrated, without filter
-		pos:               e.Position,
-		yaw:               e.yaw,
-		timerData:         e.dumpTimers(),
-		spaceID:           spaceid,
-		syncingFromClient: e.syncingFromClient,
-		syncInfoFlag:      e.syncInfoFlag,
+		Attrs:             e.Attrs.ToMap(), // all Attrs are migrated, without filter
+		Pos:               e.Position,
+		Yaw:               e.yaw,
+		TimerData:         e.dumpTimers(),
+		SpaceID:           spaceid,
+		SyncingFromClient: e.syncingFromClient,
+		SyncInfoFlag:      e.syncInfoFlag,
 	}
 
 	if e.client != nil {
-		md.client = &clientData{
+		md.Client = &clientData{
 			ClientID: e.client.clientid,
 			GateID:   e.client.gateid,
 		}
@@ -733,16 +733,16 @@ func (e *Entity) loadMigrateData(data map[string]interface{}) {
 func (e *Entity) getFreezeData() *entityMigrateData {
 	data := &entityMigrateData{
 		Type:              e.TypeName,
-		timerData:         e.dumpTimers(),
-		attrs:             e.Attrs.ToMap(),
-		pos:               e.Position,
-		yaw:               e.yaw,
-		spaceID:           e.Space.ID,
-		syncInfoFlag:      e.syncInfoFlag,
-		syncingFromClient: e.syncingFromClient,
+		TimerData:         e.dumpTimers(),
+		Attrs:             e.Attrs.ToMap(),
+		Pos:               e.Position,
+		Yaw:               e.yaw,
+		SpaceID:           e.Space.ID,
+		SyncInfoFlag:      e.syncInfoFlag,
+		SyncingFromClient: e.syncingFromClient,
 	}
 	if e.client != nil {
-		data.client = &clientData{
+		data.Client = &clientData{
 			ClientID: e.client.clientid,
 			GateID:   e.client.gateid,
 		}
@@ -753,7 +753,7 @@ func (e *Entity) getFreezeData() *entityMigrateData {
 
 // Client related utilities
 
-// GetClient returns the client of entity
+// GetClient returns the Client of entity
 func (e *Entity) GetClient() *GameClient {
 	return e.client
 }
@@ -765,7 +765,7 @@ func (e *Entity) getClientID() common.ClientID {
 	return ""
 }
 
-// SetClient sets the client of entity
+// SetClient sets the Client of entity
 func (e *Entity) SetClient(client *GameClient) {
 	oldClient := e.client
 	if oldClient == client {
@@ -775,7 +775,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	e.client = client
 
 	if oldClient != nil {
-		// send destroy entity to client
+		// send destroy entity to Client
 		entityManager.onEntityLoseClient(oldClient.clientid)
 		dispatchercluster.SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
@@ -787,7 +787,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 
 	if client != nil {
-		// send create entity to new client
+		// send create entity to new Client
 		entityManager.onEntityGetClient(e.ID, client.clientid)
 
 		client.sendCreateEntity(e, true)
@@ -796,14 +796,14 @@ func (e *Entity) SetClient(client *GameClient) {
 			client.sendCreateEntity(neighbor, false)
 		}
 
-		// set all filter properties to client
+		// set all filter properties to Client
 		for key, val := range e.filterProps {
 			dispatchercluster.SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 		}
 	}
 
 	if oldClient == nil && client != nil {
-		// got net client
+		// got net Client
 		e.I.OnClientConnected()
 		//e.callCompositiveMethod("OnClientConnected")
 	} else if oldClient != nil && client == nil {
@@ -812,7 +812,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 }
 
-// CallClient calls the client entity
+// CallClient calls the Client entity
 func (e *Entity) CallClient(method string, args ...interface{}) {
 	e.client.call(e.ID, method, args)
 }
@@ -826,15 +826,15 @@ func (e *Entity) CallAllClients(method string, args ...interface{}) {
 	}
 }
 
-// GiveClientTo gives client to other entity
+// GiveClientTo gives Client to other entity
 func (e *Entity) GiveClientTo(other *Entity) {
 	if e.client == nil {
-		gwlog.Warnf("%s.GiveClientTo(%s): client is nil", e, other)
+		gwlog.Warnf("%s.GiveClientTo(%s): Client is nil", e, other)
 		return
 	}
 
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("%s.GiveClientTo(%s): client=%s", e, other, e.client)
+		gwlog.Debugf("%s.GiveClientTo(%s): Client=%s", e, other, e.client)
 	}
 	client := e.client
 	e.SetClient(nil)
@@ -842,7 +842,7 @@ func (e *Entity) GiveClientTo(other *Entity) {
 	other.SetClient(client)
 }
 
-// ForAllClients visits all clients (own client and clients of neighbors)
+// ForAllClients visits all clients (own Client and clients of neighbors)
 func (e *Entity) ForAllClients(f func(client *GameClient)) {
 	if e.client != nil {
 		f(e.client)
@@ -856,7 +856,7 @@ func (e *Entity) ForAllClients(f func(client *GameClient)) {
 }
 
 func (e *Entity) notifyClientDisconnected() {
-	// called when client disconnected
+	// called when Client disconnected
 	if e.client == nil {
 		gwlog.Panic(e.client)
 	}
@@ -865,7 +865,7 @@ func (e *Entity) notifyClientDisconnected() {
 	//e.callCompositiveMethod("OnClientDisconnected")
 }
 
-// OnClientConnected is called when client is connected
+// OnClientConnected is called when Client is connected
 //
 // Can override this function in custom entity type
 func (e *Entity) OnClientConnected() {
@@ -874,7 +874,7 @@ func (e *Entity) OnClientConnected() {
 	}
 }
 
-// OnClientDisconnected is called when client is disconnected
+// OnClientDisconnected is called when Client is disconnected
 //
 // Can override this function in custom entity type
 func (e *Entity) OnClientDisconnected() {
@@ -999,7 +999,7 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 
 // Define Attributes Properties
 
-// Fast access to attrs
+// Fast access to Attrs
 
 // GetInt gets an outtermost attribute as int
 func (e *Entity) GetInt(key string) int64 {
@@ -1202,7 +1202,7 @@ func OnRealMigrate(entityid common.EntityID, data []byte) {
 // Can override this function in custom entity type
 func (e *Entity) OnMigrateOut() {
 	if consts.DEBUG_MIGRATE {
-		gwlog.Debugf("%s.OnMigrateOut, space=%s, client=%s", e, e.Space, e.client)
+		gwlog.Debugf("%s.OnMigrateOut, space=%s, Client=%s", e, e.Space, e.client)
 	}
 }
 
@@ -1211,7 +1211,7 @@ func (e *Entity) OnMigrateOut() {
 // Can override this function in custom entity type
 func (e *Entity) OnMigrateIn() {
 	if consts.DEBUG_MIGRATE {
-		gwlog.Debugf("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
+		gwlog.Debugf("%s.OnMigrateIn, space=%s, Client=%s", e, e.Space, e.client)
 	}
 }
 
@@ -1222,7 +1222,7 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	}
 
 	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debugf("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
+		gwlog.Debugf("%s.SetFilterProp: %s = %s, Client=%s", e, key, val, e.client)
 	}
 
 	curval, ok := e.filterProps[key]
@@ -1231,7 +1231,7 @@ func (e *Entity) SetFilterProp(key string, val string) {
 	}
 
 	e.filterProps[key] = val
-	// send filter property to client
+	// send filter property to Client
 	if e.client != nil {
 		dispatchercluster.SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 	}
@@ -1292,7 +1292,7 @@ func (e *Entity) setPositionYaw(pos Vector3, yaw Yaw, fromClient bool) {
 	e.yaw = yaw
 
 	// mark the entity as needing sync
-	// Real sync packets will be sent before flushing dispatcher client
+	// Real sync packets will be sent before flushing dispatcher Client
 	e.syncInfoFlag |= sifSyncNeighborClients
 	if !fromClient {
 		e.syncInfoFlag |= sifSyncOwnClient
@@ -1368,26 +1368,26 @@ func (e *Entity) getSyncInfo() proto.EntitySyncInfo {
 	}
 }
 
-// GetYaw gets entity yaw
+// GetYaw gets entity Yaw
 func (e *Entity) GetYaw() Yaw {
 	return e.yaw
 }
 
-// SetYaw sets entity yaw
+// SetYaw sets entity Yaw
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
 	e.syncInfoFlag |= (sifSyncNeighborClients | sifSyncOwnClient)
-	//e.ForAllClients(func(client *GameClient) {
-	//	client.updateYawOnClient(e.ID, e.yaw)
+	//e.ForAllClients(func(Client *GameClient) {
+	//	Client.updateYawOnClient(e.ID, e.Yaw)
 	//})
 }
 
-// FaceTo let entity face to another entity by setting yaw accordingly
+// FaceTo let entity face to another entity by setting Yaw accordingly
 func (e *Entity) FaceTo(other *Entity) {
 	e.FaceToPos(other.Position)
 }
 
-// FaceTo let entity face to a specified position, setting yaw accordingly
+// FaceTo let entity face to a specified position, setting Yaw accordingly
 
 func (e *Entity) FaceToPos(pos Vector3) {
 	dir := pos.Sub(e.Position)

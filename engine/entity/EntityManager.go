@@ -67,7 +67,7 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 		if def == "allclients" {
 			isAllClient = true
 			isClient = true
-		} else if def == "client" {
+		} else if def == "Client" {
 			isClient = true
 		} else if def == "persistent" {
 			isPersistent = true
@@ -197,7 +197,7 @@ func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityType
 	}
 
 	gwlog.Infof(">>> RegisterEntity %s => %s <<<", typeName, entityType.Name())
-	//// define entity attrs
+	//// define entity Attrs
 	entity.DescribeEntityType(entityTypeDesc)
 	return entityTypeDesc
 	//e.callCompositiveMethod("DescribeEntityType", entityTypeDesc)
@@ -304,9 +304,9 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 	entity.Space = nilSpace
 
 	entityManager.put(entity)
-	entity.loadMigrateData(mdata.attrs)
+	entity.loadMigrateData(mdata.Attrs)
 
-	timerData := mdata.timerData
+	timerData := mdata.TimerData
 	if timerData != nil {
 		entity.restoreTimers(timerData)
 	}
@@ -316,14 +316,14 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 		entity.setupSaveTimer()
 	}
 
-	if mdata.client != nil {
-		client := MakeGameClient(mdata.client.ClientID, mdata.client.GateID)
-		// assign client to the newly created
-		entity.client = client // assign client quietly
+	if mdata.Client != nil {
+		client := MakeGameClient(mdata.Client.ClientID, mdata.Client.GateID)
+		// assign Client to the newly created
+		entity.client = client // assign Client quietly
 		entityManager.onEntityGetClient(entity.ID, client.clientid)
 	}
 
-	gwlog.Debugf("Entity %s created, client=%s", entity, entity.client)
+	gwlog.Debugf("Entity %s created, Client=%s", entity, entity.client)
 	entity.I.OnAttrsReady()
 
 	if !isRestore {
@@ -333,9 +333,9 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 		entity.I.OnRestored()
 	}
 
-	space := spaceManager.getSpace(mdata.spaceID)
+	space := spaceManager.getSpace(mdata.SpaceID)
 	if space != nil {
-		space.enter(entity, mdata.pos, isRestore)
+		space.enter(entity, mdata.Pos, isRestore)
 	}
 }
 
@@ -413,7 +413,7 @@ func LoadEntityOnGame(typeName string, entityID common.EntityID, gameid uint16) 
 	dispatchercluster.SendLoadEntityOnGame(typeName, entityID, gameid)
 }
 
-// OnClientDisconnected is called by engine when client is disconnected
+// OnClientDisconnected is called by engine when Client is disconnected
 func OnClientDisconnected(clientid common.ClientID) {
 	entityManager.onClientDisconnected(clientid) // pop the owner eid
 }
@@ -468,7 +468,7 @@ func OnCall(id common.EntityID, method string, args [][]byte, clientID common.Cl
 	e.onCallFromRemote(method, args, clientID)
 }
 
-// OnSyncPositionYawFromClient is called by engine to sync entity infos from client
+// OnSyncPositionYawFromClient is called by engine to sync entity infos from Client
 func OnSyncPositionYawFromClient(eid common.EntityID, x, y, z Coord, yaw Yaw) {
 	e := entityManager.get(eid)
 	if e == nil {
@@ -596,20 +596,20 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 			typeName := info.Type
 			var spaceKind int64
 			if typeName == _SPACE_ENTITY_TYPE {
-				spaceKind = typeconv.Int(info.attrs[_SPACE_KIND_ATTR_KEY])
+				spaceKind = typeconv.Int(info.Attrs[_SPACE_KIND_ATTR_KEY])
 			}
 
 			if filter(typeName, spaceKind) {
 				var space *Space
 				if typeName != _SPACE_ENTITY_TYPE {
-					space = spaceManager.getSpace(info.spaceID)
+					space = spaceManager.getSpace(info.SpaceID)
 				}
 
 				var client *GameClient
-				if info.client != nil {
-					client = MakeGameClient(info.client.ClientID, info.client.GateID)
-					clients[eid] = client // save the client to the map
-					info.client = nil
+				if info.Client != nil {
+					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
+					clients[eid] = client // save the Client to the map
+					info.Client = nil
 				}
 				restoreEntity(eid, info, true)
 				gwlog.Debugf("Restored %s<%s> in space %s", typeName, eid, space)
@@ -635,10 +635,10 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	for eid, client := range clients {
 		e := entityManager.get(eid)
 		if e != nil {
-			e.client = client // assign client quietly if migrate
+			e.client = client // assign Client quietly if migrate
 			entityManager.onEntityGetClient(e.ID, client.clientid)
 		} else {
-			gwlog.Errorf("entity %s restore failed? can not set client %s", eid, client)
+			gwlog.Errorf("entity %s restore failed? can not set Client %s", eid, client)
 		}
 	}
 
