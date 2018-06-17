@@ -27,8 +27,6 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 * **Multiple Communication Protocols**: supports TCP, [KCP](https://github.com/skywind3000/kcp) and WebSocket
 * **Traffic Compression & Encryption**: traffic between clients and servers can be compressed and encrypted
 
-**Requires Go 1.10.x**
-
 ## Architecture
 ![GoWorld Architecture](http://goworldgs.com/public/img/goworld_arch.png "GoWorld Architecture")
 
@@ -47,24 +45,15 @@ We can swap a game by sending `SIGHUP` to the process and restart the process wi
 back to work but with the latest executable image. This feature enables updating server-side logic or fixing server bugs
  transparently without significant interference of online players. 
 
-## Get GoWorld
+## Installing GoWorld
+GoWorld requries Go 1.10.x to install.
 ```bash
 go get github.com/xiaonanln/goworld/cmd/...
-```
-
-### Install dependencies
-
-GoWorld uses [Dep](https://github.com/golang/dep) to manage packages. 
-
-Install Go [Dep](https://github.com/golang/dep#setup):
-```bash
 go get -u github.com/golang/dep/cmd/dep
-```
-Install Dependencies: 
-```go
 cd $GOPATH/src/github.com/xiaonanln/goworld
 dep ensure
 ```
+**GoWorld uses [Dep](https://github.com/golang/dep) to manage packages.** 
 
 **For Chinese only:** 
 中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.tar.gz](http://goworldgs.com/goworld_files/vendor.tar.gz)，并将其解压到goworld根目录下。
