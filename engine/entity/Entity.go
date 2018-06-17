@@ -61,7 +61,6 @@ type Entity struct {
 	syncingFromClient bool
 	Attrs             *MapAttr
 	// FIXME: restore filterProps from freezed data
-	filterProps          map[string]string
 	syncInfoFlag         syncInfoFlag
 	enteringSpaceRequest struct {
 		SpaceID              common.EntityID
@@ -83,8 +82,9 @@ type entityMigrateData struct {
 	Client            *clientData            `msgpack:"C,omitempty"`
 	Pos               Vector3                `msgpack:"Pos"`
 	Yaw               Yaw                    `msgpack:"Yaw"`
-	TimerData         []byte                 `msgpack:"TD,omitempty"`
 	SpaceID           common.EntityID        `msgpack:"SP"`
+	TimerData         []byte                 `msgpack:"TD,omitempty"`
+	FilterProps       map[string]string      `msgpack:"FP"`
 	SyncingFromClient bool                   `msgpack""SFC`
 	SyncInfoFlag      syncInfoFlag           `msgpack:"SIF"`
 }
@@ -211,7 +211,6 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
-	e.filterProps = map[string]string{}
 
 	attrs := NewMapAttr()
 	attrs.owner = e
@@ -777,11 +776,6 @@ func (e *Entity) SetClient(client *GameClient) {
 		for neighbor := range e.Neighbors {
 			client.sendCreateEntity(neighbor, false)
 		}
-
-		// set all filter properties to Client
-		for key, val := range e.filterProps {
-			dispatchercluster.SendSetClientFilterProp(client.gateid, client.clientid, key, val)
-		}
 	}
 
 	if oldClient == nil && client != nil {
@@ -1196,22 +1190,12 @@ func (e *Entity) OnMigrateIn() {
 	}
 }
 
-// SetFilterProp sets a filter property key-value
-func (e *Entity) SetFilterProp(key string, val string) {
+// SetClientFilterProp sets a filter property key-value
+func (e *Entity) SetClientFilterProp(key string, val string) {
 	if key == "" {
-		gwlog.Panicf("%s SetFilterProp: key must not be empty", e)
+		gwlog.Panicf("%s SetClientFilterProp: key must not be empty", e)
 	}
 
-	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debugf("%s.SetFilterProp: %s = %s, Client=%s", e, key, val, e.client)
-	}
-
-	curval, ok := e.filterProps[key]
-	if ok && curval == val {
-		return // not changed
-	}
-
-	e.filterProps[key] = val
 	// send filter property to Client
 	if e.client != nil {
 		dispatchercluster.SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
