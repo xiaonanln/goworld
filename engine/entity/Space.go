@@ -213,9 +213,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 
 		gwutils.RunPanicless(func() {
 			space.I.OnEntityEnterSpace(entity)
-			//space.callCompositiveMethod("OnEntityEnterSpace", entity)
 			entity.I.OnEnterSpace()
-			//entity.callCompositiveMethod("OnEnterSpace")
 		})
 	} else {
 		// restoring ...

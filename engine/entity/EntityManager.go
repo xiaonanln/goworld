@@ -316,6 +316,9 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 		entity.setupSaveTimer()
 	}
 
+	entity.syncInfoFlag = mdata.SyncInfoFlag
+	entity.syncingFromClient = mdata.SyncingFromClient
+
 	if mdata.Client != nil {
 		client := MakeGameClient(mdata.Client.ClientID, mdata.Client.GateID)
 		// assign Client to the newly created
@@ -324,18 +327,24 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 	}
 
 	gwlog.Debugf("Entity %s created, Client=%s", entity, entity.client)
-	entity.I.OnAttrsReady()
+	gwutils.RunPanicless(func() {
+		entity.I.OnAttrsReady()
+	})
 
 	if !isRestore {
-		entity.I.OnMigrateIn()
-	} else {
-		// restore should be silent
-		entity.I.OnRestored()
+		gwutils.RunPanicless(func() {
+			entity.I.OnMigrateIn()
+		})
 	}
-
 	space := spaceManager.getSpace(mdata.SpaceID)
 	if space != nil {
 		space.enter(entity, mdata.Pos, isRestore)
+	}
+
+	if isRestore {
+		gwutils.RunPanicless(func() {
+			entity.I.OnRestored()
+		})
 	}
 }
 
