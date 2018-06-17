@@ -74,26 +74,34 @@ Use command `goworld` to build, start, stop and reload game servers.
 
 **Build Example Chatroom Server:**
 ```bash
-goworld build examples/chatroom_demo
+$ goworld build examples/chatroom_demo
 ```
 
 **Start Example Chatroom Server: (dispatcher -> game -> gate)**
 ```bash
-goworld start examples/chatroom_demo
+$ goworld start examples/chatroom_demo
 ``` 
 
 **Stop Game Server (gate -> game -> dispatcher):**
 ```bash
-goworld stop examples/chatroom_demo
+$ goworld stop examples/chatroom_demo
 ```
 
 **Reload Game Servers:**
 ```bash
-goworld reload examples/chatroom_demo
+$ goworld reload examples/chatroom_demo
 ```
 Reload will reboot game processes with the current executable while preserving all game server states. 
-**However, it is not workable on Windows.**  
+**However, it does not work on Windows.**
 
+**List Server Processes:**
+```bash
+$ goworld status examples/chatroom_demo
+> 1 dispatcher running, 1/1 gates running, 1/1 games (examples/chatroom_demo) running
+> 	2763      dispatcher      /home/ubuntu/go/src/github.com/xiaonanln/goworld/components/dispatcher/dispatcher -dispid 1
+> 	2770      chatroom_demo   /home/ubuntu/go/src/github.com/xiaonanln/goworld/examples/chatroom_demo/chatroom_demo -gid 1
+> 	2779      gate            /home/ubuntu/go/src/github.com/xiaonanln/goworld/components/gate/gate -gid 1
+```  
 
 ## Demos
 
