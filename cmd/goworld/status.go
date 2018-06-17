@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"fmt"
+
 	"github.com/xiaonanln/goworld/cmd/goworld/process"
 	"github.com/xiaonanln/goworld/engine/config"
 )
@@ -25,23 +27,6 @@ func (ss *ServerStatus) IsRunning() bool {
 	return ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 || ss.NumGamesRunning > 0
 }
 
-//func getProcPath(proc process.Process) (string, error) {
-//	path, err := proc.Path()
-//
-//	if err == nil {
-//		return path, nil
-//	}
-//
-//	if pathErr, ok := err.(*os.PathError); ok {
-//		path = pathErr.Path
-//		if strings.HasSuffix(path, " (deleted)") {
-//			path = path[:len(path)-10]
-//			return path, nil
-//		}
-//	}
-//	return "", err
-//}
-
 func detectServerStatus() *ServerStatus {
 	ss := &ServerStatus{}
 	procs, err := process.Processes()
@@ -50,6 +35,22 @@ func detectServerStatus() *ServerStatus {
 		path, err := proc.Path()
 		if err != nil {
 			continue
+		}
+
+		if !isexists(path) {
+			cmdline, err := proc.CmdlineSlice()
+			if err != nil {
+				continue
+			}
+			path = cmdline[0]
+			if !filepath.IsAbs(path) {
+				cwd, err := proc.Cwd()
+				if err != nil {
+					continue
+				}
+				path = filepath.Join(cwd, path)
+			}
+
 		}
 
 		relpath, err := filepath.Rel(env.GoWorldRoot, path)
@@ -102,10 +103,14 @@ func showServerStatus(ss *ServerStatus) {
 	listProcs = append(listProcs, ss.GameProcs...)
 	listProcs = append(listProcs, ss.GateProcs...)
 	for _, proc := range listProcs {
-		path, err := proc.Path()
-		if err != nil {
-			path = "[" + proc.Executable() + "]"
+		cmdlineSlice, err := proc.CmdlineSlice()
+		var cmdline string
+		if err == nil {
+			cmdline = strings.Join(cmdlineSlice, " ")
+		} else {
+			cmdline = fmt.Sprintf("get cmdline failed: %e", err)
 		}
-		showMsg("\t%-10d%-16s%s", proc.Pid(), proc.Executable(), path)
+
+		showMsg("\t%-10d%-16s%s", proc.Pid(), proc.Executable(), cmdline)
 	}
 }

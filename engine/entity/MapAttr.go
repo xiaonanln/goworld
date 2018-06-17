@@ -55,7 +55,7 @@ func (a *MapAttr) HasKey(key string) bool {
 	return ok
 }
 
-// Keys returns all keys of attrs
+// Keys returns all keys of Attrs
 func (a *MapAttr) Keys() []string {
 	keys := make([]string, 0, len(a.attrs))
 	for k, _ := range a.attrs {
@@ -189,7 +189,7 @@ func (a *MapAttr) SetDefaultListAttr(key string, attr *ListAttr) {
 
 func (a *MapAttr) sendAttrChangeToClients(key string, val interface{}) {
 	if a.owner != nil {
-		// send the change to owner's client
+		// send the change to owner's Client
 		a.owner.sendMapAttrChangeToClients(a, key, val)
 	}
 }

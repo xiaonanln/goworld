@@ -1,13 +1,10 @@
 package dispatchercluster
 
 import (
-	"time"
-
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
@@ -37,8 +34,6 @@ func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, isRes
 	for _, dispConn := range dispatcherConns {
 		dispConn.Connect()
 	}
-
-	go gwutils.RepeatUntilPanicless(autoFlushRoutine)
 }
 
 func SendNotifyDestroyEntity(id common.EntityID) error {
@@ -57,18 +52,20 @@ func SendMigrateRequest(entityID common.EntityID, spaceID common.EntityID, space
 	return SelectByEntityID(entityID).SendMigrateRequest(entityID, spaceID, spaceGameID)
 }
 
-func SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,
-	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
-	return SelectByEntityID(eid).SendRealMigrate(eid, targetGame, targetSpace, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
+func SendRealMigrate(eid common.EntityID, targetGame uint16, data []byte) error {
+	return SelectByEntityID(eid).SendRealMigrate(eid, targetGame, data)
 }
-func SendCallFilterClientProxies(op proto.FilterClientsOpType, key, val string, method string, args []interface{}) (anyerror error) {
-	for _, dcm := range dispatcherConns {
-		err := dcm.GetDispatcherClientForSend().SendCallFilterClientProxies(op, key, val, method, args)
-		if err != nil && anyerror == nil {
-			anyerror = err
-		}
-	}
+func SendCallFilterClientProxies(op proto.FilterClientsOpType, key, val string, method string, args []interface{}) {
+	pkt := proto.AllocCallFilterClientProxiesPacket(op, key, val, method, args)
+	broadcast(pkt)
+	pkt.Release()
 	return
+}
+
+func broadcast(packet *netutil.Packet) {
+	for _, dcm := range dispatcherConns {
+		dcm.GetDispatcherClientForSend().SendPacket(packet)
+	}
 }
 
 func SendNotifyCreateEntity(id common.EntityID) error {
@@ -92,13 +89,10 @@ func SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data ma
 	return SelectByEntityID(entityid).SendCreateEntityAnywhere(entityid, typeName, data)
 }
 
-func SendStartFreezeGame(gameid uint16) (anyerror error) {
-	for _, dcm := range dispatcherConns {
-		err := dcm.GetDispatcherClientForSend().SendStartFreezeGame(gameid)
-		if err != nil {
-			anyerror = err
-		}
-	}
+func SendStartFreezeGame() {
+	pkt := proto.AllocStartFreezeGamePacket()
+	broadcast(pkt)
+	pkt.Release()
 	return
 }
 
@@ -106,23 +100,11 @@ func SendSrvdisRegister(srvid string, info string, force bool) {
 	SelectBySrvID(srvid).SendSrvdisRegister(srvid, info, force)
 }
 
-func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) (anyerror error) {
+func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) {
 	// construct one packet for multiple sending
-	packet := netutil.NewPacket()
-	packet.AppendUint16(proto.MT_CALL_NIL_SPACES)
-	packet.AppendUint16(exceptGameID)
-	packet.AppendVarStr(method)
-	packet.AppendArgs(args)
-
-	for _, dcm := range dispatcherConns {
-		err := dcm.GetDispatcherClientForSend().SendPacket(packet)
-		if err != nil {
-			anyerror = err
-		}
-	}
-
+	packet := proto.AllocCallNilSpacesPacket(exceptGameID, method, args)
+	broadcast(packet)
 	packet.Release()
-	return
 }
 
 func EntityIDToDispatcherID(entityid common.EntityID) uint16 {
@@ -154,27 +136,4 @@ func SelectBySrvID(srvid string) *dispatcherclient.DispatcherClient {
 
 func Select(dispidx int) *dispatcherclient.DispatcherClient {
 	return dispatcherConns[dispidx].GetDispatcherClientForSend()
-}
-
-//func Flush(reason string) (anyerror error) {
-//	for _, dispconn := range dispatcherConns {
-//		err := dispconn.GetDispatcherClientForSend().Flush(reason)
-//		if err != nil {
-//			anyerror = err
-//		}
-//	}
-//	return
-//}
-
-func autoFlushRoutine() {
-	// TODO: each dipsatcher client flush by itself
-	for {
-		time.Sleep(10 * time.Millisecond)
-		for _, dispconn := range dispatcherConns {
-			err := dispconn.GetDispatcherClientForSend().Flush("dispatchercluster")
-			if err != nil {
-				gwlog.Errorf("dispatchercluster: %s flush failed: %v", dispconn, err)
-			}
-		}
-	}
 }

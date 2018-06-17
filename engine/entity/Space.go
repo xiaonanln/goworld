@@ -174,7 +174,7 @@ func (space *Space) IsNil() bool {
 
 // CreateEntity creates a new local entity in this space
 func (space *Space) CreateEntity(typeName string, pos Vector3) {
-	createEntity(typeName, space, pos, "", nil, nil, nil, ccCreate)
+	createEntity(typeName, space, pos, "", nil)
 }
 
 // LoadEntity loads a entity of specified entityID to the space
@@ -212,9 +212,7 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 
 		gwutils.RunPanicless(func() {
 			space.I.OnEntityEnterSpace(entity)
-			//space.callCompositiveMethod("OnEntityEnterSpace", entity)
 			entity.I.OnEnterSpace()
-			//entity.callCompositiveMethod("OnEnterSpace")
 		})
 	} else {
 		// restoring ...

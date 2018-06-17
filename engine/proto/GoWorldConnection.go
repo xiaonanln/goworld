@@ -42,7 +42,7 @@ func (gwc *GoWorldConnection) SendSetGameID(id uint16, isReconnect bool, isResto
 	packet.AppendBool(isRestore)
 	packet.AppendBool(isBanBootEntity)
 	// put all entity IDs to the packet
-	// TODO: use AppendEntityIDList
+
 	packet.AppendUint32(uint32(len(eids)))
 	for _, eid := range eids {
 		packet.AppendEntityID(eid)
@@ -300,15 +300,25 @@ func (gwc *GoWorldConnection) SendClearClientFilterProp(gateid uint16, clientid 
 }
 
 // SendCallFilterClientProxies sends MT_CALL_FILTERED_CLIENTS message
-func (gwc *GoWorldConnection) SendCallFilterClientProxies(op FilterClientsOpType, key, val string, method string, args []interface{}) (err error) {
-	packet := gwc.packetConn.NewPacket()
+func AllocCallFilterClientProxiesPacket(op FilterClientsOpType, key, val string, method string, args []interface{}) *netutil.Packet {
+	packet := netutil.NewPacket()
 	packet.AppendUint16(MT_CALL_FILTERED_CLIENTS)
 	packet.AppendByte(byte(op))
 	packet.AppendVarStr(key)
 	packet.AppendVarStr(val)
 	packet.AppendVarStr(method)
 	packet.AppendArgs(args)
-	return gwc.SendPacketRelease(packet)
+	return packet
+}
+
+func AllocCallNilSpacesPacket(exceptGameID uint16, method string, args []interface{}) *netutil.Packet {
+	// construct one packet for multiple sending
+	packet := netutil.NewPacket()
+	packet.AppendUint16(MT_CALL_NIL_SPACES)
+	packet.AppendUint16(exceptGameID)
+	packet.AppendVarStr(method)
+	packet.AppendArgs(args)
+	return packet
 }
 
 // SendQuerySpaceGameIDForMigrate sends MT_QUERY_SPACE_GAMEID_FOR_MIGRATE message
@@ -339,37 +349,26 @@ func (gwc *GoWorldConnection) SendCancelMigrate(entityid common.EntityID) error 
 }
 
 // SendRealMigrate sends MT_REAL_MIGRATE message
-func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,
-	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
+func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame uint16, data []byte) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)
 	packet.AppendUint16(targetGame)
-
-	if !clientid.IsNil() {
-		packet.AppendBool(true)
-		packet.AppendClientID(clientid)
-		packet.AppendUint16(clientsrv)
-	} else {
-		packet.AppendBool(false)
-	}
-
-	packet.AppendEntityID(targetSpace)
-	packet.AppendFloat32(x)
-	packet.AppendFloat32(y)
-	packet.AppendFloat32(z)
-	packet.AppendVarStr(typeName)
-	packet.AppendData(migrateData)
-	packet.AppendVarBytes(timerData)
-
+	packet.AppendVarBytes(data)
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendStartFreezeGame sends MT_START_FREEZE_GAME message
-func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
-	packet := gwc.packetConn.NewPacket()
+//// SendStartFreezeGame sends MT_START_FREEZE_GAME message
+//func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
+//	packet := gwc.packetConn.NewPacket()
+//	packet.AppendUint16(MT_START_FREEZE_GAME)
+//	return gwc.SendPacketRelease(packet)
+//}
+
+func AllocStartFreezeGamePacket() *netutil.Packet {
+	packet := netutil.NewPacket()
 	packet.AppendUint16(MT_START_FREEZE_GAME)
-	return gwc.SendPacketRelease(packet)
+	return packet
 }
 
 func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {

@@ -57,10 +57,9 @@ func (a *Account) Login_Client(username string, password string) {
 		gwlog.Debugf("Username %s get avatar id = %s", username, avatarID)
 		if avatarID.IsNil() {
 			// avatar not found, create new avatar
-			avatarID = goworld.CreateEntityLocally("Avatar")
+			avatar := goworld.CreateEntityLocally("Avatar")
+			avatarID = avatar.ID
 			a.setAvatarID(username, avatarID)
-
-			avatar := goworld.GetEntity(avatarID)
 			a.onAvatarEntityFound(avatar)
 		} else {
 			goworld.LoadEntityAnywhere("Avatar", avatarID)

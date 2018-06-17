@@ -2,8 +2,6 @@
 
 * Service Architecture Change
 
-* Global Information Management (broadcast global info to all games)
-
 * Global Message Mechanism (call multiple entities on multiple games)
 
 * Use Kafka for reliable messaging between entities

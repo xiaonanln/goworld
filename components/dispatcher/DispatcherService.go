@@ -360,7 +360,6 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 		gwlog.Panicf("already set gameid=%d, gateid=%d", dcp.gameid, dcp.gateid)
 	}
 	dcp.gameid = gameid
-	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL) // TODO: why start autoflush after gameid is set ?
 
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleSetGameID: dcp=%s, gameid=%d, isReconnect=%v", service, dcp, gameid, isReconnect)
@@ -436,7 +435,6 @@ func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pk
 	}
 
 	dcp.gateid = gateid
-	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL) // TODO: why start autoflush after gameid is set ?
 	gwlog.Infof("Gate %d is connected: %s", gateid, dcp)
 
 	olddcp := service.gates[gateid-1]

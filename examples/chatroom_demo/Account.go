@@ -30,11 +30,10 @@ func (a *Account) Register_Client(username string, password string) {
 			return
 		}
 		goworld.PutKVDB("password$"+username, password, func(err error) {
-			avatarID := goworld.CreateEntityLocally("Avatar") // 创建一个Avatar对象然后立刻销毁，产生一次存盘
-			avatar := goworld.GetEntity(avatarID)
+			avatar := goworld.CreateEntityLocally("Avatar") // 创建一个Avatar对象然后立刻销毁，产生一次存盘
 			avatar.Attrs.SetStr("name", username)
 			avatar.Destroy()
-			goworld.PutKVDB("avatarID$"+username, string(avatarID), func(err error) {
+			goworld.PutKVDB("avatarID$"+username, string(avatar.ID), func(err error) {
 				a.CallClient("ShowInfo", "注册成功，请点击登录")
 			})
 		})

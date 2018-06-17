@@ -36,6 +36,8 @@ const (
 	DISPATCHER_SERVICE_TICK_INTERVAL = time.Millisecond * 5 // server tick interval => affect timer resolution
 	// DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL is the flush interval for client proxy. Smaller interval costs more CPU but dispatches patckets sooner
 	DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL = 5 * time.Millisecond
+	// DISPATCHER_CLIENT_FLUSH_INTERVAL is the flush interval for dispatcher clients (game -> dispatcher)
+	DISPATCHER_CLIENT_FLUSH_INTERVAL = 5 * time.Millisecond
 
 	// For Game Service
 	// GAME_SERVICE_PACKET_QUEUE_SIZE is the max packet queue length for game service
@@ -61,7 +63,7 @@ const (
 	//COMPRESS_WRITER_POOL_SIZE = 100
 	// CLIENT_PROXY_SET_TCP_NO_DELAY = true sets client proxies to TcpNoDelay
 	CLIENT_PROXY_SET_TCP_NO_DELAY     = true
-	CLIENT_PROXY_WRITE_FLUSH_INTERVAL = time.Millisecond * 50 // todo: make it configurable
+	CLIENT_PROXY_WRITE_FLUSH_INTERVAL = time.Millisecond * 50
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 

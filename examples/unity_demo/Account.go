@@ -27,12 +27,11 @@ func (a *Account) Register_Client(username string, password string) {
 
 		if oldVal == "" {
 
-			playerID := goworld.CreateEntityLocally("Player") // 创建一个Player对象然后立刻销毁，产生一次存盘
-			player := goworld.GetEntity(playerID)
+			player := goworld.CreateEntityLocally("Player") // 创建一个Player对象然后立刻销毁，产生一次存盘
 			player.Attrs.SetStr("name", username)
 			player.Destroy()
 
-			goworld.PutKVDB("playerID$"+username, string(playerID), func(err error) {
+			goworld.PutKVDB("playerID$"+username, string(player.ID), func(err error) {
 				a.CallClient("ShowInfo", "Registered Successfully, please click login.") // 注册成功，请点击登录
 			})
 		} else {

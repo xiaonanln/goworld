@@ -47,9 +47,9 @@ func (a *Avatar) OnAttrsReady() {
 // OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
 
-	a.SetFilterProp("spaceKind", strconv.Itoa(int(a.GetInt("spaceKind"))))
-	a.SetFilterProp("level", strconv.Itoa(int(a.GetInt("level"))))
-	a.SetFilterProp("prof", strconv.Itoa(int(a.GetInt("prof"))))
+	a.SetClientFilterProp("spaceKind", strconv.Itoa(int(a.GetInt("spaceKind"))))
+	a.SetClientFilterProp("level", strconv.Itoa(int(a.GetInt("level"))))
+	a.SetClientFilterProp("prof", strconv.Itoa(int(a.GetInt("prof"))))
 
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	goworld.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
@@ -115,8 +115,8 @@ func (a *Avatar) OnClientConnected() {
 	//subattr = a.Attrs.PopMapAttr("subattr")
 	//a.Attrs.Set("subattr", subattr)
 
-	a.SetFilterProp("online", "0")
-	a.SetFilterProp("online", "1")
+	a.SetClientFilterProp("online", "0")
+	a.SetClientFilterProp("online", "1")
 	a.enterSpace(int(a.GetInt("spaceKind")))
 }
 

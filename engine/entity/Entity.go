@@ -10,6 +10,7 @@ import (
 
 	"unsafe"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/go-aoi"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -27,7 +28,7 @@ var (
 	saveInterval time.Duration
 )
 
-// Yaw is the type of entity yaw
+// Yaw is the type of entity Yaw
 type Yaw float32
 
 type entityTimerInfo struct {
@@ -42,38 +43,49 @@ type entityTimerInfo struct {
 // Entity is the basic execution unit in GoWorld server. Entities can be used to
 // represent players, NPCs, monsters. Entities can migrate among spaces.
 type Entity struct {
-	ID       common.EntityID
-	TypeName string
-	I        IEntity
-	V        reflect.Value
-
-	destroyed bool
-	typeDesc  *EntityTypeDesc
-	Space     *Space
-	Position  Vector3
-	Neighbors EntitySet
-	aoi       aoi.AOI
-	yaw       Yaw
-
-	rawTimers   map[*timer.Timer]struct{}
-	timers      map[EntityTimerID]*entityTimerInfo
-	lastTimerId EntityTimerID
-
-	client            *GameClient
-	syncingFromClient bool
-
-	Attrs *MapAttr
-
+	ID                   common.EntityID
+	TypeName             string
+	I                    IEntity
+	V                    reflect.Value
+	destroyed            bool
+	typeDesc             *EntityTypeDesc
+	Space                *Space
+	Position             Vector3
+	Neighbors            EntitySet
+	aoi                  aoi.AOI
+	yaw                  Yaw
+	rawTimers            map[*timer.Timer]struct{}
+	timers               map[EntityTimerID]*entityTimerInfo
+	lastTimerId          EntityTimerID
+	client               *GameClient
+	syncingFromClient    bool
+	Attrs                *MapAttr
+	syncInfoFlag         syncInfoFlag
 	enteringSpaceRequest struct {
 		SpaceID              common.EntityID
 		EnterPos             Vector3
 		RequestTime          int64
 		migrateRequestIsSent bool
 	}
+}
 
-	filterProps map[string]string
+type clientData struct {
+	ClientID common.ClientID
+	GateID   uint16
+}
 
-	syncInfoFlag syncInfoFlag
+// entity info that should be migrated
+type entityMigrateData struct {
+	Type              string                 `msgpack:"T"`
+	Attrs             map[string]interface{} `msgpack:"A"`
+	Client            *clientData            `msgpack:"C,omitempty"`
+	Pos               Vector3                `msgpack:"Pos"`
+	Yaw               Yaw                    `msgpack:"Yaw"`
+	SpaceID           common.EntityID        `msgpack:"SP"`
+	TimerData         []byte                 `msgpack:"TD,omitempty"`
+	FilterProps       map[string]string      `msgpack:"FP"`
+	SyncingFromClient bool                   `msgpack""SFC`
+	SyncInfoFlag      syncInfoFlag           `msgpack:"SIF"`
 }
 
 type syncInfoFlag int
@@ -101,8 +113,8 @@ type IEntity interface {
 	OnEnterSpace()             // Called when entity leaves space
 	OnLeaveSpace(space *Space) // Called when entity enters space
 	// Client Notifications
-	OnClientConnected()    // Called when client is connected to entity (become player)
-	OnClientDisconnected() // Called when client disconnected
+	OnClientConnected()    // Called when Client is connected to entity (become player)
+	OnClientDisconnected() // Called when Client disconnected
 
 	DescribeEntityType(desc *EntityTypeDesc) // Define entity attributes in this function
 }
@@ -136,7 +148,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.rawTimers = nil // prohibit further use
 
 	if !isMigrate {
-		e.SetClient(nil) // always set client to nil before destroy
+		e.SetClient(nil) // always set Client to nil before destroy
 		e.Save()
 	} else {
 		if e.client != nil {
@@ -174,8 +186,8 @@ func (e *Entity) IsSpaceEntity() bool {
 	return e.TypeName == _SPACE_ENTITY_TYPE
 }
 
-// ToSpace converts entity to space (only works for space entity)
-func (e *Entity) ToSpace() *Space {
+// AsSpace converts entity to space (only works for space entity)
+func (e *Entity) AsSpace() *Space {
 	if !e.IsSpaceEntity() {
 		gwlog.Panicf("%s is not a space", e)
 	}
@@ -192,13 +204,12 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 	e.typeDesc = registeredEntityTypes[typeName]
 
 	//if !e.typeDesc.definedAttrs {
-	//	// first time entity of this type is created, define attrs now
+	//	// first time entity of this type is created, define Attrs now
 	//	e.callCompositiveMethod("DescribeEntityType", e.typeDesc)
 	//}
 
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
-	e.filterProps = map[string]string{}
 
 	attrs := NewMapAttr()
 	attrs.owner = e
@@ -488,15 +499,14 @@ func (e *Entity) Call(id common.EntityID, method string, args ...interface{}) {
 }
 
 func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
-	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, yaw %v, syncing %v", e, x, y, z, yaw, e.syncingFromClient)
+	//gwlog.Infof("%s.syncPositionYawFromClient: %v,%v,%v, Yaw %v, syncing %v", e, x, y, z, Yaw, e.SyncingFromClient)
 	if e.syncingFromClient {
 		e.setPositionYaw(Vector3{x, y, z}, yaw, true)
 	}
 }
 
-// SetClientSyncing set if entity infos (position, yaw) is syncing with client
+// SetClientSyncing set if entity infos (position, Yaw) is syncing with Client
 func (e *Entity) SetClientSyncing(syncing bool) {
-	// FIXME: syncingFromClient property is not perserved after restore game ...
 	e.syncingFromClient = syncing
 }
 
@@ -689,8 +699,26 @@ func (e *Entity) getAllClientData() map[string]interface{} {
 }
 
 // GetMigrateData gets the migration data
-func (e *Entity) GetMigrateData() map[string]interface{} {
-	return e.Attrs.ToMap() // all attrs are migrated, without filter
+func (e *Entity) GetMigrateData(spaceid common.EntityID) *entityMigrateData {
+	md := &entityMigrateData{
+		Type:              e.TypeName,
+		Attrs:             e.Attrs.ToMap(), // all Attrs are migrated, without filter
+		Pos:               e.Position,
+		Yaw:               e.yaw,
+		TimerData:         e.dumpTimers(),
+		SpaceID:           spaceid,
+		SyncingFromClient: e.syncingFromClient,
+		SyncInfoFlag:      e.syncInfoFlag,
+	}
+
+	if e.client != nil {
+		md.Client = &clientData{
+			ClientID: e.client.clientid,
+			GateID:   e.client.gateid,
+		}
+	}
+
+	return md
 }
 
 // loadMigrateData loads migrate data
@@ -698,49 +726,14 @@ func (e *Entity) loadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
 
-type clientData struct {
-	ClientID common.ClientID
-	GateID   uint16
-}
-
-type enteringSpaceRequestData struct {
-	SpaceID  common.EntityID
-	EnterPos Vector3
-}
-
-type entityFreezeData struct {
-	Type      string
-	TimerData []byte
-	Pos       Vector3
-	Attrs     map[string]interface{}
-	Yaw       Yaw
-	SpaceID   common.EntityID
-	Client    *clientData
-}
-
-// GetFreezeData gets freezed data
-func (e *Entity) GetFreezeData() *entityFreezeData {
-	data := &entityFreezeData{
-		Type:      e.TypeName,
-		TimerData: e.dumpTimers(),
-		Attrs:     e.Attrs.ToMap(),
-		Pos:       e.Position,
-		Yaw:       e.yaw,
-		SpaceID:   e.Space.ID,
-	}
-	if e.client != nil {
-		data.Client = &clientData{
-			ClientID: e.client.clientid,
-			GateID:   e.client.gateid,
-		}
-	}
-
-	return data
+// getFreezeData gets freezed data
+func (e *Entity) getFreezeData() *entityMigrateData {
+	return e.GetMigrateData(e.Space.ID)
 }
 
 // Client related utilities
 
-// GetClient returns the client of entity
+// GetClient returns the Client of entity
 func (e *Entity) GetClient() *GameClient {
 	return e.client
 }
@@ -752,7 +745,7 @@ func (e *Entity) getClientID() common.ClientID {
 	return ""
 }
 
-// SetClient sets the client of entity
+// SetClient sets the Client of entity
 func (e *Entity) SetClient(client *GameClient) {
 	oldClient := e.client
 	if oldClient == client {
@@ -762,7 +755,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	e.client = client
 
 	if oldClient != nil {
-		// send destroy entity to client
+		// send destroy entity to Client
 		entityManager.onEntityLoseClient(oldClient.clientid)
 		dispatchercluster.SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
@@ -774,7 +767,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 
 	if client != nil {
-		// send create entity to new client
+		// send create entity to new Client
 		entityManager.onEntityGetClient(e.ID, client.clientid)
 
 		client.sendCreateEntity(e, true)
@@ -782,16 +775,10 @@ func (e *Entity) SetClient(client *GameClient) {
 		for neighbor := range e.Neighbors {
 			client.sendCreateEntity(neighbor, false)
 		}
-
-		// set all filter properties to client
-		for key, val := range e.filterProps {
-
-			dispatchercluster.SendSetClientFilterProp(client.gateid, client.clientid, key, val)
-		}
 	}
 
 	if oldClient == nil && client != nil {
-		// got net client
+		// got net Client
 		e.I.OnClientConnected()
 		//e.callCompositiveMethod("OnClientConnected")
 	} else if oldClient != nil && client == nil {
@@ -800,7 +787,7 @@ func (e *Entity) SetClient(client *GameClient) {
 	}
 }
 
-// CallClient calls the client entity
+// CallClient calls the Client entity
 func (e *Entity) CallClient(method string, args ...interface{}) {
 	e.client.call(e.ID, method, args)
 }
@@ -814,15 +801,15 @@ func (e *Entity) CallAllClients(method string, args ...interface{}) {
 	}
 }
 
-// GiveClientTo gives client to other entity
+// GiveClientTo gives Client to other entity
 func (e *Entity) GiveClientTo(other *Entity) {
 	if e.client == nil {
-		gwlog.Warnf("%s.GiveClientTo(%s): client is nil", e, other)
+		gwlog.Warnf("%s.GiveClientTo(%s): Client is nil", e, other)
 		return
 	}
 
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("%s.GiveClientTo(%s): client=%s", e, other, e.client)
+		gwlog.Debugf("%s.GiveClientTo(%s): Client=%s", e, other, e.client)
 	}
 	client := e.client
 	e.SetClient(nil)
@@ -830,7 +817,7 @@ func (e *Entity) GiveClientTo(other *Entity) {
 	other.SetClient(client)
 }
 
-// ForAllClients visits all clients (own client and clients of neighbors)
+// ForAllClients visits all clients (own Client and clients of neighbors)
 func (e *Entity) ForAllClients(f func(client *GameClient)) {
 	if e.client != nil {
 		f(e.client)
@@ -844,7 +831,7 @@ func (e *Entity) ForAllClients(f func(client *GameClient)) {
 }
 
 func (e *Entity) notifyClientDisconnected() {
-	// called when client disconnected
+	// called when Client disconnected
 	if e.client == nil {
 		gwlog.Panic(e.client)
 	}
@@ -853,7 +840,7 @@ func (e *Entity) notifyClientDisconnected() {
 	//e.callCompositiveMethod("OnClientDisconnected")
 }
 
-// OnClientConnected is called when client is connected
+// OnClientConnected is called when Client is connected
 //
 // Can override this function in custom entity type
 func (e *Entity) OnClientConnected() {
@@ -862,7 +849,7 @@ func (e *Entity) OnClientConnected() {
 	}
 }
 
-// OnClientDisconnected is called when client is disconnected
+// OnClientDisconnected is called when Client is disconnected
 //
 // Can override this function in custom entity type
 func (e *Entity) OnClientDisconnected() {
@@ -987,7 +974,7 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 
 // Define Attributes Properties
 
-// Fast access to attrs
+// Fast access to Attrs
 
 // GetInt gets an outtermost attribute as int
 func (e *Entity) GetInt(key string) int64 {
@@ -1082,7 +1069,6 @@ func (e *Entity) requestMigrateTo(spaceid common.EntityID, pos Vector3) {
 }
 
 func (e *Entity) cancelEnterSpace() {
-	// TODO: cancel migrating block in dispatcher
 	e.enteringSpaceRequest.SpaceID = ""
 	e.enteringSpaceRequest.EnterPos = Vector3{}
 	e.enteringSpaceRequest.RequestTime = 0
@@ -1161,38 +1147,28 @@ func OnMigrateRequestAck(entityid common.EntityID, spaceid common.EntityID, spac
 }
 
 func (e *Entity) realMigrateTo(spaceid common.EntityID, pos Vector3, spaceGameID uint16) {
-	var clientid common.ClientID
-	var clientsrv uint16
-	if e.client != nil {
-		clientid = e.client.clientid
-		clientsrv = e.client.gateid
+	migrateData := e.GetMigrateData(spaceid)
+	data, err := netutil.MSG_PACKER.PackMsg(migrateData, nil)
+	if err != nil {
+		gwlog.Panicf("%s is migrating to space %s, but pack migrate data failed: %s", e, spaceid, err)
 	}
 
 	e.destroyEntity(true) // disable the entity
-	timerData := e.dumpTimers()
-	migrateData := e.GetMigrateData()
-
-	dispatchercluster.SendRealMigrate(e.ID, spaceGameID, spaceid,
-		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
+	dispatchercluster.SendRealMigrate(e.ID, spaceGameID, data)
 }
 
 // OnRealMigrate is used by entity migration
-func OnRealMigrate(entityid common.EntityID, spaceid common.EntityID, x, y, z float32, typeName string,
-	migrateData map[string]interface{}, timerData []byte,
-	clientid common.ClientID, clientsrv uint16) {
-
+func OnRealMigrate(entityid common.EntityID, data []byte) {
 	if entityManager.get(entityid) != nil {
 		gwlog.Panicf("entity %s already exists", entityid)
 	}
 
-	// try to find the target space, but might be nil
-	space := spaceManager.getSpace(spaceid)
-	var client *GameClient
-	if !clientid.IsNil() {
-		client = MakeGameClient(clientid, clientsrv)
+	var md entityMigrateData
+	if err := netutil.MSG_PACKER.UnpackMsg(data, &md); err != nil {
+		gwlog.Panic(errors.Wrap(err, "unpack migrate data failed"))
 	}
-	pos := Vector3{Coord(x), Coord(y), Coord(z)}
-	createEntity(typeName, space, pos, entityid, migrateData, timerData, client, ccMigrate)
+
+	restoreEntity(entityid, &md, false)
 }
 
 // OnMigrateOut is called when entity is migrating out
@@ -1200,7 +1176,7 @@ func OnRealMigrate(entityid common.EntityID, spaceid common.EntityID, x, y, z fl
 // Can override this function in custom entity type
 func (e *Entity) OnMigrateOut() {
 	if consts.DEBUG_MIGRATE {
-		gwlog.Debugf("%s.OnMigrateOut, space=%s, client=%s", e, e.Space, e.client)
+		gwlog.Debugf("%s.OnMigrateOut, space=%s, Client=%s", e, e.Space, e.client)
 	}
 }
 
@@ -1209,27 +1185,17 @@ func (e *Entity) OnMigrateOut() {
 // Can override this function in custom entity type
 func (e *Entity) OnMigrateIn() {
 	if consts.DEBUG_MIGRATE {
-		gwlog.Debugf("%s.OnMigrateIn, space=%s, client=%s", e, e.Space, e.client)
+		gwlog.Debugf("%s.OnMigrateIn, space=%s, Client=%s", e, e.Space, e.client)
 	}
 }
 
-// SetFilterProp sets a filter property key-value
-func (e *Entity) SetFilterProp(key string, val string) {
+// SetClientFilterProp sets a filter property key-value
+func (e *Entity) SetClientFilterProp(key string, val string) {
 	if key == "" {
-		gwlog.Panicf("%s SetFilterProp: key must not be empty", e)
+		gwlog.Panicf("%s SetClientFilterProp: key must not be empty", e)
 	}
 
-	if consts.DEBUG_FILTER_PROP {
-		gwlog.Debugf("%s.SetFilterProp: %s = %s, client=%s", e, key, val, e.client)
-	}
-
-	curval, ok := e.filterProps[key]
-	if ok && curval == val {
-		return // not changed
-	}
-
-	e.filterProps[key] = val
-	// send filter property to client
+	// send filter property to Client
 	if e.client != nil {
 		dispatchercluster.SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 	}
@@ -1290,7 +1256,7 @@ func (e *Entity) setPositionYaw(pos Vector3, yaw Yaw, fromClient bool) {
 	e.yaw = yaw
 
 	// mark the entity as needing sync
-	// Real sync packets will be sent before flushing dispatcher client
+	// Real sync packets will be sent before flushing dispatcher Client
 	e.syncInfoFlag |= sifSyncNeighborClients
 	if !fromClient {
 		e.syncInfoFlag |= sifSyncOwnClient
@@ -1366,26 +1332,26 @@ func (e *Entity) getSyncInfo() proto.EntitySyncInfo {
 	}
 }
 
-// GetYaw gets entity yaw
+// GetYaw gets entity Yaw
 func (e *Entity) GetYaw() Yaw {
 	return e.yaw
 }
 
-// SetYaw sets entity yaw
+// SetYaw sets entity Yaw
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
 	e.syncInfoFlag |= (sifSyncNeighborClients | sifSyncOwnClient)
-	//e.ForAllClients(func(client *GameClient) {
-	//	client.updateYawOnClient(e.ID, e.yaw)
+	//e.ForAllClients(func(Client *GameClient) {
+	//	Client.updateYawOnClient(e.ID, e.Yaw)
 	//})
 }
 
-// FaceTo let entity face to another entity by setting yaw accordingly
+// FaceTo let entity face to another entity by setting Yaw accordingly
 func (e *Entity) FaceTo(other *Entity) {
 	e.FaceToPos(other.Position)
 }
 
-// FaceTo let entity face to a specified position, setting yaw accordingly
+// FaceTo let entity face to a specified position, setting Yaw accordingly
 
 func (e *Entity) FaceToPos(pos Vector3) {
 	dir := pos.Sub(e.Position)
