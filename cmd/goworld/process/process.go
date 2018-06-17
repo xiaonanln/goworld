@@ -22,6 +22,7 @@ type process struct {
 func (p process) Pid() int32 {
 	return p.Process.Pid
 }
+
 func (p process) Executable() string {
 	name, _ := p.Process.Name()
 	return name

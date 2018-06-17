@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"fmt"
+
 	"github.com/xiaonanln/goworld/cmd/goworld/process"
 	"github.com/xiaonanln/goworld/engine/config"
 )
@@ -101,10 +103,14 @@ func showServerStatus(ss *ServerStatus) {
 	listProcs = append(listProcs, ss.GameProcs...)
 	listProcs = append(listProcs, ss.GateProcs...)
 	for _, proc := range listProcs {
-		path, err := proc.Path()
-		if err != nil {
-			path = "[" + proc.Executable() + "]"
+		cmdlineSlice, err := proc.CmdlineSlice()
+		var cmdline string
+		if err == nil {
+			cmdline = strings.Join(cmdlineSlice, " ")
+		} else {
+			cmdline = fmt.Sprintf("get cmdline failed: %e", err)
 		}
-		showMsg("\t%-10d%-16s%s", proc.Pid(), proc.Executable(), path)
+
+		showMsg("\t%-10d%-16s%s", proc.Pid(), proc.Executable(), cmdline)
 	}
 }
