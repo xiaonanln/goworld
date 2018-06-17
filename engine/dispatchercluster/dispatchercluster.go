@@ -1,13 +1,10 @@
 package dispatchercluster
 
 import (
-	"time"
-
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
@@ -37,8 +34,6 @@ func Initialize(_gid uint16, dctype dispatcherclient.DispatcherClientType, isRes
 	for _, dispConn := range dispatcherConns {
 		dispConn.Connect()
 	}
-
-	go gwutils.RepeatUntilPanicless(autoFlushRoutine)
 }
 
 func SendNotifyDestroyEntity(id common.EntityID) error {
@@ -164,16 +159,3 @@ func Select(dispidx int) *dispatcherclient.DispatcherClient {
 //	}
 //	return
 //}
-
-func autoFlushRoutine() {
-	// TODO: each dipsatcher client flush by itself
-	for {
-		time.Sleep(10 * time.Millisecond)
-		for _, dispconn := range dispatcherConns {
-			err := dispconn.GetDispatcherClientForSend().Flush("dispatchercluster")
-			if err != nil {
-				gwlog.Errorf("dispatchercluster: %s flush failed: %v", dispconn, err)
-			}
-		}
-	}
-}
