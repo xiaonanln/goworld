@@ -300,15 +300,25 @@ func (gwc *GoWorldConnection) SendClearClientFilterProp(gateid uint16, clientid 
 }
 
 // SendCallFilterClientProxies sends MT_CALL_FILTERED_CLIENTS message
-func (gwc *GoWorldConnection) SendCallFilterClientProxies(op FilterClientsOpType, key, val string, method string, args []interface{}) (err error) {
-	packet := gwc.packetConn.NewPacket()
+func AllocCallFilterClientProxiesPacket(op FilterClientsOpType, key, val string, method string, args []interface{}) *netutil.Packet {
+	packet := netutil.NewPacket()
 	packet.AppendUint16(MT_CALL_FILTERED_CLIENTS)
 	packet.AppendByte(byte(op))
 	packet.AppendVarStr(key)
 	packet.AppendVarStr(val)
 	packet.AppendVarStr(method)
 	packet.AppendArgs(args)
-	return gwc.SendPacketRelease(packet)
+	return packet
+}
+
+func AllocCallNilSpacesPacket(exceptGameID uint16, method string, args []interface{}) *netutil.Packet {
+	// construct one packet for multiple sending
+	packet := netutil.NewPacket()
+	packet.AppendUint16(MT_CALL_NIL_SPACES)
+	packet.AppendUint16(exceptGameID)
+	packet.AppendVarStr(method)
+	packet.AppendArgs(args)
+	return packet
 }
 
 // SendQuerySpaceGameIDForMigrate sends MT_QUERY_SPACE_GAMEID_FOR_MIGRATE message
@@ -348,11 +358,17 @@ func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame ui
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendStartFreezeGame sends MT_START_FREEZE_GAME message
-func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
-	packet := gwc.packetConn.NewPacket()
+//// SendStartFreezeGame sends MT_START_FREEZE_GAME message
+//func (gwc *GoWorldConnection) SendStartFreezeGame(gameid uint16) error {
+//	packet := gwc.packetConn.NewPacket()
+//	packet.AppendUint16(MT_START_FREEZE_GAME)
+//	return gwc.SendPacketRelease(packet)
+//}
+
+func AllocStartFreezeGamePacket() *netutil.Packet {
+	packet := netutil.NewPacket()
 	packet.AppendUint16(MT_START_FREEZE_GAME)
-	return gwc.SendPacketRelease(packet)
+	return packet
 }
 
 func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {

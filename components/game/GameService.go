@@ -461,7 +461,7 @@ func (gs *GameService) terminate() {
 func (gs *GameService) startFreeze() {
 	dispatcherNum := len(config.GetDispatcherIDs())
 	gs.dispatcherStartFreezeAcks = make([]bool, dispatcherNum)
-	dispatchercluster.SendStartFreezeGame(gameid)
+	dispatchercluster.SendStartFreezeGame()
 }
 
 func ConnectedGamesNum() int {
