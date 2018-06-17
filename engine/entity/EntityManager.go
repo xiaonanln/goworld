@@ -288,7 +288,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 }
 
 func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore bool) {
-	//gwlog.Debugf("createEntity: %s in Space %s", typeName, space)
+	gwlog.Debugf("restoring entity %s: mdata=%+v, isRestore=%v", entityID, mdata, isRestore)
 	typeName := mdata.Type
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -304,8 +304,7 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 	entity.Space = nilSpace
 
 	entityManager.put(entity)
-	data := mdata.attrs
-	entity.loadMigrateData(data)
+	entity.loadMigrateData(mdata.attrs)
 
 	timerData := mdata.timerData
 	if timerData != nil {
