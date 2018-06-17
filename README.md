@@ -12,7 +12,7 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
   * [Manage GoWorld Servers](#manage-goworld-servers)
   * [Demos](#demos)
     * [Chatroom Demo](#chatroom-demo)
-    * [Unity Demo](#unity-demo): [GoWorldUnityDemo.zip](https://pan.baidu.com/s/1MSs8cUAXUnQPTUCN-lIpHg) 
+    * [Unity Demo](#unity-demo): [GoWorldUnityDemo.zip](http://goworldgs.com/goworld_files/GoWorldUnityDemo.zip) 
 ---------------------------------------
 >  中文资料：
 > [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
@@ -151,5 +151,5 @@ Unity demo client implements the client-server protocol in C#.
 The client for unity demo is hosted at [https://github.com/xiaonanln/goworld-unity-demo](https://github.com/xiaonanln/goworld-unity-demo).
 The project was created and built in [Unity 2017.1](https://unity3d.com/). 
 
-You can try the demo by downloading [GoWorldUnityDemo.zip](https://pan.baidu.com/s/1MSs8cUAXUnQPTUCN-lIpHg). 
+You can try the demo by downloading [GoWorldUnityDemo.zip](http://goworldgs.com/goworld_files/GoWorldUnityDemo.zip). 
 The demo connects to a goworld server on Amazon EC2 instance. 
