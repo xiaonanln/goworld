@@ -57,9 +57,8 @@ func SendMigrateRequest(entityID common.EntityID, spaceID common.EntityID, space
 	return SelectByEntityID(entityID).SendMigrateRequest(entityID, spaceID, spaceGameID)
 }
 
-func SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,
-	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
-	return SelectByEntityID(eid).SendRealMigrate(eid, targetGame, targetSpace, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
+func SendRealMigrate(eid common.EntityID, targetGame uint16, data []byte) error {
+	return SelectByEntityID(eid).SendRealMigrate(eid, targetGame, data)
 }
 func SendCallFilterClientProxies(op proto.FilterClientsOpType, key, val string, method string, args []interface{}) (anyerror error) {
 	for _, dcm := range dispatcherConns {

@@ -233,15 +233,15 @@ func isEntityType(t reflect.Type) bool {
 //	return ok && componentField.Type == componentType
 //}
 
-type createCause int
+//type createCause int
+//
+//const (
+//	ccCreate createCause = 1 + iota
+//	ccMigrate
+//	ccRestore
+//)
 
-const (
-	ccCreate createCause = 1 + iota
-	ccMigrate
-	ccRestore
-)
-
-func createEntity(typeName string, space *Space, pos Vector3, entityID common.EntityID, data map[string]interface{}, timerData []byte, client *GameClient, cause createCause) common.EntityID {
+func createEntity(typeName string, space *Space, pos Vector3, entityID common.EntityID, data map[string]interface{}) *Entity {
 	//gwlog.Debugf("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -262,15 +262,52 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 
 	entityManager.put(entity)
 	if data != nil {
-		if cause == ccCreate {
-			entity.loadPersistentData(data)
-		} else {
-			entity.loadMigrateData(data)
-		}
+		entity.loadPersistentData(data)
 	} else {
 		entity.Save() // save immediately after creation
 	}
 
+	isPersistent := entity.IsPersistent()
+	if isPersistent { // startup the periodical timer for saving e
+		entity.setupSaveTimer()
+	}
+
+	dispatchercluster.SendNotifyCreateEntity(entityID)
+
+	gwlog.Debugf("Entity %s created.", entity)
+	gwutils.RunPanicless(func() {
+		entity.I.OnAttrsReady()
+		entity.I.OnCreated()
+	})
+
+	if space != nil {
+		space.enter(entity, pos, false)
+	}
+
+	return entity
+}
+
+func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore bool) {
+	//gwlog.Debugf("createEntity: %s in Space %s", typeName, space)
+	typeName := mdata.Type
+	entityTypeDesc, ok := registeredEntityTypes[typeName]
+	if !ok {
+		gwlog.Panicf("unknown entity type: %s", typeName)
+	}
+
+	var entity *Entity
+	var entityInstance reflect.Value
+
+	entityInstance = reflect.New(entityTypeDesc.entityType)
+	entity = reflect.Indirect(entityInstance).FieldByName("Entity").Addr().Interface().(*Entity)
+	entity.init(typeName, entityID, entityInstance)
+	entity.Space = nilSpace
+
+	entityManager.put(entity)
+	data := mdata.attrs
+	entity.loadMigrateData(data)
+
+	timerData := mdata.timerData
 	if timerData != nil {
 		entity.restoreTimers(timerData)
 	}
@@ -280,41 +317,27 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 		entity.setupSaveTimer()
 	}
 
-	if cause == ccCreate {
-		dispatchercluster.SendNotifyCreateEntity(entityID)
-	}
-
-	if client != nil {
+	if mdata.client != nil {
+		client := MakeGameClient(mdata.client.ClientID, mdata.client.GateID)
 		// assign client to the newly created
-		if cause == ccCreate {
-			entity.SetClient(client)
-		} else {
-			entity.client = client // assign client quietly if migrate
-			entityManager.onEntityGetClient(entity.ID, client.clientid)
-		}
+		entity.client = client // assign client quietly
+		entityManager.onEntityGetClient(entity.ID, client.clientid)
 	}
 
-	gwlog.Debugf("Entity %s created, cause=%d, client=%s", entity, cause, client)
+	gwlog.Debugf("Entity %s created, client=%s", entity, entity.client)
 	entity.I.OnAttrsReady()
-	//entity.callCompositiveMethod("OnAttrsReady")
 
-	if cause == ccCreate {
-		entity.I.OnCreated()
-		//entity.callCompositiveMethod("OnCreated")
-	} else if cause == ccMigrate {
+	if !isRestore {
 		entity.I.OnMigrateIn()
-		//entity.callCompositiveMethod("OnMigrateIn")
-	} else if cause == ccRestore {
+	} else {
 		// restore should be silent
 		entity.I.OnRestored()
-		//entity.callCompositiveMethod("OnRestored")
 	}
 
+	space := spaceManager.getSpace(mdata.spaceID)
 	if space != nil {
-		space.enter(entity, pos, cause == ccRestore)
+		space.enter(entity, mdata.pos, isRestore)
 	}
-
-	return entityID
 }
 
 func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, pos Vector3) {
@@ -349,7 +372,7 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 		for _, f := range removeFields {
 			delete(data, f)
 		}
-		createEntity(typeName, space, pos, entityID, data, nil, nil, ccCreate)
+		createEntity(typeName, space, pos, entityID, data)
 	})
 }
 
@@ -360,8 +383,8 @@ func createEntityAnywhere(typeName string, data map[string]interface{}) common.E
 }
 
 // CreateEntityLocally creates new entity in the local game
-func CreateEntityLocally(typeName string, data map[string]interface{}, client *GameClient) common.EntityID {
-	return createEntity(typeName, nil, Vector3{}, "", data, nil, client, ccCreate)
+func CreateEntityLocally(typeName string, data map[string]interface{}) *Entity {
+	return createEntity(typeName, nil, Vector3{}, "", data)
 }
 
 // CreateEntityAnywhere creates new entity in any game
@@ -371,7 +394,7 @@ func CreateEntityAnywhere(typeName string) common.EntityID {
 
 // OnCreateEntityAnywhere is called when CreateEntityAnywhere chooses this game
 func OnCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) {
-	createEntity(typeName, nil, Vector3{}, entityid, data, nil, nil, ccCreate)
+	createEntity(typeName, nil, Vector3{}, entityid, data)
 }
 
 // OnLoadEntitySomewhere loads entity in the local game.
@@ -513,14 +536,14 @@ func SaveAllEntities() {
 
 // FreezeData is the data structure for storing entity freeze data
 type FreezeData struct {
-	Entities map[common.EntityID]*entityFreezeData
+	Entities map[common.EntityID]*entityMigrateData
 }
 
 // Freeze freezes the entity system and returns all freeze data
 func Freeze(gameid uint16) (*FreezeData, error) {
 	freeze := FreezeData{}
 
-	entityFreezeInfos := map[common.EntityID]*entityFreezeData{}
+	entityFreezeInfos := map[common.EntityID]*entityMigrateData{}
 	foundNilSpace := false
 	for _, e := range entityManager.entities {
 
@@ -533,9 +556,9 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 			return nil, errors.Errorf("OnFreeze paniced: %v", err)
 		}
 
-		entityFreezeInfos[e.ID] = e.GetFreezeData()
+		entityFreezeInfos[e.ID] = e.getFreezeData()
 		if e.IsSpaceEntity() {
-			if e.ToSpace().IsNil() {
+			if e.AsSpace().IsNil() {
 				if foundNilSpace {
 					return nil, errors.Errorf("found duplicate nil space")
 				}
@@ -574,22 +597,22 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 			typeName := info.Type
 			var spaceKind int64
 			if typeName == _SPACE_ENTITY_TYPE {
-				attrs := info.Attrs
-				spaceKind = typeconv.Int(attrs[_SPACE_KIND_ATTR_KEY])
+				spaceKind = typeconv.Int(info.attrs[_SPACE_KIND_ATTR_KEY])
 			}
 
 			if filter(typeName, spaceKind) {
 				var space *Space
 				if typeName != _SPACE_ENTITY_TYPE {
-					space = spaceManager.getSpace(info.SpaceID)
+					space = spaceManager.getSpace(info.spaceID)
 				}
 
 				var client *GameClient
-				if info.Client != nil {
-					client = MakeGameClient(info.Client.ClientID, info.Client.GateID)
+				if info.client != nil {
+					client = MakeGameClient(info.client.ClientID, info.client.GateID)
 					clients[eid] = client // save the client to the map
+					info.client = nil
 				}
-				createEntity(typeName, space, info.Pos, eid, info.Attrs, info.TimerData, nil, ccRestore)
+				restoreEntity(eid, info, true)
 				gwlog.Debugf("Restored %s<%s> in space %s", typeName, eid, space)
 			}
 		}

@@ -8,10 +8,11 @@ import (
 )
 
 // CreateSpaceLocally creates a space in the local game server
-func CreateSpaceLocally(kind int) common.EntityID {
-	return createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, "", map[string]interface{}{
+func CreateSpaceLocally(kind int) *Space {
+	e := createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, "", map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: kind,
-	}, nil, nil, ccCreate)
+	})
+	return e.AsSpace()
 }
 
 // CreateSpaceAnywhere creates a space in any game server
@@ -22,11 +23,12 @@ func CreateSpaceAnywhere(kind int) common.EntityID {
 }
 
 // CreateNilSpace creates the nil space
-func CreateNilSpace(gameid uint16) common.EntityID {
+func CreateNilSpace(gameid uint16) *Space {
 	spaceID := GetNilSpaceID(gameid)
-	return createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, spaceID, map[string]interface{}{
+	e := createEntity(_SPACE_ENTITY_TYPE, nil, Vector3{}, spaceID, map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: 0,
-	}, nil, nil, ccCreate)
+	})
+	return e.AsSpace()
 }
 
 // GetNilSpaceEntityID returns the EntityID for Nil Space on the specified game

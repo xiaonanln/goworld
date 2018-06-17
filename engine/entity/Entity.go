@@ -10,6 +10,7 @@ import (
 
 	"unsafe"
 
+	"github.com/pkg/errors"
 	"github.com/xiaonanln/go-aoi"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -42,38 +43,50 @@ type entityTimerInfo struct {
 // Entity is the basic execution unit in GoWorld server. Entities can be used to
 // represent players, NPCs, monsters. Entities can migrate among spaces.
 type Entity struct {
-	ID       common.EntityID
-	TypeName string
-	I        IEntity
-	V        reflect.Value
-
-	destroyed bool
-	typeDesc  *EntityTypeDesc
-	Space     *Space
-	Position  Vector3
-	Neighbors EntitySet
-	aoi       aoi.AOI
-	yaw       Yaw
-
-	rawTimers   map[*timer.Timer]struct{}
-	timers      map[EntityTimerID]*entityTimerInfo
-	lastTimerId EntityTimerID
-
+	ID                common.EntityID
+	TypeName          string
+	I                 IEntity
+	V                 reflect.Value
+	destroyed         bool
+	typeDesc          *EntityTypeDesc
+	Space             *Space
+	Position          Vector3
+	Neighbors         EntitySet
+	aoi               aoi.AOI
+	yaw               Yaw
+	rawTimers         map[*timer.Timer]struct{}
+	timers            map[EntityTimerID]*entityTimerInfo
+	lastTimerId       EntityTimerID
 	client            *GameClient
 	syncingFromClient bool
-
-	Attrs *MapAttr
-
+	Attrs             *MapAttr
+	// FIXME: restore filterProps from freezed data
+	filterProps          map[string]string
+	syncInfoFlag         syncInfoFlag
 	enteringSpaceRequest struct {
 		SpaceID              common.EntityID
 		EnterPos             Vector3
 		RequestTime          int64
 		migrateRequestIsSent bool
 	}
+}
 
-	filterProps map[string]string
+type clientData struct {
+	ClientID common.ClientID
+	GateID   uint16
+}
 
-	syncInfoFlag syncInfoFlag
+// entity info that should be migrated
+type entityMigrateData struct {
+	Type              string                 `msgpack:"T"`
+	attrs             map[string]interface{} `msgpack:"A"`
+	client            *clientData            `msgpack:"C,omitempty"`
+	pos               Vector3                `msgpack:"pos"`
+	yaw               Yaw                    `msgpack:"yaw"`
+	timerData         []byte                 `msgpack:"TD,omitempty"`
+	spaceID           common.EntityID        `msgpack:"SP"`
+	syncingFromClient bool                   `msgpack""SFC`
+	syncInfoFlag      syncInfoFlag           `msgpack:"SIF"`
 }
 
 type syncInfoFlag int
@@ -174,8 +187,8 @@ func (e *Entity) IsSpaceEntity() bool {
 	return e.TypeName == _SPACE_ENTITY_TYPE
 }
 
-// ToSpace converts entity to space (only works for space entity)
-func (e *Entity) ToSpace() *Space {
+// AsSpace converts entity to space (only works for space entity)
+func (e *Entity) AsSpace() *Space {
 	if !e.IsSpaceEntity() {
 		gwlog.Panicf("%s is not a space", e)
 	}
@@ -689,8 +702,26 @@ func (e *Entity) getAllClientData() map[string]interface{} {
 }
 
 // GetMigrateData gets the migration data
-func (e *Entity) GetMigrateData() map[string]interface{} {
-	return e.Attrs.ToMap() // all attrs are migrated, without filter
+func (e *Entity) GetMigrateData(spaceid common.EntityID) *entityMigrateData {
+	md := &entityMigrateData{
+		Type:              e.TypeName,
+		attrs:             e.Attrs.ToMap(), // all attrs are migrated, without filter
+		pos:               e.Position,
+		yaw:               e.yaw,
+		timerData:         e.dumpTimers(),
+		spaceID:           spaceid,
+		syncingFromClient: e.syncingFromClient,
+		syncInfoFlag:      e.syncInfoFlag,
+	}
+
+	if e.client != nil {
+		md.client = &clientData{
+			ClientID: e.client.clientid,
+			GateID:   e.client.gateid,
+		}
+	}
+
+	return md
 }
 
 // loadMigrateData loads migrate data
@@ -698,38 +729,20 @@ func (e *Entity) loadMigrateData(data map[string]interface{}) {
 	e.Attrs.AssignMap(data)
 }
 
-type clientData struct {
-	ClientID common.ClientID
-	GateID   uint16
-}
-
-type enteringSpaceRequestData struct {
-	SpaceID  common.EntityID
-	EnterPos Vector3
-}
-
-type entityFreezeData struct {
-	Type      string
-	TimerData []byte
-	Pos       Vector3
-	Attrs     map[string]interface{}
-	Yaw       Yaw
-	SpaceID   common.EntityID
-	Client    *clientData
-}
-
-// GetFreezeData gets freezed data
-func (e *Entity) GetFreezeData() *entityFreezeData {
-	data := &entityFreezeData{
-		Type:      e.TypeName,
-		TimerData: e.dumpTimers(),
-		Attrs:     e.Attrs.ToMap(),
-		Pos:       e.Position,
-		Yaw:       e.yaw,
-		SpaceID:   e.Space.ID,
+// getFreezeData gets freezed data
+func (e *Entity) getFreezeData() *entityMigrateData {
+	data := &entityMigrateData{
+		Type:              e.TypeName,
+		timerData:         e.dumpTimers(),
+		attrs:             e.Attrs.ToMap(),
+		pos:               e.Position,
+		yaw:               e.yaw,
+		spaceID:           e.Space.ID,
+		syncInfoFlag:      e.syncInfoFlag,
+		syncingFromClient: e.syncingFromClient,
 	}
 	if e.client != nil {
-		data.Client = &clientData{
+		data.client = &clientData{
 			ClientID: e.client.clientid,
 			GateID:   e.client.gateid,
 		}
@@ -785,7 +798,6 @@ func (e *Entity) SetClient(client *GameClient) {
 
 		// set all filter properties to client
 		for key, val := range e.filterProps {
-
 			dispatchercluster.SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 		}
 	}
@@ -1161,38 +1173,28 @@ func OnMigrateRequestAck(entityid common.EntityID, spaceid common.EntityID, spac
 }
 
 func (e *Entity) realMigrateTo(spaceid common.EntityID, pos Vector3, spaceGameID uint16) {
-	var clientid common.ClientID
-	var clientsrv uint16
-	if e.client != nil {
-		clientid = e.client.clientid
-		clientsrv = e.client.gateid
+	migrateData := e.GetMigrateData(spaceid)
+	data, err := netutil.MSG_PACKER.PackMsg(migrateData, nil)
+	if err != nil {
+		gwlog.Panicf("%s is migrating to space %s, but pack migrate data failed: %s", e, spaceid, err)
 	}
 
 	e.destroyEntity(true) // disable the entity
-	timerData := e.dumpTimers()
-	migrateData := e.GetMigrateData()
-
-	dispatchercluster.SendRealMigrate(e.ID, spaceGameID, spaceid,
-		float32(pos.X), float32(pos.Y), float32(pos.Z), e.TypeName, migrateData, timerData, clientid, clientsrv)
+	dispatchercluster.SendRealMigrate(e.ID, spaceGameID, data)
 }
 
 // OnRealMigrate is used by entity migration
-func OnRealMigrate(entityid common.EntityID, spaceid common.EntityID, x, y, z float32, typeName string,
-	migrateData map[string]interface{}, timerData []byte,
-	clientid common.ClientID, clientsrv uint16) {
-
+func OnRealMigrate(entityid common.EntityID, data []byte) {
 	if entityManager.get(entityid) != nil {
 		gwlog.Panicf("entity %s already exists", entityid)
 	}
 
-	// try to find the target space, but might be nil
-	space := spaceManager.getSpace(spaceid)
-	var client *GameClient
-	if !clientid.IsNil() {
-		client = MakeGameClient(clientid, clientsrv)
+	var md entityMigrateData
+	if err := netutil.MSG_PACKER.UnpackMsg(data, &md); err != nil {
+		gwlog.Panic(errors.Wrap(err, "unpack migrate data failed"))
 	}
-	pos := Vector3{Coord(x), Coord(y), Coord(z)}
-	createEntity(typeName, space, pos, entityid, migrateData, timerData, client, ccMigrate)
+
+	restoreEntity(entityid, &md, false)
 }
 
 // OnMigrateOut is called when entity is migrating out

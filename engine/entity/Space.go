@@ -174,7 +174,7 @@ func (space *Space) IsNil() bool {
 
 // CreateEntity creates a new local entity in this space
 func (space *Space) CreateEntity(typeName string, pos Vector3) {
-	createEntity(typeName, space, pos, "", nil, nil, nil, ccCreate)
+	createEntity(typeName, space, pos, "", nil)
 }
 
 // LoadEntity loads a entity of specified entityID to the space
@@ -184,6 +184,7 @@ func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Ve
 	loadEntityLocally(typeName, entityID, space, pos)
 }
 
+// FIXME: add yaw for enter
 func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debugf("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))

@@ -339,29 +339,12 @@ func (gwc *GoWorldConnection) SendCancelMigrate(entityid common.EntityID) error 
 }
 
 // SendRealMigrate sends MT_REAL_MIGRATE message
-func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame uint16, targetSpace common.EntityID, x, y, z float32,
-	typeName string, migrateData map[string]interface{}, timerData []byte, clientid common.ClientID, clientsrv uint16) error {
+func (gwc *GoWorldConnection) SendRealMigrate(eid common.EntityID, targetGame uint16, data []byte) error {
 	packet := gwc.packetConn.NewPacket()
 	packet.AppendUint16(MT_REAL_MIGRATE)
 	packet.AppendEntityID(eid)
 	packet.AppendUint16(targetGame)
-
-	if !clientid.IsNil() {
-		packet.AppendBool(true)
-		packet.AppendClientID(clientid)
-		packet.AppendUint16(clientsrv)
-	} else {
-		packet.AppendBool(false)
-	}
-
-	packet.AppendEntityID(targetSpace)
-	packet.AppendFloat32(x)
-	packet.AppendFloat32(y)
-	packet.AppendFloat32(z)
-	packet.AppendVarStr(typeName)
-	packet.AppendData(migrateData)
-	packet.AppendVarBytes(timerData)
-
+	packet.AppendVarBytes(data)
 	return gwc.SendPacketRelease(packet)
 }
 

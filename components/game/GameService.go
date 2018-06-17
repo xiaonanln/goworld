@@ -407,7 +407,8 @@ func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gat
 	}
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
-	entity.CreateEntityLocally(gs.config.BootEntity, nil, client)
+	e := entity.CreateEntityLocally(gs.config.BootEntity, nil)
+	e.SetClient(client)
 }
 
 func (gs *GameService) HandleCallNilSpaces(method string, args [][]byte) {
@@ -449,28 +450,8 @@ func (gs *GameService) HandleMigrateRequestAck(pkt *netutil.Packet) {
 func (gs *GameService) HandleRealMigrate(pkt *netutil.Packet) {
 	eid := pkt.ReadEntityID()
 	_ = pkt.ReadUint16() // targetGame is not userful
-
-	hasClient := pkt.ReadBool()
-	var clientid common.ClientID
-	var clientsrv uint16
-	if hasClient {
-		clientid = pkt.ReadClientID()
-		clientsrv = pkt.ReadUint16()
-	}
-
-	spaceID := pkt.ReadEntityID() // target space
-	x := pkt.ReadFloat32()
-	y := pkt.ReadFloat32()
-	z := pkt.ReadFloat32()
-	typeName := pkt.ReadVarStr()
-	var migrateData map[string]interface{}
-	pkt.ReadData(&migrateData)
-	timerData := pkt.ReadVarBytes()
-	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleRealMigrate: entity %s migrating to space %s, typeName=%s, migrateData=%v, timerData=%v, client=%s@%d", gs, eid, spaceID, typeName, migrateData, timerData, clientid, clientsrv)
-	}
-
-	entity.OnRealMigrate(eid, spaceID, x, y, z, typeName, migrateData, timerData, clientid, clientsrv)
+	data := pkt.ReadVarBytes()
+	entity.OnRealMigrate(eid, data)
 }
 
 func (gs *GameService) terminate() {

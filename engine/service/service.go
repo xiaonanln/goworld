@@ -162,9 +162,9 @@ func createServiceEntity(serviceName string) {
 	}
 
 	if !desc.IsPersistent {
-		eid := entity.CreateEntityLocally(serviceName, nil, nil)
-		gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
-		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
+		e := entity.CreateEntityLocally(serviceName, nil)
+		gwlog.Infof("Created service entity: %s: %s", serviceName, e)
+		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(e.ID), true)
 	} else {
 		createPersistentServiceEntity(serviceName)
 	}
@@ -184,7 +184,7 @@ func createPersistentServiceEntity(serviceName string) {
 
 		var eid common.EntityID
 		if len(ids) == 0 {
-			eid = entity.CreateEntityLocally(serviceName, nil, nil)
+			eid = entity.CreateEntityLocally(serviceName, nil).ID
 			gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
 		} else {
 			eid = ids[0]
