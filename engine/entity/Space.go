@@ -184,7 +184,6 @@ func (space *Space) LoadEntity(typeName string, entityID common.EntityID, pos Ve
 	loadEntityLocally(typeName, entityID, space, pos)
 }
 
-// FIXME: add Yaw for enter
 func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	if consts.DEBUG_SPACES {
 		gwlog.Debugf("%s.enter <<< %s, avatar count=%d, monster count=%d", space, entity, space.CountEntities("Avatar"), space.CountEntities("Monster"))

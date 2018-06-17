@@ -509,7 +509,6 @@ func (e *Entity) syncPositionYawFromClient(x, y, z Coord, yaw Yaw) {
 
 // SetClientSyncing set if entity infos (position, Yaw) is syncing with Client
 func (e *Entity) SetClientSyncing(syncing bool) {
-	// FIXME: SyncingFromClient property is not perserved after restore game ...
 	e.syncingFromClient = syncing
 }
 
@@ -1077,7 +1076,6 @@ func (e *Entity) requestMigrateTo(spaceid common.EntityID, pos Vector3) {
 }
 
 func (e *Entity) cancelEnterSpace() {
-	// TODO: cancel migrating block in dispatcher
 	e.enteringSpaceRequest.SpaceID = ""
 	e.enteringSpaceRequest.EnterPos = Vector3{}
 	e.enteringSpaceRequest.RequestTime = 0
