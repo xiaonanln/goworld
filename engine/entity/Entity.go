@@ -43,24 +43,23 @@ type entityTimerInfo struct {
 // Entity is the basic execution unit in GoWorld server. Entities can be used to
 // represent players, NPCs, monsters. Entities can migrate among spaces.
 type Entity struct {
-	ID                common.EntityID
-	TypeName          string
-	I                 IEntity
-	V                 reflect.Value
-	destroyed         bool
-	typeDesc          *EntityTypeDesc
-	Space             *Space
-	Position          Vector3
-	Neighbors         EntitySet
-	aoi               aoi.AOI
-	yaw               Yaw
-	rawTimers         map[*timer.Timer]struct{}
-	timers            map[EntityTimerID]*entityTimerInfo
-	lastTimerId       EntityTimerID
-	client            *GameClient
-	syncingFromClient bool
-	Attrs             *MapAttr
-	// FIXME: restore filterProps from freezed data
+	ID                   common.EntityID
+	TypeName             string
+	I                    IEntity
+	V                    reflect.Value
+	destroyed            bool
+	typeDesc             *EntityTypeDesc
+	Space                *Space
+	Position             Vector3
+	Neighbors            EntitySet
+	aoi                  aoi.AOI
+	yaw                  Yaw
+	rawTimers            map[*timer.Timer]struct{}
+	timers               map[EntityTimerID]*entityTimerInfo
+	lastTimerId          EntityTimerID
+	client               *GameClient
+	syncingFromClient    bool
+	Attrs                *MapAttr
 	syncInfoFlag         syncInfoFlag
 	enteringSpaceRequest struct {
 		SpaceID              common.EntityID
