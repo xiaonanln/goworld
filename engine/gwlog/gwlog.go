@@ -26,20 +26,6 @@ var (
 	PanicLevel Level = Level(zap.PanicLevel)
 	// FatalLevel level
 	FatalLevel Level = Level(zap.FatalLevel)
-
-	//// Debugf logs formatted debug message
-	//Debugf logFormatFunc
-	//// Infof logs formatted info message
-	//Infof logFormatFunc
-	//// Warnf logs formatted warn message
-	//Warnf logFormatFunc
-	//// Errorf logs formatted error message
-	//Errorf logFormatFunc
-	//Panicf logFormatFunc
-	//Fatalf logFormatFunc
-	//Error  func(args ...interface{})
-	//Fatal  func(args ...interface{})
-	//Panic  func(args ...interface{})
 )
 
 type logFormatFunc func(format string, args ...interface{})
