@@ -272,7 +272,7 @@ func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packe
 		} else {
 			// client already disconnected, but the game service seems not knowing it, so tell it
 			// fixme: uncomment bellow line, it is just for test
-			//dispatchercluster.SelectByGateID(gateid).SendNotifyClientDisconnected(clientid)
+			dispatchercluster.SelectByGateID(gateid).SendNotifyClientDisconnected(clientid)
 		}
 	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
 		gs.handleSyncPositionYawOnClients(packet)
