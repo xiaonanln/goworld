@@ -229,6 +229,8 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	bot.Lock()
 	defer bot.Unlock()
 
+	gwlog.Infof("client handle packet: msgtype=%v, payload=%v", msgtype, packet.Payload())
+
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 		_ = packet.ReadUint16()
 		_ = packet.ReadClientID() // TODO: strip these two fields ? seems a little difficult, maybe later.
@@ -411,7 +413,6 @@ func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interfac
 	}
 	entity := bot.entities[entityID]
 	entity.applyListAttrPop(path)
-
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
