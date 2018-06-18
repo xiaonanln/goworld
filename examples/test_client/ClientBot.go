@@ -442,6 +442,9 @@ func (bot *ClientBot) destroyEntity(typeName string, entityID common.EntityID) {
 func (bot *ClientBot) createSpace(spaceID common.EntityID, data map[string]interface{}) {
 	if bot.currentSpace != nil {
 		gwlog.TraceError("%s.createSpace: duplicate space: %s and %s", bot, bot.currentSpace, spaceID)
+		oldSpace := bot.currentSpace
+		bot.currentSpace = nil
+		bot.OnLeaveSpace(oldSpace)
 	}
 	space := newClientSpace(bot, spaceID, data)
 	bot.currentSpace = space
