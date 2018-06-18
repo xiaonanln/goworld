@@ -307,11 +307,17 @@ func (e *Entity) OnLeaveAOI(otherAoi *aoi.AOI) {
 
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
+	if e == other || e.Neighbors.Contains(other) {
+		gwlog.Fatalf("interest multiple times")
+	}
 	e.Neighbors.Add(other)
 	e.client.sendCreateEntity(other, false)
 }
 
 func (e *Entity) uninterest(other *Entity) {
+	if e == other || !e.Neighbors.Contains(other) {
+		gwlog.Fatalf("not interested yet")
+	}
 	e.Neighbors.Del(other)
 	e.client.sendDestroyEntity(other)
 }
@@ -933,6 +939,7 @@ func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interf
 	flag := la.flag
 
 	if flag&afAllClient != 0 {
+		// TODO: only pack 1 packet, do not marshal multiple times
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		for neighbor := range e.Neighbors {
