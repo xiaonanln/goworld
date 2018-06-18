@@ -102,7 +102,7 @@ func (space *Space) EnableAOI() {
 	}
 
 	space.Attrs.SetBool(_SPACE_ENABLE_AOI_KEY, true)
-	space.aoiMgr = aoi.NewXZListAOICalculator()
+	space.aoiMgr = aoi.NewXZListAOIManager()
 	//space.aoiMgr = aoi.NewTowerAOIManager(-500, 500, -500, 500, 10)
 }
 
