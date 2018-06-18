@@ -387,6 +387,10 @@ func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val in
 	gwlog.Debugf("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
+	if index >= len(attr) {
+		gwlog.TraceError("ListAttr change error: list size is %d, index = %d, path=%s", len(attr), index, path)
+		return
+	}
 	attr[index] = val
 	e.onAttrChange(path, "")
 }
@@ -409,7 +413,7 @@ func (e *clientEntity) applyListAttrPop(path []interface{}) {
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 	if len(attr) == 0 {
-		gwlog.TraceError("ListAttr pop errr: list is empty: path=%s", path)
+		gwlog.TraceError("ListAttr pop error: list is empty: path=%s", path)
 		return
 	}
 
