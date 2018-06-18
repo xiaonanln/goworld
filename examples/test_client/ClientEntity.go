@@ -384,11 +384,11 @@ func (e *clientEntity) applyMapAttrDel(path []interface{}, key string) {
 }
 
 func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
-	gwlog.Debugf("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
+	gwlog.Infof("%s applyListAttrChange: path=%v, index=%v, val=%v", e, path, index, val)
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 	if index >= len(attr) {
-		gwlog.TraceError("ListAttr change error: list size is %d, index = %d, path=%s", len(attr), index, path)
+		gwlog.TraceError("ListAttr change error: list size is %d, index = %d, path=%s, attr=%#v", len(attr), index, path, attr)
 		return
 	}
 	attr[index] = val
@@ -396,7 +396,7 @@ func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val in
 }
 
 func (e *clientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
-	gwlog.Debugf("applyListAttrAppend: path=%v, val=%v, attrs=%v", path, val, e.Attrs)
+	gwlog.Infof("%s applyListAttrAppend: path=%v, val=%v, attrs=%v", e, path, val, e.Attrs)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 
@@ -404,16 +404,18 @@ func (e *clientEntity) applyListAttrAppend(path []interface{}, val interface{}) 
 		parentmap[pkey.(string)] = append(attr, val)
 	} else if parentlist, ok := parent.([]interface{}); ok {
 		parentlist[pkey.(int64)] = append(attr, val)
+	} else {
+		gwlog.Fatalf("parent type is %T", parent)
 	}
 
 	e.onAttrChange(path, "")
 }
 func (e *clientEntity) applyListAttrPop(path []interface{}) {
-	gwlog.Debugf("applyListAttrPop: path=%v", path)
+	gwlog.Infof("%s applyListAttrPop: path=%v", e, path)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 	if len(attr) == 0 {
-		gwlog.TraceError("ListAttr pop error: list is empty: path=%s", path)
+		gwlog.TraceError("ListAttr pop error: list is empty: path=%s, attr=%#v", path, attr)
 		return
 	}
 
