@@ -222,7 +222,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	defer func() {
 		err := recover()
 		if err != nil {
-			gwlog.Fatalf("handle packet faild: %v", err)
+			gwlog.TraceError("handle packet faild: %v", err)
 		}
 	}()
 
