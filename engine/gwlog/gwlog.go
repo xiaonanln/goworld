@@ -148,6 +148,7 @@ func Panicf(format string, args ...interface{}) {
 }
 
 func Fatalf(format string, args ...interface{}) {
+	debug.PrintStack()
 	sugar.With(zap.Time("ts", time.Now())).Fatalf(format, args...)
 }
 
