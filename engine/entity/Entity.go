@@ -308,7 +308,7 @@ func (e *Entity) OnLeaveAOI(otherAoi *aoi.AOI) {
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
 	if e == other || e.Neighbors.Contains(other) {
-		gwlog.Fatalf("interest multiple times: %s & %s", e, other)
+		gwlog.Panicf("interest multiple times: %s & %s", e, other)
 	}
 	e.Neighbors.Add(other)
 	e.client.sendCreateEntity(other, false)
@@ -316,7 +316,7 @@ func (e *Entity) interest(other *Entity) {
 
 func (e *Entity) uninterest(other *Entity) {
 	if e == other || !e.Neighbors.Contains(other) {
-		gwlog.Fatalf("not interested yet: %s & %s", e, other)
+		gwlog.Panicf("not interested yet: %s & %s", e, other)
 	}
 	e.Neighbors.Del(other)
 	e.client.sendDestroyEntity(other)
