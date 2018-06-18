@@ -165,12 +165,12 @@ type _Something struct {
 var (
 	_DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 20, time.Minute},
-		{"DoEnterRandomNilSpace", 10, time.Minute},
+		//{"DoEnterRandomNilSpace", 10, time.Minute},
 		//{"DoSendMail", 5, time.Minute},
 		//{"DoGetMails", 10, time.Minute},
-		{"DoSayInWorldChannel", 5, time.Minute},
-		{"DoSayInProfChannel", 5, time.Minute},
-		{"DoTestListField", 10, time.Minute},
+		//{"DoSayInWorldChannel", 5, time.Minute},
+		//{"DoSayInProfChannel", 5, time.Minute},
+		{"DoTestListField", 20, time.Minute},
 		//{"DoTestPublish", 1, time.Minute},
 	}
 )
@@ -384,30 +384,40 @@ func (e *clientEntity) applyMapAttrDel(path []interface{}, key string) {
 }
 
 func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
-	gwlog.Debugf("applyListAttrChange: path=%v, index=%v, val=%v", path, index, val)
 	_attr, _, _ := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
+	//gwlog.Infof("%s applyListAttrChange: path=%v, index=%v, val=%v, attr=%#v", e, path, index, val, attr)
+	if index >= len(attr) {
+		gwlog.Panicf("%s: ListAttr change error: list size is %d, index = %d, path=%s, attr=%#v", e, len(attr), index, path, attr)
+		return
+	}
 	attr[index] = val
 	e.onAttrChange(path, "")
 }
 
 func (e *clientEntity) applyListAttrAppend(path []interface{}, val interface{}) {
-	gwlog.Debugf("applyListAttrAppend: path=%v, val=%v, attrs=%v", path, val, e.Attrs)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
 
+	//gwlog.Infof("%s applyListAttrAppend: path=%v, val=%v, attr=%#v", e, path, val, attr)
 	if parentmap, ok := parent.(map[string]interface{}); ok {
 		parentmap[pkey.(string)] = append(attr, val)
 	} else if parentlist, ok := parent.([]interface{}); ok {
 		parentlist[pkey.(int64)] = append(attr, val)
+	} else {
+		gwlog.Panicf("parent type is %T", parent)
 	}
 
 	e.onAttrChange(path, "")
 }
 func (e *clientEntity) applyListAttrPop(path []interface{}) {
-	gwlog.Debugf("applyListAttrPop: path=%v", path)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
+	//gwlog.Infof("%s applyListAttrPop: path=%v, attr=%#v", e, path, attr)
+	if len(attr) == 0 {
+		gwlog.Panicf("%s: ListAttr pop error: list is empty: path=%s, attr=%#v", e, path, attr)
+		return
+	}
 
 	if parentmap, ok := parent.(map[string]interface{}); ok {
 		parentmap[pkey.(string)] = attr[:len(attr)-1]

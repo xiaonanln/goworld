@@ -23,18 +23,10 @@ import (
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
-type callQueueItem struct {
-	packet *netutil.Packet
-}
-
 type entityDispatchInfo struct {
 	gameid             uint16
 	blockUntilTime     time.Time
 	pendingPacketQueue []*netutil.Packet
-}
-
-func newEntityDispatchInfo() *entityDispatchInfo {
-	return &entityDispatchInfo{}
 }
 
 func (edi *entityDispatchInfo) blockRPC(d time.Duration) {
@@ -573,23 +565,6 @@ func (service *DispatcherService) cleanupEntitiesOfGame(gameid uint16) {
 		}
 	}
 
-	//// for all services whose entity is cleaned, notify all games that the service is down
-	//undeclaredServices := common.StringSet{}
-	//for serviceName, serviceEids := range service.srvdisRegisterMap {
-	//	var serviceRemoveEids []common.EntityID
-	//	for serviceEid := range serviceEids {
-	//		if cleanEids.Contains(serviceEid) { // this service entity is down, tell other games
-	//			undeclaredServices.Add(serviceName)
-	//			serviceRemoveEids = append(serviceRemoveEids, serviceEid)
-	//			service.handleServiceDown(gameid, serviceName, serviceEid)
-	//		}
-	//	}
-	//
-	//	for _, eid := range serviceRemoveEids {
-	//		serviceEids.Del(eid)
-	//	}
-	//}
-
 	for eid := range cleanEids {
 		service.cleanupEntityInfo(eid)
 	}
@@ -616,17 +591,6 @@ func (service *DispatcherService) handleNotifyDestroyEntity(dcp *dispatcherClien
 
 func (service *DispatcherService) cleanupEntityInfo(entityID common.EntityID) {
 	service.delEntityDispatchInfo(entityID)
-	//if services, ok := service.entityIDToServices[entityID]; ok {
-	//	for serviceName := range services {
-	//		serviceEids := service.srvdisRegisterMap[serviceName]
-	//		serviceEids.Del(entityID)
-	//		if len(serviceEids) == 0 {
-	//			delete(service.srvdisRegisterMap, serviceName)
-	//		}
-	//	}
-	//	delete(service.entityIDToServices, entityID)
-	//	gwlog.Warnf("%s: entity %s is cleaned up, undeclared servies %v", service, entityID, services.ToList())
-	//}
 }
 
 func (service *DispatcherService) handleNotifyClientConnected(dcp *dispatcherClientProxy, pkt *netutil.Packet) {

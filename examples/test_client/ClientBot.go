@@ -222,12 +222,14 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	defer func() {
 		err := recover()
 		if err != nil {
-			gwlog.Fatalf("handle packet faild: %v", err)
+			gwlog.TraceError("handle packet faild: %v", err)
 		}
 	}()
 
 	bot.Lock()
 	defer bot.Unlock()
+
+	//gwlog.Infof("client handle packet: msgtype=%v, payload=%v", msgtype, packet.Payload())
 
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 		_ = packet.ReadUint16()
@@ -261,9 +263,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		index := packet.ReadUint32()
 		var val interface{}
 		packet.ReadData(&val)
-		if !quiet {
-			gwlog.Debugf("Entity %s Attribute %v: set [%d]=%v", entityID, path, index, val)
-		}
+		//gwlog.Infof("Entity %s Attribute %v: set [%d]=%v", entityID, path, index, val)
 		bot.applyListAttrChange(entityID, path, int(index), val)
 	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_APPEND_ON_CLIENT {
 		entityID := packet.ReadEntityID()
@@ -271,17 +271,13 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 		packet.ReadData(&path)
 		var val interface{}
 		packet.ReadData(&val)
-		if !quiet {
-			gwlog.Debugf("Entity %s Attribute %v: append %v", entityID, path, val)
-		}
+		//gwlog.Infof("Entity %s Attribute %v: append %v", entityID, path, val)
 		bot.applyListAttrAppend(entityID, path, val)
 	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_POP_ON_CLIENT {
 		entityID := packet.ReadEntityID()
 		var path []interface{}
 		packet.ReadData(&path)
-		if !quiet {
-			gwlog.Debugf("Entity %s Attribute %v: pop", entityID, path)
-		}
+		//gwlog.Infof("Entity %s Attribute %v: pop", entityID, path)
 		bot.applyListAttrPop(entityID, path)
 	} else if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
 		isPlayer := packet.ReadBool()
@@ -417,7 +413,6 @@ func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interfac
 	}
 	entity := bot.entities[entityID]
 	entity.applyListAttrPop(path)
-
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
