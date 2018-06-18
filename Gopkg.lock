@@ -155,8 +155,8 @@
 [[projects]]
   name = "github.com/xiaonanln/go-aoi"
   packages = ["."]
-  revision = "ee6580829802975e3e60ef5c0711a44bcc8b481e"
-  version = "v0.0.2"
+  revision = "2762bd19865793964f81523c610fe87550122d16"
+  version = "v0.1.0"
 
 [[projects]]
   name = "github.com/xiaonanln/go-trie-tst"
@@ -165,10 +165,10 @@
   version = "v0.4"
 
 [[projects]]
-  branch = "master"
   name = "github.com/xiaonanln/go-xnsyncutil"
   packages = ["xnsyncutil"]
   revision = "f004c49229c858b2b4479993d3ce2adc408828fc"
+  version = "v0.0.5"
 
 [[projects]]
   name = "github.com/xiaonanln/goTimer"
@@ -209,26 +209,26 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["blowfish","cast5","pbkdf2","salsa20","salsa20/salsa","tea","twofish","xtea"]
-  revision = "5ba7f63082460102a45837dbd1827e10f9479ac0"
+  packages = ["blowfish","cast5","internal/subtle","pbkdf2","salsa20","salsa20/salsa","tea","twofish","xtea"]
+  revision = "027cca12c2d63e3d62b670d901e8a2c95854feec"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
+  revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "3b87a42e500a6dc65dae1a55d0b641295971163e"
+  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
 
 [[projects]]
   name = "google.golang.org/appengine"
   packages = [".","datastore","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api"]
-  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
-  version = "v1.0.0"
+  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
+  version = "v1.1.0"
 
 [[projects]]
   name = "gopkg.in/eapache/queue.v1"
@@ -245,6 +245,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bfe91a1aafba53b2221b9a4c47c5682648bf11ae2f2fa7d9680dbeb91c7e77f0"
+  inputs-digest = "310a69e8e725a247d66d715f574e85e5f55713ffaec788657ab59a2e165ff069"
   solver-name = "gps-cdcl"
   solver-version = 1

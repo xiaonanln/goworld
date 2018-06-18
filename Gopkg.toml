@@ -78,9 +78,5 @@
   name = "gopkg.in/mgo.v2"
 
 [[constraint]]
-  name = "github.com/xiaonanln/go-aoi"
-  version = "^0.0.2"
-
-[[constraint]]
   name = "github.com/chasex/redis-go-cluster"
   branch = "master"
