@@ -98,7 +98,7 @@ const (
 	// DEBUG_SAVE_LOAD prints save & load debug logs
 	DEBUG_SAVE_LOAD = false
 	// DEBUG_CLIENTS prints clients operation debug logs
-	DEBUG_CLIENTS = true
+	DEBUG_CLIENTS = false
 	// DEBUG_MIGRATE prints migration debug logs
 	DEBUG_MIGRATE = false
 	// DEBUG_PACKET_ALLOC prints  packet allocation debug logs
