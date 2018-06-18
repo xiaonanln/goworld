@@ -408,6 +408,10 @@ func (e *clientEntity) applyListAttrPop(path []interface{}) {
 	gwlog.Debugf("applyListAttrPop: path=%v", path)
 	_attr, parent, pkey := e.findAttrByPath(path)
 	attr := _attr.([]interface{})
+	if len(attr) == 0 {
+		gwlog.TraceError("ListAttr pop errr: list is empty: path=%s", path)
+		return
+	}
 
 	if parentmap, ok := parent.(map[string]interface{}); ok {
 		parentmap[pkey.(string)] = attr[:len(attr)-1]
