@@ -229,7 +229,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	bot.Lock()
 	defer bot.Unlock()
 
-	gwlog.Infof("client handle packet: msgtype=%v, payload=%v", msgtype, packet.Payload())
+	//gwlog.Infof("client handle packet: msgtype=%v, payload=%v", msgtype, packet.Payload())
 
 	if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 		_ = packet.ReadUint16()
