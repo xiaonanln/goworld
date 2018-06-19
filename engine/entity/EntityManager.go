@@ -268,7 +268,7 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 }
 
 func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore bool) {
-	gwlog.Debugf("restoring entity %s: mdata=%+v, isRestore=%v", entityID, mdata, isRestore)
+	//gwlog.Debugf("restoring entity %s: mdata=%+v, isRestore=%v", entityID, mdata, isRestore)
 	typeName := mdata.Type
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
