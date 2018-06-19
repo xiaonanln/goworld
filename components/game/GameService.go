@@ -112,11 +112,13 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleRealMigrate(pkt)
 			case proto.MT_NOTIFY_CLIENT_CONNECTED:
 				clientid := pkt.ReadClientID()
+				eid := pkt.ReadEntityID()
 				gid := pkt.ReadUint16()
-				gs.HandleNotifyClientConnected(clientid, gid)
+				gs.HandleNotifyClientConnected(clientid, eid, gid)
 			case proto.MT_NOTIFY_CLIENT_DISCONNECTED:
+				eid := pkt.ReadEntityID()
 				clientid := pkt.ReadClientID()
-				gs.HandleNotifyClientDisconnected(clientid)
+				gs.HandleNotifyClientDisconnected(eid, clientid)
 			case proto.MT_LOAD_ENTITY_SOMEWHERE:
 				_ = pkt.ReadUint16()
 				eid := pkt.ReadEntityID()
@@ -400,14 +402,14 @@ func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method s
 	entity.OnCall(entityID, method, args, clientid)
 }
 
-func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gateid uint16) {
+func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, bootEid common.EntityID, gateid uint16) {
 	client := entity.MakeGameClient(clientid, gateid)
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleNotifyClientConnected: %s", gs, client)
 	}
 
 	// create a boot entity for the new client and set the client as the OWN CLIENT of the entity
-	e := entity.CreateEntityLocally(gs.config.BootEntity, nil)
+	e := entity.CreateEntityLocallyWithID(gs.config.BootEntity, nil, bootEid)
 	e.SetClient(client)
 }
 
@@ -420,12 +422,12 @@ func (gs *GameService) HandleCallNilSpaces(method string, args [][]byte) {
 	entity.OnCallNilSpaces(method, args)
 }
 
-func (gs *GameService) HandleNotifyClientDisconnected(clientid common.ClientID) {
+func (gs *GameService) HandleNotifyClientDisconnected(ownerID common.EntityID, clientid common.ClientID) {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("%s.handleNotifyClientDisconnected: %s", gs, clientid)
+		gwlog.Debugf("%s.handleNotifyClientDisconnected: %s.%s", gs, ownerID, clientid)
 	}
 	// find the owner of the client, and notify lose client
-	entity.OnClientDisconnected(clientid)
+	entity.OnClientDisconnected(ownerID, clientid)
 }
 
 func (gs *GameService) HandleQuerySpaceGameIDForMigrateAck(pkt *netutil.Packet) {

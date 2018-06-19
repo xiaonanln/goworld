@@ -32,6 +32,7 @@ type ClientProxy struct {
 	filterProps    map[string]string
 	clientSyncInfo clientSyncInfo
 	heartbeatTime  time.Time
+	ownerEntityID  common.EntityID // owner entity's ID
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {

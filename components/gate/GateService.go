@@ -194,8 +194,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 
 	// pass the client proxy to GateService ...
 	post.Post(func() {
-		gs.clientProxies[cp.clientid] = cp
-		dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
+		gs.onNewClientProxy(cp)
 	})
 	cp.serve()
 }
@@ -212,6 +211,13 @@ func (gs *GateService) checkClientHeartbeats() {
 	}
 }
 
+func (gs *GateService) onNewClientProxy(cp *ClientProxy) {
+	gs.clientProxies[cp.clientid] = cp
+	bootEntityID := common.GenEntityID() // generate boot entity ID in the gate
+	cp.ownerEntityID = bootEntityID
+	dispatchercluster.SelectByEntityID(bootEntityID).SendNotifyClientConnected(cp.clientid, bootEntityID)
+}
+
 func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 	delete(gs.clientProxies, cp.clientid)
 
@@ -225,7 +231,7 @@ func (gs *GateService) onClientProxyClose(cp *ClientProxy) {
 		}
 	}
 
-	dispatchercluster.SelectByGateID(gateid).SendNotifyClientDisconnected(cp.clientid)
+	dispatchercluster.SelectByEntityID(cp.ownerEntityID).SendNotifyClientDisconnected(cp.clientid, cp.ownerEntityID)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.onClientProxyClose: client %s disconnected", gs, cp)
 	}
@@ -260,6 +266,22 @@ func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packe
 
 		clientproxy := gs.clientProxies[clientid]
 
+		// if msgtype is MT_CREATE_ENTITY_ON_CLIENT, update owner entity for the client proxy when isPlayer == true
+		if msgtype == proto.MT_CREATE_ENTITY_ON_CLIENT {
+			isPlayer := packet.ReadBool()
+			if isPlayer {
+				entityID := packet.ReadEntityID() // this is the owner entity
+				if clientproxy != nil {
+					clientproxy.ownerEntityID = entityID
+					gwlog.Warnf("%s: owner entity changed to %s", clientproxy, entityID)
+				} else {
+					// client already disconnected, but the game service seems not knowing it, so tell the owner entity
+					dispatchercluster.SelectByEntityID(entityID).SendNotifyClientDisconnected(clientid, entityID)
+					gwlog.Warnf("clientproxy not found for owner entity %s", entityID)
+				}
+			}
+		}
+
 		if clientproxy != nil {
 			if msgtype == proto.MT_SET_CLIENTPROXY_FILTER_PROP {
 				gs.handleSetClientFilterProp(clientproxy, packet)
@@ -269,11 +291,8 @@ func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packe
 				// message types that should be redirected to client proxy
 				clientproxy.SendPacket(packet)
 			}
-		} else {
-			// client already disconnected, but the game service seems not knowing it, so tell it
-			// fixme: uncomment bellow line, it is just for test
-			dispatchercluster.SelectByGateID(gateid).SendNotifyClientDisconnected(clientid)
 		}
+
 	} else if msgtype == proto.MT_SYNC_POSITION_YAW_ON_CLIENTS {
 		gs.handleSyncPositionYawOnClients(packet)
 	} else if msgtype == proto.MT_CALL_FILTERED_CLIENTS {

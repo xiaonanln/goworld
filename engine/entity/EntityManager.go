@@ -93,14 +93,12 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 type _EntityManager struct {
 	entities       EntityMap
 	entitiesByType map[string]EntityMap
-	ownerOfClient  map[common.ClientID]common.EntityID
 }
 
 func newEntityManager() *_EntityManager {
 	return &_EntityManager{
 		entities:       EntityMap{},
 		entitiesByType: map[string]EntityMap{},
-		ownerOfClient:  map[common.ClientID]common.EntityID{},
 	}
 }
 
@@ -134,28 +132,10 @@ func (em *_EntityManager) traverseByType(etype string, cb func(e *Entity)) {
 	}
 }
 
-func (em *_EntityManager) onEntityLoseClient(clientid common.ClientID) {
-	delete(em.ownerOfClient, clientid)
-}
-
-func (em *_EntityManager) onEntityGetClient(entityID common.EntityID, clientid common.ClientID) {
-	em.ownerOfClient[clientid] = entityID
-}
-
-func (em *_EntityManager) onClientDisconnected(clientid common.ClientID) {
-	eid := em.ownerOfClient[clientid]
-	if !eid.IsNil() { // should always true
-		em.onEntityLoseClient(clientid)
-		owner := em.get(eid)
-		owner.notifyClientDisconnected()
-	}
-}
-
 func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 	for _, entity := range em.entities {
 		client := entity.client
 		if client != nil && client.gateid == gateid {
-			em.onEntityLoseClient(client.clientid)
 			entity.notifyClientDisconnected()
 		}
 	}
@@ -325,7 +305,6 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 		client := MakeGameClient(mdata.Client.ClientID, mdata.Client.GateID)
 		// assign Client to the newly created
 		entity.client = client // assign Client quietly
-		entityManager.onEntityGetClient(entity.ID, client.clientid)
 	}
 
 	gwlog.Debugf("Entity %s created, Client=%s", entity, entity.client)
@@ -397,6 +376,11 @@ func CreateEntityLocally(typeName string, data map[string]interface{}) *Entity {
 	return createEntity(typeName, nil, Vector3{}, "", data)
 }
 
+// CreateEntityLocallyWithEntityID creates new entity in the local game with specified entity ID
+func CreateEntityLocallyWithID(typeName string, data map[string]interface{}, id common.EntityID) *Entity {
+	return createEntity(typeName, nil, Vector3{}, id, data)
+}
+
 // CreateEntityAnywhere creates new entity in any game
 func CreateEntityAnywhere(typeName string) common.EntityID {
 	return createEntityAnywhere(typeName, nil)
@@ -425,8 +409,17 @@ func LoadEntityOnGame(typeName string, entityID common.EntityID, gameid uint16) 
 }
 
 // OnClientDisconnected is called by engine when Client is disconnected
-func OnClientDisconnected(clientid common.ClientID) {
-	entityManager.onClientDisconnected(clientid) // pop the owner eid
+func OnClientDisconnected(ownerID common.EntityID, clientid common.ClientID) {
+	owner := entityManager.get(ownerID)
+	if owner != nil {
+		if owner.client != nil && owner.client.clientid == clientid {
+			owner.notifyClientDisconnected()
+		} else {
+			gwlog.Warnf("client %s is disconnected, but owner entity %s has client %s", clientid, owner, owner.client)
+		}
+	} else {
+		gwlog.Warnf("owner entity %s not found for client %s, might already be destroyed", ownerID, clientid)
+	}
 }
 
 func Call(id common.EntityID, method string, args []interface{}) {
@@ -647,7 +640,6 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 		e := entityManager.get(eid)
 		if e != nil {
 			e.client = client // assign Client quietly if migrate
-			entityManager.onEntityGetClient(e.ID, client.clientid)
 		} else {
 			gwlog.Errorf("entity %s restore failed? can not set Client %s", eid, client)
 		}
