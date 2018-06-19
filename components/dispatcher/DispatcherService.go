@@ -182,7 +182,6 @@ type DispatcherService struct {
 	entityDispatchInfos map[common.EntityID]*entityDispatchInfo
 	srvdisRegisterMap   map[string]string
 	//entityIDToServices    map[common.EntityID]common.StringSet
-	targetGameOfClient    map[common.ClientID]uint16
 	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
 }
@@ -207,7 +206,6 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
 		//entityIDToServices:    map[common.EntityID]common.StringSet{},
 		srvdisRegisterMap:     map[string]string{},
-		targetGameOfClient:    map[common.ClientID]uint16{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
 	}
@@ -594,31 +592,18 @@ func (service *DispatcherService) cleanupEntityInfo(entityID common.EntityID) {
 }
 
 func (service *DispatcherService) handleNotifyClientConnected(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
-	clientid := pkt.ReadClientID()
 	targetGame := service.chooseGameForBootEntity()
-
-	service.targetGameOfClient[clientid] = targetGame.gameid // owner is not determined yet, set to "" as placeholder
-
-	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("Target game of client %s is SET to %v on connected", clientid, targetGame.gameid)
-	}
-
 	pkt.AppendUint16(dcp.gateid)
 	targetGame.dispatchPacket(pkt)
 }
 
 func (service *DispatcherService) handleNotifyClientDisconnected(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
-	clientid := pkt.ReadClientID() // client disconnected
-
-	targetSid := service.targetGameOfClient[clientid]
-	delete(service.targetGameOfClient, clientid)
-
-	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("Target game of client %s is %v, disconnecting ...", clientid, targetSid)
-	}
-
-	if targetSid != 0 { // if found the owner, tell it
-		service.dispatchPacketToGame(targetSid, pkt)
+	ownerEntityID := pkt.ReadEntityID() // owner entity's ID for the client
+	edi := service.entityDispatchInfos[ownerEntityID]
+	if edi != nil {
+		edi.dispatchPacket(pkt)
+	} else {
+		gwlog.Warnf("%s: client %s is disconnected, but owner entity %s not found", service, dcp, ownerEntityID)
 	}
 }
 
@@ -825,21 +810,10 @@ func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, 
 	targetGame := pkt.ReadUint16() // target game of migration
 	// target space is not checked for existence, because we relay the packet anyway
 
-	hasClient := pkt.ReadBool()
-	var clientid common.ClientID
-	if hasClient {
-		clientid = pkt.ReadClientID()
-	}
-
 	// mark the eid as migrating done
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
 
 	entityDispatchInfo.gameid = targetGame
-	service.targetGameOfClient[clientid] = targetGame // migrating also change target game of client
-
-	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("Target game of client %s is migrated to %v along with owner %s", clientid, targetGame, eid)
-	}
 
 	service.dispatchPacketToGame(targetGame, pkt)
 	// send the cached calls to target game
