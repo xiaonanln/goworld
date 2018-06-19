@@ -823,8 +823,8 @@ func (e *Entity) GiveClientTo(other *Entity) {
 		gwlog.Debugf("%s.GiveClientTo(%s): Client=%s", e, other, e.client)
 	}
 	client := e.client
+	client.ownerid = other.ID // hack ownerid so that destroy entity messages will be synced with create entity messages
 	e.SetClient(nil)
-
 	other.SetClient(client)
 }
 
