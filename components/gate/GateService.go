@@ -273,7 +273,7 @@ func (gs *GateService) handleDispatcherClientPacket(msgtype proto.MsgType, packe
 				entityID := packet.ReadEntityID() // this is the owner entity
 				if clientproxy != nil {
 					clientproxy.ownerEntityID = entityID
-					gwlog.Warnf("%s: owner entity changed to %s", clientproxy, entityID)
+					//gwlog.Warnf("%s: owner entity changed to %s", clientproxy, entityID)
 				} else {
 					// client already disconnected, but the game service seems not knowing it, so tell the owner entity
 					dispatchercluster.SelectByEntityID(entityID).SendNotifyClientDisconnected(clientid, entityID)
