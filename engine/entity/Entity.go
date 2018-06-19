@@ -1204,7 +1204,7 @@ func (e *Entity) SetClientFilterProp(key string, val string) {
 	}
 
 	// send filter property to Client
-	e.client.sendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
+	e.client.sendSetClientFilterProp(key, val)
 }
 
 // CallFilteredClients calls the filtered clients with prop key == value

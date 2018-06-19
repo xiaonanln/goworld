@@ -105,9 +105,9 @@ func (client *GameClient) sendNotifyListAttrAppend(entityID common.EntityID, pat
 	}
 }
 
-func (client *GameClient) sendSetClientFilterProp(gateid uint16, clientid common.ClientID, key, val string) {
+func (client *GameClient) sendSetClientFilterProp(key, val string) {
 	if client != nil {
-		client.selectDispatcher().SendSetClientFilterProp(gateid, clientid, key, val)
+		client.selectDispatcher().SendSetClientFilterProp(client.gateid, client.clientid, key, val)
 	}
 }
 

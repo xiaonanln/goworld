@@ -46,11 +46,6 @@ func (a *Avatar) OnAttrsReady() {
 
 // OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
-
-	a.SetClientFilterProp("spaceKind", strconv.Itoa(int(a.GetInt("spaceKind"))))
-	a.SetClientFilterProp("level", strconv.Itoa(int(a.GetInt("level"))))
-	a.SetClientFilterProp("prof", strconv.Itoa(int(a.GetInt("prof"))))
-
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	goworld.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
@@ -102,19 +97,9 @@ func (a *Avatar) enterSpace(spaceKind int) {
 
 // OnClientConnected is called when client is connected
 func (a *Avatar) OnClientConnected() {
-	//gwlog.Infof("%s.OnClientConnected: current space = %s", a, a.Space)
-	//a.Attrs.Set("exp", a.Attrs.GetInt("exp")+1)
-	//a.Attrs.Set("testpop", 1)
-	//v := a.Attrs.Pop("testpop")
-	//gwlog.Infof("Avatar pop testpop => %v", v)
-	//
-	//a.Attrs.Set("subattr", goworld.MapAttr())
-	//subattr := a.Attrs.GetMapAttr("subattr")
-	//subattr.Set("a", 1)
-	//subattr.Set("b", 1)
-	//subattr = a.Attrs.PopMapAttr("subattr")
-	//a.Attrs.Set("subattr", subattr)
-
+	a.SetClientFilterProp("spaceKind", strconv.Itoa(int(a.GetInt("spaceKind"))))
+	a.SetClientFilterProp("level", strconv.Itoa(int(a.GetInt("level"))))
+	a.SetClientFilterProp("prof", strconv.Itoa(int(a.GetInt("prof"))))
 	a.SetClientFilterProp("online", "0")
 	a.SetClientFilterProp("online", "1")
 	a.enterSpace(int(a.GetInt("spaceKind")))
