@@ -304,7 +304,7 @@ func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore
 	if mdata.Client != nil {
 		client := MakeGameClient(mdata.Client.ClientID, mdata.Client.GateID)
 		// assign Client to the newly created
-		entity.client = client // assign Client quietly
+		entity.assignClient(client) // assign Client quietly
 	}
 
 	gwlog.Debugf("Entity %s created, Client=%s", entity, entity.client)
@@ -639,7 +639,7 @@ func RestoreFreezedEntities(freeze *FreezeData) (err error) {
 	for eid, client := range clients {
 		e := entityManager.get(eid)
 		if e != nil {
-			e.client = client // assign Client quietly if migrate
+			e.assignClient(client) // assign Client quietly if migrate
 		} else {
 			gwlog.Errorf("entity %s restore failed? can not set Client %s", eid, client)
 		}

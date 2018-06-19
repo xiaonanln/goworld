@@ -110,7 +110,7 @@ const (
 //  System level configurations
 const (
 	// DEBUG_MODE = true turns on debug mode
-	DEBUG_MODE = false
+	DEBUG_MODE = true
 )
 
 // Async configurations

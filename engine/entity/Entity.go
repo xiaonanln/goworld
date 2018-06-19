@@ -151,9 +151,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 		e.SetClient(nil) // always set Client to nil before destroy
 		e.Save()
 	} else {
-		if e.client != nil {
-			e.client = nil
-		}
+		e.assignClient(nil)
 	}
 
 	e.destroyed = true
@@ -757,11 +755,9 @@ func (e *Entity) SetClient(client *GameClient) {
 		return
 	}
 
-	e.client = client
-
 	if oldClient != nil {
 		// send destroy entity to Client
-		dispatchercluster.SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
+		dispatchercluster.SelectByEntityID(e.ID).SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors {
 			oldClient.sendDestroyEntity(neighbor)
@@ -770,8 +766,11 @@ func (e *Entity) SetClient(client *GameClient) {
 		oldClient.sendDestroyEntity(e)
 	}
 
+	e.assignClient(client) // remove old client, assign new client
+
 	if client != nil {
-		// send create entity to new Client
+		// send create entity to new client
+		dispatchercluster.SelectByEntityID(e.ID).SendClearClientFilterProp(client.gateid, client.clientid)
 		client.sendCreateEntity(e, true)
 
 		for neighbor := range e.Neighbors {
@@ -779,13 +778,23 @@ func (e *Entity) SetClient(client *GameClient) {
 		}
 	}
 
+	// FIXME: call OnClientDisconnected then OnClientConnected if switch clients ?
 	if oldClient == nil && client != nil {
 		// got net Client
 		e.I.OnClientConnected()
-		//e.callCompositiveMethod("OnClientConnected")
 	} else if oldClient != nil && client == nil {
-		//e.callCompositiveMethod("OnClientDisconnected")
 		e.I.OnClientDisconnected()
+	}
+}
+
+func (e *Entity) assignClient(client *GameClient) {
+	if e.client != nil {
+		e.client.ownerid = ""
+	}
+
+	e.client = client
+	if client != nil {
+		client.ownerid = e.ID
 	}
 }
 
@@ -834,12 +843,8 @@ func (e *Entity) ForAllClients(f func(client *GameClient)) {
 
 func (e *Entity) notifyClientDisconnected() {
 	// called when Client disconnected
-	if e.client == nil {
-		gwlog.Panic(e.client)
-	}
-	e.client = nil
+	e.assignClient(nil)
 	e.I.OnClientDisconnected()
-	//e.callCompositiveMethod("OnClientDisconnected")
 }
 
 // OnClientConnected is called when Client is connected
@@ -1199,9 +1204,7 @@ func (e *Entity) SetClientFilterProp(key string, val string) {
 	}
 
 	// send filter property to Client
-	if e.client != nil {
-		dispatchercluster.SendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
-	}
+	e.client.sendSetClientFilterProp(e.client.gateid, e.client.clientid, key, val)
 }
 
 // CallFilteredClients calls the filtered clients with prop key == value

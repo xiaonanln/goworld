@@ -40,14 +40,6 @@ func SendNotifyDestroyEntity(id common.EntityID) error {
 	return SelectByEntityID(id).SendNotifyDestroyEntity(id)
 }
 
-func SendClearClientFilterProp(gateid uint16, clientid common.ClientID) (err error) {
-	return SelectByGateID(gateid).SendClearClientFilterProp(gateid, clientid)
-}
-
-func SendSetClientFilterProp(gateid uint16, clientid common.ClientID, key, val string) (err error) {
-	return SelectByGateID(gateid).SendSetClientFilterProp(gateid, clientid, key, val)
-}
-
 func SendMigrateRequest(entityID common.EntityID, spaceID common.EntityID, spaceGameID uint16) error {
 	return SelectByEntityID(entityID).SendMigrateRequest(entityID, spaceID, spaceGameID)
 }
