@@ -351,7 +351,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position entity.Vector3) {
 	//gwlog.Debugf("updateEntityPosition %s => %s", entityID, position)
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("updateEntityPosition: entity %s not found", entityID)
+		gwlog.Warnf("updateEntityPosition: entity %s not found", entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -361,7 +361,7 @@ func (bot *ClientBot) updateEntityPosition(entityID common.EntityID, position en
 func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) {
 	//gwlog.Debugf("updateEntityYaw %s => %s", entityID, yaw)
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("updateEntityYaw: entity %s not found", entityID)
+		gwlog.Warnf("updateEntityYaw: entity %s not found", entityID)
 		return
 	}
 	entity := bot.entities[entityID]
