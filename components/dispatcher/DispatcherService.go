@@ -810,21 +810,10 @@ func (service *DispatcherService) handleRealMigrate(dcp *dispatcherClientProxy, 
 	targetGame := pkt.ReadUint16() // target game of migration
 	// target space is not checked for existence, because we relay the packet anyway
 
-	hasClient := pkt.ReadBool()
-	var clientid common.ClientID
-	if hasClient {
-		clientid = pkt.ReadClientID()
-	}
-
 	// mark the eid as migrating done
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(eid)
 
 	entityDispatchInfo.gameid = targetGame
-	service.targetGameOfClient[clientid] = targetGame // migrating also change target game of client
-
-	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("Target game of client %s is migrated to %v along with owner %s", clientid, targetGame, eid)
-	}
 
 	service.dispatchPacketToGame(targetGame, pkt)
 	// send the cached calls to target game
