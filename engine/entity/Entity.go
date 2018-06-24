@@ -6,8 +6,6 @@ import (
 
 	"time"
 
-	"github.com/xiaonanln/goTimer"
-
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -763,6 +761,10 @@ func (e *Entity) SetClient(client *GameClient) {
 			oldClient.sendDestroyEntity(neighbor)
 		}
 
+		if !e.Space.IsNil() {
+			oldClient.sendDestroyEntity(&e.Space.Entity)
+		}
+
 		oldClient.sendDestroyEntity(e)
 	}
 
@@ -772,6 +774,10 @@ func (e *Entity) SetClient(client *GameClient) {
 		// send create entity to new client
 		dispatchercluster.SelectByEntityID(e.ID).SendClearClientFilterProp(client.gateid, client.clientid)
 		client.sendCreateEntity(e, true)
+
+		if !e.Space.IsNil() {
+			client.sendCreateEntity(&e.Space.Entity, false)
+		}
 
 		for neighbor := range e.Neighbors {
 			client.sendCreateEntity(neighbor, false)
