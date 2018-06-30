@@ -15,7 +15,7 @@ const (
 
 // MySpace is the custom space type
 type MySpace struct {
-	entity.Space // Space type should always inherit from entity.Space
+	goworld.Space // Space type should always inherit from entity.Space
 
 	destroyCheckTimer entity.EntityTimerID
 }
