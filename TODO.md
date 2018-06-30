@@ -1,6 +1,5 @@
 # TODO
 
-* LoadEntityInGame - load entity in the specified game
 * Random Distributation for Service Entities 
 
 * Load Balancing for Spaces
