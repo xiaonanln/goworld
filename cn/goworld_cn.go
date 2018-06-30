@@ -36,15 +36,8 @@ type Space = entity.Space
 type Vector3 = entity.Vector3
 
 // Run 开始运行game服务。开发者需要为自己的游戏服务器提供一个main模块和main函数，并在main函数里正确初始化GoWorld服务器并启动服务器。
-// 一般来说，开发者需要在main函数中注册相应的Space类型、Service类型、Entity类型，然后调用`goworld.Run`启动GoWorld服务器即可
-// goworld.RegisterSpace(&MySpace{}) // 注册自定义的Space类型
-// goworld.RegisterService("OnlineService", &OnlineService{})
-// goworld.RegisterService("SpaceService", &SpaceService{})
-// goworld.RegisterEntity("Account", &Account{})
-// goworld.RegisterEntity("Monster", &Monster{})
-// goworld.RegisterEntity("Player", &Player{})
-//
-// goworld.Run()
+// 一般来说，开发者需要在main函数中注册相应的Space类型、Service类型、Entity类型，然后调用`goworld.Run`启动GoWorld服务器即可，可参考：
+// https://github.com/xiaonanln/goworld/blob/master/examples/unity_demo/unity_demo.go
 func Run() {
 	game.Run()
 }
