@@ -1,5 +1,7 @@
 package goworld
 
+// GoWorld是一个分布式的游戏服务器，提供
+
 import (
 	"time"
 
@@ -14,8 +16,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
-
-// GoWorld是一个分布式的游戏服务器，提供
 
 type GameID = uint16
 type GateID = uint16
