@@ -21,20 +21,30 @@ type GameID = uint16
 type GateID = uint16
 type DispatcherID uint16
 
-// Export useful types
-type Vector3 = entity.Vector3
+// EntityID 唯一代表
+type EntityID = common.EntityID
 
-// Entity 类型代表游戏服务器中的一个对象
+// Entity 类型代表游戏服务器中的一个对象。开发者可以使用GoWorld提供的接口进行对象创建、载入。对象载入之后，GoWorld提供定时的对象数据存盘。
+// 同一个game进程中的Entity之间可以拿到相互的引用（指针）并直接进行相关的函数调用。不同game进程中的Entity之间可以使用RPC进行相互通信。
 type Entity = entity.Entity
 
 // Space 类型代表一个游戏服务器中的一个场景。一个场景中可以包含多个Entity。Space和其中的Entity都存在于一个game进程中。
 type Space = entity.Space
-type EntityID = common.EntityID
 
-// Run runs the server endless loop
+// Vector3 是服务端用于存储Entity位置的类型，包含X, Y, Z三个字段。
+// GoWorld使用X轴和Z轴坐标进行AOI管理，无视Y轴坐标值。
+type Vector3 = entity.Vector3
+
+// Run 开始运行game服务。开发者需要为自己的游戏服务器提供一个main模块和main函数，并在main函数里正确初始化GoWorld服务器并启动服务器。
+// 一般来说，开发者需要在main函数中注册相应的Space类型、Service类型、Entity类型，然后调用`goworld.Run`启动GoWorld服务器即可
+// goworld.RegisterSpace(&MySpace{}) // 注册自定义的Space类型
+// goworld.RegisterService("OnlineService", &OnlineService{})
+// goworld.RegisterService("SpaceService", &SpaceService{})
+// goworld.RegisterEntity("Account", &Account{})
+// goworld.RegisterEntity("Monster", &Monster{})
+// goworld.RegisterEntity("Player", &Player{})
 //
-// This is the main routine for the server and all entity logic,
-// and this function never quit
+// goworld.Run()
 func Run() {
 	game.Run()
 }
