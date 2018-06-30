@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/go-aoi"
+	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
