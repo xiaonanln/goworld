@@ -15,9 +15,19 @@ import (
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
+// GoWorld是一个分布式的游戏服务器，提供
+
+type GameID = uint16
+type GateID = uint16
+type DispatcherID uint16
+
 // Export useful types
 type Vector3 = entity.Vector3
+
+// Entity 类型代表游戏服务器中的一个对象
 type Entity = entity.Entity
+
+// Space 类型代表一个游戏服务器中的一个场景。一个场景中可以包含多个Entity。Space和其中的Entity都存在于一个game进程中。
 type Space = entity.Space
 type EntityID = common.EntityID
 
@@ -80,7 +90,7 @@ func LoadEntityAnywhere(typeName string, entityID EntityID) {
 
 // LoadEntityOnGame loads entity in the specified game
 // If the entity already exists on any server, LoadEntityOnGame will do nothing
-func LoadEntityOnGame(typeName string, entityID EntityID, gameid uint16) {
+func LoadEntityOnGame(typeName string, entityID EntityID, gameid GameID) {
 	entity.LoadEntityOnGame(typeName, entityID, gameid)
 }
 
@@ -165,7 +175,7 @@ func CallNilSpaces(method string, args ...interface{}) {
 }
 
 // GetNilSpaceID returns the Entity ID of nil space on the specified game
-func GetNilSpaceID(gameid uint16) EntityID {
+func GetNilSpaceID(gameid GameID) EntityID {
 	return entity.GetNilSpaceID(gameid)
 }
 

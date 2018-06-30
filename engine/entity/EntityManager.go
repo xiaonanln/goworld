@@ -403,7 +403,6 @@ func LoadEntityAnywhere(typeName string, entityID common.EntityID) {
 	dispatchercluster.SendLoadEntityAnywhere(typeName, entityID)
 }
 
-// LoadEntityOnGame
 func LoadEntityOnGame(typeName string, entityID common.EntityID, gameid uint16) {
 	dispatchercluster.SendLoadEntityOnGame(typeName, entityID, gameid)
 }
