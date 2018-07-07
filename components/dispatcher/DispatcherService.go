@@ -259,6 +259,8 @@ func (service *DispatcherService) messageLoop() {
 					service.handleNotifyDestroyEntity(dcp, pkt, eid)
 				case proto.MT_CREATE_ENTITY_ANYWHERE:
 					service.handleCreateEntityAnywhere(dcp, pkt)
+				case proto.MT_GAME_LBC_INFO:
+					service.handleGameLBCInfo(dcp, pkt)
 				case proto.MT_CALL_NIL_SPACES:
 					service.handleCallNilSpaces(dcp, pkt)
 				case proto.MT_CANCEL_MIGRATE:
@@ -861,4 +863,11 @@ func (service *DispatcherService) recalcBootGames() {
 		}
 	}
 	service.bootGames = candidates
+}
+
+func (service *DispatcherService) handleGameLBCInfo(dcp *dispatcherClientProxy, packet *netutil.Packet) {
+	// handle game LBC info from game
+	var lbcinfo proto.GameLBCInfo
+	packet.ReadData(&lbcinfo)
+	gwlog.Infof("Game %d LBC info: %+v", dcp.gameid, lbcinfo)
 }

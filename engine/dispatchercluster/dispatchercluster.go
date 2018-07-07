@@ -81,6 +81,12 @@ func SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data ma
 	return SelectByEntityID(entityid).SendCreateEntityAnywhere(entityid, typeName, data)
 }
 
+func SendGameLBCInfo(lbcinfo proto.GameLBCInfo) {
+	packet := proto.AllocGameLBCInfoPacket(lbcinfo)
+	broadcast(packet)
+	packet.Release()
+}
+
 func SendStartFreezeGame() {
 	pkt := proto.AllocStartFreezeGamePacket()
 	broadcast(pkt)

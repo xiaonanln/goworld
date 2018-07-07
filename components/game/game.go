@@ -19,6 +19,9 @@ import (
 
 	"fmt"
 
+	"context"
+
+	"github.com/xiaonanln/goworld/components/game/lbc"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -43,6 +46,7 @@ var (
 	runInDaemonMode bool
 	gameService     *GameService
 	signalChan      = make(chan os.Signal, 1)
+	gameCtx         = context.Background()
 )
 
 func parseArgs() {
@@ -121,6 +125,8 @@ func Run() {
 
 	gwlog.Infof("Start dispatchercluster ...")
 	dispatchercluster.Initialize(gameid, dispatcherclient.GameDispatcherClientType, restore, gameConfig.BanBootEntity, &_GameDispatcherClientDelegate{})
+
+	gamelbc.Initialize(gameCtx, time.Second*1)
 
 	setupSignals()
 

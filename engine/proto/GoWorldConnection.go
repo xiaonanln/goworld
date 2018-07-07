@@ -323,6 +323,13 @@ func AllocCallNilSpacesPacket(exceptGameID uint16, method string, args []interfa
 	return packet
 }
 
+func AllocGameLBCInfoPacket(lbcinfo GameLBCInfo) *netutil.Packet {
+	packet := netutil.NewPacket()
+	packet.AppendUint16(MT_GAME_LBC_INFO)
+	packet.AppendData(lbcinfo)
+	return packet
+}
+
 // SendQuerySpaceGameIDForMigrate sends MT_QUERY_SPACE_GAMEID_FOR_MIGRATE message
 func (gwc *GoWorldConnection) SendQuerySpaceGameIDForMigrate(spaceid common.EntityID, entityid common.EntityID) error {
 	packet := gwc.packetConn.NewPacket()
