@@ -119,7 +119,7 @@ func (a *Player) ShootHit_Client(victimID common.EntityID) {
 	}
 
 	monster := victim.I.(*Monster)
-	monster.TakeDamage(10)
+	monster.TakeDamage(50)
 }
 
 func (player *Player) TakeDamage(damage int64) {

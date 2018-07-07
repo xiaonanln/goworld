@@ -16,6 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
@@ -785,12 +786,14 @@ func (e *Entity) SetClient(client *GameClient) {
 		}
 	}
 
-	// FIXME: call OnClientDisconnected then OnClientConnected if switch clients ?
-	if oldClient == nil && client != nil {
-		// got net Client
-		e.I.OnClientConnected()
-	} else if oldClient != nil && client == nil {
-		e.I.OnClientDisconnected()
+	if oldClient != nil && client == nil {
+		gwutils.RunPanicless(func() {
+			e.I.OnClientDisconnected()
+		})
+	} else if client != nil {
+		gwutils.RunPanicless(func() {
+			e.I.OnClientConnected()
+		})
 	}
 }
 

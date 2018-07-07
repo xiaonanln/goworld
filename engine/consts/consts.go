@@ -43,7 +43,7 @@ const (
 	// GAME_SERVICE_PACKET_QUEUE_SIZE is the max packet queue length for game service
 	GAME_SERVICE_PACKET_QUEUE_SIZE = 10000 // packet queue size
 	// GAME_SERVICE_TICK_INTERVAL is the tick interval to tick timers in game service
-	GAME_SERVICE_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affect timer resolution
+	GAME_SERVICE_TICK_INTERVAL = time.Millisecond * 5 // server tick interval => affect timer resolution
 
 	// DISPATCHER_CLIENT_WRITE_BUFFER_SIZE is the writer buffer size for gates/games' connections to dispatcher
 	DISPATCHER_CLIENT_WRITE_BUFFER_SIZE = 1024 * 1024
@@ -54,7 +54,7 @@ const (
 	// GATE_SERVICE_PACKET_QUEUE_SIZE is the packet queue size of gate service
 	GATE_SERVICE_PACKET_QUEUE_SIZE = 10000
 	// GATE_SERVICE_TICK_INTERVAL is the tick interval to tick timers in gate service
-	GATE_SERVICE_TICK_INTERVAL = time.Millisecond * 10 // server tick interval => affect timer resolution
+	GATE_SERVICE_TICK_INTERVAL = time.Millisecond * 5 // server tick interval => affect timer resolution
 	// CLIENT_PROXY_WRITE_BUFFER_SIZE is the write buffer size for gates' client proxies
 	CLIENT_PROXY_WRITE_BUFFER_SIZE = 1024 * 1024
 	// CLIENT_PROXY_READ_BUFFER_SIZE is the read buffer size for gates' client proxies
@@ -63,7 +63,7 @@ const (
 	//COMPRESS_WRITER_POOL_SIZE = 100
 	// CLIENT_PROXY_SET_TCP_NO_DELAY = true sets client proxies to TcpNoDelay
 	CLIENT_PROXY_SET_TCP_NO_DELAY     = true
-	CLIENT_PROXY_WRITE_FLUSH_INTERVAL = time.Millisecond * 50
+	CLIENT_PROXY_WRITE_FLUSH_INTERVAL = time.Millisecond * 5
 
 	//SAVE_INTERVAL      = time.Minute * 5 // Save interval of entities
 
