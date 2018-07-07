@@ -8,7 +8,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/entity"
-	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/service"
@@ -45,9 +44,6 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
 func CreateSpaceAnywhere(kind int) EntityID {
-	if kind == 0 {
-		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
-	}
 	return entity.CreateSpaceAnywhere(kind)
 }
 
@@ -55,9 +51,6 @@ func CreateSpaceAnywhere(kind int) EntityID {
 //
 // returns the space EntityID
 func CreateSpaceLocally(kind int) *Space {
-	if kind == 0 {
-		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
-	}
 	return entity.CreateSpaceLocally(kind)
 }
 
