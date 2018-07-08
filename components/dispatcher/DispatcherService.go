@@ -11,6 +11,8 @@ import (
 
 	"math/rand"
 
+	"container/heap"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
@@ -84,6 +86,7 @@ type gameDispatchInfo struct {
 	blockUntilTime     time.Time // game can be blocked
 	pendingPacketQueue []*netutil.Packet
 	isBanBootEntity    bool
+	lbcheapentry       *lbcheapentry
 }
 
 func (gdi *gameDispatchInfo) setClientProxy(clientProxy *dispatcherClientProxy) {
@@ -184,6 +187,7 @@ type DispatcherService struct {
 	//entityIDToServices    map[common.EntityID]common.StringSet
 	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
+	lbcheap               lbcheap // heap for game load balancing
 }
 
 func newDispatcherService(dispid uint16) *DispatcherService {
@@ -208,11 +212,18 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		srvdisRegisterMap:     map[string]string{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
+		lbcheap:               nil,
 	}
 
 	for i := range ds.games {
-		ds.games[i] = &gameDispatchInfo{gameid: uint16(i + 1)}
+		gameid := uint16(i + 1)
+		lbcheapentry := &lbcheapentry{gameid, proto.GameLBCInfo{0}, i}
+		ds.games[i] = &gameDispatchInfo{gameid: gameid, lbcheapentry: lbcheapentry}
+		ds.lbcheap = append(ds.lbcheap, lbcheapentry)
 	}
+	heap.Init(&ds.lbcheap)
+	ds.lbcheap.validateHeapIndexes()
+
 	ds.recalcBootGames()
 
 	return ds
@@ -877,4 +888,8 @@ func (service *DispatcherService) handleGameLBCInfo(dcp *dispatcherClientProxy, 
 	var lbcinfo proto.GameLBCInfo
 	packet.ReadData(&lbcinfo)
 	gwlog.Infof("Game %d LBC info: %+v", dcp.gameid, lbcinfo)
+	gdi := service.games[dcp.gameid-1]
+	gdi.lbcheapentry.lbcinfo = lbcinfo // update lbcinfo for the lbcheap entry
+	heap.Fix(&service.lbcheap, gdi.lbcheapentry.heapidx)
+	service.lbcheap.validateHeapIndexes()
 }
