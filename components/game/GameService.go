@@ -124,12 +124,13 @@ func (gs *GameService) serveRoutine() {
 				eid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
 				gs.HandleLoadEntitySomewhere(typeName, eid)
-			case proto.MT_CREATE_ENTITY_ANYWHERE:
+			case proto.MT_CREATE_ENTITY_SOMEWHERE:
+				_ = pkt.ReadUint16() // gameid
 				entityid := pkt.ReadEntityID()
 				typeName := pkt.ReadVarStr()
 				var data map[string]interface{}
 				pkt.ReadData(&data)
-				gs.HandleCreateEntityAnywhere(entityid, typeName, data)
+				gs.HandleCreateEntitySomewhere(entityid, typeName, data)
 			case proto.MT_CALL_NIL_SPACES:
 				_ = pkt.ReadUint16() // ignore except gameid
 				method := pkt.ReadVarStr()
@@ -270,11 +271,11 @@ func (gs *GameService) String() string {
 	return fmt.Sprintf("GameService<%d>", gs.id)
 }
 
-func (gs *GameService) HandleCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) {
+func (gs *GameService) HandleCreateEntitySomewhere(entityid common.EntityID, typeName string, data map[string]interface{}) {
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleCreateEntityAnywhere: %s, typeName=%s, data=%v", gs, entityid, typeName, data)
 	}
-	entity.OnCreateEntityAnywhere(entityid, typeName, data)
+	entity.OnCreateEntitySomewhere(entityid, typeName, data)
 }
 
 func (gs *GameService) HandleLoadEntitySomewhere(typeName string, entityID common.EntityID) {

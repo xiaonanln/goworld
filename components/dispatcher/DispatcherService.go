@@ -257,7 +257,7 @@ func (service *DispatcherService) messageLoop() {
 				case proto.MT_NOTIFY_DESTROY_ENTITY:
 					eid := pkt.ReadEntityID()
 					service.handleNotifyDestroyEntity(dcp, pkt, eid)
-				case proto.MT_CREATE_ENTITY_ANYWHERE:
+				case proto.MT_CREATE_ENTITY_SOMEWHERE:
 					service.handleCreateEntityAnywhere(dcp, pkt)
 				case proto.MT_GAME_LBC_INFO:
 					service.handleGameLBCInfo(dcp, pkt)
@@ -640,10 +640,17 @@ func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClie
 	if consts.DEBUG_PACKETS {
 		gwlog.Debugf("%s.handleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
-
+	gameid := pkt.ReadUint16()
 	entityid := pkt.ReadEntityID()
+	var gdi *gameDispatchInfo
+	if gameid == 0 {
+		// choose a random game
+		gdi = service.chooseGame()
+	} else {
+		// choose the specified game
+		gdi = service.games[gameid-1]
+	}
 
-	gdi := service.chooseGame()
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityid)
 	entityDispatchInfo.gameid = gdi.gameid // setup gameid of entity
 	gdi.dispatchPacket(pkt)

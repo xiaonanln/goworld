@@ -19,12 +19,12 @@ func CreateSpaceLocally(kind int) *Space {
 	return e.AsSpace()
 }
 
-// CreateSpaceAnywhere creates a space in any game server
-func CreateSpaceAnywhere(kind int) common.EntityID {
+// CreateSpaceSomewhere creates a space in any game server
+func CreateSpaceSomewhere(gameid uint16, kind int) common.EntityID {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
-	return createEntityAnywhere(_SPACE_ENTITY_TYPE, map[string]interface{}{
+	return createEntitySomewhere(gameid, _SPACE_ENTITY_TYPE, map[string]interface{}{
 		_SPACE_KIND_ATTR_KEY: kind,
 	})
 }

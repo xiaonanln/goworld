@@ -58,7 +58,7 @@ func CreateSpaceAnywhere(kind int) EntityID {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
-	return entity.CreateSpaceAnywhere(kind)
+	return entity.CreateSpaceSomewhere(kind)
 }
 
 // CreateSpaceLocally creates a space with specified kind in the local game server
@@ -78,9 +78,9 @@ func CreateEntityLocally(typeName string) *Entity {
 	return entity.CreateEntityLocally(typeName, nil)
 }
 
-// CreateEntityAnywhere creates a entity on any server
+// CreateEntitySomewhere creates a entity on any server
 func CreateEntityAnywhere(typeName string) EntityID {
-	return entity.CreateEntityAnywhere(typeName)
+	return entity.CreateEntitySomewhere(typeName)
 }
 
 // LoadEntityAnywhere loads the specified entity from entity storage

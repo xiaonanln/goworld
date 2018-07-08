@@ -77,8 +77,8 @@ func SendLoadEntityOnGame(typeName string, entityID common.EntityID, gameid uint
 	return SelectByEntityID(entityID).SendLoadEntitySomewhere(typeName, entityID, gameid)
 }
 
-func SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) error {
-	return SelectByEntityID(entityid).SendCreateEntityAnywhere(entityid, typeName, data)
+func SendCreateEntitySomewhere(gameid uint16, entityid common.EntityID, typeName string, data map[string]interface{}) error {
+	return SelectByEntityID(entityid).SendCreateEntitySomewhere(gameid, entityid, typeName, data)
 }
 
 func SendGameLBCInfo(lbcinfo proto.GameLBCInfo) {

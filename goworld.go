@@ -44,7 +44,7 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
 func CreateSpaceAnywhere(kind int) EntityID {
-	return entity.CreateSpaceAnywhere(kind)
+	return entity.CreateSpaceSomewhere(0, kind)
 }
 
 // CreateSpaceLocally creates a space with specified kind in the local game server
@@ -54,6 +54,13 @@ func CreateSpaceLocally(kind int) *Space {
 	return entity.CreateSpaceLocally(kind)
 }
 
+// CreateSpaceOnGame creates a space with specified kind on the specified game
+//
+// returns the space EntityID
+func CreateSpaceOnGame(gameid uint16, kind int) EntityID {
+	return entity.CreateSpaceSomewhere(gameid, kind)
+}
+
 // CreateEntityLocally creates a entity on the local server
 //
 // returns EntityID
@@ -61,9 +68,13 @@ func CreateEntityLocally(typeName string) *Entity {
 	return entity.CreateEntityLocally(typeName, nil)
 }
 
-// CreateEntityAnywhere creates a entity on any server
+// CreateEntitySomewhere creates a entity on any server
 func CreateEntityAnywhere(typeName string) EntityID {
-	return entity.CreateEntityAnywhere(typeName)
+	return entity.CreateEntitySomewhere(0, typeName)
+}
+
+func CreateEntityOnGame(gameid uint16, typeName string) EntityID {
+	return entity.CreateEntitySomewhere(gameid, typeName)
 }
 
 // LoadEntityAnywhere loads the specified entity from entity storage
