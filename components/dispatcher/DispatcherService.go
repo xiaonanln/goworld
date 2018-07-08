@@ -258,7 +258,7 @@ func (service *DispatcherService) messageLoop() {
 					eid := pkt.ReadEntityID()
 					service.handleNotifyDestroyEntity(dcp, pkt, eid)
 				case proto.MT_CREATE_ENTITY_SOMEWHERE:
-					service.handleCreateEntityAnywhere(dcp, pkt)
+					service.handleCreateEntitySomewhere(dcp, pkt)
 				case proto.MT_GAME_LBC_INFO:
 					service.handleGameLBCInfo(dcp, pkt)
 				case proto.MT_CALL_NIL_SPACES:
@@ -636,9 +636,9 @@ func (service *DispatcherService) handleLoadEntitySomewhere(dcp *dispatcherClien
 	}
 }
 
-func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+func (service *DispatcherService) handleCreateEntitySomewhere(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
+		gwlog.Debugf("%s.handleCreateEntitySomewhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
 	}
 	gameid := pkt.ReadUint16()
 	entityid := pkt.ReadEntityID()
