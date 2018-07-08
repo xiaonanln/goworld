@@ -215,7 +215,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 
 	for i := range ds.games {
 		gameid := uint16(i + 1)
-		lbcheapentry := &lbcheapentry{gameid, proto.GameLBCInfo{0}, i}
+		lbcheapentry := &lbcheapentry{gameid, i, 0, 0}
 		ds.games[i] = &gameDispatchInfo{gameid: gameid, lbcheapentry: lbcheapentry}
 		ds.lbcheap = append(ds.lbcheap, lbcheapentry)
 	}
@@ -495,6 +495,10 @@ func (service *DispatcherService) chooseGame() *gameDispatchInfo {
 	top := service.lbcheap[0]
 	gwlog.Infof("%s: choose game by lbc: gameid=%d", service, top.gameid)
 	gdi := service.games[top.gameid-1]
+
+	// after game is chosen, udpate CPU percent by a bit
+	service.lbcheap.chosen(0)
+	service.lbcheap.validateHeapIndexes()
 	return gdi
 }
 
@@ -887,8 +891,9 @@ func (service *DispatcherService) handleGameLBCInfo(dcp *dispatcherClientProxy, 
 	var lbcinfo proto.GameLBCInfo
 	packet.ReadData(&lbcinfo)
 	gwlog.Infof("Game %d LBC info: %+v", dcp.gameid, lbcinfo)
+	lbcinfo.CPUPercent *= 1 + (rand.Float64() * 0.1) // multiply CPUPercent by a random factor 1.0 ~ 1.1
 	gdi := service.games[dcp.gameid-1]
-	gdi.lbcheapentry.lbcinfo = lbcinfo // update lbcinfo for the lbcheap entry
+	gdi.lbcheapentry.update(lbcinfo)
 	heap.Fix(&service.lbcheap, gdi.lbcheapentry.heapidx)
 	service.lbcheap.validateHeapIndexes()
 }

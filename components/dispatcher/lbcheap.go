@@ -1,14 +1,22 @@
 package main
 
 import (
+	"container/heap"
+
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 type lbcheapentry struct {
-	gameid  uint16
-	lbcinfo proto.GameLBCInfo
-	heapidx int // index of this entry in the heap
+	gameid         uint16
+	heapidx        int // index of this entry in the heap
+	CPUPercent     float64
+	origCPUPercent float64
+}
+
+func (e *lbcheapentry) update(info proto.GameLBCInfo) {
+	e.origCPUPercent = info.CPUPercent
+	e.CPUPercent = info.CPUPercent
 }
 
 type lbcheap []*lbcheapentry
@@ -18,7 +26,7 @@ func (h lbcheap) Len() int {
 }
 
 func (h lbcheap) Less(i, j int) bool {
-	return h[i].lbcinfo.CPUPercent < h[j].lbcinfo.CPUPercent
+	return h[i].CPUPercent < h[j].CPUPercent
 }
 
 func (h lbcheap) Swap(i, j int) {
@@ -47,7 +55,19 @@ func (h lbcheap) validateHeapIndexes() {
 		if h[i].heapidx != i {
 			gwlog.Fatalf("lbcheap elem at index %d but has heapidx=%d", i, h[i].heapidx)
 		}
+		if i > 0 {
+			if h.Less(i, 0) {
+				gwlog.Fatalf("lbcheap elem at index 0 is not min")
+			}
+		}
 		gameids = append(gameids, h[i].gameid)
 	}
 	//gwlog.Infof("lbcheap: gameids: %v", gameids)
+}
+func (h *lbcheap) chosen(idx int) {
+	entry := (*h)[idx]
+	if entry.CPUPercent < entry.origCPUPercent+10 {
+		entry.CPUPercent += 0.1
+		heap.Fix(h, idx)
+	}
 }
