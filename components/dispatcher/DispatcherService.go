@@ -181,7 +181,6 @@ type DispatcherService struct {
 	bootGames           []int
 	gates               []*dispatcherClientProxy
 	messageQueue        chan dispatcherMessage
-	chooseClientIndex   int
 	entityDispatchInfos map[common.EntityID]*entityDispatchInfo
 	srvdisRegisterMap   map[string]string
 	//entityIDToServices    map[common.EntityID]common.StringSet
@@ -206,7 +205,6 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		messageQueue:        make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
 		games:               make([]*gameDispatchInfo, gameCount),
 		gates:               make([]*dispatcherClientProxy, gateCount),
-		chooseClientIndex:   0,
 		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
 		//entityIDToServices:    map[common.EntityID]common.StringSet{},
 		srvdisRegisterMap:     map[string]string{},
@@ -494,8 +492,9 @@ func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *dispatc
 
 // Choose a dispatcher client for sending Anywhere packets
 func (service *DispatcherService) chooseGame() *gameDispatchInfo {
-	gdi := service.games[service.chooseClientIndex]
-	service.chooseClientIndex = (service.chooseClientIndex + 1) % len(service.games)
+	top := service.lbcheap[0]
+	gwlog.Infof("%s: choose game by lbc: gameid=%d", service, top.gameid)
+	gdi := service.games[top.gameid-1]
 	return gdi
 }
 

@@ -49,5 +49,5 @@ func (h lbcheap) validateHeapIndexes() {
 		}
 		gameids = append(gameids, h[i].gameid)
 	}
-	gwlog.Infof("lbcheap: gameids: %v", gameids)
+	//gwlog.Infof("lbcheap: gameids: %v", gameids)
 }
