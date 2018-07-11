@@ -1,5 +1,5 @@
 [debug]
-debug=1
+debug = 1 ; set to 0 in production
 
 [storage]
 type=mongodb
