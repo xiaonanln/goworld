@@ -94,6 +94,7 @@ type GoWorldConfig struct {
 	Gates            map[int]*GateConfig
 	Storage          StorageConfig
 	KVDB             KVDBConfig
+	Debug            DebugConfig
 }
 
 // StorageConfig defines fields of storage config
@@ -114,6 +115,10 @@ type KVDBConfig struct {
 	Collection string // MongoDB
 	Driver     string // SQL Driver: e.x. mysql
 	StartNodes common.StringSet
+}
+
+type DebugConfig struct {
+	Debug bool
 }
 
 // SetConfigFile sets the config file path (goworld.ini by default)
@@ -138,6 +143,12 @@ func Get() *GoWorldConfig {
 	defer configLock.Unlock() // protect concurrent access from Games & Gate
 	if goWorldConfig == nil {
 		goWorldConfig = readGoWorldConfig()
+		gwlog.Infof(">>> config <<< debug = %v", goWorldConfig.Debug.Debug)
+		gwlog.Infof(">>> config <<< dispatcher count = %d", len(goWorldConfig.Dispatchers))
+		gwlog.Infof(">>> config <<< game count = %d", len(goWorldConfig.Games))
+		gwlog.Infof(">>> config <<< gate count = %d", len(goWorldConfig.Gates))
+		gwlog.Infof(">>> config <<< storage type = %s", goWorldConfig.Storage.Type)
+		gwlog.Infof(">>> config <<< KVDB type = %s", goWorldConfig.KVDB.Type)
 	}
 	return goWorldConfig
 }
@@ -243,6 +254,10 @@ func DumpPretty(cfg interface{}) string {
 	return string(s)
 }
 
+func Debug() bool {
+	return Get().Debug.Debug
+}
+
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
 		Dispatchers: map[int]*DispatcherConfig{},
@@ -289,8 +304,11 @@ func readGoWorldConfig() *GoWorldConfig {
 		} else if secName == "kvdb" {
 			// kvdb config
 			readKVDBConfig(sec, &config.KVDB)
+		} else if secName == "debug" {
+			// debug config
+			readDebugConfig(sec, &config.Debug)
 		} else {
-			gwlog.Errorf("unknown section: %s", secName)
+			gwlog.Fatalf("unknown section: %s", secName)
 		}
 
 	}
@@ -347,7 +365,7 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 		} else if name == "ban_boot_entity" {
 			sc.BanBootEntity = key.MustBool(sc.BanBootEntity)
 		} else {
-			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+			gwlog.Fatalf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 }
@@ -420,7 +438,7 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 		} else if name == "position_sync_interval_ms" {
 			sc.PositionSyncIntervalMS = key.MustInt(sc.PositionSyncIntervalMS)
 		} else {
-			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+			gwlog.Fatalf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 }
@@ -466,7 +484,7 @@ func _readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 		} else if name == "log_level" {
 			config.LogLevel = key.MustString(config.LogLevel)
 		} else {
-			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+			gwlog.Fatalf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 	return
@@ -526,7 +544,7 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 		} else if strings.HasPrefix(name, "start_nodes_") {
 			config.StartNodes.Add(key.MustString(""))
 		} else {
-			gwlog.Panicf("section %s has unknown key: %s", sec.Name(), key.Name())
+			gwlog.Fatalf("section %s has unknown key: %s", sec.Name(), key.Name())
 		}
 	}
 
@@ -545,11 +563,11 @@ func validateKVDBConfig(config *KVDBConfig) {
 	} else if config.Type == "mongodb" {
 		// must set DB and Collection for mongodb
 		if config.Url == "" || config.DB == "" || config.Collection == "" {
-			gwlog.Panicf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
+			gwlog.Fatalf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
 		}
 	} else if config.Type == "redis" {
 		if config.Url == "" {
-			gwlog.Panicf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
+			gwlog.Fatalf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
 		}
 		_, err := strconv.Atoi(config.DB) // make sure db is integer for redis
 		if err != nil {
@@ -557,22 +575,35 @@ func validateKVDBConfig(config *KVDBConfig) {
 		}
 	} else if config.Type == "redis_cluster" {
 		if len(config.StartNodes) == 0 {
-			gwlog.Panicf("must have at least 1 start_nodes for [kvdb].redis_cluster")
+			gwlog.Fatalf("must have at least 1 start_nodes for [kvdb].redis_cluster")
 		}
 		for s := range config.StartNodes {
 			if s == "" {
-				gwlog.Panicf("start_nodes must not be empty")
+				gwlog.Fatalf("start_nodes must not be empty")
 			}
 		}
 	} else if config.Type == "sql" {
 		if config.Driver == "" {
-			gwlog.Panicf("invalid %s KVDB config:\n %s", config.Type, DumpPretty(config))
+			gwlog.Fatalf("invalid %s KVDB config:\n %s", config.Type, DumpPretty(config))
 		}
 		if config.Url == "" {
-			gwlog.Panicf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
+			gwlog.Fatalf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
 		}
 	} else {
-		gwlog.Panicf("unknown storage type: %s", config.Type)
+		gwlog.Fatalf("unknown storage type: %s", config.Type)
+	}
+}
+
+func readDebugConfig(sec *ini.Section, config *DebugConfig) {
+	config.Debug = false
+
+	for _, key := range sec.Keys() {
+		name := strings.ToLower(key.Name())
+		if name == "debug" {
+			config.Debug = key.MustBool(config.Debug)
+		} else {
+			gwlog.Fatalf("section %s has unknown key: %s", sec.Name(), key.Name())
+		}
 	}
 }
 
@@ -581,7 +612,7 @@ func checkConfigError(err error, msg string) {
 		if msg == "" {
 			msg = err.Error()
 		}
-		gwlog.Panicf("read config error: %s", msg)
+		gwlog.Fatalf("read config error: %s", msg)
 	}
 }
 
@@ -589,40 +620,40 @@ func validateStorageConfig(config *StorageConfig) {
 	if config.Type == "filesystem" {
 		// directory must be set
 		if config.Directory == "" {
-			gwlog.Panicf("directory is not set in %s storage config", config.Type)
+			gwlog.Fatalf("directory is not set in %s storage config", config.Type)
 		}
 	} else if config.Type == "mongodb" {
 		if config.Url == "" {
-			gwlog.Panicf("url is not set in %s storage config", config.Type)
+			gwlog.Fatalf("url is not set in %s storage config", config.Type)
 		}
 		if config.DB == "" {
-			gwlog.Panicf("db is not set in %s storage config", config.Type)
+			gwlog.Fatalf("db is not set in %s storage config", config.Type)
 		}
 	} else if config.Type == "redis" {
 		if config.Url == "" {
-			gwlog.Panicf("redis host is not set")
+			gwlog.Fatalf("redis host is not set")
 		}
 		if _, err := strconv.Atoi(config.DB); err != nil {
 			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
 		}
 	} else if config.Type == "redis_cluster" {
 		if len(config.StartNodes) == 0 {
-			gwlog.Panicf("must have at least 1 start_nodes for [storage].redis_cluster")
+			gwlog.Fatalf("must have at least 1 start_nodes for [storage].redis_cluster")
 		}
 		for s := range config.StartNodes {
 			if s == "" {
-				gwlog.Panicf("start_nodes must not be empty")
+				gwlog.Fatalf("start_nodes must not be empty")
 			}
 		}
 	} else if config.Type == "sql" {
 		if config.Driver == "" {
-			gwlog.Panicf("sql driver is not set")
+			gwlog.Fatalf("sql driver is not set")
 		}
 		if config.Url == "" {
-			gwlog.Panicf("db url is not set")
+			gwlog.Fatalf("db url is not set")
 		}
 	} else {
-		gwlog.Panicf("unknown storage type: %s", config.Type)
+		gwlog.Fatalf("unknown storage type: %s", config.Type)
 	}
 }
 
@@ -630,18 +661,18 @@ func validateConfig(config *GoWorldConfig) {
 
 	dispatchersNum := len(config.Dispatchers)
 	if dispatchersNum <= 0 {
-		gwlog.Panicf("dispatcher not found in config file, must has at least 1 dispatcher")
+		gwlog.Fatalf("dispatcher not found in config file, must has at least 1 dispatcher")
 	}
 
 	for dispatcherid := 1; dispatcherid <= dispatchersNum; dispatcherid++ {
 		if _, ok := config.Dispatchers[dispatcherid]; !ok {
-			gwlog.Panicf("found %d dispatchers in config file, but dispatcher%d is not found. dispatcherid must be 1~%d", dispatchersNum, dispatcherid, dispatchersNum)
+			gwlog.Fatalf("found %d dispatchers in config file, but dispatcher%d is not found. dispatcherid must be 1~%d", dispatchersNum, dispatcherid, dispatchersNum)
 		}
 	}
 
 	gamesNum := len(config.Games)
 	if gamesNum <= 0 {
-		gwlog.Panicf("game not found in config file, must has at least 1 game")
+		gwlog.Fatalf("game not found in config file, must has at least 1 game")
 	}
 
 	hasNotBanBootEntityGame := false
@@ -651,21 +682,21 @@ func validateConfig(config *GoWorldConfig) {
 				hasNotBanBootEntityGame = true //
 			}
 		} else {
-			gwlog.Panicf("found %d games in config file, but game%d is not found. gameid must be 1~%d", gamesNum, gameid, gamesNum)
+			gwlog.Fatalf("found %d games in config file, but game%d is not found. gameid must be 1~%d", gamesNum, gameid, gamesNum)
 		}
 	}
 	if !hasNotBanBootEntityGame {
-		gwlog.Panicf("must has at least 1 game with ban_boot_entity = false!")
+		gwlog.Fatalf("must has at least 1 game with ban_boot_entity = false!")
 	}
 
 	gatesNum := len(config.Gates)
 	if gatesNum <= 0 {
-		gwlog.Panicf("gate not found in config file, must has at least 1 gate")
+		gwlog.Fatalf("gate not found in config file, must has at least 1 gate")
 	}
 
 	for gateid := 1; gateid <= gatesNum; gateid++ {
 		if _, ok := config.Gates[gateid]; !ok {
-			gwlog.Panicf("found %d gates in config file, but gate%d is not found. gateid must be 1~%d", gatesNum, gateid, gatesNum)
+			gwlog.Fatalf("found %d gates in config file, but gate%d is not found. gateid must be 1~%d", gatesNum, gateid, gatesNum)
 		}
 	}
 }

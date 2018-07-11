@@ -1,3 +1,6 @@
+[debug]
+debug=1
+
 [storage]
 type=mongodb
 url=mongodb://localhost:27017/
