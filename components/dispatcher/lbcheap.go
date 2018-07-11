@@ -3,6 +3,7 @@ package main
 import (
 	"container/heap"
 
+	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
@@ -50,6 +51,10 @@ func (h *lbcheap) Pop() interface{} {
 }
 
 func (h lbcheap) validateHeapIndexes() {
+	if !config.Debug() {
+		return
+	}
+
 	gameids := []uint16{}
 	for i := 0; i < len(h); i++ {
 		if h[i].heapidx != i {
