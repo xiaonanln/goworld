@@ -92,10 +92,11 @@ func (gwc *GoWorldConnection) SendNotifyClientDisconnected(id common.ClientID, o
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendCreateEntityAnywhere sends MT_CREATE_ENTITY_ANYWHERE message
-func (gwc *GoWorldConnection) SendCreateEntityAnywhere(entityid common.EntityID, typeName string, data map[string]interface{}) error {
+// SendCreateEntitySomewhere sends MT_CREATE_ENTITY_SOMEWHERE message
+func (gwc *GoWorldConnection) SendCreateEntitySomewhere(gameid uint16, entityid common.EntityID, typeName string, data map[string]interface{}) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_CREATE_ENTITY_ANYWHERE)
+	packet.AppendUint16(MT_CREATE_ENTITY_SOMEWHERE)
+	packet.AppendUint16(gameid)
 	packet.AppendEntityID(entityid)
 	packet.AppendVarStr(typeName)
 	packet.AppendData(data)
@@ -320,6 +321,13 @@ func AllocCallNilSpacesPacket(exceptGameID uint16, method string, args []interfa
 	packet.AppendUint16(exceptGameID)
 	packet.AppendVarStr(method)
 	packet.AppendArgs(args)
+	return packet
+}
+
+func AllocGameLBCInfoPacket(lbcinfo GameLBCInfo) *netutil.Packet {
+	packet := netutil.NewPacket()
+	packet.AppendUint16(MT_GAME_LBC_INFO)
+	packet.AppendData(lbcinfo)
 	return packet
 }
 

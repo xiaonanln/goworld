@@ -8,7 +8,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/entity"
-	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/service"
@@ -45,20 +44,21 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
 func CreateSpaceAnywhere(kind int) EntityID {
-	if kind == 0 {
-		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
-	}
-	return entity.CreateSpaceAnywhere(kind)
+	return entity.CreateSpaceSomewhere(0, kind)
 }
 
 // CreateSpaceLocally creates a space with specified kind in the local game server
 //
 // returns the space EntityID
 func CreateSpaceLocally(kind int) *Space {
-	if kind == 0 {
-		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
-	}
 	return entity.CreateSpaceLocally(kind)
+}
+
+// CreateSpaceOnGame creates a space with specified kind on the specified game
+//
+// returns the space EntityID
+func CreateSpaceOnGame(gameid uint16, kind int) EntityID {
+	return entity.CreateSpaceSomewhere(gameid, kind)
 }
 
 // CreateEntityLocally creates a entity on the local server
@@ -68,9 +68,13 @@ func CreateEntityLocally(typeName string) *Entity {
 	return entity.CreateEntityLocally(typeName, nil)
 }
 
-// CreateEntityAnywhere creates a entity on any server
+// CreateEntitySomewhere creates a entity on any server
 func CreateEntityAnywhere(typeName string) EntityID {
-	return entity.CreateEntityAnywhere(typeName)
+	return entity.CreateEntitySomewhere(0, typeName)
+}
+
+func CreateEntityOnGame(gameid uint16, typeName string) EntityID {
+	return entity.CreateEntitySomewhere(gameid, typeName)
 }
 
 // LoadEntityAnywhere loads the specified entity from entity storage

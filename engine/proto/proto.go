@@ -33,8 +33,8 @@ const (
 	MT_UNDECLARE_SERVICE
 	// MT_CALL_ENTITY_METHOD is a message type for calling entity methods
 	MT_CALL_ENTITY_METHOD
-	// MT_CREATE_ENTITY_ANYWHERE is a message type for creating entities
-	MT_CREATE_ENTITY_ANYWHERE
+	// MT_CREATE_ENTITY_SOMEWHERE is a message type for creating entities
+	MT_CREATE_ENTITY_SOMEWHERE
 	// MT_LOAD_ENTITY_SOMEWHERE is a message type loading entities
 	MT_LOAD_ENTITY_SOMEWHERE
 	// MT_NOTIFY_CLIENT_CONNECTED is a message type for clients
@@ -69,6 +69,8 @@ const (
 	MT_SET_GAME_ID_ACK
 	// MT_NOTIFY_GAME_CONNECTED is sent by dispatcher to game to notify new game connected
 	MT_NOTIFY_GAME_CONNECTED
+	// MT_GAME_LBC_INFO contains game load balacing info
+	MT_GAME_LBC_INFO
 )
 
 // Alias message types
@@ -156,4 +158,9 @@ func init() {
 	if unsafe.Sizeof(EntitySyncInfo{}) != SYNC_INFO_SIZE_PER_ENTITY {
 		gwlog.Fatalf("Wrong type definition for EntitySyncInfo: size is %d, but should be %d", unsafe.Sizeof(EntitySyncInfo{}), SYNC_INFO_SIZE_PER_ENTITY)
 	}
+}
+
+// GameLBCInfo defines the info for game load balancing
+type GameLBCInfo struct {
+	CPUPercent float64 `msgpack:"cp"`
 }

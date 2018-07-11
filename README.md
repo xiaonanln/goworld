@@ -48,10 +48,11 @@ back to work but with the latest executable image. This feature enables updating
 ## Installing GoWorld
 GoWorld requries Go 1.10.x to install.
 ```bash
-go get github.com/xiaonanln/goworld/cmd/...
+go get -d github.com/xiaonanln/goworld
 go get -u github.com/golang/dep/cmd/dep
 cd $GOPATH/src/github.com/xiaonanln/goworld
 dep ensure
+go get ./cmd/...
 ```
 **GoWorld uses [Dep](https://github.com/golang/dep) to manage packages.** 
 

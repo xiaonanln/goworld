@@ -82,7 +82,14 @@ func CreateSpaceAnywhere(kind Kind) EntityID {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
-	return entity.CreateSpaceAnywhere(kind)
+	return entity.CreateSpaceSomewhere(0, kind)
+}
+
+// CreateSpaceOnGame creates a space with specified kind on the specified game
+//
+// returns the space EntityID
+func CreateSpaceOnGame(gameid uint16, kind int) EntityID {
+	return entity.CreateSpaceSomewhere(gameid, kind)
 }
 
 // CreateSpaceLocally 在本地game进程上创建一个指定Kind的Space。
@@ -100,7 +107,11 @@ func CreateEntityLocally(typeName string) *Entity {
 
 // CreateEntityAnywhere 在随机选择的game进程上创建一个特定类型的Entity
 func CreateEntityAnywhere(typeName string) EntityID {
-	return entity.CreateEntityAnywhere(typeName)
+	return entity.CreateEntitySomewhere(0, typeName)
+}
+
+func CreateEntityOnGame(gameid uint16, typeName string) EntityID {
+	return entity.CreateEntitySomewhere(gameid, typeName)
 }
 
 // LoadEntityAnywhere 在随机选择的game进程上载入指定的Entity。

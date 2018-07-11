@@ -11,6 +11,8 @@ import (
 
 	"math/rand"
 
+	"container/heap"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
@@ -84,6 +86,7 @@ type gameDispatchInfo struct {
 	blockUntilTime     time.Time // game can be blocked
 	pendingPacketQueue []*netutil.Packet
 	isBanBootEntity    bool
+	lbcheapentry       *lbcheapentry
 }
 
 func (gdi *gameDispatchInfo) setClientProxy(clientProxy *dispatcherClientProxy) {
@@ -178,12 +181,12 @@ type DispatcherService struct {
 	bootGames           []int
 	gates               []*dispatcherClientProxy
 	messageQueue        chan dispatcherMessage
-	chooseClientIndex   int
 	entityDispatchInfos map[common.EntityID]*entityDispatchInfo
 	srvdisRegisterMap   map[string]string
 	//entityIDToServices    map[common.EntityID]common.StringSet
 	entitySyncInfosToGame []*netutil.Packet // cache entity sync infos to gates
 	ticker                <-chan time.Time
+	lbcheap               lbcheap // heap for game load balancing
 }
 
 func newDispatcherService(dispid uint16) *DispatcherService {
@@ -202,17 +205,23 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		messageQueue:        make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
 		games:               make([]*gameDispatchInfo, gameCount),
 		gates:               make([]*dispatcherClientProxy, gateCount),
-		chooseClientIndex:   0,
 		entityDispatchInfos: map[common.EntityID]*entityDispatchInfo{},
 		//entityIDToServices:    map[common.EntityID]common.StringSet{},
 		srvdisRegisterMap:     map[string]string{},
 		entitySyncInfosToGame: entitySyncInfosToGame,
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
+		lbcheap:               nil,
 	}
 
 	for i := range ds.games {
-		ds.games[i] = &gameDispatchInfo{gameid: uint16(i + 1)}
+		gameid := uint16(i + 1)
+		lbcheapentry := &lbcheapentry{gameid, i, 0, 0}
+		ds.games[i] = &gameDispatchInfo{gameid: gameid, lbcheapentry: lbcheapentry}
+		ds.lbcheap = append(ds.lbcheap, lbcheapentry)
 	}
+	heap.Init(&ds.lbcheap)
+	ds.lbcheap.validateHeapIndexes()
+
 	ds.recalcBootGames()
 
 	return ds
@@ -257,8 +266,10 @@ func (service *DispatcherService) messageLoop() {
 				case proto.MT_NOTIFY_DESTROY_ENTITY:
 					eid := pkt.ReadEntityID()
 					service.handleNotifyDestroyEntity(dcp, pkt, eid)
-				case proto.MT_CREATE_ENTITY_ANYWHERE:
-					service.handleCreateEntityAnywhere(dcp, pkt)
+				case proto.MT_CREATE_ENTITY_SOMEWHERE:
+					service.handleCreateEntitySomewhere(dcp, pkt)
+				case proto.MT_GAME_LBC_INFO:
+					service.handleGameLBCInfo(dcp, pkt)
 				case proto.MT_CALL_NIL_SPACES:
 					service.handleCallNilSpaces(dcp, pkt)
 				case proto.MT_CANCEL_MIGRATE:
@@ -481,8 +492,13 @@ func (service *DispatcherService) dispatcherClientOfGate(gateid uint16) *dispatc
 
 // Choose a dispatcher client for sending Anywhere packets
 func (service *DispatcherService) chooseGame() *gameDispatchInfo {
-	gdi := service.games[service.chooseClientIndex]
-	service.chooseClientIndex = (service.chooseClientIndex + 1) % len(service.games)
+	top := service.lbcheap[0]
+	gwlog.Infof("%s: choose game by lbc: gameid=%d", service, top.gameid)
+	gdi := service.games[top.gameid-1]
+
+	// after game is chosen, udpate CPU percent by a bit
+	service.lbcheap.chosen(0)
+	service.lbcheap.validateHeapIndexes()
 	return gdi
 }
 
@@ -634,14 +650,21 @@ func (service *DispatcherService) handleLoadEntitySomewhere(dcp *dispatcherClien
 	}
 }
 
-func (service *DispatcherService) handleCreateEntityAnywhere(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
+func (service *DispatcherService) handleCreateEntitySomewhere(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	if consts.DEBUG_PACKETS {
-		gwlog.Debugf("%s.handleCreateEntityAnywhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
+		gwlog.Debugf("%s.handleCreateEntitySomewhere: dcp=%s, pkt=%s", service, dcp, pkt.Payload())
+	}
+	gameid := pkt.ReadUint16()
+	entityid := pkt.ReadEntityID()
+	var gdi *gameDispatchInfo
+	if gameid == 0 {
+		// choose a random game
+		gdi = service.chooseGame()
+	} else {
+		// choose the specified game
+		gdi = service.games[gameid-1]
 	}
 
-	entityid := pkt.ReadEntityID()
-
-	gdi := service.chooseGame()
 	entityDispatchInfo := service.setEntityDispatcherInfoForWrite(entityid)
 	entityDispatchInfo.gameid = gdi.gameid // setup gameid of entity
 	gdi.dispatchPacket(pkt)
@@ -861,4 +884,16 @@ func (service *DispatcherService) recalcBootGames() {
 		}
 	}
 	service.bootGames = candidates
+}
+
+func (service *DispatcherService) handleGameLBCInfo(dcp *dispatcherClientProxy, packet *netutil.Packet) {
+	// handle game LBC info from game
+	var lbcinfo proto.GameLBCInfo
+	packet.ReadData(&lbcinfo)
+	gwlog.Infof("Game %d LBC info: %+v", dcp.gameid, lbcinfo)
+	lbcinfo.CPUPercent *= 1 + (rand.Float64() * 0.1) // multiply CPUPercent by a random factor 1.0 ~ 1.1
+	gdi := service.games[dcp.gameid-1]
+	gdi.lbcheapentry.update(lbcinfo)
+	heap.Fix(&service.lbcheap, gdi.lbcheapentry.heapidx)
+	service.lbcheap.validateHeapIndexes()
 }
