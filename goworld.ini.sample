@@ -1,3 +1,6 @@
+[debug]
+debug = 1 ; set to 0 in production
+
 [storage]
 type=mongodb
 url=mongodb://localhost:27017/

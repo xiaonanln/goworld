@@ -30,7 +30,7 @@ func Initialize(ctx context.Context, collectInterval time.Duration) {
 				gwlog.Panicf("gamelbc: get process cpu percent failed: %s", err)
 			}
 
-			gwlog.Infof("gamelbc: cpu percent is %.3f%%", pcnt)
+			gwlog.Debugf("gamelbc: cpu percent is %.3f%%", pcnt)
 			dispatchercluster.SendGameLBCInfo(proto.GameLBCInfo{
 				CPUPercent: pcnt,
 			})
