@@ -1,0 +1,22 @@
+version: '2'
+services:
+        goworld:
+                build: .
+                ports:
+                        - "15001:15001"
+                        - "15101:15101"
+                environment:
+                        - MONGO_URL=mongodb://mongodb:27017/goworld
+                depends_on:
+                        - mongodb
+        mongodb:
+                image: "mongo:3.4-jessie"
+                environment:
+                        - MONGO_DATA_DIR=/data/db
+                        - MONGO_LOG_DIR=/dev/null
+                ports:
+                        - "27017:27017"
+
+
+networks:
+        inner:
