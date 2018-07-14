@@ -1,5 +1,7 @@
 FROM xiaonanln/goworld
 
+USER root
+
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN groupadd -r mongodb && useradd -r -g mongodb mongodb
 
@@ -84,16 +86,11 @@ RUN mkdir -p /data/db /data/configdb \
 	&& chown -R mongodb:mongodb /data/db /data/configdb
 VOLUME /data/db /data/configdb
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
-ENTRYPOINT ["docker-entrypoint.sh"]
+#COPY mongod-docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+#RUN chmod a+x /usr/local/bin/docker-entrypoint.sh
+#RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
 
-EXPOSE 27017
-CMD ["mongod"]
+## Install Useful Tools For Development
 
-
-#WORKDIR $GOPATH/src/github.com/xiaonanln/goworld
-#RUN sed -i -e 's/localhost:27017/mongodb:27017/' goworld.ini
-#RUN sed -i -e 's/127.0.0.1:27017/mongodb:27017/' goworld.ini
-#RUN touch game.log
-#CMD ["tailf", "game.log"]
+USER goworld
+CMD ["/bin/bash"]
