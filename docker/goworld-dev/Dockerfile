@@ -1,6 +1,4 @@
-FROM xiaonanln/goworld
-
-USER root
+FROM xiaonanln/golang-jessie
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN groupadd -r mongodb && useradd -r -g mongodb mongodb
@@ -91,6 +89,27 @@ VOLUME /data/db /data/configdb
 #RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
 
 ## Install Useful Tools For Development
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		sudo \
+		vim \
+		less \
+		&& rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r goworld && useradd -m -g goworld -s /bin/bash goworld && echo goworld:goworld | chpasswd && adduser goworld sudo
+# RUN chown goworld:goworld /home/goworld
 
 USER goworld
-CMD ["/bin/bash"]
+ENV HOME=/home/goworld
+ENV GOPATH=$HOME/go PATH=$HOME/go/bin:$PATH
+RUN echo "GOPATH: $GOPATH"
+RUN echo "PATH: $PATH"
+WORKDIR $HOME
+
+RUN go get -u github.com/golang/dep/cmd/dep
+RUN go get -d github.com/xiaonanln/goworld
+WORKDIR $GOPATH/src/github.com/xiaonanln/goworld
+RUN dep ensure
+RUN go get ./cmd/...
+RUN make all
+
