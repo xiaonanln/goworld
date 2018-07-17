@@ -94,6 +94,7 @@ RUN apt-get update \
 		sudo \
 		vim \
 		less \
+		git \
 		&& rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r goworld && useradd -m -g goworld -s /bin/bash goworld && echo goworld:goworld | chpasswd && adduser goworld sudo
