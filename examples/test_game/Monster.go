@@ -8,6 +8,6 @@ type Monster struct {
 }
 
 func (m *Monster) DescribeEntityType(desc *entity.EntityTypeDesc) {
-	desc.SetUseAOI(true)
+	desc.SetUseAOI(true, 100)
 	desc.DefineAttr("name", "AllClients")
 }

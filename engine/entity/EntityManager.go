@@ -25,6 +25,7 @@ type EntityTypeDesc struct {
 	isService       bool
 	IsPersistent    bool
 	useAOI          bool
+	aoiDistance     Coord
 	entityType      reflect.Type
 	rpcDescs        rpcDescMap
 	allClientAttrs  common.StringSet
@@ -47,8 +48,9 @@ func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
 	return desc
 }
 
-func (desc *EntityTypeDesc) SetUseAOI(useAOI bool) *EntityTypeDesc {
+func (desc *EntityTypeDesc) SetUseAOI(useAOI bool, aoiDistance Coord) *EntityTypeDesc {
 	desc.useAOI = useAOI
+	desc.aoiDistance = aoiDistance
 	return desc
 }
 

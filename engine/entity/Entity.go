@@ -213,7 +213,7 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 	e.Attrs = attrs
 
 	e.Neighbors = EntitySet{}
-	aoi.InitAOI(&e.aoi, _DEFAULT_AOI_DISTANCE, e, e)
+	aoi.InitAOI(&e.aoi, aoi.Coord(e.typeDesc.aoiDistance), e, e)
 	//e.initComponents()
 
 	//e.callCompositiveMethod("OnInit")

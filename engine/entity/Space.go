@@ -14,8 +14,6 @@ const (
 	_SPACE_ENTITY_TYPE    = "__space__"
 	_SPACE_KIND_ATTR_KEY  = "_K"
 	_SPACE_ENABLE_AOI_KEY = "_EnableAOI"
-
-	_DEFAULT_AOI_DISTANCE = 100
 )
 
 var (
