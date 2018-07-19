@@ -4,6 +4,8 @@
 
 * Service Architecture Change
 
+* Processes quit more gracefully
+
 * Enable / Disable Debug Mode in Configuration (goworld.ini)
 
 * Run processes in Docker
