@@ -137,10 +137,8 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.Space.leave(e)
 
 	if !isMigrate {
-		//e.callCompositiveMethod("OnDestroy")
 		e.I.OnDestroy()
 	} else {
-		//e.callCompositiveMethod("OnMigrateOut")
 		e.I.OnMigrateOut()
 	}
 
@@ -200,11 +198,6 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 
 	e.typeDesc = registeredEntityTypes[typeName]
 
-	//if !e.typeDesc.definedAttrs {
-	//	// first time entity of this type is created, define Attrs now
-	//	e.callCompositiveMethod("DescribeEntityType", e.typeDesc)
-	//}
-
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
 
@@ -214,73 +207,9 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 
 	e.Neighbors = EntitySet{}
 	aoi.InitAOI(&e.aoi, aoi.Coord(e.typeDesc.aoiDistance), e, e)
-	//e.initComponents()
 
-	//e.callCompositiveMethod("OnInit")
 	e.I.OnInit()
 }
-
-//func (e *Entity) initComponents() {
-//	entityVal := reflect.Indirect(e.V)
-//	for fi := 0; fi < entityVal.NumField(); fi++ {
-//		field := entityVal.Field(fi)
-//		//fieldStruct := entityVal.Type().Field(fi)
-//		if isComponentType(field.Type()) {
-//			//gwlog.Infof("%s: Field %s %d %T is a component, initializing ...", e, fieldStruct.Name, fi, field.Interface())
-//			comp := field.FieldByName("Component").Addr().Interface().(*Component)
-//			e.initComponent(comp)
-//		}
-//	}
-//}
-
-//func (e *Entity) initComponent(comp *Component) {
-//	comp.Entity = e
-//}
-
-//func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
-//	entityPtr := e.V
-//	entityVal := reflect.Indirect(entityPtr)
-//	var methodIn []reflect.Value
-//	if len(args) > 0 {
-//		methodIn = make([]reflect.Value, len(args), len(args))
-//		for i := 0; i < len(args); i++ {
-//			methodIn[i] = reflect.ValueOf(args[i])
-//		}
-//	}
-//
-//	method := entityPtr.MethodByName(methodName)
-//	if method.IsValid() {
-//		gwutils.RunPanicless(func() {
-//			method.Call(methodIn)
-//		})
-//	}
-//
-//	compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
-//	if !ok {
-//		// collect compositiveMethodComponentIndices for the first time
-//		entityType := entityVal.Type()
-//		for fi := 0; fi < entityType.NumField(); fi++ {
-//			field := entityType.Field(fi)
-//			if isComponentType(field.Type) {
-//				//gwlog.Infof("Field %v is a component", field.Name)
-//				_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
-//				if ok {
-//					compIndices = append(compIndices, fi)
-//				}
-//			}
-//		}
-//
-//		e.typeDesc.compositiveMethodComponentIndices[methodName] = compIndices
-//	}
-//
-//	for _, ci := range compIndices {
-//		field := entityVal.Field(ci)
-//		//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
-//		gwutils.RunPanicless(func() {
-//			field.Addr().MethodByName(methodName).Call(methodIn)
-//		})
-//	}
-//}
 
 func (e *Entity) setupSaveTimer() {
 	e.addRawTimer(saveInterval, e.Save)
@@ -1031,7 +960,6 @@ func (e *Entity) EnterSpace(spaceid common.EntityID, pos Vector3) {
 	if e.isEnteringSpace() {
 		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceid)
 		e.I.OnEnterSpace()
-		//e.callCompositiveMethod("OnEnterSpace")
 		return
 	}
 

@@ -182,7 +182,6 @@ func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityType
 	//// define entity Attrs
 	entity.DescribeEntityType(entityTypeDesc)
 	return entityTypeDesc
-	//e.callCompositiveMethod("DescribeEntityType", entityTypeDesc)
 }
 
 func GetEntityTypeDesc(typeName string) *EntityTypeDesc {
@@ -553,7 +552,6 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 
 		err := gwutils.CatchPanic(func() {
 			e.I.OnFreeze()
-			//e.callCompositiveMethod("OnFreeze")
 		})
 		if err != nil {
 			// OnFreeze failed

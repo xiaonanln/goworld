@@ -63,7 +63,6 @@ func (space *Space) OnInit() {
 	space.I = space.Entity.I.(ISpace)
 
 	space.I.OnSpaceInit()
-	//space.callCompositiveMethod("OnSpaceInit")
 }
 
 // OnSpaceInit is a compositive method for initializing space fields
@@ -87,7 +86,6 @@ func (space *Space) OnCreated() {
 		gwlog.Debugf("%s.OnCreated", space)
 	}
 	space.I.OnSpaceCreated()
-	//space.callCompositiveMethod("OnSpaceCreated")
 }
 
 func (space *Space) EnableAOI() {
@@ -148,7 +146,6 @@ func (space *Space) OnSpaceCreated() {
 // OnDestroy is called when Space entity is destroyed
 func (space *Space) OnDestroy() {
 	space.I.OnSpaceDestroy()
-	//space.callCompositiveMethod("OnSpaceDestroy")
 	// destroy all entities
 	for e := range space.entities {
 		e.Destroy()
