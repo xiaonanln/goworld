@@ -1,5 +1,7 @@
 # TODO
 
+* Adopt Kafka 
+
 * Service Architecture Change
 
 * Processes quit more gracefully
