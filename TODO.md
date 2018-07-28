@@ -1,6 +1,7 @@
 # TODO
 
-* Adopt Kafka 
+* Adopt Kafka
+    ** Support For Reliable Call?
 
 * Service Architecture Change
 
