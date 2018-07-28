@@ -67,7 +67,7 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 		if def == "allclients" {
 			isAllClient = true
 			isClient = true
-		} else if def == "Client" {
+		} else if def == "client" {
 			isClient = true
 		} else if def == "persistent" {
 			isPersistent = true
