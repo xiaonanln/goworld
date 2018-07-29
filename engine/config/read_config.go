@@ -225,11 +225,6 @@ func GetGateIDs() []uint16 {
 	return res
 }
 
-// GetGatesNum returns the number of gates
-func GetGatesNum() int {
-	return len(Get().Gates)
-}
-
 // GetDispatcher returns the dispatcher config
 func GetDispatcher(dispid uint16) *DispatcherConfig {
 	return Get().Dispatchers[int(dispid)]
