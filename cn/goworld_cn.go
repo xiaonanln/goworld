@@ -1,3 +1,5 @@
+//GoWorld是一个游戏服务器引擎
+
 package goworld
 
 import (
