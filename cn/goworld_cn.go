@@ -1,4 +1,6 @@
-// GoWorld是一个分布式的游戏服务器引擎
+// goworld库为开发者提供大部分的GoWorld服务器引擎接口
+// GoWorld是一个分布式的游戏服务器引擎，理论上支持无限横向扩展。
+// 一个GoWorld服务器由三种不同的进程注册：dispatcher、gate、game。
 package goworld
 
 import (
