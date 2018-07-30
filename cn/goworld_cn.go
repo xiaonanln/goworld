@@ -1,3 +1,5 @@
+// GoWorld是一个分布式的游戏服务器引擎
+
 package goworld
 
 import (
