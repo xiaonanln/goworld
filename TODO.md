@@ -12,3 +12,4 @@
     * Processes connect each other and other services using Container Network
     * Processes discover each other using etcd ?
     
+* Read config using tag (maybe use yaml)

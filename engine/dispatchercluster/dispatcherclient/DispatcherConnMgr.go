@@ -70,7 +70,7 @@ func (dcm *DispatcherConnMgr) assureConnected() *DispatcherClient {
 	for dc == nil || dc.IsClosed() {
 		dc, err = dcm.connectDispatchClient()
 		if err != nil {
-			gwlog.Errorf("Connect to dispatcher failed: %s", err.Error())
+			gwlog.Errorf("Connect to dispatcher%d failed: %s", dcm.dispid, err.Error())
 			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 			continue
 		}

@@ -12,7 +12,6 @@ import (
 	"github.com/xiaonanln/go-aoi"
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/common"
-	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -1208,17 +1207,20 @@ func (e *Entity) setPositionYaw(pos Vector3, yaw Yaw, fromClient bool) {
 }
 
 // CollectEntitySyncInfos is called by game service to collect and broadcast entity sync infos to all clients
-func CollectEntitySyncInfos() {
-	cfg := config.Get()
-	gateCount := len(cfg.Gates)
-	entitySyncInfosToGate := make([]*netutil.Packet, gateCount)
-	for gateid := 1; gateid <= gateCount; gateid++ {
-		packet := netutil.NewPacket()
-		packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
-		packet.AppendUint16(uint16(gateid))
-		entitySyncInfosToGate[gateid-1] = packet
-	}
+var entitySyncInfosToGate = map[uint16]*netutil.Packet{}
 
+func getEntitySyncInfosPacket(gateid uint16) *netutil.Packet {
+	pkt := entitySyncInfosToGate[gateid]
+	if pkt == nil {
+		pkt = netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
+		pkt.AppendUint16(gateid)
+		entitySyncInfosToGate[gateid] = pkt
+	}
+	return pkt
+}
+
+func CollectEntitySyncInfos() {
 	for eid, e := range entityManager.entities {
 		syncInfoFlag := e.syncInfoFlag
 		if syncInfoFlag == 0 {
@@ -1229,7 +1231,7 @@ func CollectEntitySyncInfos() {
 		syncInfo := e.getSyncInfo()
 		if syncInfoFlag&sifSyncOwnClient != 0 && e.client != nil {
 			gateid := e.client.gateid
-			packet := entitySyncInfosToGate[gateid-1]
+			packet := getEntitySyncInfosPacket(gateid)
 			packet.AppendClientID(e.client.clientid)
 			packet.AppendEntityID(eid)
 			packet.AppendFloat32(syncInfo.X)
@@ -1242,7 +1244,7 @@ func CollectEntitySyncInfos() {
 				client := neighbor.client
 				if client != nil {
 					gateid := client.gateid
-					packet := entitySyncInfosToGate[gateid-1]
+					packet := getEntitySyncInfosPacket(gateid)
 					packet.AppendClientID(client.clientid)
 					packet.AppendEntityID(eid)
 					packet.AppendFloat32(syncInfo.X)
@@ -1255,15 +1257,14 @@ func CollectEntitySyncInfos() {
 	}
 
 	// send to dispatcher, one gate by one gate
-	for gateid_1, packet := range entitySyncInfosToGate {
-		//gwlog.Infof("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
-
-		if packet.GetPayloadLen() > 4 {
-			gateid := uint16(gateid_1 + 1)
+	if len(entitySyncInfosToGate) > 0 {
+		for gateid, packet := range entitySyncInfosToGate {
+			//gwlog.Infof("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
 			dispatchercluster.SelectByGateID(gateid).SendPacket(packet)
+			packet.Release()
 		}
 
-		packet.Release()
+		entitySyncInfosToGate = map[uint16]*netutil.Packet{} // clear all packets
 	}
 }
 

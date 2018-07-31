@@ -38,6 +38,12 @@ var (
 	configLock     sync.Mutex
 )
 
+// DeploymentConfig defines fields of deployment config
+type DeploymentConfig struct {
+	DesiredGames int `ini:"desired_games"`
+	DesiredGates int `ini:"desired_gates"`
+}
+
 // GameConfig defines fields of game config
 type GameConfig struct {
 	BootEntity             string
@@ -86,12 +92,13 @@ type DispatcherConfig struct {
 
 // GoWorldConfig defines the total GoWorld config file structure
 type GoWorldConfig struct {
+	Deployment       DeploymentConfig
 	DispatcherCommon DispatcherConfig
 	GameCommon       GameConfig
 	GateCommon       GateConfig
-	Dispatchers      map[int]*DispatcherConfig
-	Games            map[int]*GameConfig
-	Gates            map[int]*GateConfig
+	Dispatchers      map[uint16]*DispatcherConfig
+	_Games           map[uint16]*GameConfig
+	_Gates           map[uint16]*GateConfig
 	Storage          StorageConfig
 	KVDB             KVDBConfig
 	Debug            DebugConfig
@@ -145,8 +152,8 @@ func Get() *GoWorldConfig {
 		goWorldConfig = readGoWorldConfig()
 		gwlog.Infof(">>> config <<< debug = %v", goWorldConfig.Debug.Debug)
 		gwlog.Infof(">>> config <<< dispatcher count = %d", len(goWorldConfig.Dispatchers))
-		gwlog.Infof(">>> config <<< game count = %d", len(goWorldConfig.Games))
-		gwlog.Infof(">>> config <<< gate count = %d", len(goWorldConfig.Gates))
+		gwlog.Infof(">>> config <<< desired game count = %d", goWorldConfig.Deployment.DesiredGames)
+		gwlog.Infof(">>> config <<< desired gate count = %d", goWorldConfig.Deployment.DesiredGates)
 		gwlog.Infof(">>> config <<< storage type = %s", goWorldConfig.Storage.Type)
 		gwlog.Infof(">>> config <<< KVDB type = %s", goWorldConfig.KVDB.Type)
 	}
@@ -162,14 +169,26 @@ func Reload() *GoWorldConfig {
 	return Get()
 }
 
+func GetDeployment() *DeploymentConfig {
+	return &Get().Deployment
+}
+
 // GetGame gets the game config of specified game ID
 func GetGame(gameid uint16) *GameConfig {
-	return Get().Games[int(gameid)]
+	cfg := Get()._Games[gameid]
+	if cfg == nil {
+		cfg = &Get().GameCommon
+	}
+	return cfg
 }
 
 // GetGate gets the gate config of specified gate ID
 func GetGate(gateid uint16) *GateConfig {
-	return Get().Gates[int(gateid)]
+	cfg := Get()._Gates[gateid]
+	if cfg == nil {
+		cfg = &Get().GateCommon
+	}
+	return cfg
 }
 
 // GetDispatcherIDs returns all dispatcher IDs
@@ -177,7 +196,7 @@ func GetDispatcherIDs() []uint16 {
 	cfg := Get()
 	dispIDs := make([]int, 0, len(cfg.Dispatchers))
 	for id := range cfg.Dispatchers {
-		dispIDs = append(dispIDs, id)
+		dispIDs = append(dispIDs, int(id))
 	}
 	sort.Ints(dispIDs)
 
@@ -188,46 +207,9 @@ func GetDispatcherIDs() []uint16 {
 	return res
 }
 
-// GetGameIDs returns all game IDs
-func GetGameIDs() []uint16 {
-	cfg := Get()
-	gameIDs := make([]int, 0, len(cfg.Games))
-	for id := range cfg.Games {
-		gameIDs = append(gameIDs, id)
-	}
-	sort.Ints(gameIDs)
-
-	res := make([]uint16, len(gameIDs))
-	for i, id := range gameIDs {
-		res[i] = uint16(id)
-	}
-	return res
-}
-
-// GetGameNum returns the number of games
-func GetGamesNum() int {
-	return len(Get().Games)
-}
-
-// GetGateIDs returns all gate IDs
-func GetGateIDs() []uint16 {
-	cfg := Get()
-	gateIDs := make([]int, 0, len(cfg.Gates))
-	for id := range cfg.Gates {
-		gateIDs = append(gateIDs, id)
-	}
-	sort.Ints(gateIDs)
-
-	res := make([]uint16, len(gateIDs))
-	for i, id := range gateIDs {
-		res[i] = uint16(id)
-	}
-	return res
-}
-
 // GetDispatcher returns the dispatcher config
 func GetDispatcher(dispid uint16) *DispatcherConfig {
-	return Get().Dispatchers[int(dispid)]
+	return Get().Dispatchers[dispid]
 }
 
 // GetStorage returns the storage config
@@ -255,9 +237,9 @@ func Debug() bool {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		Dispatchers: map[int]*DispatcherConfig{},
-		Games:       map[int]*GameConfig{},
-		Gates:       map[int]*GateConfig{},
+		Dispatchers: map[uint16]*DispatcherConfig{},
+		_Games:      map[uint16]*GameConfig{},
+		_Gates:      map[uint16]*GateConfig{},
 	}
 	gwlog.Infof("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
@@ -279,20 +261,22 @@ func readGoWorldConfig() *GoWorldConfig {
 		secName = strings.ToLower(secName)
 		if secName == "game_common" || secName == "gate_common" || secName == "dispatcher_common" {
 			// ignore common section here
+		} else if secName == "deployment" {
+			readDeploymentConfig(sec, &config.Deployment)
 		} else if len(secName) > 10 && secName[:10] == "dispatcher" {
 			// dispatcher config
 			id, err := strconv.Atoi(secName[10:])
 			checkConfigError(err, fmt.Sprintf("invalid dispatcher name: %s", secName))
-			config.Dispatchers[id] = readDispatcherConfig(sec, &config.DispatcherCommon)
+			config.Dispatchers[uint16(id)] = readDispatcherConfig(sec, &config.DispatcherCommon)
 		} else if len(secName) > 4 && secName[:4] == "game" {
 			// game config
 			id, err := strconv.Atoi(secName[4:])
 			checkConfigError(err, fmt.Sprintf("invalid game name: %s", secName))
-			config.Games[id] = readGameConfig(sec, &config.GameCommon)
+			config._Games[uint16(id)] = readGameConfig(sec, &config.GameCommon)
 		} else if len(secName) > 4 && secName[:4] == "gate" {
 			id, err := strconv.Atoi(secName[4:])
 			checkConfigError(err, fmt.Sprintf("invalid gate name: %s", secName))
-			config.Gates[id] = readGateConfig(sec, &config.GateCommon)
+			config._Gates[uint16(id)] = readGateConfig(sec, &config.GateCommon)
 		} else if secName == "storage" {
 			// storage config
 			readStorageConfig(sec, &config.Storage)
@@ -310,6 +294,10 @@ func readGoWorldConfig() *GoWorldConfig {
 
 	validateConfig(&config)
 	return &config
+}
+
+func readDeploymentConfig(sec *ini.Section, config *DeploymentConfig) {
+	sec.MapTo(config)
 }
 
 func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
@@ -653,6 +641,14 @@ func validateStorageConfig(config *StorageConfig) {
 }
 
 func validateConfig(config *GoWorldConfig) {
+	deploymentConfig := &config.Deployment
+	if deploymentConfig.DesiredGates <= 0 {
+		gwlog.Fatalf("[deployment].desired_gates is %d, which must be positive", deploymentConfig.DesiredGates)
+	}
+
+	if deploymentConfig.DesiredGames <= 0 {
+		gwlog.Fatalf("[deployment].desired_games is %d, which must be positive", deploymentConfig.DesiredGames)
+	}
 
 	dispatchersNum := len(config.Dispatchers)
 	if dispatchersNum <= 0 {
@@ -660,38 +656,8 @@ func validateConfig(config *GoWorldConfig) {
 	}
 
 	for dispatcherid := 1; dispatcherid <= dispatchersNum; dispatcherid++ {
-		if _, ok := config.Dispatchers[dispatcherid]; !ok {
+		if _, ok := config.Dispatchers[uint16(dispatcherid)]; !ok {
 			gwlog.Fatalf("found %d dispatchers in config file, but dispatcher%d is not found. dispatcherid must be 1~%d", dispatchersNum, dispatcherid, dispatchersNum)
-		}
-	}
-
-	gamesNum := len(config.Games)
-	if gamesNum <= 0 {
-		gwlog.Fatalf("game not found in config file, must has at least 1 game")
-	}
-
-	hasNotBanBootEntityGame := false
-	for gameid := 1; gameid <= gamesNum; gameid++ {
-		if gameCfg, ok := config.Games[gameid]; ok {
-			if !gameCfg.BanBootEntity {
-				hasNotBanBootEntityGame = true //
-			}
-		} else {
-			gwlog.Fatalf("found %d games in config file, but game%d is not found. gameid must be 1~%d", gamesNum, gameid, gamesNum)
-		}
-	}
-	if !hasNotBanBootEntityGame {
-		gwlog.Fatalf("must has at least 1 game with ban_boot_entity = false!")
-	}
-
-	gatesNum := len(config.Gates)
-	if gatesNum <= 0 {
-		gwlog.Fatalf("gate not found in config file, must has at least 1 gate")
-	}
-
-	for gateid := 1; gateid <= gatesNum; gateid++ {
-		if _, ok := config.Gates[gateid]; !ok {
-			gwlog.Fatalf("found %d gates in config file, but gate%d is not found. gateid must be 1~%d", gatesNum, gateid, gatesNum)
 		}
 	}
 }
