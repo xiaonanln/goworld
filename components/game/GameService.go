@@ -45,9 +45,6 @@ type GameService struct {
 	dispatcherStartFreezeAcks      []bool
 	positionSyncInterval           time.Duration
 	ticker                         <-chan time.Time
-	isGameConnected                []bool
-	//collectEntitySyncInfosRequest chan struct{}
-	//collectEntitySycnInfosReply   chan interface{}
 }
 
 func newGameService(gameid uint16) *GameService {
