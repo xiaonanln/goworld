@@ -45,17 +45,17 @@ type GameService struct {
 	dispatcherStartFreezeAcks      []bool
 	positionSyncInterval           time.Duration
 	ticker                         <-chan time.Time
+	onlineGames                    common.Uint16Set
 }
 
 func newGameService(gameid uint16) *GameService {
 	//cfg := config.GetGame(gameid)
-	totalGameNum := config.GetGamesNum()
 	return &GameService{
 		id: gameid,
 		//registeredServices: map[string]common.EntityIDSet{},
-		packetQueue:     make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
-		ticker:          time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
-		isGameConnected: make([]bool, totalGameNum),
+		packetQueue: make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
+		ticker:      time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
+		onlineGames: common.Uint16Set{},
 		//terminated:         xnsyncutil.NewOneTimeCond(),
 		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
 		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
@@ -310,49 +310,34 @@ func (gs *GameService) HandleStartFreezeGameAck(dispid uint16) {
 
 func (gs *GameService) handleNotifyGameConnected(pkt *netutil.Packet) {
 	gameid := pkt.ReadUint16() // the new connected game
-	if int(gameid) > config.GetGamesNum() {
-		gwlog.Panicf("%s: handle notify game connected: gameid %d is out of range", gs, gameid)
-		return
-	}
-
-	if gs.isGameConnected[gameid-1] {
+	if gs.onlineGames.Contains(gameid) {
 		// should not happen
 		gwlog.Errorf("%s: handle notify game connected: game%d is connected, but it was already connected", gs, gameid)
 		return
 	}
 
-	gs.isGameConnected[gameid-1] = true
-	if gs.isAllGamesConnected() {
-		entity.OnAllGamesConnected()
-	}
+	gs.onlineGames.Add(gameid)
 }
 
-func (gs *GameService) isAllGamesConnected() bool {
-	for _, connected := range gs.isGameConnected {
-		if !connected {
-			return false
-		}
-	}
-	return true
-}
+//func (gs *GameService) isAllGamesConnected() bool {
+//	for _, connected := range gs.isGameConnected {
+//		if !connected {
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 	dispid := pkt.ReadUint16() // dispatcher  that sent the SET_GAME_ID_ACK
+	isDeploymentReady := pkt.ReadBool()
+
 	gameNum := int(pkt.ReadUint16())
-	for i := range gs.isGameConnected {
-		gs.isGameConnected[i] = false // set all games to be not connected
-	}
-	numConnectedGames := 0
+	gs.onlineGames = common.Uint16Set{} // clear online games first
 	for i := 0; i < gameNum; i++ {
 		gameid := pkt.ReadUint16()
-		if int(gameid) > len(gs.isGameConnected) {
-			gwlog.Errorf("%s: set game ID ack: gameid %s is out of range", gs, gameid)
-			continue
-		}
-		gs.isGameConnected[gameid-1] = true
-		numConnectedGames += 1
+		gs.onlineGames.Add(gameid)
 	}
-
 	rejectEntitiesNum := pkt.ReadUint32()
 	rejectEntities := make([]common.EntityID, 0, rejectEntitiesNum)
 	for i := uint32(0); i < rejectEntitiesNum; i++ {
@@ -372,10 +357,11 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		srvdis.WatchSrvdisRegister(srvid, srvinfo)
 	}
 
-	gwlog.Infof("%s: set game ID ack received, connected games: %v, reject entities: %d, srvdis map: %+v", gs, numConnectedGames, rejectEntitiesNum, srvdisMap)
-	if gs.isAllGamesConnected() {
+	gwlog.Infof("%s: set game ID ack received, deployment ready: %v, reject entities: %d, srvdis map: %+v",
+		gs, isDeploymentReady, rejectEntitiesNum, srvdisMap)
+	if isDeploymentReady {
 		// all games are connected
-		entity.OnAllGamesConnected()
+		entity.OnGameReady()
 	}
 }
 
@@ -464,6 +450,7 @@ func (gs *GameService) startFreeze() {
 	dispatchercluster.SendStartFreezeGame()
 }
 
-func ConnectedGamesNum() int {
-	return len(gameService.isGameConnected)
+// GetOnlineGames returns all online game IDs
+func GetOnlineGames() common.Uint16Set {
+	return gameService.onlineGames
 }

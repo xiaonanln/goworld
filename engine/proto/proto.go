@@ -69,6 +69,7 @@ const (
 	MT_SET_GAME_ID_ACK
 	// MT_NOTIFY_GAME_CONNECTED is sent by dispatcher to game to notify new game connected
 	MT_NOTIFY_GAME_CONNECTED
+	MT_NOTIFY_DEPLOYMENT_READY
 	// MT_GAME_LBC_INFO contains game load balacing info
 	MT_GAME_LBC_INFO
 )

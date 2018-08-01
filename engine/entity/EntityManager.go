@@ -505,17 +505,17 @@ func OnGameTerminating() {
 	}
 }
 
-var allGamesConnected bool
+var gameIsReady bool
 
-// OnAllGamesConnected is called when all games are connected to dispatcher cluster
-func OnAllGamesConnected() {
-	if allGamesConnected {
+// OnGameReady is called when all games are connected to dispatcher cluster
+func OnGameReady() {
+	if gameIsReady {
 		gwlog.Warnf("all games connected, but not for the first time")
 		//gwlog.Warnf("registered services: %+v", entityManager.registeredServices)
 		return
 	}
 
-	allGamesConnected = true
+	gameIsReady = true
 	gwlog.Infof("all games connected, nil space = %s", nilSpace)
 	if nilSpace != nil {
 		nilSpace.I.OnGameReady()

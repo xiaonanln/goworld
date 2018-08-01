@@ -187,6 +187,7 @@ type DispatcherService struct {
 	ticker                <-chan time.Time
 	lbcheap               lbcheap // heap for game load balancing
 	chooseGameIdx         int     // choose game in a round robin way
+	isDeploymentReady     bool    // whether or not the deployment is ready
 }
 
 func newDispatcherService(dispid uint16) *DispatcherService {
@@ -202,16 +203,8 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 		entitySyncInfosToGame: map[uint16]*netutil.Packet{},
 		ticker:                time.Tick(consts.DISPATCHER_SERVICE_TICK_INTERVAL),
 		lbcheap:               nil,
+		isDeploymentReady:     false,
 	}
-
-	//for i := range ds.games {
-	//	gameid := uint16(i + 1)
-	//	lbcheapentry := &lbcheapentry{gameid, i, 0, 0}
-	//	ds.games[i] = &gameDispatchInfo{gameid: gameid, lbcheapentry: lbcheapentry}
-	//	ds.lbcheap = append(ds.lbcheap, lbcheapentry)
-	//}
-	//heap.Init(&ds.lbcheap)
-	//ds.lbcheap.validateHeapIndexes()
 
 	ds.recalcBootGames()
 
@@ -333,7 +326,6 @@ func (service *DispatcherService) ServeTCPConnection(conn net.Conn) {
 }
 
 func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
-
 	gameid := pkt.ReadUint16()
 	isReconnect := pkt.ReadBool()
 	isRestore := pkt.ReadBool()
@@ -403,7 +395,8 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 	gwlog.Infof("%s: %s set gameid = %d, numEntities = %d, rejectEntites = %d, services = %v", service, dcp, gameid, numEntities, len(rejectEntities), service.srvdisRegisterMap)
 	// reuse the packet to send SET_GAMEID_ACK with all connected gameids
 	connectedGameIDs := service.getConnectedGameIDs()
-	dcp.SendSetGameIDAck(service.dispid, connectedGameIDs, rejectEntities, service.srvdisRegisterMap)
+
+	dcp.SendSetGameIDAck(service.dispid, service.isDeploymentReady, connectedGameIDs, rejectEntities, service.srvdisRegisterMap)
 	service.sendNotifyGameConnected(gameid)
 
 	return
@@ -448,6 +441,24 @@ func (service *DispatcherService) handleSetGateID(dcp *dispatcherClientProxy, pk
 	}
 
 	service.gates[gateid] = dcp
+	service.checkDeploymentReady()
+}
+
+func (service *DispatcherService) checkDeploymentReady() {
+	if service.isDeploymentReady {
+		// if deployment was ever ready, it is already ready forever
+		return
+	}
+
+	deployCfg := config.GetDeployment()
+	if len(service.gates) >= deployCfg.DesiredGates && len(service.games) >= deployCfg.DesiredGames {
+		service.isDeploymentReady = true
+		// now the deployment is ready for only once
+		// broadcast deployment ready to all games
+		pkt := proto.MakeNotifyDeploymentReadyPacket()
+		service.broadcastToGames(pkt)
+		pkt.Release()
+	}
 }
 
 func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientProxy, pkt *netutil.Packet) {

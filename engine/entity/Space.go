@@ -75,8 +75,8 @@ func (space *Space) OnCreated() {
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	space.onSpaceCreated()
 	if space.IsNil() {
-		gwlog.Infof("nil space is created: %s, all games connected: %v", space, allGamesConnected)
-		if allGamesConnected {
+		gwlog.Infof("nil space is created: %s, all games connected: %v", space, gameIsReady)
+		if gameIsReady {
 			space.I.OnGameReady()
 		}
 		return

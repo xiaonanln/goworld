@@ -144,7 +144,7 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 }
 
 func (a *Avatar) EnterRandomNilSpace_Client() {
-	gameIDs := goworld.ListGameIDs()
+	gameIDs := goworld.GetOnlineGames().ToList()
 	gameid := gameIDs[rand.Intn(len(gameIDs))]
 	nilSpaceID := goworld.GetNilSpaceID(gameid)
 	gwlog.Debugf("%s EnterRandomNilSpace: %s on game%d", a, nilSpaceID, gameid)
