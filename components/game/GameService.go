@@ -149,6 +149,10 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleStartFreezeGameAck(dispid)
 			case proto.MT_NOTIFY_GAME_CONNECTED:
 				gs.handleNotifyGameConnected(pkt)
+			case proto.MT_NOTIFY_GAME_DISCONNECTED:
+				gs.handleNotifyGameDisconnected(pkt)
+			case proto.MT_NOTIFY_DEPLOYMENT_READY:
+				gs.handleNotifyDeploymentReady(pkt)
 			case proto.MT_SET_GAME_ID_ACK:
 				gs.handleSetGameIDAck(pkt)
 			default:
@@ -317,6 +321,24 @@ func (gs *GameService) handleNotifyGameConnected(pkt *netutil.Packet) {
 	}
 
 	gs.onlineGames.Add(gameid)
+	gwlog.Infof("%s notify game connected: %d online games currently", gs, len(gs.onlineGames))
+}
+
+func (gs *GameService) handleNotifyGameDisconnected(pkt *netutil.Packet) {
+	gameid := pkt.ReadUint16()
+
+	if !gs.onlineGames.Contains(gameid) {
+		// should not happen
+		gwlog.Errorf("%s: handle notify game disconnected: game%d is disconnected, but it was not connected", gs, gameid)
+		return
+	}
+
+	gs.onlineGames.Remove(gameid)
+	gwlog.Infof("%s notify game disconnected: %d online games left", gs, len(gs.onlineGames))
+}
+
+func (gs *GameService) handleNotifyDeploymentReady(pkt *netutil.Packet) {
+	gwlog.Infof("%s: DEPLOYMENT IS READY!", gs)
 }
 
 //func (gs *GameService) isAllGamesConnected() bool {
@@ -338,6 +360,7 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		gameid := pkt.ReadUint16()
 		gs.onlineGames.Add(gameid)
 	}
+
 	rejectEntitiesNum := pkt.ReadUint32()
 	rejectEntities := make([]common.EntityID, 0, rejectEntitiesNum)
 	for i := uint32(0); i < rejectEntitiesNum; i++ {
@@ -357,8 +380,8 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		srvdis.WatchSrvdisRegister(srvid, srvinfo)
 	}
 
-	gwlog.Infof("%s: set game ID ack received, deployment ready: %v, reject entities: %d, srvdis map: %+v",
-		gs, isDeploymentReady, rejectEntitiesNum, srvdisMap)
+	gwlog.Infof("%s: set game ID ack received, deployment ready: %v, %d online games, reject entities: %d, srvdis map: %+v",
+		gs, isDeploymentReady, len(gs.onlineGames), rejectEntitiesNum, srvdisMap)
 	if isDeploymentReady {
 		// all games are connected
 		entity.OnGameReady()

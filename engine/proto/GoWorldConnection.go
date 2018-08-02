@@ -388,6 +388,13 @@ func MakeNotifyGameConnectedPacket(gameid uint16) *netutil.Packet {
 	return pkt
 }
 
+func MakeNotifyGameDisconnectedPacket(gameid uint16) *netutil.Packet {
+	pkt := netutil.NewPacket()
+	pkt.AppendUint16(MT_NOTIFY_GAME_DISCONNECTED)
+	pkt.AppendUint16(gameid)
+	return pkt
+}
+
 func MakeNotifyDeploymentReadyPacket() *netutil.Packet {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(MT_NOTIFY_DEPLOYMENT_READY)

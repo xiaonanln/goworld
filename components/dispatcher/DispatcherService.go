@@ -120,7 +120,7 @@ func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 	if gdi.checkBlocked() && gdi.clientProxy == nil {
 		// blocked from true -> false, and game is already disconnected before
 		// in this case, the game should be cleaned up
-		dispatcherService.cleanupGameInfo(gdi.gameid, gdi)
+		dispatcherService.handleGameDown(gdi)
 	}
 
 	if !gdi.isBlocked && gdi.clientProxy != nil {
@@ -398,7 +398,7 @@ func (service *DispatcherService) handleSetGameID(dcp *dispatcherClientProxy, pk
 
 	dcp.SendSetGameIDAck(service.dispid, service.isDeploymentReady, connectedGameIDs, rejectEntities, service.srvdisRegisterMap)
 	service.sendNotifyGameConnected(gameid)
-
+	service.checkDeploymentReady()
 	return
 }
 
@@ -451,14 +451,29 @@ func (service *DispatcherService) checkDeploymentReady() {
 	}
 
 	deployCfg := config.GetDeployment()
-	if len(service.gates) >= deployCfg.DesiredGates && len(service.games) >= deployCfg.DesiredGames {
-		service.isDeploymentReady = true
-		// now the deployment is ready for only once
-		// broadcast deployment ready to all games
-		pkt := proto.MakeNotifyDeploymentReadyPacket()
-		service.broadcastToGames(pkt)
-		pkt.Release()
+	numGates := len(service.gates)
+	if numGates < deployCfg.DesiredGates {
+		gwlog.Infof("%s check deployment ready: %d/%d gates", service, numGates, deployCfg.DesiredGates)
+		return
 	}
+	numGames := 0
+	for _, gdi := range service.games {
+		if gdi.isBlocked || gdi.clientProxy != nil {
+			numGames += 1
+		}
+	}
+	gwlog.Infof("%s check deployment ready: %d/%d games %d/%d gates", service, numGames, deployCfg.DesiredGames, numGates, deployCfg.DesiredGates)
+	if numGames < deployCfg.DesiredGames {
+		// games not ready
+		return
+	}
+
+	// now deployment is ready
+	service.isDeploymentReady = true
+	// now the deployment is ready for only once
+	// broadcast deployment ready to all games
+	pkt := proto.MakeNotifyDeploymentReadyPacket()
+	service.broadcastToGamesRelease(pkt)
 }
 
 func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
@@ -575,8 +590,7 @@ func (service *DispatcherService) handleGateDisconnected(dcp *dispatcherClientPr
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(proto.MT_NOTIFY_GATE_DISCONNECTED)
 	pkt.AppendUint16(gateid)
-	service.broadcastToGames(pkt)
-	pkt.Release()
+	service.broadcastToGamesRelease(pkt)
 }
 
 func (service *DispatcherService) handleGameDisconnected(dcp *dispatcherClientProxy) {
@@ -597,18 +611,21 @@ func (service *DispatcherService) handleGameDisconnected(dcp *dispatcherClientPr
 	gdi.clientProxy = nil // connection down, set clientProxy = nil
 	if !gdi.isBlocked {
 		// game is down, we need to clear all
-		service.cleanupGameInfo(gameid, gdi)
+		service.handleGameDown(gdi)
 	} else {
 		// game is freezed, wait for restore, setup a timer to cleanup later if restore is not success
 	}
 
 }
 
-func (service *DispatcherService) cleanupGameInfo(gameid uint16, gdi *gameDispatchInfo) {
-	// clear all entities and other infos for the game
-	gwlog.Infof("%s: cleanup game info: game%d", service, gameid)
+func (service *DispatcherService) handleGameDown(gdi *gameDispatchInfo) {
+	gameid := gdi.gameid
+	gwlog.Infof("%s: game%d is down, cleaning up...", service, gameid)
 	service.cleanupEntitiesOfGame(gameid)
 	gdi.clearPendingPackets()
+
+	// send gamedown packet to all games
+	service.broadcastToGamesRelease(proto.MakeNotifyGameDisconnectedPacket(gameid))
 }
 
 func (service *DispatcherService) cleanupEntitiesOfGame(gameid uint16) {
@@ -898,7 +915,10 @@ func (service *DispatcherService) broadcastToGames(pkt *netutil.Packet) {
 		gdi.dispatchPacket(pkt)
 	}
 }
-
+func (service *DispatcherService) broadcastToGamesRelease(pkt *netutil.Packet) {
+	service.broadcastToGames(pkt)
+	pkt.Release()
+}
 func (service *DispatcherService) broadcastToGamesExcept(pkt *netutil.Packet, exceptGameID uint16) {
 	for gameid, gdi := range service.games {
 		if gameid == exceptGameID {
