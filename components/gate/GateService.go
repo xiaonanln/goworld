@@ -73,7 +73,7 @@ func newGateService() *GateService {
 }
 
 func (gs *GateService) run() {
-	cfg := config.GetGate(gateid)
+	cfg := config.GetGate(args.gateid)
 	gwlog.Infof("Compress connection: %v, encrypt connection: %v", cfg.CompressConnection, cfg.EncryptConnection)
 
 	if cfg.EncryptConnection {
@@ -179,7 +179,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 		return
 	}
 
-	cfg := config.GetGate(gateid)
+	cfg := config.GetGate(args.gateid)
 
 	if cfg.EncryptConnection && !isWebSocket {
 		tlsConn := tls.Server(netconn, gs.tlsConfig)
