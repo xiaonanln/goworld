@@ -130,7 +130,7 @@ func Run() {
 
 	setupSignals()
 
-	service.Startup(gameid)
+	service.Setup(gameid)
 	gwlog.Infof("Game service start running ...")
 	gameService.run()
 }

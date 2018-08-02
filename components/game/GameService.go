@@ -18,10 +18,12 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
+	"github.com/xiaonanln/goworld/engine/gwvar"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
@@ -46,6 +48,7 @@ type GameService struct {
 	positionSyncInterval           time.Duration
 	ticker                         <-chan time.Time
 	onlineGames                    common.Uint16Set
+	isDeploymentReady              bool
 }
 
 func newGameService(gameid uint16) *GameService {
@@ -338,17 +341,8 @@ func (gs *GameService) handleNotifyGameDisconnected(pkt *netutil.Packet) {
 }
 
 func (gs *GameService) handleNotifyDeploymentReady(pkt *netutil.Packet) {
-	gwlog.Infof("%s: DEPLOYMENT IS READY!", gs)
+	gs.onDeploymentReady()
 }
-
-//func (gs *GameService) isAllGamesConnected() bool {
-//	for _, connected := range gs.isGameConnected {
-//		if !connected {
-//			return false
-//		}
-//	}
-//	return true
-//}
 
 func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 	dispid := pkt.ReadUint16() // dispatcher  that sent the SET_GAME_ID_ACK
@@ -384,8 +378,21 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		gs, isDeploymentReady, len(gs.onlineGames), rejectEntitiesNum, srvdisMap)
 	if isDeploymentReady {
 		// all games are connected
-		entity.OnGameReady()
+		gs.onDeploymentReady()
 	}
+}
+
+func (gs *GameService) onDeploymentReady() {
+	if gs.isDeploymentReady {
+		// should never happen, because dispatcher never send deployment ready to a game more than once
+		return
+	}
+
+	gs.isDeploymentReady = true
+	gwvar.IsDeploymentReady.Set(true)
+	gwlog.Infof("DEPLOYMENT IS READY!")
+	entity.OnGameReady()
+	service.OnDeploymentReady()
 }
 
 func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
