@@ -89,7 +89,7 @@ func (dcm *DispatcherConnMgr) assureConnected() *DispatcherClient {
 
 func (dcm *DispatcherConnMgr) connectDispatchClient() (*DispatcherClient, error) {
 	dispatcherConfig := config.GetDispatcher(dcm.dispid)
-	conn, err := netutil.ConnectTCP(dispatcherConfig.Ip, dispatcherConfig.Port)
+	conn, err := netutil.ConnectTCP(dispatcherConfig.AdvertiseAddr)
 	if err != nil {
 		return nil, err
 	}

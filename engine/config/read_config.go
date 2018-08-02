@@ -25,9 +25,7 @@ import (
 
 const (
 	_DEFAULT_CONFIG_FILE   = "goworld.ini"
-	_DEFAULT_LOCALHOST_IP  = "127.0.0.1"
 	_DEFAULT_SAVE_ITNERVAL = time.Minute * 5
-	_DEFAULT_HTTP_IP       = "127.0.0.1"
 	_DEFAULT_LOG_LEVEL     = "debug"
 	_DEFAULT_STORAGE_DB    = "goworld"
 )
@@ -50,8 +48,7 @@ type GameConfig struct {
 	SaveInterval           time.Duration
 	LogFile                string
 	LogStderr              bool
-	HTTPIp                 string
-	HTTPPort               int
+	HTTPAddr               string
 	LogLevel               string
 	GoMaxProcs             int
 	PositionSyncIntervalMS int
@@ -60,12 +57,10 @@ type GameConfig struct {
 
 // GateConfig defines fields of gate config
 type GateConfig struct {
-	ListenIp               string
-	ListenPort             int
+	ListenAddr             string
 	LogFile                string
 	LogStderr              bool
-	HTTPIp                 string
-	HTTPPort               int
+	HTTPAddr               string
 	LogLevel               string
 	GoMaxProcs             int
 	CompressConnection     bool
@@ -79,15 +74,12 @@ type GateConfig struct {
 
 // DispatcherConfig defines fields of dispatcher config
 type DispatcherConfig struct {
-	BindIp    string
-	BindPort  int
-	Ip        string
-	Port      int
-	LogFile   string
-	LogStderr bool
-	HTTPIp    string
-	HTTPPort  int
-	LogLevel  string
+	ListenAddr    string
+	AdvertiseAddr string
+	HTTPAddr      string
+	LogFile       string
+	LogStderr     bool
+	LogLevel      string
 }
 
 // GoWorldConfig defines the total GoWorld config file structure
@@ -306,8 +298,7 @@ func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 	scc.LogStderr = true
 	scc.LogLevel = _DEFAULT_LOG_LEVEL
 	scc.SaveInterval = _DEFAULT_SAVE_ITNERVAL
-	scc.HTTPIp = _DEFAULT_HTTP_IP
-	scc.HTTPPort = 0 // pprof not enabled by default
+	scc.HTTPAddr = "127.0.0.1:25000"
 	scc.GoMaxProcs = 0
 	scc.PositionSyncIntervalMS = 100 // sync positions per 100ms by default
 
@@ -335,10 +326,8 @@ func _readGameConfig(sec *ini.Section, sc *GameConfig) {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
 			sc.LogStderr = key.MustBool(sc.LogStderr)
-		} else if name == "http_ip" {
-			sc.HTTPIp = key.MustString(sc.HTTPIp)
-		} else if name == "http_port" {
-			sc.HTTPPort = key.MustInt(sc.HTTPPort)
+		} else if name == "http_addr" {
+			sc.HTTPAddr = key.MustString(sc.HTTPAddr)
 		} else if name == "log_level" {
 			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else if name == "gomaxprocs" {
@@ -357,9 +346,8 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 	gcc.LogFile = "gate.log"
 	gcc.LogStderr = true
 	gcc.LogLevel = _DEFAULT_LOG_LEVEL
-	gcc.ListenIp = "0.0.0.0"
-	gcc.HTTPIp = _DEFAULT_HTTP_IP
-	gcc.HTTPPort = 0 // pprof not enabled by default
+	gcc.ListenAddr = "0.0.0.0:14000"
+	gcc.HTTPAddr = "127.0.0.1:24000"
 	gcc.GoMaxProcs = 0
 	gcc.CompressFormat = ""
 	gcc.CompressFormat = "gwsnappy"
@@ -390,18 +378,14 @@ func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig 
 func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
-		if name == "ip" {
-			sc.ListenIp = key.MustString(sc.ListenIp)
-		} else if name == "port" {
-			sc.ListenPort = key.MustInt(sc.ListenPort)
+		if name == "listen_addr" {
+			sc.ListenAddr = key.MustString(sc.ListenAddr)
 		} else if name == "log_file" {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
 			sc.LogStderr = key.MustBool(sc.LogStderr)
-		} else if name == "http_ip" {
-			sc.HTTPIp = key.MustString(sc.HTTPIp)
-		} else if name == "http_port" {
-			sc.HTTPPort = key.MustInt(sc.HTTPPort)
+		} else if name == "http_addr" {
+			sc.HTTPAddr = key.MustString(sc.HTTPAddr)
 		} else if name == "log_level" {
 			sc.LogLevel = key.MustString(sc.LogLevel)
 		} else if name == "gomaxprocs" {
@@ -427,13 +411,12 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 }
 
 func readDispatcherCommonConfig(section *ini.Section, dc *DispatcherConfig) {
-	dc.BindIp = _DEFAULT_LOCALHOST_IP
-	dc.Ip = _DEFAULT_LOCALHOST_IP
+	dc.ListenAddr = "127.0.0.1:13000"
+	dc.AdvertiseAddr = "127.0.0.1:13000"
+	dc.HTTPAddr = "127.0.0.1:23000"
 	dc.LogFile = "dispatcher.log"
 	dc.LogStderr = true
 	dc.LogLevel = _DEFAULT_LOG_LEVEL
-	dc.HTTPIp = _DEFAULT_HTTP_IP
-	dc.HTTPPort = 0
 
 	_readDispatcherConfig(section, dc)
 }
@@ -448,22 +431,16 @@ func readDispatcherConfig(sec *ini.Section, dispatcherCommonConfig *DispatcherCo
 func _readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
-		if name == "ip" {
-			config.Ip = key.MustString(config.Ip)
-		} else if name == "port" {
-			config.Port = key.MustInt(config.Port)
-		} else if name == "bind_ip" {
-			config.BindIp = key.MustString(config.BindIp)
-		} else if name == "bind_port" {
-			config.BindPort = key.MustInt(config.Port)
+		if name == "advertise_addr" {
+			config.AdvertiseAddr = key.MustString(config.AdvertiseAddr)
+		} else if name == "listen_addr" {
+			config.ListenAddr = key.MustString(config.ListenAddr)
 		} else if name == "log_file" {
 			config.LogFile = key.MustString(config.LogFile)
 		} else if name == "log_stderr" {
 			config.LogStderr = key.MustBool(config.LogStderr)
-		} else if name == "http_ip" {
-			config.HTTPIp = key.MustString(config.HTTPIp)
-		} else if name == "http_port" {
-			config.HTTPPort = key.MustInt(config.HTTPPort)
+		} else if name == "http_addr" {
+			config.HTTPAddr = key.MustString(config.HTTPAddr)
 		} else if name == "log_level" {
 			config.LogLevel = key.MustString(config.LogLevel)
 		} else {

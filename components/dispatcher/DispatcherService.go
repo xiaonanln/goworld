@@ -309,10 +309,9 @@ func (service *DispatcherService) String() string {
 }
 
 func (service *DispatcherService) run() {
-	host := fmt.Sprintf("%s:%d", service.config.BindIp, service.config.BindPort)
 	binutil.PrintSupervisorTag(consts.DISPATCHER_STARTED_TAG)
 	go gwutils.RepeatUntilPanicless(service.messageLoop)
-	netutil.ServeTCPForever(host, service)
+	netutil.ServeTCPForever(service.config.ListenAddr, service)
 }
 
 // ServeTCPConnection handles dispatcher client connections to dispatcher

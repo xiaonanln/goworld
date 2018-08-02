@@ -20,11 +20,8 @@ func TestLoad(t *testing.T) {
 		t.FailNow()
 	}
 	for dispid, dispatcherConfig := range config.Dispatchers {
-		if dispatcherConfig.Ip == "" {
-			t.Errorf("dispatch %d: ip not found", dispid)
-		}
-		if dispatcherConfig.Port == 0 {
-			t.Errorf("dispatcher %d: port not found", dispid)
+		if dispatcherConfig.AdvertiseAddr == "" {
+			t.Errorf("dispatch %d: advertise addr not found", dispid)
 		}
 	}
 

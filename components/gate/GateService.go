@@ -80,7 +80,7 @@ func (gs *GateService) run() {
 		gs.setupTLSConfig(cfg)
 	}
 
-	gs.listenAddr = fmt.Sprintf("%s:%d", cfg.ListenIp, cfg.ListenPort)
+	gs.listenAddr = cfg.ListenAddr
 	go netutil.ServeTCPForever(gs.listenAddr, gs)
 	go gs.serveKCP(gs.listenAddr)
 

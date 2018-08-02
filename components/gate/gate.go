@@ -84,9 +84,9 @@ func main() {
 		cfgdir := config.GetConfigDir()
 		rsaCert := path.Join(cfgdir, gateConfig.RSACertificate)
 		rsaKey := path.Join(cfgdir, gateConfig.RSAKey)
-		binutil.SetupHTTPServerTLS(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn, rsaCert, rsaKey)
+		binutil.SetupHTTPServerTLS(gateConfig.HTTPAddr, gateService.handleWebSocketConn, rsaCert, rsaKey)
 	} else {
-		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
+		binutil.SetupHTTPServer(gateConfig.HTTPAddr, gateService.handleWebSocketConn)
 	}
 
 	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &gateDispatcherClientDelegate{})

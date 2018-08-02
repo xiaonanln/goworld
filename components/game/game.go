@@ -104,7 +104,7 @@ func Run() {
 	crontab.Initialize()
 
 	gwlog.Infof("Setup http server ...")
-	binutil.SetupHTTPServer(gameConfig.HTTPIp, gameConfig.HTTPPort, nil)
+	binutil.SetupHTTPServer(gameConfig.HTTPAddr, nil)
 
 	entity.SetSaveInterval(gameConfig.SaveInterval)
 

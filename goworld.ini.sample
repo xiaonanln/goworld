@@ -7,11 +7,15 @@ desired_gates=1
 
 [storage]
 type=mongodb
-url=mongodb://localhost:27017/
+url=mongodb://127.0.0.1:27017/
 db=goworld
 ;type=redis
-;url=redis://127.0.0.1:6379/0/
+;url=redis://127.0.0.1:6379
 ;db=0
+;type=redis_cluster
+;start_nodes_1=127.0.0.1:6379
+;start_nodes_2=127.0.0.2:6379
+
 ;type=sql
 ;driver=mysql
 ;url=root:testmysql@tcp(127.0.0.1:3306)/goworld
@@ -22,51 +26,62 @@ url=mongodb://127.0.0.1:27017/goworld
 db=goworld
 collection=__kv__
 ;type=redis
-;url=redis://127.0.0.1:6379/1/
+;url=redis://127.0.0.1:6379
 ;db=1
 ;type=sql
 ;driver=mysql
 ;url=root:testmysql@tcp(127.0.0.1:3306)/goworld
+;type=redis_cluster
+;start_nodes_1=127.0.0.1:6379
+;start_nodes_2=127.0.0.2:6379
 
-
-[dispatcher1]
-bind_ip=127.0.0.1
-bind_port=13000
-ip=127.0.0.1
-port=13000
+[dispatcher_common]
+listen_addr=127.0.0.1:13000
+advertise_addr=127.0.0.1:13000
+http_addr=127.0.0.1:23000
 log_file=dispatcher.log
 log_stderr=true
-http_ip=0.0.0.0
-http_port=13001
 log_level=debug
+
+[dispatcher1]
+listen_addr=127.0.0.1:13001
+advertise_addr=127.0.0.1:13001
+http_addr=127.0.0.1:23001
+[dispatcher2]
+listen_addr=127.0.0.1:13002
+advertise_addr=127.0.0.1:13002
+http_addr=127.0.0.1:23002
 
 [game_common]
 boot_entity=Account
 save_interval=600
 log_file=game.log
 log_stderr=true
-http_ip=0.0.0.0
+http_addr=127.0.0.1:25000
 log_level=debug
 position_sync_interval_ms=100 ; position sync: server -> client
 ; gomaxprocs=0
 
 [game1]
-http_port=14001
+http_addr=25001
 ; ban_boot_entity=false
-
-;[game2]
-;http_port=14002
+[game2]
+http_addr=25002
 ;ban_boot_entity=false
+;[game3]
+;http_addr=25003
+;;ban_boot_entity=false
 
 [gate_common]
 ; gomaxprocs=0
 log_file=gate.log
 log_stderr=true
-http_ip=0.0.0.0
+http_addr=127.0.0.1:24000
+listen_addr=0.0.0.0:14000
 log_level=debug
 compress_connection=0
 ; supported compress formats: gwsnappy|snappy|flate|lz4|lzw
-compress_format=snappy
+compress_format=gwsnappy
 encrypt_connection=0
 rsa_key=rsa.key
 rsa_certificate=rsa.crt
@@ -74,9 +89,11 @@ heartbeat_check_interval = 0
 position_sync_interval_ms=100 ; position sync: client -> server
 
 [gate1]
-port=15011
-http_port=15012
-
+listen_addr=0.0.0.0:14001
+http_addr=127.0.0.1:24001
 [gate2]
-port=15021
-http_port=15022
+listen_addr=0.0.0.0:14002
+http_addr=127.0.0.1:24002
+;[gate3]
+;listen_addr=0.0.0.0:14003
+;http_addr=127.0.0.1:24003
