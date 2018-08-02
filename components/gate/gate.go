@@ -69,10 +69,7 @@ func main() {
 	}
 
 	gateConfig := config.GetGate(gateid)
-	if gateConfig == nil {
-		gwlog.Errorf("gate %d's config is not found", gateid)
-		os.Exit(1)
-	}
+	verifyGateConfig(gateConfig)
 	if gateConfig.GoMaxProcs > 0 {
 		gwlog.Infof("SET GOMAXPROCS = %d", gateConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gateConfig.GoMaxProcs)
@@ -96,6 +93,9 @@ func main() {
 	//dispatcherclient.Initialize(&gateDispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
+}
+
+func verifyGateConfig(gateConfig *config.GateConfig) {
 }
 
 func setupSignals() {

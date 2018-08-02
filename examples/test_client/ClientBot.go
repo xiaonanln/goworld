@@ -118,7 +118,7 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 		return bot.connectServerByKCP(cfg)
 	}
 	// just use tcp
-	conn, err := netutil.ConnectTCP(serverHost, cfg.Port)
+	conn, err := netutil.ConnectTCP(serverHost, cfg.ListenPort)
 	if err == nil {
 		conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
 		conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
@@ -127,7 +127,7 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 }
 
 func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, error) {
-	serverAddr := fmt.Sprintf("%s:%d", serverHost, cfg.Port)
+	serverAddr := fmt.Sprintf("%s:%d", serverHost, cfg.ListenPort)
 	conn, err := kcp.DialWithOptions(serverAddr, nil, 10, 3)
 	if err != nil {
 		return nil, err

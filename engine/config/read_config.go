@@ -60,8 +60,8 @@ type GameConfig struct {
 
 // GateConfig defines fields of gate config
 type GateConfig struct {
-	Ip                     string
-	Port                   int
+	ListenIp               string
+	ListenPort             int
 	LogFile                string
 	LogStderr              bool
 	HTTPIp                 string
@@ -357,7 +357,7 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 	gcc.LogFile = "gate.log"
 	gcc.LogStderr = true
 	gcc.LogLevel = _DEFAULT_LOG_LEVEL
-	gcc.Ip = "0.0.0.0"
+	gcc.ListenIp = "0.0.0.0"
 	gcc.HTTPIp = _DEFAULT_HTTP_IP
 	gcc.HTTPPort = 0 // pprof not enabled by default
 	gcc.GoMaxProcs = 0
@@ -391,9 +391,9 @@ func _readGateConfig(sec *ini.Section, sc *GateConfig) {
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "ip" {
-			sc.Ip = key.MustString(sc.Ip)
+			sc.ListenIp = key.MustString(sc.ListenIp)
 		} else if name == "port" {
-			sc.Port = key.MustInt(sc.Port)
+			sc.ListenPort = key.MustInt(sc.ListenPort)
 		} else if name == "log_file" {
 			sc.LogFile = key.MustString(sc.LogFile)
 		} else if name == "log_stderr" {
