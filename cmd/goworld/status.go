@@ -93,8 +93,8 @@ func status() {
 
 func showServerStatus(ss *ServerStatus) {
 	showMsg("%d dispatcher running, %d/%d gates running, %d/%d games (%s) running", ss.NumDispatcherRunning,
-		ss.NumGatesRunning, config.GetGatesNum(),
-		ss.NumGamesRunning, config.GetGamesNum(),
+		ss.NumGatesRunning, config.GetDeployment().DesiredGates,
+		ss.NumGamesRunning, config.GetDeployment().DesiredGames,
 		ss.ServerID,
 	)
 

@@ -51,9 +51,9 @@ func startDispatcher(dispid uint16) {
 
 func startGames(sid ServerID, isRestore bool) {
 	showMsg("start games ...")
-	gameIds := config.GetGameIDs()
-	showMsg("game ids: %v", gameIds)
-	for _, gameid := range gameIds {
+	desiredGames := config.GetDeployment().DesiredGames
+	showMsg("desired games = %d", desiredGames)
+	for gameid := uint16(1); int(gameid) <= desiredGames; gameid++ {
 		startGame(sid, gameid, isRestore)
 	}
 }
@@ -76,9 +76,9 @@ func startGame(sid ServerID, gameid uint16, isRestore bool) {
 
 func startGates() {
 	showMsg("start gates ...")
-	gateIds := config.GetGateIDs()
-	showMsg("gate ids: %v", gateIds)
-	for _, gateid := range gateIds {
+	desiredGates := config.GetDeployment().DesiredGates
+	showMsg("desired gates = %d", desiredGates)
+	for gateid := uint16(1); int(gateid) < desiredGates; gateid++ {
 		startGate(gateid)
 	}
 }
