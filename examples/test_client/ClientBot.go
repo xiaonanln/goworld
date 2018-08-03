@@ -164,8 +164,8 @@ func (bot *ClientBot) connectServerByWebsocket(cfg *config.GateConfig) (net.Conn
 		gwlog.Fatalf("can not parse host:port: %s", cfg.HTTPAddr)
 	}
 
-	origin := fmt.Sprintf("%s://%s:%d/", originProto, serverHost, httpPort)
-	wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverHost, httpPort)
+	origin := fmt.Sprintf("%s://%s:%s/", originProto, serverHost, httpPort)
+	wsaddr := fmt.Sprintf("%s://%s:%s/ws", wsProto, serverHost, httpPort)
 
 	if cfg.EncryptConnection {
 		dialCfg, err := websocket.NewConfig(wsaddr, origin)
