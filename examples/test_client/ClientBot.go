@@ -164,7 +164,7 @@ func (bot *ClientBot) connectServerByWebsocket(cfg *config.GateConfig) (net.Conn
 		gwlog.Fatalf("can not parse host:port: %s", cfg.HTTPAddr)
 	}
 
-	origin := fmt.Sprintf("%s://%s/", originProto, serverHost, httpPort)
+	origin := fmt.Sprintf("%s://%s:%d/", originProto, serverHost, httpPort)
 	wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverHost, httpPort)
 
 	if cfg.EncryptConnection {
