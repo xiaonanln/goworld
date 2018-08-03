@@ -88,17 +88,21 @@ func (space *Space) OnCreated() {
 	space.I.OnSpaceCreated()
 }
 
-func (space *Space) EnableAOI() {
+func (space *Space) EnableAOI(defaultAOIDistance Coord) {
+	if defaultAOIDistance <= 0 {
+		gwlog.Panicf("defaultAOIDistance < 0")
+	}
+
 	if space.aoiMgr != nil {
-		return
+		gwlog.Panicf("%s.EnableAOI: AOI already enabled", space)
 	}
 
 	if len(space.entities) > 0 {
 		gwlog.Panicf("%s is already using AOI", space)
 	}
 
-	space.Attrs.SetBool(_SPACE_ENABLE_AOI_KEY, true)
-	space.aoiMgr = aoi.NewXZListAOIManager()
+	space.Attrs.SetFloat(_SPACE_ENABLE_AOI_KEY, float64(defaultAOIDistance))
+	space.aoiMgr = aoi.NewXZListAOIManager(aoi.Coord(defaultAOIDistance))
 	//space.aoiMgr = aoi.NewTowerAOIManager(-500, 500, -500, 500, 10)
 }
 
@@ -114,8 +118,9 @@ func (space *Space) EnableAOI() {
 func (space *Space) OnRestored() {
 	space.onSpaceCreated()
 	//gwlog.Debugf("space %s restored: atts=%+v", space, space.Attrs)
-	if space.GetBool(_SPACE_ENABLE_AOI_KEY) {
-		space.EnableAOI()
+	aoidist := space.GetFloat(_SPACE_ENABLE_AOI_KEY)
+	if aoidist > 0 {
+		space.EnableAOI(Coord(aoidist))
 	}
 }
 

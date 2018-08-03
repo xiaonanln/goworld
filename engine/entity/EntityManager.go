@@ -49,6 +49,10 @@ func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
 }
 
 func (desc *EntityTypeDesc) SetUseAOI(useAOI bool, aoiDistance Coord) *EntityTypeDesc {
+	if aoiDistance < 0 {
+		gwlog.Panicf("aoi distance < 0")
+	}
+
 	desc.useAOI = useAOI
 	desc.aoiDistance = aoiDistance
 	return desc
