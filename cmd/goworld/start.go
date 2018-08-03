@@ -78,7 +78,7 @@ func startGates() {
 	showMsg("start gates ...")
 	desiredGates := config.GetDeployment().DesiredGates
 	showMsg("desired gates = %d", desiredGates)
-	for gateid := uint16(1); int(gateid) < desiredGates; gateid++ {
+	for gateid := uint16(1); int(gateid) <= desiredGates; gateid++ {
 		startGate(gateid)
 	}
 }
