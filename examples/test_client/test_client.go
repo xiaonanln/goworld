@@ -48,7 +48,7 @@ func main() {
 		config.SetConfigFile(configFile)
 	}
 	binutil.SetupGWLog("test_client", "info", "test_client.log", true)
-	binutil.SetupHTTPServer("localhost", 18888, nil)
+	binutil.SetupHTTPServer("localhost:18888", nil)
 	if useWebSocket && useKCP {
 		gwlog.Errorf("Can not use both websocket and KCP")
 		os.Exit(1)

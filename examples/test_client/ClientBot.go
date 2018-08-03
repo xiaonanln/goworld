@@ -76,9 +76,9 @@ func (bot *ClientBot) run() {
 
 	gwlog.Infof("%s is running ...", bot)
 
-	gateIDs := config.GetGateIDs()
+	desiredGates := config.GetDeployment().DesiredGates
 	// choose a random gateid
-	gateid := gateIDs[rand.Intn(len(gateIDs))]
+	gateid := uint16(rand.Intn(desiredGates) + 1)
 	gwlog.Debugf("%s is connecting to gate %d", bot, gateid)
 	cfg := config.GetGate(gateid)
 
@@ -118,7 +118,12 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 		return bot.connectServerByKCP(cfg)
 	}
 	// just use tcp
-	conn, err := netutil.ConnectTCP(serverHost, cfg.ListenPort)
+	_, listenPort, err := net.SplitHostPort(cfg.ListenAddr)
+	if err != nil {
+		gwlog.Fatalf("can not parse host:port: %s", cfg.ListenAddr)
+	}
+
+	conn, err := netutil.ConnectTCP(net.JoinHostPort(serverHost, listenPort))
 	if err == nil {
 		conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
 		conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
@@ -127,7 +132,13 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 }
 
 func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, error) {
-	serverAddr := fmt.Sprintf("%s:%d", serverHost, cfg.ListenPort)
+	// just use tcp
+	_, listenPort, err := net.SplitHostPort(cfg.ListenAddr)
+	if err != nil {
+		gwlog.Fatalf("can not parse host:port: %s", cfg.ListenAddr)
+	}
+
+	serverAddr := net.JoinHostPort(serverHost, listenPort)
 	conn, err := kcp.DialWithOptions(serverAddr, nil, 10, 3)
 	if err != nil {
 		return nil, err
@@ -148,8 +159,13 @@ func (bot *ClientBot) connectServerByWebsocket(cfg *config.GateConfig) (net.Conn
 		originProto = "https"
 		wsProto = "wss"
 	}
-	origin := fmt.Sprintf("%s://%s:%d/", originProto, serverHost, cfg.HTTPPort)
-	wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverHost, cfg.HTTPPort)
+	_, httpPort, err := net.SplitHostPort(cfg.HTTPAddr)
+	if err != nil {
+		gwlog.Fatalf("can not parse host:port: %s", cfg.HTTPAddr)
+	}
+
+	origin := fmt.Sprintf("%s://%s/", originProto, serverHost, httpPort)
+	wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverHost, httpPort)
 
 	if cfg.EncryptConnection {
 		dialCfg, err := websocket.NewConfig(wsaddr, origin)
