@@ -76,7 +76,7 @@ func (monster *Monster) AI() {
 }
 
 func (monster *Monster) Tick() {
-	if monster.attackingTarget != nil && monster.IsNeighbor(monster.attackingTarget) {
+	if monster.attackingTarget != nil && monster.IsInterestedIn(monster.attackingTarget) {
 		now := time.Now()
 		if !now.Before(monster.lastAttackTime.Add(monster.attackCD)) {
 			monster.FaceTo(monster.attackingTarget)
@@ -86,7 +86,7 @@ func (monster *Monster) Tick() {
 		return
 	}
 
-	if monster.movingToTarget != nil && monster.IsNeighbor(monster.movingToTarget) {
+	if monster.movingToTarget != nil && monster.IsInterestedIn(monster.movingToTarget) {
 		mypos := monster.GetPosition()
 		direction := monster.movingToTarget.GetPosition().Sub(mypos)
 		direction.Y = 0
