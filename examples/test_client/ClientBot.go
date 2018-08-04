@@ -489,7 +489,11 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args [][]byte) {
 	entity := bot.entities[entityID]
 	if entity == nil {
-		Errorf("%s: entity %s is not found while calling method %s(%v)", bot, entityID, method, args)
+		if method != "OnLogin" {
+			// Method OnLogin might be called when Account is already destroyed
+			Errorf("%s: entity %s is not found while calling method %s(%v)", bot, entityID, method, args)
+		}
+
 		return
 	}
 
