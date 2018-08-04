@@ -33,6 +33,10 @@ script:
   - goworld start examples/test_game
   - sleep 5
   - examples/test_client/test_client -N 100 -strict -duration 30
+  - sleep 5
+  - goworld reload examples/test_game
+  - sleep 5
+  - examples/test_client/test_client -N 100 -strict -duration 30
   - sleep 1
   - goworld stop examples/test_game
 
