@@ -34,6 +34,7 @@ script:
   - sleep 1
   - goworld reload examples/test_game
   - sleep 1
+  - examples/test_client/test_client -N 200 -strict -duration 30
   - goworld stop examples/test_game
 
 after_success:
