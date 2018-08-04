@@ -28,6 +28,7 @@ var (
 	startClientId int
 	noEntitySync  bool
 	strictMode    bool
+	duration      int
 )
 
 func parseArgs() {
@@ -40,6 +41,7 @@ func parseArgs() {
 	flag.BoolVar(&useKCP, "kcp", false, "use KCP to connect server")
 	flag.BoolVar(&noEntitySync, "nosync", false, "disable entity sync")
 	flag.BoolVar(&strictMode, "strict", false, "enable strict mode")
+	flag.IntVar(&duration, "duration", 0, "run for a specified duration (seconds)")
 	flag.Parse()
 }
 
@@ -68,5 +70,10 @@ func main() {
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)
+	if duration > 0 {
+		timer.AddCallback(time.Second*time.Duration(duration), func() {
+			os.Exit(0)
+		})
+	}
 	wait.Wait()
 }
