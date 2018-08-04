@@ -36,7 +36,7 @@ func (space *MySpace) OnSpaceCreated() {
 
 func (space *MySpace) DumpEntityStatus() {
 	space.ForEachEntity(func(e *entity.Entity) {
-		gwlog.Debugf(">>> %s @ position %s, neighbors=%d", e, e.GetPosition(), len(e.Neighbors))
+		gwlog.Debugf(">>> %s @ position %s, neighbors=%d", e, e.GetPosition(), len(e.InterestedIn))
 	})
 }
 
