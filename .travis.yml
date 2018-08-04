@@ -26,7 +26,7 @@ install:
   - make
 
 script:
-  - cp goworld.ini.sample goworld.ini
+  - cp goworld_travis.ini goworld.ini
   - make test
   - bash covertest.sh
   - goworld build examples/test_game
