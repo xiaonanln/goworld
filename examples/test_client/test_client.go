@@ -27,6 +27,7 @@ var (
 	numClients    int
 	startClientId int
 	noEntitySync  bool
+	strictMode    bool
 )
 
 func parseArgs() {
@@ -38,6 +39,7 @@ func parseArgs() {
 	flag.BoolVar(&useWebSocket, "ws", false, "use WebSocket to connect server")
 	flag.BoolVar(&useKCP, "kcp", false, "use KCP to connect server")
 	flag.BoolVar(&noEntitySync, "nosync", false, "disable entity sync")
+	flag.BoolVar(&strictMode, "strict", false, "enable strict mode")
 	flag.Parse()
 }
 

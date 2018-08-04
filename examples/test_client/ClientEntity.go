@@ -164,14 +164,14 @@ type _Something struct {
 
 var (
 	_DO_THINGS = []*_Something{
-		{"DoEnterRandomSpace", 1, time.Minute},
-		{"DoEnterRandomNilSpace", 1, time.Minute},
-		{"DoSendMail", 1, time.Minute},
-		{"DoGetMails", 1, time.Minute},
-		{"DoSayInWorldChannel", 1, time.Minute},
-		{"DoSayInProfChannel", 1, time.Minute},
-		{"DoTestListField", 1, time.Minute},
-		{"DoTestPublish", 1, time.Minute},
+		{"DoEnterRandomSpace", 1, time.Second * 5},
+		{"DoEnterRandomNilSpace", 1, time.Second * 5},
+		{"DoSendMail", 1, time.Second * 5},
+		{"DoGetMails", 1, time.Second * 5},
+		{"DoSayInWorldChannel", 1, time.Second * 5},
+		{"DoSayInProfChannel", 1, time.Second * 5},
+		{"DoTestListField", 1, time.Second * 5},
+		{"DoTestPublish", 1, time.Second * 5},
 	}
 )
 
@@ -189,7 +189,11 @@ func (e *clientEntity) doSomething() {
 	e.currentThing = thing.Method
 	e.currentThingStartTime = time.Now()
 	e.currentTimeoutTimer = e.AddCallback(thing.Timeout, func() {
-		gwlog.Warnf("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
+		if strictMode {
+			gwlog.Fatalf("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
+		} else {
+			gwlog.Warnf("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
+		}
 
 		e.currentThing = ""
 		e.currentThingStartTime = time.Time{}
