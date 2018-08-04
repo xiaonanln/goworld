@@ -89,7 +89,7 @@ func (bot *ClientBot) run() {
 	for { // retry for ever
 		netconn, err = bot.connectServer(cfg)
 		if err != nil {
-			Errorf("Connect failed: %s", err)
+			Errorf("%s: connect failed: %s", bot, err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
 			continue
 		}
@@ -196,7 +196,7 @@ func (bot *ClientBot) recvLoop() {
 			bot.packetQueue <- proto.Message{msgtype, pkt}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			// bad error
-			Errorf("Client recv packet failed: %v", err)
+			Errorf("%s: client recv packet failed: %v", bot, err)
 			break
 		}
 	}
@@ -392,7 +392,7 @@ func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) 
 func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {
 	//gwlog.Infof("SET ATTR %s.%v: set %s=%v", entityID, path, key, val)
 	if bot.entities[entityID] == nil {
-		Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -402,7 +402,7 @@ func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interf
 func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface{}, key string) {
 	//gwlog.Infof("DEL ATTR %s.%v: del %s", entityID, path, key)
 	if bot.entities[entityID] == nil {
-		Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -411,7 +411,7 @@ func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface
 
 func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []interface{}, index int, val interface{}) {
 	if bot.entities[entityID] == nil {
-		Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -420,7 +420,7 @@ func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []inter
 
 func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []interface{}, val interface{}) {
 	if bot.entities[entityID] == nil {
-		Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -429,7 +429,7 @@ func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []inter
 
 func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interface{}) {
 	if bot.entities[entityID] == nil {
-		Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -487,13 +487,13 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args [][]byte) {
 	entity := bot.entities[entityID]
 	if entity == nil {
-		Errorf("Entity %s is not found while calling method %s(%v)", entityID, method, args)
+		Errorf("%s: entity %s is not found while calling method %s(%v)", bot, entityID, method, args)
 		return
 	}
 
 	methodVal := reflect.ValueOf(entity).MethodByName(method)
 	if !methodVal.IsValid() {
-		Errorf("Client method %s is not found", method)
+		Errorf("%s： client method %s is not found", bot, method)
 		return
 	}
 
