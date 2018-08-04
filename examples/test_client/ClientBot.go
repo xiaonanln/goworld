@@ -42,6 +42,7 @@ type ClientBot struct {
 	id int
 
 	waiter             *sync.WaitGroup
+	waitAllConnected   *sync.WaitGroup
 	conn               *proto.GoWorldConnection
 	entities           map[common.EntityID]*clientEntity
 	player             *clientEntity
@@ -55,15 +56,16 @@ type ClientBot struct {
 	packetQueue        chan proto.Message
 }
 
-func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, waiter *sync.WaitGroup) *ClientBot {
+func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, waiter *sync.WaitGroup, waitAllConnected *sync.WaitGroup) *ClientBot {
 	return &ClientBot{
-		id:           id,
-		waiter:       waiter,
-		entities:     map[common.EntityID]*clientEntity{},
-		useKCP:       useKCP,
-		useWebSocket: useWebSocket,
-		noEntitySync: noEntitySync,
-		packetQueue:  make(chan proto.Message),
+		id:               id,
+		waiter:           waiter,
+		waitAllConnected: waitAllConnected,
+		entities:         map[common.EntityID]*clientEntity{},
+		useKCP:           useKCP,
+		useWebSocket:     useWebSocket,
+		noEntitySync:     noEntitySync,
+		packetQueue:      make(chan proto.Message),
 	}
 }
 
@@ -108,6 +110,9 @@ func (bot *ClientBot) run() {
 	}
 
 	go bot.recvLoop()
+	bot.waitAllConnected.Done()
+
+	bot.waitAllConnected.Wait()
 	bot.loop()
 }
 

@@ -64,9 +64,11 @@ func main() {
 		gwlog.Infof("Using KCP clients ...")
 	}
 	var wait sync.WaitGroup
+	var waitAllConnected sync.WaitGroup
 	wait.Add(numClients)
+	waitAllConnected.Add(numClients)
 	for i := 0; i < numClients; i++ {
-		bot := newClientBot(startClientId+i, useWebSocket, useKCP, noEntitySync, &wait)
+		bot := newClientBot(startClientId+i, useWebSocket, useKCP, noEntitySync, &wait, &waitAllConnected)
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)
