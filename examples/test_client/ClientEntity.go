@@ -362,6 +362,7 @@ func (e *clientEntity) onAccountCreated() {
 	post.Post(func() {
 		username := e.owner.username()
 		password := e.owner.password()
+		gwlog.Infof("%s Login ...", e)
 		e.CallServer("Login", username, password)
 	})
 }
