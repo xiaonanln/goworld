@@ -189,7 +189,7 @@ func (e *clientEntity) doSomething() {
 	e.currentThing = thing.Method
 	e.currentThingStartTime = time.Now()
 	e.currentTimeoutTimer = e.AddCallback(thing.Timeout, func() {
-		if strictMode {
+		if strictMode && thing.Method != "DoSayInProfChannel" {
 			gwlog.Fatalf("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
 		} else {
 			gwlog.Warnf("[%s] %s %s TIMEOUT !!!", time.Now(), e, thing)
