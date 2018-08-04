@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 10
+	_AVERAGE_DO_SOMETHING_INTERVAL = time.Second * 3
 )
 
 type clientAttrs map[string]interface{}
@@ -92,7 +92,7 @@ func (e *clientEntity) OnCreated() {
 }
 
 func (e *clientEntity) onAvatarCreated() {
-	gwlog.Infof("Avatar created on pos %v yaw %v", e.pos, e.yaw)
+	//gwlog.Infof("Avatar created on pos %v yaw %v", e.pos, e.yaw)
 }
 
 func (e *clientEntity) doSomethingLater() {
