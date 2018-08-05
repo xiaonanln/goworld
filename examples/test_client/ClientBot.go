@@ -243,7 +243,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	defer func() {
 		err := recover()
 		if err != nil {
-			gwlog.TraceError("handle packet faild: %v", err)
+			gwlog.TraceError("handle packet failed: %v", err)
 		}
 	}()
 
@@ -437,7 +437,7 @@ func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interfac
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
-	//gwlog.Infof("%s: create entity %s<%s>, isPlayer=%v", bot, typeName, entityID, isPlayer)
+	gwlog.Debugf("%s: create entity %s<%s>, isPlayer=%v", bot, typeName, entityID, isPlayer)
 	if bot.entities[entityID] == nil {
 		e := newClientEntity(bot, typeName, entityID, isPlayer, clientData, x, y, z, yaw)
 		bot.entities[entityID] = e
@@ -452,7 +452,7 @@ func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, is
 
 func (bot *ClientBot) destroyEntity(typeName string, entityID common.EntityID) {
 	entity := bot.entities[entityID]
-	//gwlog.Infof("%s: destroy entity %s<%s>, found entity = %s", bot, typeName, entityID, entity)
+	gwlog.Debugf("%s: destroy entity %s<%s>, found entity = %s", bot, typeName, entityID, entity)
 	if entity != nil {
 		entity.Destroy()
 		if entity == bot.player {

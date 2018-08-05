@@ -270,5 +270,8 @@ func (a *Avatar) TestAOI_Client() {
 	}
 
 	e.EnterSpace(a.Space.ID, a.GetPosition())
-	a.CallClient("OnTestAOI", e.ID)
+	a.Post(func() {
+		a.CallClient("OnTestAOI", e.ID)
+		e.Destroy()
+	})
 }

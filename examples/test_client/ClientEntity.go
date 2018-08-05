@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/xiaonanln/goTimer"
+	"github.com/xiaonanln/goworld"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -362,8 +363,14 @@ func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, 
 func (e *clientEntity) DoTestAOI() {
 	e.CallServer("TestAOI")
 }
-func (e *clientEntity) OnTestAOI() {
-	gwlog.Debugf("OnTestAOI")
+func (e *clientEntity) OnTestAOI(eid goworld.EntityID) {
+	o := e.owner.entities[eid]
+	gwlog.Debugf("OnTestAOI eid %s => %s", eid, o)
+	if o == nil {
+		Errorf("can not find AOITester<%s>", eid)
+	}
+
+	e.notifyThingDone("DoTestAOI")
 }
 
 func (e *clientEntity) onAccountCreated() {

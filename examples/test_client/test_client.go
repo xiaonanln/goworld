@@ -29,6 +29,7 @@ var (
 	noEntitySync  bool
 	strictMode    bool
 	duration      int
+	loglevel      string
 )
 
 func parseArgs() {
@@ -42,6 +43,7 @@ func parseArgs() {
 	flag.BoolVar(&noEntitySync, "nosync", false, "disable entity sync")
 	flag.BoolVar(&strictMode, "strict", false, "enable strict mode")
 	flag.IntVar(&duration, "duration", 0, "run for a specified duration (seconds)")
+	flag.StringVar(&loglevel, "log", "info", "set log level (info by default)")
 	flag.Parse()
 }
 
@@ -51,7 +53,8 @@ func main() {
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
-	binutil.SetupGWLog("test_client", "info", "test_client.log", true)
+
+	binutil.SetupGWLog("test_client", loglevel, "test_client.log", true)
 	binutil.SetupHTTPServer("localhost:18888", nil)
 	if useWebSocket && useKCP {
 		gwlog.Errorf("Can not use both websocket and KCP")
