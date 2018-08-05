@@ -172,6 +172,7 @@ var (
 		{"DoSayInProfChannel", 1, time.Second * 5},
 		{"DoTestListField", 1, time.Second * 5},
 		{"DoTestPublish", 1, time.Second * 5},
+		{"DoTestAOI", 1, time.Second * 5},
 	}
 )
 
@@ -356,6 +357,13 @@ func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, 
 	if publisher == e.ID {
 		e.notifyThingDone("DoTestPublish")
 	}
+}
+
+func (e *clientEntity) DoTestAOI() {
+	e.CallServer("TestAOI")
+}
+func (e *clientEntity) OnTestAOI() {
+	gwlog.Debugf("OnTestAOI")
 }
 
 func (e *clientEntity) onAccountCreated() {

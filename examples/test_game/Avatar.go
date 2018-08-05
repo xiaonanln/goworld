@@ -261,3 +261,14 @@ func (a *Avatar) OnPublish(subject string, content string) {
 	gwlog.Debugf("OnPublish: publisher=%s, subject=%s, content=%s", publisher, subject, content)
 	a.CallClient("OnTestPublish", publisher, subject, content)
 }
+
+func (a *Avatar) TestAOI_Client() {
+	e := goworld.CreateEntityLocally("AOITester")
+	gwlog.Infof("%s in space %s, TestAOI created %s", a, a.Space, e)
+	if !e.Space.IsNil() {
+		gwlog.Panicf("AOITester space is not nil")
+	}
+
+	e.EnterSpace(a.Space.ID, a.GetPosition())
+	a.CallClient("OnTestAOI", e.ID)
+}
