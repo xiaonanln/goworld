@@ -7,8 +7,6 @@
     * Dispatcher, Gate, Game should run in different docker container 
     * Processes connect each other and other services using Container Network
     * Processes discover each other using etcd ?
-    
-* Read config using tag (maybe use yaml)
 
 * Optimize callall and 'AllClients' attribute broadcasting ?
 
@@ -17,3 +15,5 @@
 * Service Registry using Etcd
 
 * Better AOI algorithm that enables entities to have different AOI distances
+
+* Read config using tag (maybe use yaml)
