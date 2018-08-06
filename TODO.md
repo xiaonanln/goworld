@@ -12,7 +12,7 @@
 
 * Optimize callall and 'AllClients' attribute broadcasting ?
 
-* Multiple Service Entities on Multiple Games
+* Multiple service entities on multiple Games to remove SPOF in service architecture
 
 * Service Registry using Etcd
 
