@@ -11,3 +11,7 @@
 * Read config using tag (maybe use yaml)
 
 * Optimize callall and 'AllClients' attribute broadcasting ?
+
+* Multiple Service Entities on Multiple Games
+
+* Service Registry using Etcd

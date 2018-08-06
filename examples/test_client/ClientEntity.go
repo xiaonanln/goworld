@@ -174,6 +174,7 @@ var (
 		{"DoTestListField", 1, time.Second * 5},
 		{"DoTestPublish", 1, time.Second * 5},
 		{"DoTestAOI", 1, time.Second * 5},
+		{"DoTestCallAll", 1, time.Second * 5},
 	}
 )
 
@@ -365,6 +366,7 @@ func (e *clientEntity) OnTestPublish(publisher common.EntityID, subject string, 
 func (e *clientEntity) DoTestAOI() {
 	e.CallServer("TestAOI")
 }
+
 func (e *clientEntity) OnTestAOI(eid goworld.EntityID) {
 	o := e.owner.entities[eid]
 	gwlog.Debugf("OnTestAOI eid %s => %s", eid, o)
@@ -373,6 +375,18 @@ func (e *clientEntity) OnTestAOI(eid goworld.EntityID) {
 	}
 
 	e.notifyThingDone("DoTestAOI")
+}
+
+func (e *clientEntity) DoTestCallAll() {
+	e.CallServer("TestCallAll")
+}
+
+func (e *clientEntity) OnTestCallAll() {
+	e.notifyThingDone("DoTestCallAll")
+}
+
+func (e *clientEntity) TestCallAllPlzEcho(eid common.EntityID) {
+	e.CallServer("TestCallAllEcho", eid)
 }
 
 func (e *clientEntity) onAccountCreated() {

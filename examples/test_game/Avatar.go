@@ -32,6 +32,7 @@ func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
 	desc.DefineAttr("lastMailID", "Persistent")
 	desc.DefineAttr("testListField", "AllClients")
 	desc.DefineAttr("enteringNilSpace")
+	desc.DefineAttr("testCallAllN")
 }
 
 func (a *Avatar) OnInit() {
@@ -274,4 +275,32 @@ func (a *Avatar) TestAOI_Client() {
 		a.CallClient("OnTestAOI", e.ID)
 		e.Destroy()
 	})
+}
+
+func (a *Avatar) TestCallAll_Client() {
+	avatarCount := 1
+	a.InterestedIn.ForEach(func(e *entity.Entity) {
+		if e.TypeName == "Avatar" {
+			avatarCount += 1
+		}
+	})
+	a.Attrs.SetInt("testCallAllN", int64(avatarCount))
+	gwlog.Debugf("%s TestCallAll: found %d avatars", a, avatarCount)
+	a.CallAllClients("TestCallAllPlzEcho", a.ID)
+}
+
+func (a *Avatar) TestCallAllEcho_AllClients(eid common.EntityID) {
+	o := goworld.GetEntity(eid)
+	if o == nil {
+		gwlog.Warnf("%s.TestCallAllEcho_AllClients: can not find avatar %s", a, eid)
+		return
+	}
+
+	v := o.Attrs.GetInt("testCallAllN")
+	v -= 1
+	o.Attrs.SetInt("testCallAllN", v)
+	gwlog.Debugf("%s TestCallAllEcho_AllClients: v = %d", o, v)
+	if v == 0 {
+		o.CallClient("OnTestCallAll")
+	}
 }
