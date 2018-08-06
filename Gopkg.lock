@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
-  version = "v1.37.0"
+  revision = "358ee7663966325963d4e8b2e1fbd570c5195153"
+  version = "v1.38.1"
 
 [[projects]]
   name = "github.com/go-ole/go-ole"
@@ -118,8 +118,8 @@
 [[projects]]
   name = "github.com/shirou/gopsutil"
   packages = ["cpu","host","internal/common","mem","net","process"]
-  revision = "eeb1d38d69593f121e060d24d17f7b1f0936b203"
-  version = "v2.18.05"
+  revision = "8048a2e9c5773235122027dd585cf821b2af1249"
+  version = "v2.18.07"
 
 [[projects]]
   branch = "master"
@@ -131,7 +131,7 @@
   branch = "master"
   name = "github.com/templexxx/cpufeat"
   packages = ["."]
-  revision = "3794dfbfb04749f896b521032f69383f24c3687e"
+  revision = "cef66df7f161dee20f4d650da7268d77eaaec82d"
 
 [[projects]]
   name = "github.com/templexxx/xor"
@@ -155,8 +155,8 @@
 [[projects]]
   name = "github.com/xiaonanln/go-aoi"
   packages = ["."]
-  revision = "2762bd19865793964f81523c610fe87550122d16"
-  version = "v0.1.0"
+  revision = "637aab197bea0a99f8f838abfd39bbd90ff537a5"
+  version = "v0.1.1"
 
 [[projects]]
   name = "github.com/xiaonanln/go-trie-tst"
@@ -203,26 +203,26 @@
 [[projects]]
   name = "go.uber.org/zap"
   packages = [".","buffer","internal/bufferpool","internal/color","internal/exit","zapcore"]
-  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
-  version = "v1.8.0"
+  revision = "4d45f9617f7d90f7a663ff21c7a4321dbe78098b"
+  version = "v1.9.0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["blowfish","cast5","internal/subtle","pbkdf2","salsa20","salsa20/salsa","tea","twofish","xtea"]
-  revision = "027cca12c2d63e3d62b670d901e8a2c95854feec"
+  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["bpf","context","internal/iana","internal/socket","ipv4","websocket"]
-  revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
+  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
+  revision = "34b17bdb430002e9db9ae7ddc8480b9fa05edc22"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -240,11 +240,11 @@
   branch = "v2"
   name = "gopkg.in/mgo.v2"
   packages = [".","bson","internal/json","internal/sasl","internal/scram"]
-  revision = "3f83fa5005286a7fe593b055f0d7771a7dce4655"
+  revision = "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "310a69e8e725a247d66d715f574e85e5f55713ffaec788657ab59a2e165ff069"
+  inputs-digest = "ec9a1c565930b108095d984fb34fbdf9ba7ccef1ac94b2886fbf4de95ea74a40"
   solver-name = "gps-cdcl"
   solver-version = 1

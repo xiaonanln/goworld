@@ -80,3 +80,7 @@
 [[constraint]]
   name = "github.com/chasex/redis-go-cluster"
   branch = "master"
+
+[[constraint]]
+  name = "github.com/xiaonanln/go-aoi"
+  version = "^0.1.0"
