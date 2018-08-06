@@ -9,3 +9,5 @@
     * Processes discover each other using etcd ?
     
 * Read config using tag (maybe use yaml)
+
+* Optimize callall and 'AllClients' attribute broadcasting ?
