@@ -1,3 +1,2 @@
-name=goworld-base
-docker build -t xiaonanln/$name .
+. docker-build.sh
 docker push xiaonanln/$name
