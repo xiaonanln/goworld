@@ -113,4 +113,6 @@ WORKDIR $GOPATH/src/github.com/xiaonanln/goworld
 RUN dep ensure
 RUN go get ./cmd/...
 RUN make all
+RUN cp goworld_docker.ini goworld.ini
 
+CMD ["bash"]
