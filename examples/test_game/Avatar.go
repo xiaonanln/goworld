@@ -33,6 +33,7 @@ func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
 	desc.DefineAttr("testListField", "AllClients")
 	desc.DefineAttr("enteringNilSpace")
 	desc.DefineAttr("testCallAllN")
+	desc.DefineAttr("complexAttr", "Client")
 }
 
 func (a *Avatar) OnInit() {
@@ -303,4 +304,19 @@ func (a *Avatar) TestCallAllEcho_AllClients(eid common.EntityID) {
 	if v == 0 {
 		o.CallClient("OnTestCallAll")
 	}
+}
+
+func (a *Avatar) TestComplexAttr_Client() {
+	complexAttr := a.GetMapAttr("complexAttr")
+	key1Attr := complexAttr.GetMapAttr("key1")
+	key2Attr := key1Attr.GetListAttr("key2")
+	key2Attr.AppendBool(true)
+	key2Attr.AppendListAttr(goworld.ListAttr())
+	idx1Attr := key2Attr.GetListAttr(1)
+	idx1Attr.AppendMapAttr(goworld.MapAttr())
+	innerMapAttr := idx1Attr.GetMapAttr(0)
+	innerMapAttr.SetStr("finalkey", "iamhere")
+	a.CallClient("OnTestComplexAttrStep1")
+	complexAttr.Clear()
+	a.CallClient("OnTestComplexAttrClear")
 }

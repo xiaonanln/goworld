@@ -277,6 +277,11 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 			gwlog.Debugf("Entity %s Attribute %v deleted %s", entityID, path, key)
 		}
 		bot.applyMapAttrDel(entityID, path, key)
+	} else if msgtype == proto.MT_NOTIFY_MAP_ATTR_CLEAR_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		var path []interface{}
+		packet.ReadData(&path)
+		bot.applyMapAttrClear(entityID, path)
 	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_CHANGE_ON_CLIENT {
 		entityID := packet.ReadEntityID()
 		var path []interface{}
@@ -407,6 +412,15 @@ func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface
 	}
 	entity := bot.entities[entityID]
 	entity.applyMapAttrDel(path, key)
+}
+
+func (bot *ClientBot) applyMapAttrClear(entityID common.EntityID, path []interface{}) {
+	if bot.entities[entityID] == nil {
+		Errorf("%s: entity %s not found", bot, entityID)
+		return
+	}
+	entity := bot.entities[entityID]
+	entity.applyMapAttrClear(path)
 }
 
 func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []interface{}, index int, val interface{}) {

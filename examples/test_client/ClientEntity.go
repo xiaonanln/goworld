@@ -167,14 +167,15 @@ var (
 	_DO_THINGS = []*_Something{
 		{"DoEnterRandomSpace", 1, time.Second * 5},
 		{"DoEnterRandomNilSpace", 1, time.Second * 5},
-		{"DoSendMail", 1, time.Second * 5},
-		{"DoGetMails", 1, time.Second * 5},
+		//{"DoSendMail", 1, time.Second * 5},
+		//{"DoGetMails", 1, time.Second * 5},
 		{"DoSayInWorldChannel", 1, time.Second * 5},
 		{"DoSayInProfChannel", 1, time.Second * 5},
 		{"DoTestListField", 1, time.Second * 5},
-		{"DoTestPublish", 1, time.Second * 5},
+		//{"DoTestPublish", 1, time.Second * 5},
 		{"DoTestAOI", 1, time.Second * 5},
 		{"DoTestCallAll", 1, time.Second * 5},
+		{"DoTestComplexAttr", 1, time.Second * 5},
 	}
 )
 
@@ -389,6 +390,28 @@ func (e *clientEntity) TestCallAllPlzEcho(eid common.EntityID) {
 	e.CallServer("TestCallAllEcho", eid)
 }
 
+func (e *clientEntity) DoTestComplexAttr() {
+	e.CallServer("TestComplexAttr")
+}
+
+func (e *clientEntity) OnTestComplexAttrStep1() {
+	gwlog.Debugf("%s.OnTestComplexAttrStep1: %v", e, e.Attrs["complexAttr"])
+	complexAttr := e.Attrs["complexAttr"].(map[string]interface{})
+	// map[key1:map[key2:[true [map[finalkey:iamhere]]]]]
+	v := complexAttr["key1"].(map[string]interface{})["key2"].([]interface{})[1].([]interface{})[0].(map[string]interface{})["finalkey"].(string)
+	if v != "iamhere" {
+		Errorf("finalkey should be 'iamhere', but is %#v", v)
+	}
+}
+func (e *clientEntity) OnTestComplexAttrClear() {
+	gwlog.Debugf("%s.OnTestComplexAttrClear: %v", e)
+	complexAttr := e.Attrs["complexAttr"].(map[string]interface{})
+	if len(complexAttr) != 0 {
+		Errorf("complexAttr should be cleared, but is %#v", complexAttr)
+	}
+	e.notifyThingDone("DoTestComplexAttr")
+}
+
 func (e *clientEntity) onAccountCreated() {
 	post.Post(func() {
 		username := e.owner.username()
@@ -417,6 +440,15 @@ func (e *clientEntity) applyMapAttrDel(path []interface{}, key string) {
 	attr := _attr.(map[string]interface{})
 	delete(attr, key)
 	e.onAttrChange(path, key)
+}
+
+func (e *clientEntity) applyMapAttrClear(path []interface{}) {
+	_attr, _, _ := e.findAttrByPath(path)
+	attr := _attr.(map[string]interface{})
+	for k := range attr {
+		delete(attr, k)
+	}
+	e.onAttrChange(path, "")
 }
 
 func (e *clientEntity) applyListAttrChange(path []interface{}, index int, val interface{}) {
@@ -495,7 +527,7 @@ func (e *clientEntity) findAttrByPath(path []interface{}) (attr interface{}, par
 			key := path[i].(string)
 			attr = mapattr[key]
 		} else if listattr, ok := attr.([]interface{}); ok {
-			index := path[i].(int)
+			index := path[i].(int64)
 			attr = listattr[index]
 		} else {
 			gwlog.Panicf("Attr is neither map nor list: %T", attr)
