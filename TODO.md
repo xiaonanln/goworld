@@ -15,3 +15,5 @@
 * Multiple Service Entities on Multiple Games
 
 * Service Registry using Etcd
+
+* Better AOI algorithm that enables entities to have different AOI distances
