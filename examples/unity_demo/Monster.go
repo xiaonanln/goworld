@@ -19,7 +19,7 @@ type Monster struct {
 }
 
 func (monster *Monster) DescribeEntityType(desc *entity.EntityTypeDesc) {
-	desc.SetUseAOI(true)
+	desc.SetUseAOI(true, 100)
 	desc.DefineAttr("name", "AllClients")
 	desc.DefineAttr("lv", "AllClients")
 	desc.DefineAttr("hp", "AllClients")
@@ -47,7 +47,7 @@ func (monster *Monster) setDefaultAttrs() {
 
 func (monster *Monster) AI() {
 	var nearestPlayer *entity.Entity
-	for entity := range monster.Neighbors {
+	for entity := range monster.InterestedIn {
 
 		if entity.TypeName != "Player" {
 			continue
@@ -76,7 +76,7 @@ func (monster *Monster) AI() {
 }
 
 func (monster *Monster) Tick() {
-	if monster.attackingTarget != nil && monster.IsNeighbor(monster.attackingTarget) {
+	if monster.attackingTarget != nil && monster.IsInterestedIn(monster.attackingTarget) {
 		now := time.Now()
 		if !now.Before(monster.lastAttackTime.Add(monster.attackCD)) {
 			monster.FaceTo(monster.attackingTarget)
@@ -86,7 +86,7 @@ func (monster *Monster) Tick() {
 		return
 	}
 
-	if monster.movingToTarget != nil && monster.IsNeighbor(monster.movingToTarget) {
+	if monster.movingToTarget != nil && monster.IsInterestedIn(monster.movingToTarget) {
 		mypos := monster.GetPosition()
 		direction := monster.movingToTarget.GetPosition().Sub(mypos)
 		direction.Y = 0

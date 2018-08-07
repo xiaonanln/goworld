@@ -32,70 +32,75 @@ import (
 )
 
 var (
-	gateid          uint16
-	configFile      string
-	logLevel        string
-	runInDaemonMode bool
-	gateService     *GateService
-	signalChan      = make(chan os.Signal, 1)
+	args struct {
+		gateid          uint16
+		configFile      string
+		logLevel        string
+		runInDaemonMode bool
+		//listenAddr      string
+	}
+	gateService *GateService
+	signalChan  = make(chan os.Signal, 1)
 )
 
 func parseArgs() {
 	var gateIdArg int
 	flag.IntVar(&gateIdArg, "gid", 0, "set gateid")
-	flag.StringVar(&configFile, "configfile", "", "set config file path")
-	flag.StringVar(&logLevel, "log", "", "set log level, will override log level in config")
-	flag.BoolVar(&runInDaemonMode, "d", false, "run in daemon mode")
+	flag.StringVar(&args.configFile, "configfile", "", "set config file path")
+	flag.StringVar(&args.logLevel, "log", "", "set log level, will override log level in config")
+	flag.BoolVar(&args.runInDaemonMode, "d", false, "run in daemon mode")
+	//flag.StringVar(&args.listenAddr, "listen-addr", "", "set listen address for gate, overriding listen_addr in config file")
 	flag.Parse()
-	gateid = uint16(gateIdArg)
+	args.gateid = uint16(gateIdArg)
 }
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	parseArgs()
 
-	if runInDaemonMode {
+	if args.runInDaemonMode {
 		daemoncontext := binutil.Daemonize()
 		defer daemoncontext.Release()
 	}
 
-	if configFile != "" {
-		config.SetConfigFile(configFile)
+	if args.configFile != "" {
+		config.SetConfigFile(args.configFile)
 	}
 
-	if gateid <= 0 {
-		gwlog.Errorf("gateid %d is not valid, should be positive", gateid)
+	if args.gateid <= 0 {
+		gwlog.Errorf("gateid %d is not valid, should be positive", args.gateid)
 		os.Exit(1)
 	}
 
-	gateConfig := config.GetGate(gateid)
-	if gateConfig == nil {
-		gwlog.Errorf("gate %d's config is not found", gateid)
-		os.Exit(1)
-	}
+	gateConfig := config.GetGate(args.gateid)
+	verifyGateConfig(gateConfig)
 	if gateConfig.GoMaxProcs > 0 {
 		gwlog.Infof("SET GOMAXPROCS = %d", gateConfig.GoMaxProcs)
 		runtime.GOMAXPROCS(gateConfig.GoMaxProcs)
 	}
+	logLevel := args.logLevel
 	if logLevel == "" {
 		logLevel = gateConfig.LogLevel
 	}
-	binutil.SetupGWLog(fmt.Sprintf("gate%d", gateid), logLevel, gateConfig.LogFile, gateConfig.LogStderr)
+	binutil.SetupGWLog(fmt.Sprintf("gate%d", args.gateid), logLevel, gateConfig.LogFile, gateConfig.LogStderr)
 
 	gateService = newGateService()
 	if gateConfig.EncryptConnection {
 		cfgdir := config.GetConfigDir()
 		rsaCert := path.Join(cfgdir, gateConfig.RSACertificate)
 		rsaKey := path.Join(cfgdir, gateConfig.RSAKey)
-		binutil.SetupHTTPServerTLS(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn, rsaCert, rsaKey)
+		binutil.SetupHTTPServerTLS(gateConfig.HTTPAddr, gateService.handleWebSocketConn, rsaCert, rsaKey)
 	} else {
-		binutil.SetupHTTPServer(gateConfig.HTTPIp, gateConfig.HTTPPort, gateService.handleWebSocketConn)
+		binutil.SetupHTTPServer(gateConfig.HTTPAddr, gateService.handleWebSocketConn)
 	}
 
-	dispatchercluster.Initialize(gateid, dispatcherclient.GateDispatcherClientType, false, false, &gateDispatcherClientDelegate{})
+	dispatchercluster.Initialize(args.gateid, dispatcherclient.GateDispatcherClientType, false, false, &gateDispatcherClientDelegate{})
 	//dispatcherclient.Initialize(&gateDispatcherClientDelegate{}, true)
 	setupSignals()
 	gateService.run() // run gate service in another goroutine
+}
+
+func verifyGateConfig(gateConfig *config.GateConfig) {
 }
 
 func setupSignals() {
@@ -114,7 +119,7 @@ func setupSignals() {
 				})
 
 				gateService.terminated.Wait()
-				gwlog.Infof("Gate %d terminated gracefully.", gateid)
+				gwlog.Infof("Gate %d terminated gracefully.", args.gateid)
 				os.Exit(0)
 			} else {
 				gwlog.Errorf("unexpected signal: %s", sig)
@@ -139,9 +144,4 @@ func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientDisconnect()
 
 func (deleget *gateDispatcherClientDelegate) GetEntityIDsForDispatcher(dispid uint16) []common.EntityID {
 	return nil
-}
-
-// GetGateID gets the gate ID
-func GetGateID() uint16 {
-	return gateid
 }

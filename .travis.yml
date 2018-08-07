@@ -26,13 +26,17 @@ install:
   - make
 
 script:
-  - cp goworld.ini.sample goworld.ini
+  - cp goworld_travis.ini goworld.ini
   - make test
   - bash covertest.sh
   - goworld build examples/test_game
   - goworld start examples/test_game
-  - sleep 1
+  - sleep 5
+  - examples/test_client/test_client -N 100 -strict -duration 30
+  - sleep 5
   - goworld reload examples/test_game
+  - sleep 5
+  - examples/test_client/test_client -N 100 -strict -duration 30
   - sleep 1
   - goworld stop examples/test_game
 
