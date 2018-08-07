@@ -155,8 +155,8 @@
 [[projects]]
   name = "github.com/xiaonanln/go-aoi"
   packages = ["."]
-  revision = "637aab197bea0a99f8f838abfd39bbd90ff537a5"
-  version = "v0.1.1"
+  revision = "5e9d87993768c88f87e40b2b66d6be3fdabde228"
+  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/xiaonanln/go-trie-tst"
@@ -203,14 +203,14 @@
 [[projects]]
   name = "go.uber.org/zap"
   packages = [".","buffer","internal/bufferpool","internal/color","internal/exit","zapcore"]
-  revision = "4d45f9617f7d90f7a663ff21c7a4321dbe78098b"
-  version = "v1.9.0"
+  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
+  version = "v1.9.1"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["blowfish","cast5","internal/subtle","pbkdf2","salsa20","salsa20/salsa","tea","twofish","xtea"]
-  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
+  revision = "f027049dab0ad238e394a753dba2d14753473a04"
 
 [[projects]]
   branch = "master"
@@ -222,7 +222,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "34b17bdb430002e9db9ae7ddc8480b9fa05edc22"
+  revision = "0718ef2ef256118d53a01598f179001ec2af7626"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -245,6 +245,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ec9a1c565930b108095d984fb34fbdf9ba7ccef1ac94b2886fbf4de95ea74a40"
+  inputs-digest = "517ea457122619cd87535355e8fd6c8a69d5e96b63fbe581dcdfa36647f038c7"
   solver-name = "gps-cdcl"
   solver-version = 1
