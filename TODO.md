@@ -1,5 +1,7 @@
 # TODO
 
+* Run GoWorld server on Docker
+
 * Adopt Kafka
     ** Support For Reliable Call?
 
