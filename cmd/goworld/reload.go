@@ -24,8 +24,8 @@ func reload(sid ServerID) {
 
 	if ss.NumGamesRunning == 0 {
 		showMsgAndQuit("no game is running")
-	} else if ss.NumGamesRunning != config.GetGamesNum() {
-		showMsgAndQuit("found %d games, but should have %d", ss.NumGamesRunning, config.GetGamesNum())
+	} else if ss.NumGamesRunning != config.GetDeployment().DesiredGames {
+		showMsgAndQuit("found %d games, but should have %d", ss.NumGamesRunning, config.GetDeployment().DesiredGames)
 	}
 
 	stopGames(ss, binutil.FreezeSignal)

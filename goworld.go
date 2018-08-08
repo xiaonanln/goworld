@@ -6,7 +6,6 @@ import (
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
-	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/crontab"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/kvdb"
@@ -198,9 +197,9 @@ func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 	kvdb.GetOrPut(key, val, callback)
 }
 
-// ListGameIDs returns all game IDs
-func ListGameIDs() []uint16 {
-	return config.GetGameIDs()
+// GetOnlineGames returns all online game IDs
+func GetOnlineGames() common.Uint16Set {
+	return game.GetOnlineGames()
 }
 
 // AddTimer adds a timer to be executed after specified duration

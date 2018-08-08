@@ -42,6 +42,7 @@ type ClientBot struct {
 	id int
 
 	waiter             *sync.WaitGroup
+	waitAllConnected   *sync.WaitGroup
 	conn               *proto.GoWorldConnection
 	entities           map[common.EntityID]*clientEntity
 	player             *clientEntity
@@ -55,15 +56,16 @@ type ClientBot struct {
 	packetQueue        chan proto.Message
 }
 
-func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, waiter *sync.WaitGroup) *ClientBot {
+func newClientBot(id int, useWebSocket bool, useKCP bool, noEntitySync bool, waiter *sync.WaitGroup, waitAllConnected *sync.WaitGroup) *ClientBot {
 	return &ClientBot{
-		id:           id,
-		waiter:       waiter,
-		entities:     map[common.EntityID]*clientEntity{},
-		useKCP:       useKCP,
-		useWebSocket: useWebSocket,
-		noEntitySync: noEntitySync,
-		packetQueue:  make(chan proto.Message),
+		id:               id,
+		waiter:           waiter,
+		waitAllConnected: waitAllConnected,
+		entities:         map[common.EntityID]*clientEntity{},
+		useKCP:           useKCP,
+		useWebSocket:     useWebSocket,
+		noEntitySync:     noEntitySync,
+		packetQueue:      make(chan proto.Message),
 	}
 }
 
@@ -76,9 +78,9 @@ func (bot *ClientBot) run() {
 
 	gwlog.Infof("%s is running ...", bot)
 
-	gateIDs := config.GetGateIDs()
+	desiredGates := config.GetDeployment().DesiredGates
 	// choose a random gateid
-	gateid := gateIDs[rand.Intn(len(gateIDs))]
+	gateid := uint16(rand.Intn(desiredGates) + 1)
 	gwlog.Debugf("%s is connecting to gate %d", bot, gateid)
 	cfg := config.GetGate(gateid)
 
@@ -87,7 +89,7 @@ func (bot *ClientBot) run() {
 	for { // retry for ever
 		netconn, err = bot.connectServer(cfg)
 		if err != nil {
-			gwlog.Errorf("Connect failed: %s", err)
+			Errorf("%s: connect failed: %s", bot, err)
 			time.Sleep(time.Second * time.Duration(1+rand.Intn(10)))
 			continue
 		}
@@ -108,6 +110,9 @@ func (bot *ClientBot) run() {
 	}
 
 	go bot.recvLoop()
+	bot.waitAllConnected.Done()
+
+	bot.waitAllConnected.Wait()
 	bot.loop()
 }
 
@@ -118,7 +123,12 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 		return bot.connectServerByKCP(cfg)
 	}
 	// just use tcp
-	conn, err := netutil.ConnectTCP(serverHost, cfg.Port)
+	_, listenPort, err := net.SplitHostPort(cfg.ListenAddr)
+	if err != nil {
+		gwlog.Fatalf("can not parse host:port: %s", cfg.ListenAddr)
+	}
+
+	conn, err := netutil.ConnectTCP(net.JoinHostPort(serverHost, listenPort))
 	if err == nil {
 		conn.(*net.TCPConn).SetWriteBuffer(64 * 1024)
 		conn.(*net.TCPConn).SetReadBuffer(64 * 1024)
@@ -127,7 +137,13 @@ func (bot *ClientBot) connectServer(cfg *config.GateConfig) (net.Conn, error) {
 }
 
 func (bot *ClientBot) connectServerByKCP(cfg *config.GateConfig) (net.Conn, error) {
-	serverAddr := fmt.Sprintf("%s:%d", serverHost, cfg.Port)
+	// just use tcp
+	_, listenPort, err := net.SplitHostPort(cfg.ListenAddr)
+	if err != nil {
+		gwlog.Fatalf("can not parse host:port: %s", cfg.ListenAddr)
+	}
+
+	serverAddr := net.JoinHostPort(serverHost, listenPort)
 	conn, err := kcp.DialWithOptions(serverAddr, nil, 10, 3)
 	if err != nil {
 		return nil, err
@@ -148,8 +164,13 @@ func (bot *ClientBot) connectServerByWebsocket(cfg *config.GateConfig) (net.Conn
 		originProto = "https"
 		wsProto = "wss"
 	}
-	origin := fmt.Sprintf("%s://%s:%d/", originProto, serverHost, cfg.HTTPPort)
-	wsaddr := fmt.Sprintf("%s://%s:%d/ws", wsProto, serverHost, cfg.HTTPPort)
+	_, httpPort, err := net.SplitHostPort(cfg.HTTPAddr)
+	if err != nil {
+		gwlog.Fatalf("can not parse host:port: %s", cfg.HTTPAddr)
+	}
+
+	origin := fmt.Sprintf("%s://%s:%s/", originProto, serverHost, httpPort)
+	wsaddr := fmt.Sprintf("%s://%s:%s/ws", wsProto, serverHost, httpPort)
 
 	if cfg.EncryptConnection {
 		dialCfg, err := websocket.NewConfig(wsaddr, origin)
@@ -175,7 +196,7 @@ func (bot *ClientBot) recvLoop() {
 			bot.packetQueue <- proto.Message{msgtype, pkt}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
 			// bad error
-			gwlog.Errorf("Client recv packet failed: %v", err)
+			Errorf("%s: client recv packet failed: %v", bot, err)
 			break
 		}
 	}
@@ -222,7 +243,7 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 	defer func() {
 		err := recover()
 		if err != nil {
-			gwlog.TraceError("handle packet faild: %v", err)
+			gwlog.TraceError("handle packet failed: %v", err)
 		}
 	}()
 
@@ -256,6 +277,11 @@ func (bot *ClientBot) handlePacket(msgtype proto.MsgType, packet *netutil.Packet
 			gwlog.Debugf("Entity %s Attribute %v deleted %s", entityID, path, key)
 		}
 		bot.applyMapAttrDel(entityID, path, key)
+	} else if msgtype == proto.MT_NOTIFY_MAP_ATTR_CLEAR_ON_CLIENT {
+		entityID := packet.ReadEntityID()
+		var path []interface{}
+		packet.ReadData(&path)
+		bot.applyMapAttrClear(entityID, path)
 	} else if msgtype == proto.MT_NOTIFY_LIST_ATTR_CHANGE_ON_CLIENT {
 		entityID := packet.ReadEntityID()
 		var path []interface{}
@@ -371,7 +397,7 @@ func (bot *ClientBot) updateEntityYaw(entityID common.EntityID, yaw entity.Yaw) 
 func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interface{}, key string, val interface{}) {
 	//gwlog.Infof("SET ATTR %s.%v: set %s=%v", entityID, path, key, val)
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -381,16 +407,25 @@ func (bot *ClientBot) applyMapAttrChange(entityID common.EntityID, path []interf
 func (bot *ClientBot) applyMapAttrDel(entityID common.EntityID, path []interface{}, key string) {
 	//gwlog.Infof("DEL ATTR %s.%v: del %s", entityID, path, key)
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
 	entity.applyMapAttrDel(path, key)
 }
 
+func (bot *ClientBot) applyMapAttrClear(entityID common.EntityID, path []interface{}) {
+	if bot.entities[entityID] == nil {
+		Errorf("%s: entity %s not found", bot, entityID)
+		return
+	}
+	entity := bot.entities[entityID]
+	entity.applyMapAttrClear(path)
+}
+
 func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []interface{}, index int, val interface{}) {
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -399,7 +434,7 @@ func (bot *ClientBot) applyListAttrChange(entityID common.EntityID, path []inter
 
 func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []interface{}, val interface{}) {
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -408,7 +443,7 @@ func (bot *ClientBot) applyListAttrAppend(entityID common.EntityID, path []inter
 
 func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interface{}) {
 	if bot.entities[entityID] == nil {
-		gwlog.Errorf("entity %s not found", entityID)
+		Errorf("%s: entity %s not found", bot, entityID)
 		return
 	}
 	entity := bot.entities[entityID]
@@ -416,6 +451,7 @@ func (bot *ClientBot) applyListAttrPop(entityID common.EntityID, path []interfac
 }
 
 func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, isPlayer bool, clientData map[string]interface{}, x, y, z entity.Coord, yaw entity.Yaw) {
+	gwlog.Debugf("%s: create entity %s<%s>, isPlayer=%v", bot, typeName, entityID, isPlayer)
 	if bot.entities[entityID] == nil {
 		e := newClientEntity(bot, typeName, entityID, isPlayer, clientData, x, y, z, yaw)
 		bot.entities[entityID] = e
@@ -430,6 +466,7 @@ func (bot *ClientBot) createEntity(typeName string, entityID common.EntityID, is
 
 func (bot *ClientBot) destroyEntity(typeName string, entityID common.EntityID) {
 	entity := bot.entities[entityID]
+	gwlog.Debugf("%s: destroy entity %s<%s>, found entity = %s", bot, typeName, entityID, entity)
 	if entity != nil {
 		entity.Destroy()
 		if entity == bot.player {
@@ -466,13 +503,17 @@ func (bot *ClientBot) destroySpace(spaceID common.EntityID) {
 func (bot *ClientBot) callEntityMethod(entityID common.EntityID, method string, args [][]byte) {
 	entity := bot.entities[entityID]
 	if entity == nil {
-		gwlog.Warnf("Entity %s is not found while calling method %s(%v)", entityID, method, args)
+		if method != "OnLogin" {
+			// Method OnLogin might be called when Account is already destroyed
+			Errorf("%s: entity %s is not found while calling method %s(%v)", bot, entityID, method, args)
+		}
+
 		return
 	}
 
 	methodVal := reflect.ValueOf(entity).MethodByName(method)
 	if !methodVal.IsValid() {
-		gwlog.Errorf("Client method %s is not found", method)
+		Errorf("%s： client method %s is not found", bot, method)
 		return
 	}
 
@@ -519,4 +560,13 @@ func (bot *ClientBot) OnEnterSpace() {
 // OnLeaveSpace is called when player leaves space
 func (bot *ClientBot) OnLeaveSpace(oldSpace *ClientSpace) {
 	gwlog.Debugf("%s.OnLeaveSpace, player=%s", bot, bot.player)
+}
+
+func Errorf(fmt string, args ...interface{}) {
+	if strictMode {
+		gwlog.Fatalf(fmt, args...)
+	} else {
+		gwlog.Errorf(fmt, args...)
+	}
+
 }

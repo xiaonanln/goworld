@@ -23,7 +23,7 @@ type MySpace struct {
 // OnSpaceCreated is called when the space is created
 func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
-	space.EnableAOI()
+	space.EnableAOI(100)
 
 	goworld.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 	space.AddTimer(time.Second*5, "DumpEntityStatus")
@@ -36,7 +36,7 @@ func (space *MySpace) OnSpaceCreated() {
 
 func (space *MySpace) DumpEntityStatus() {
 	space.ForEachEntity(func(e *entity.Entity) {
-		gwlog.Debugf(">>> %s @ position %s, neighbors=%d", e, e.GetPosition(), len(e.Neighbors))
+		gwlog.Debugf(">>> %s @ position %s, neighbors=%d", e, e.GetPosition(), len(e.InterestedIn))
 	})
 }
 

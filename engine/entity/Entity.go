@@ -12,7 +12,6 @@ import (
 	"github.com/xiaonanln/go-aoi"
 	timer "github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/common"
-	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/gwlog"
@@ -51,7 +50,8 @@ type Entity struct {
 	typeDesc             *EntityTypeDesc
 	Space                *Space
 	Position             Vector3
-	Neighbors            EntitySet
+	InterestedIn         EntitySet
+	InterestedBy         EntitySet
 	aoi                  aoi.AOI
 	yaw                  Yaw
 	rawTimers            map[*timer.Timer]struct{}
@@ -137,10 +137,8 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 	e.Space.leave(e)
 
 	if !isMigrate {
-		//e.callCompositiveMethod("OnDestroy")
 		e.I.OnDestroy()
 	} else {
-		//e.callCompositiveMethod("OnMigrateOut")
 		e.I.OnMigrateOut()
 	}
 
@@ -200,11 +198,6 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 
 	e.typeDesc = registeredEntityTypes[typeName]
 
-	//if !e.typeDesc.definedAttrs {
-	//	// first time entity of this type is created, define Attrs now
-	//	e.callCompositiveMethod("DescribeEntityType", e.typeDesc)
-	//}
-
 	e.rawTimers = map[*timer.Timer]struct{}{}
 	e.timers = map[EntityTimerID]*entityTimerInfo{}
 
@@ -212,75 +205,12 @@ func (e *Entity) init(typeName string, entityid common.EntityID, entityInstance 
 	attrs.owner = e
 	e.Attrs = attrs
 
-	e.Neighbors = EntitySet{}
-	aoi.InitAOI(&e.aoi, _DEFAULT_AOI_DISTANCE, e, e)
-	//e.initComponents()
+	e.InterestedIn = EntitySet{}
+	e.InterestedBy = EntitySet{}
+	aoi.InitAOI(&e.aoi, aoi.Coord(e.typeDesc.aoiDistance), e, e)
 
-	//e.callCompositiveMethod("OnInit")
 	e.I.OnInit()
 }
-
-//func (e *Entity) initComponents() {
-//	entityVal := reflect.Indirect(e.V)
-//	for fi := 0; fi < entityVal.NumField(); fi++ {
-//		field := entityVal.Field(fi)
-//		//fieldStruct := entityVal.Type().Field(fi)
-//		if isComponentType(field.Type()) {
-//			//gwlog.Infof("%s: Field %s %d %T is a component, initializing ...", e, fieldStruct.Name, fi, field.Interface())
-//			comp := field.FieldByName("Component").Addr().Interface().(*Component)
-//			e.initComponent(comp)
-//		}
-//	}
-//}
-
-//func (e *Entity) initComponent(comp *Component) {
-//	comp.Entity = e
-//}
-
-//func (e *Entity) callCompositiveMethod(methodName string, args ...interface{}) {
-//	entityPtr := e.V
-//	entityVal := reflect.Indirect(entityPtr)
-//	var methodIn []reflect.Value
-//	if len(args) > 0 {
-//		methodIn = make([]reflect.Value, len(args), len(args))
-//		for i := 0; i < len(args); i++ {
-//			methodIn[i] = reflect.ValueOf(args[i])
-//		}
-//	}
-//
-//	method := entityPtr.MethodByName(methodName)
-//	if method.IsValid() {
-//		gwutils.RunPanicless(func() {
-//			method.Call(methodIn)
-//		})
-//	}
-//
-//	compIndices, ok := e.typeDesc.compositiveMethodComponentIndices[methodName]
-//	if !ok {
-//		// collect compositiveMethodComponentIndices for the first time
-//		entityType := entityVal.Type()
-//		for fi := 0; fi < entityType.NumField(); fi++ {
-//			field := entityType.Field(fi)
-//			if isComponentType(field.Type) {
-//				//gwlog.Infof("Field %v is a component", field.Name)
-//				_, ok := reflect.PtrTo(field.Type).MethodByName(methodName)
-//				if ok {
-//					compIndices = append(compIndices, fi)
-//				}
-//			}
-//		}
-//
-//		e.typeDesc.compositiveMethodComponentIndices[methodName] = compIndices
-//	}
-//
-//	for _, ci := range compIndices {
-//		field := entityVal.Field(ci)
-//		//gwlog.Infof("Calling method %s on field %d=>%s", methodName, ci, field)
-//		gwutils.RunPanicless(func() {
-//			field.Addr().MethodByName(methodName).Call(methodIn)
-//		})
-//	}
-//}
 
 func (e *Entity) setupSaveTimer() {
 	e.addRawTimer(saveInterval, e.Save)
@@ -304,24 +234,20 @@ func (e *Entity) OnLeaveAOI(otherAoi *aoi.AOI) {
 
 // Interests and Uninterest among entities
 func (e *Entity) interest(other *Entity) {
-	if e == other || e.Neighbors.Contains(other) {
-		gwlog.Panicf("interest multiple times: %s & %s", e, other)
-	}
-	e.Neighbors.Add(other)
+	e.InterestedIn.Add(other)
+	other.InterestedBy.Add(e)
 	e.client.sendCreateEntity(other, false)
 }
 
 func (e *Entity) uninterest(other *Entity) {
-	if e == other || !e.Neighbors.Contains(other) {
-		gwlog.Panicf("not interested yet: %s & %s", e, other)
-	}
-	e.Neighbors.Del(other)
+	e.InterestedIn.Del(other)
+	other.InterestedBy.Del(e)
 	e.client.sendDestroyEntity(other)
 }
 
-// IsNeighbor checks if other entity is a neighbor
-func (e *Entity) IsNeighbor(other *Entity) bool {
-	return e.Neighbors.Contains(other)
+// IsInterestedIn checks if other entity is interested by this entity
+func (e *Entity) IsInterestedIn(other *Entity) bool {
+	return e.InterestedIn.Contains(other)
 }
 
 // DistanceTo calculates the distance between two entities
@@ -759,7 +685,7 @@ func (e *Entity) SetClient(client *GameClient) {
 		// send destroy entity to Client
 		dispatchercluster.SelectByEntityID(e.ID).SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			oldClient.sendDestroyEntity(neighbor)
 		}
 
@@ -781,7 +707,7 @@ func (e *Entity) SetClient(client *GameClient) {
 			client.sendCreateEntity(&e.Space.Entity, false)
 		}
 
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			client.sendCreateEntity(neighbor, false)
 		}
 	}
@@ -817,7 +743,7 @@ func (e *Entity) CallClient(method string, args ...interface{}) {
 func (e *Entity) CallAllClients(method string, args ...interface{}) {
 	e.client.call(e.ID, method, args)
 
-	for neighbor := range e.Neighbors {
+	for neighbor := range e.InterestedBy {
 		neighbor.client.call(e.ID, method, args)
 	}
 }
@@ -844,7 +770,7 @@ func (e *Entity) ForAllClients(f func(client *GameClient)) {
 		f(e.client)
 	}
 
-	for neighbor := range e.Neighbors {
+	for neighbor := range e.InterestedBy {
 		if neighbor.client != nil {
 			f(neighbor.client)
 		}
@@ -862,7 +788,7 @@ func (e *Entity) notifyClientDisconnected() {
 // Can override this function in custom entity type
 func (e *Entity) OnClientConnected() {
 	if consts.DEBUG_CLIENTS {
-		gwlog.Debugf("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.Neighbors))
+		gwlog.Debugf("%s.OnClientConnected: %s, %d Neighbors", e, e.client, len(e.InterestedIn))
 	}
 }
 
@@ -897,7 +823,7 @@ func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interfa
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
 		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			neighbor.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		}
 	} else if flag&afClient != 0 {
@@ -918,7 +844,7 @@ func (e *Entity) sendMapAttrDelToClients(ma *MapAttr, key string) {
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
 		e.client.sendNotifyMapAttrDel(e.ID, path, key)
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			neighbor.client.sendNotifyMapAttrDel(e.ID, path, key)
 		}
 	} else if flag&afClient != 0 {
@@ -937,7 +863,7 @@ func (e *Entity) sendMapAttrClearToClients(ma *MapAttr) {
 	if flag&afAllClient != 0 {
 		path := ma.getPathFromOwner()
 		e.client.sendNotifyMapAttrClear(e.ID, path)
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			neighbor.client.sendNotifyMapAttrClear(e.ID, path)
 		}
 	} else if flag&afClient != 0 {
@@ -953,7 +879,7 @@ func (e *Entity) sendListAttrChangeToClients(la *ListAttr, index int, val interf
 		// TODO: only pack 1 packet, do not marshal multiple times
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			neighbor.client.sendNotifyListAttrChange(e.ID, path, uint32(index), val)
 		}
 	} else if flag&afClient != 0 {
@@ -967,7 +893,7 @@ func (e *Entity) sendListAttrPopToClients(la *ListAttr) {
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrPop(e.ID, path)
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			neighbor.client.sendNotifyListAttrPop(e.ID, path)
 		}
 	} else if flag&afClient != 0 {
@@ -981,7 +907,7 @@ func (e *Entity) sendListAttrAppendToClients(la *ListAttr, val interface{}) {
 	if flag&afAllClient != 0 {
 		path := la.getPathFromOwner()
 		e.client.sendNotifyListAttrAppend(e.ID, path, val)
-		for neighbor := range e.Neighbors {
+		for neighbor := range e.InterestedBy {
 			neighbor.client.sendNotifyListAttrAppend(e.ID, path, val)
 		}
 	} else if flag&afClient != 0 {
@@ -1031,7 +957,6 @@ func (e *Entity) EnterSpace(spaceid common.EntityID, pos Vector3) {
 	if e.isEnteringSpace() {
 		gwlog.Errorf("%s is entering space %s, can not enter space %s", e, e.enteringSpaceRequest.SpaceID, spaceid)
 		e.I.OnEnterSpace()
-		//e.callCompositiveMethod("OnEnterSpace")
 		return
 	}
 
@@ -1280,17 +1205,20 @@ func (e *Entity) setPositionYaw(pos Vector3, yaw Yaw, fromClient bool) {
 }
 
 // CollectEntitySyncInfos is called by game service to collect and broadcast entity sync infos to all clients
-func CollectEntitySyncInfos() {
-	cfg := config.Get()
-	gateCount := len(cfg.Gates)
-	entitySyncInfosToGate := make([]*netutil.Packet, gateCount)
-	for gateid := 1; gateid <= gateCount; gateid++ {
-		packet := netutil.NewPacket()
-		packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
-		packet.AppendUint16(uint16(gateid))
-		entitySyncInfosToGate[gateid-1] = packet
-	}
+var entitySyncInfosToGate = map[uint16]*netutil.Packet{}
 
+func getEntitySyncInfosPacket(gateid uint16) *netutil.Packet {
+	pkt := entitySyncInfosToGate[gateid]
+	if pkt == nil {
+		pkt = netutil.NewPacket()
+		pkt.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
+		pkt.AppendUint16(gateid)
+		entitySyncInfosToGate[gateid] = pkt
+	}
+	return pkt
+}
+
+func CollectEntitySyncInfos() {
 	for eid, e := range entityManager.entities {
 		syncInfoFlag := e.syncInfoFlag
 		if syncInfoFlag == 0 {
@@ -1301,7 +1229,7 @@ func CollectEntitySyncInfos() {
 		syncInfo := e.getSyncInfo()
 		if syncInfoFlag&sifSyncOwnClient != 0 && e.client != nil {
 			gateid := e.client.gateid
-			packet := entitySyncInfosToGate[gateid-1]
+			packet := getEntitySyncInfosPacket(gateid)
 			packet.AppendClientID(e.client.clientid)
 			packet.AppendEntityID(eid)
 			packet.AppendFloat32(syncInfo.X)
@@ -1310,11 +1238,11 @@ func CollectEntitySyncInfos() {
 			packet.AppendFloat32(syncInfo.Yaw)
 		}
 		if syncInfoFlag&sifSyncNeighborClients != 0 {
-			for neighbor := range e.Neighbors {
+			for neighbor := range e.InterestedBy {
 				client := neighbor.client
 				if client != nil {
 					gateid := client.gateid
-					packet := entitySyncInfosToGate[gateid-1]
+					packet := getEntitySyncInfosPacket(gateid)
 					packet.AppendClientID(client.clientid)
 					packet.AppendEntityID(eid)
 					packet.AppendFloat32(syncInfo.X)
@@ -1327,15 +1255,14 @@ func CollectEntitySyncInfos() {
 	}
 
 	// send to dispatcher, one gate by one gate
-	for gateid_1, packet := range entitySyncInfosToGate {
-		//gwlog.Infof("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
-
-		if packet.GetPayloadLen() > 4 {
-			gateid := uint16(gateid_1 + 1)
+	if len(entitySyncInfosToGate) > 0 {
+		for gateid, packet := range entitySyncInfosToGate {
+			//gwlog.Infof("SYNC %d PAYLOAD %d", gateid, packet.GetPayloadLen())
 			dispatchercluster.SelectByGateID(gateid).SendPacket(packet)
+			packet.Release()
 		}
 
-		packet.Release()
+		entitySyncInfosToGate = map[uint16]*netutil.Packet{} // clear all packets
 	}
 }
 

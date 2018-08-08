@@ -1,7 +1,6 @@
 package netutil
 
 import (
-	"fmt"
 	"io"
 	"net"
 
@@ -34,8 +33,7 @@ func IsConnectionError(_err interface{}) bool {
 }
 
 // ConnectTCP connects to host:port in TCP
-func ConnectTCP(host string, port int) (net.Conn, error) {
-	addr := fmt.Sprintf("%s:%d", host, port)
+func ConnectTCP(addr string) (net.Conn, error) {
 	conn, err := net.Dial("tcp", addr)
 	return conn, err
 }

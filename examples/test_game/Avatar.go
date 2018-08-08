@@ -22,7 +22,7 @@ type Avatar struct {
 }
 
 func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
-	desc.SetPersistent(true).SetUseAOI(true)
+	desc.SetPersistent(true).SetUseAOI(true, 100)
 	desc.DefineAttr("name", "AllClients", "Persistent")
 	desc.DefineAttr("level", "AllClients", "Persistent")
 	desc.DefineAttr("prof", "AllClients", "Persistent")
@@ -32,6 +32,8 @@ func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
 	desc.DefineAttr("lastMailID", "Persistent")
 	desc.DefineAttr("testListField", "AllClients")
 	desc.DefineAttr("enteringNilSpace")
+	desc.DefineAttr("testCallAllN")
+	desc.DefineAttr("complexAttr", "Client")
 }
 
 func (a *Avatar) OnInit() {
@@ -144,7 +146,7 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 }
 
 func (a *Avatar) EnterRandomNilSpace_Client() {
-	gameIDs := goworld.ListGameIDs()
+	gameIDs := goworld.GetOnlineGames().ToList()
 	gameid := gameIDs[rand.Intn(len(gameIDs))]
 	nilSpaceID := goworld.GetNilSpaceID(gameid)
 	gwlog.Debugf("%s EnterRandomNilSpace: %s on game%d", a, nilSpaceID, gameid)
@@ -260,4 +262,61 @@ func (a *Avatar) OnPublish(subject string, content string) {
 	publisher = common.EntityID(content[:common.ENTITYID_LENGTH])
 	gwlog.Debugf("OnPublish: publisher=%s, subject=%s, content=%s", publisher, subject, content)
 	a.CallClient("OnTestPublish", publisher, subject, content)
+}
+
+func (a *Avatar) TestAOI_Client() {
+	e := goworld.CreateEntityLocally("AOITester")
+	gwlog.Infof("%s in space %s, TestAOI created %s", a, a.Space, e)
+	if !e.Space.IsNil() {
+		gwlog.Panicf("AOITester space is not nil")
+	}
+
+	e.EnterSpace(a.Space.ID, a.GetPosition())
+	a.Post(func() {
+		a.CallClient("OnTestAOI", e.ID)
+		e.Destroy()
+	})
+}
+
+func (a *Avatar) TestCallAll_Client() {
+	avatarCount := 1
+	a.InterestedIn.ForEach(func(e *entity.Entity) {
+		if e.TypeName == "Avatar" {
+			avatarCount += 1
+		}
+	})
+	a.Attrs.SetInt("testCallAllN", int64(avatarCount))
+	gwlog.Debugf("%s TestCallAll: found %d avatars", a, avatarCount)
+	a.CallAllClients("TestCallAllPlzEcho", a.ID)
+}
+
+func (a *Avatar) TestCallAllEcho_AllClients(eid common.EntityID) {
+	o := goworld.GetEntity(eid)
+	if o == nil {
+		gwlog.Warnf("%s.TestCallAllEcho_AllClients: can not find avatar %s", a, eid)
+		return
+	}
+
+	v := o.Attrs.GetInt("testCallAllN")
+	v -= 1
+	o.Attrs.SetInt("testCallAllN", v)
+	gwlog.Debugf("%s TestCallAllEcho_AllClients: v = %d", o, v)
+	if v == 0 {
+		o.CallClient("OnTestCallAll")
+	}
+}
+
+func (a *Avatar) TestComplexAttr_Client() {
+	complexAttr := a.GetMapAttr("complexAttr")
+	key1Attr := complexAttr.GetMapAttr("key1")
+	key2Attr := key1Attr.GetListAttr("key2")
+	key2Attr.AppendBool(true)
+	key2Attr.AppendListAttr(goworld.ListAttr())
+	idx1Attr := key2Attr.GetListAttr(1)
+	idx1Attr.AppendMapAttr(goworld.MapAttr())
+	innerMapAttr := idx1Attr.GetMapAttr(0)
+	innerMapAttr.SetStr("finalkey", "iamhere")
+	a.CallClient("OnTestComplexAttrStep1")
+	complexAttr.Clear()
+	a.CallClient("OnTestComplexAttrClear")
 }

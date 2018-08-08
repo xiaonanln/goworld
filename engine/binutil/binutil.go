@@ -1,7 +1,6 @@
 package binutil
 
 import (
-	"fmt"
 	"net/http"
 	"syscall"
 
@@ -15,27 +14,20 @@ const (
 )
 
 // SetupHTTPServer starts the HTTP server for go tool pprof and websockets
-func SetupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn)) {
-	setupHTTPServer(ip, port, wsHandler, "", "")
+func SetupHTTPServer(listenAddr string, wsHandler func(ws *websocket.Conn)) {
+	setupHTTPServer(listenAddr, wsHandler, "", "")
 }
 
 // SetupHTTPServerTLS starts the HTTPs server for go tool pprof and websockets
-func SetupHTTPServerTLS(ip string, port int, wsHandler func(ws *websocket.Conn), certFile string, keyFile string) {
-	setupHTTPServer(ip, port, wsHandler, certFile, keyFile)
+func SetupHTTPServerTLS(listenAddr string, wsHandler func(ws *websocket.Conn), certFile string, keyFile string) {
+	setupHTTPServer(listenAddr, wsHandler, certFile, keyFile)
 }
 
-func setupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn), certFile string, keyFile string) {
-	if port == 0 {
-		// pprof not enabled
-		gwlog.Infof("pprof server not enabled")
-		return
-	}
-
-	httpHost := fmt.Sprintf("%s:%d", ip, port)
-	gwlog.Infof("http server listening on %s", httpHost)
-	gwlog.Infof("pprof http://%s/debug/pprof/ ... available commands: ", httpHost)
-	gwlog.Infof("    go tool pprof http://%s/debug/pprof/heap", httpHost)
-	gwlog.Infof("    go tool pprof http://%s/debug/pprof/profile", httpHost)
+func setupHTTPServer(listenAddr string, wsHandler func(ws *websocket.Conn), certFile string, keyFile string) {
+	gwlog.Infof("http server listening on %s", listenAddr)
+	gwlog.Infof("pprof http://%s/debug/pprof/ ... available commands: ", listenAddr)
+	gwlog.Infof("    go tool pprof http://%s/debug/pprof/heap", listenAddr)
+	gwlog.Infof("    go tool pprof http://%s/debug/pprof/profile", listenAddr)
 	if keyFile != "" || certFile != "" {
 		gwlog.Infof("TLS is enabled on http: key=%s, cert=%s", keyFile, certFile)
 	}
@@ -47,9 +39,9 @@ func setupHTTPServer(ip string, port int, wsHandler func(ws *websocket.Conn), ce
 
 	go func() {
 		if keyFile == "" && certFile == "" {
-			http.ListenAndServe(httpHost, nil)
+			http.ListenAndServe(listenAddr, nil)
 		} else {
-			http.ListenAndServeTLS(httpHost, certFile, keyFile, nil)
+			http.ListenAndServeTLS(listenAddr, certFile, keyFile, nil)
 		}
 	}()
 }

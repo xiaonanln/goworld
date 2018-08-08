@@ -11,7 +11,6 @@ import (
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/components/game"
 	"github.com/xiaonanln/goworld/engine/common"
-	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
@@ -226,11 +225,6 @@ func PutKVDB(key string, val string, callback kvdb.KVDBPutCallback) {
 // GetOrPutKVDB 读取指定key所对应的value，如果key所对应的值当前为空，则存入key-value键值对
 func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 	kvdb.GetOrPut(key, val, callback)
-}
-
-// ListGameIDs 获得所有的GameID列表
-func ListGameIDs() []GameID {
-	return config.GetGameIDs()
 }
 
 // AddTimer adds a timer to be executed after specified duration
