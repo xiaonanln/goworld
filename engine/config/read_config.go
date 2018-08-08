@@ -38,8 +38,9 @@ var (
 
 // DeploymentConfig defines fields of deployment config
 type DeploymentConfig struct {
-	DesiredGames int `ini:"desired_games"`
-	DesiredGates int `ini:"desired_gates"`
+	DesiredDispatchers int `ini:"desired_dispatchers"`
+	DesiredGames       int `ini:"desired_games"`
+	DesiredGates       int `ini:"desired_gates"`
 }
 
 // GameConfig defines fields of game config
@@ -88,7 +89,7 @@ type GoWorldConfig struct {
 	DispatcherCommon DispatcherConfig
 	GameCommon       GameConfig
 	GateCommon       GateConfig
-	Dispatchers      map[uint16]*DispatcherConfig
+	_Dispatchers     map[uint16]*DispatcherConfig
 	_Games           map[uint16]*GameConfig
 	_Gates           map[uint16]*GateConfig
 	Storage          StorageConfig
@@ -122,7 +123,16 @@ type DebugConfig struct {
 
 // SetConfigFile sets the config file path (goworld.ini by default)
 func SetConfigFile(f string) {
+	configLock.Lock()
+	if configFilePath == f {
+		configLock.Unlock()
+		return
+	}
+
 	configFilePath = f
+	configLock.Unlock()
+
+	Reload()
 }
 
 // GetConfigDir returns the directory of goworld.ini
@@ -143,7 +153,7 @@ func Get() *GoWorldConfig {
 	if goWorldConfig == nil {
 		goWorldConfig = readGoWorldConfig()
 		gwlog.Infof(">>> config <<< debug = %v", goWorldConfig.Debug.Debug)
-		gwlog.Infof(">>> config <<< dispatcher count = %d", len(goWorldConfig.Dispatchers))
+		gwlog.Infof(">>> config <<< desired dispatcher count = %d", goWorldConfig.Deployment.DesiredDispatchers)
 		gwlog.Infof(">>> config <<< desired game count = %d", goWorldConfig.Deployment.DesiredGames)
 		gwlog.Infof(">>> config <<< desired gate count = %d", goWorldConfig.Deployment.DesiredGates)
 		gwlog.Infof(">>> config <<< storage type = %s", goWorldConfig.Storage.Type)
@@ -186,8 +196,8 @@ func GetGate(gateid uint16) *GateConfig {
 // GetDispatcherIDs returns all dispatcher IDs
 func GetDispatcherIDs() []uint16 {
 	cfg := Get()
-	dispIDs := make([]int, 0, len(cfg.Dispatchers))
-	for id := range cfg.Dispatchers {
+	dispIDs := make([]int, 0, len(cfg._Dispatchers))
+	for id := range cfg._Dispatchers {
 		dispIDs = append(dispIDs, int(id))
 	}
 	sort.Ints(dispIDs)
@@ -201,7 +211,7 @@ func GetDispatcherIDs() []uint16 {
 
 // GetDispatcher returns the dispatcher config
 func GetDispatcher(dispid uint16) *DispatcherConfig {
-	return Get().Dispatchers[dispid]
+	return Get()._Dispatchers[dispid]
 }
 
 // GetStorage returns the storage config
@@ -229,9 +239,9 @@ func Debug() bool {
 
 func readGoWorldConfig() *GoWorldConfig {
 	config := GoWorldConfig{
-		Dispatchers: map[uint16]*DispatcherConfig{},
-		_Games:      map[uint16]*GameConfig{},
-		_Gates:      map[uint16]*GateConfig{},
+		_Dispatchers: map[uint16]*DispatcherConfig{},
+		_Games:       map[uint16]*GameConfig{},
+		_Gates:       map[uint16]*GateConfig{},
 	}
 	gwlog.Infof("Using config file: %s", configFilePath)
 	iniFile, err := ini.Load(configFilePath)
@@ -242,7 +252,11 @@ func readGoWorldConfig() *GoWorldConfig {
 	readGateCommonConfig(gateCommonSec, &config.GateCommon)
 	dispatcherCommonSec := iniFile.Section("dispatcher_common")
 	readDispatcherCommonConfig(dispatcherCommonSec, &config.DispatcherCommon)
-
+	deploymentSec := iniFile.Section("deployment")
+	if deploymentSec == nil {
+		gwlog.Fatalf("[deployment] section not found in config file")
+	}
+	readDeploymentConfig(deploymentSec, &config.Deployment)
 	for _, sec := range iniFile.Sections() {
 		secName := sec.Name()
 		if secName == "DEFAULT" {
@@ -254,12 +268,17 @@ func readGoWorldConfig() *GoWorldConfig {
 		if secName == "game_common" || secName == "gate_common" || secName == "dispatcher_common" {
 			// ignore common section here
 		} else if secName == "deployment" {
-			readDeploymentConfig(sec, &config.Deployment)
+			// deployment section already read
 		} else if len(secName) > 10 && secName[:10] == "dispatcher" {
 			// dispatcher config
 			id, err := strconv.Atoi(secName[10:])
 			checkConfigError(err, fmt.Sprintf("invalid dispatcher name: %s", secName))
-			config.Dispatchers[uint16(id)] = readDispatcherConfig(sec, &config.DispatcherCommon)
+			if id > config.Deployment.DesiredDispatchers {
+				gwlog.Warnf("Section [%s] is ignored because [deployment].desired_dispatchers = %d", secName, config.Deployment.DesiredDispatchers)
+				continue
+			}
+
+			config._Dispatchers[uint16(id)] = readDispatcherConfig(sec, &config.DispatcherCommon)
 		} else if len(secName) > 4 && secName[:4] == "game" {
 			// game config
 			id, err := strconv.Atoi(secName[4:])
@@ -282,6 +301,13 @@ func readGoWorldConfig() *GoWorldConfig {
 			gwlog.Fatalf("unknown section: %s", secName)
 		}
 
+	}
+
+	for dispid := uint16(1); int(dispid) <= config.Deployment.DesiredDispatchers; dispid++ {
+		if _, ok := config._Dispatchers[dispid]; !ok {
+			// dispatcher config not found, fix it
+			config._Dispatchers[dispid] = &config.DispatcherCommon
+		}
 	}
 
 	validateConfig(&config)
@@ -627,13 +653,16 @@ func validateConfig(config *GoWorldConfig) {
 		gwlog.Fatalf("[deployment].desired_games is %d, which must be positive", deploymentConfig.DesiredGames)
 	}
 
-	dispatchersNum := len(config.Dispatchers)
+	dispatchersNum := deploymentConfig.DesiredDispatchers
+	if dispatchersNum != len(config._Dispatchers) {
+		gwlog.Panicf("[deployment].desired_dispatchers is %d, but find %d dispatcher section in config file", dispatchersNum, len(config._Dispatchers))
+	}
 	if dispatchersNum <= 0 {
 		gwlog.Fatalf("dispatcher not found in config file, must has at least 1 dispatcher")
 	}
 
 	for dispatcherid := 1; dispatcherid <= dispatchersNum; dispatcherid++ {
-		if _, ok := config.Dispatchers[uint16(dispatcherid)]; !ok {
+		if _, ok := config._Dispatchers[uint16(dispatcherid)]; !ok {
 			gwlog.Fatalf("found %d dispatchers in config file, but dispatcher%d is not found. dispatcherid must be 1~%d", dispatchersNum, dispatcherid, dispatchersNum)
 		}
 	}

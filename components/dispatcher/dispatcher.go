@@ -36,11 +36,6 @@ func parseArgs() {
 	flag.BoolVar(&runInDaemonMode, "d", false, "run in daemon mode")
 	flag.Parse()
 	dispid = uint16(dispidArg)
-
-	validDispIds := config.GetDispatcherIDs()
-	if dispid < validDispIds[0] || dispid > validDispIds[len(validDispIds)-1] {
-		gwlog.Fatalf("dispatcher ID must be one of %v, but is %v, use -dispid to specify", config.GetDispatcherIDs(), dispid)
-	}
 }
 
 func setupGCPercent() {
@@ -58,6 +53,11 @@ func main() {
 
 	if configFile != "" {
 		config.SetConfigFile(configFile)
+	}
+
+	validDispIds := config.GetDispatcherIDs()
+	if dispid < validDispIds[0] || dispid > validDispIds[len(validDispIds)-1] {
+		gwlog.Fatalf("dispatcher ID must be one of %v, but is %v, use -dispid to specify", config.GetDispatcherIDs(), dispid)
 	}
 
 	dispatcherConfig := config.GetDispatcher(dispid)

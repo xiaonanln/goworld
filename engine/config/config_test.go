@@ -19,7 +19,8 @@ func TestLoad(t *testing.T) {
 	if config == nil {
 		t.FailNow()
 	}
-	for dispid, dispatcherConfig := range config.Dispatchers {
+
+	for dispid, dispatcherConfig := range config._Dispatchers {
 		if dispatcherConfig.AdvertiseAddr == "" {
 			t.Errorf("dispatch %d: advertise addr not found", dispid)
 		}
@@ -75,5 +76,5 @@ func TestGetGate(t *testing.T) {
 }
 
 func TestSetConfigFile(t *testing.T) {
-	SetConfigFile("goworld.ini")
+	SetConfigFile("../../goworld.ini")
 }
