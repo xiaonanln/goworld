@@ -27,6 +27,9 @@ var (
 	numClients    int
 	startClientId int
 	noEntitySync  bool
+	strictMode    bool
+	duration      int
+	loglevel      string
 )
 
 func parseArgs() {
@@ -38,6 +41,9 @@ func parseArgs() {
 	flag.BoolVar(&useWebSocket, "ws", false, "use WebSocket to connect server")
 	flag.BoolVar(&useKCP, "kcp", false, "use KCP to connect server")
 	flag.BoolVar(&noEntitySync, "nosync", false, "disable entity sync")
+	flag.BoolVar(&strictMode, "strict", false, "enable strict mode")
+	flag.IntVar(&duration, "duration", 0, "run for a specified duration (seconds)")
+	flag.StringVar(&loglevel, "log", "info", "set log level (info by default)")
 	flag.Parse()
 }
 
@@ -47,8 +53,9 @@ func main() {
 	if configFile != "" {
 		config.SetConfigFile(configFile)
 	}
-	binutil.SetupGWLog("test_client", "info", "test_client.log", true)
-	binutil.SetupHTTPServer("localhost", 18888, nil)
+
+	binutil.SetupGWLog("test_client", loglevel, "test_client.log", true)
+	binutil.SetupHTTPServer("localhost:18888", nil)
 	if useWebSocket && useKCP {
 		gwlog.Errorf("Can not use both websocket and KCP")
 		os.Exit(1)
@@ -60,11 +67,18 @@ func main() {
 		gwlog.Infof("Using KCP clients ...")
 	}
 	var wait sync.WaitGroup
+	var waitAllConnected sync.WaitGroup
 	wait.Add(numClients)
+	waitAllConnected.Add(numClients)
 	for i := 0; i < numClients; i++ {
-		bot := newClientBot(startClientId+i, useWebSocket, useKCP, noEntitySync, &wait)
+		bot := newClientBot(startClientId+i, useWebSocket, useKCP, noEntitySync, &wait, &waitAllConnected)
 		go bot.run()
 	}
 	timer.StartTicks(time.Millisecond * 100)
+	if duration > 0 {
+		timer.AddCallback(time.Second*time.Duration(duration), func() {
+			os.Exit(0)
+		})
+	}
 	wait.Wait()
 }

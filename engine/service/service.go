@@ -1,19 +1,21 @@
 package service
 
 import (
-	"time"
-
 	"fmt"
+	"time"
 
 	"strings"
 
 	"strconv"
+
+	"math/rand"
 
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goTimer"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"github.com/xiaonanln/goworld/engine/gwvar"
 	"github.com/xiaonanln/goworld/engine/srvdis"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
@@ -37,10 +39,14 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 	registeredServices.Add(typeName)
 }
 
-func Startup(gameid_ uint16) {
+func Setup(gameid_ uint16) {
 	gameid = gameid_
 	srvdis.AddPostCallback(checkServicesLater)
+}
+
+func OnDeploymentReady() {
 	timer.AddTimer(checkServicesInterval, checkServices)
+	checkServicesLater()
 }
 
 type serviceInfo struct {
@@ -58,6 +64,10 @@ func checkServicesLater() {
 }
 
 func checkServices() {
+	if !gwvar.IsDeploymentReady.Value() {
+		// deployment is not ready
+		return
+	}
 	gwlog.Infof("service: checking services ...")
 	dispRegisteredServices := map[string]*serviceInfo{} // all services that are registered on dispatchers
 	needLocalServiceEntities := common.StringSet{}
@@ -151,7 +161,12 @@ func checkServices() {
 	for serviceName := range registeredServices {
 		if !getServiceInfo(serviceName).Registered {
 			gwlog.Warnf("service: %s not found, registering srvdis ...", serviceName)
-			srvdis.Register(getSrvID(serviceName), fmt.Sprintf("game%d", gameid), false)
+			// delay for a random time so that each game might register servcie randomly
+			randomDelay := time.Millisecond * time.Duration(rand.Intn(100))
+			_serviceName := serviceName
+			timer.AddCallback(randomDelay, func() {
+				srvdis.Register(getSrvID(_serviceName), fmt.Sprintf("game%d", gameid), false)
+			})
 		}
 	}
 }

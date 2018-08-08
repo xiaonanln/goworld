@@ -59,6 +59,12 @@ func (es EntitySet) Contains(entity *Entity) bool {
 	return ok
 }
 
+func (es EntitySet) ForEach(f func(e *Entity)) {
+	for e := range es {
+		f(e)
+	}
+}
+
 func (es EntitySet) String() string {
 	b := bytes.Buffer{}
 	b.WriteString("{")

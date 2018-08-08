@@ -14,8 +14,6 @@ const (
 	_SPACE_ENTITY_TYPE    = "__space__"
 	_SPACE_KIND_ATTR_KEY  = "_K"
 	_SPACE_ENABLE_AOI_KEY = "_EnableAOI"
-
-	_DEFAULT_AOI_DISTANCE = 100
 )
 
 var (
@@ -65,7 +63,6 @@ func (space *Space) OnInit() {
 	space.I = space.Entity.I.(ISpace)
 
 	space.I.OnSpaceInit()
-	//space.callCompositiveMethod("OnSpaceInit")
 }
 
 // OnSpaceInit is a compositive method for initializing space fields
@@ -78,8 +75,8 @@ func (space *Space) OnCreated() {
 	//dispatcher_client.GetDispatcherClientForSend().SendNotifyCreateEntity(space.ID)
 	space.onSpaceCreated()
 	if space.IsNil() {
-		gwlog.Infof("nil space is created: %s, all games connected: %v", space, allGamesConnected)
-		if allGamesConnected {
+		gwlog.Infof("nil space is created: %s, all games connected: %v", space, gameIsReady)
+		if gameIsReady {
 			space.I.OnGameReady()
 		}
 		return
@@ -89,20 +86,23 @@ func (space *Space) OnCreated() {
 		gwlog.Debugf("%s.OnCreated", space)
 	}
 	space.I.OnSpaceCreated()
-	//space.callCompositiveMethod("OnSpaceCreated")
 }
 
-func (space *Space) EnableAOI() {
+func (space *Space) EnableAOI(defaultAOIDistance Coord) {
+	if defaultAOIDistance <= 0 {
+		gwlog.Panicf("defaultAOIDistance < 0")
+	}
+
 	if space.aoiMgr != nil {
-		return
+		gwlog.Panicf("%s.EnableAOI: AOI already enabled", space)
 	}
 
 	if len(space.entities) > 0 {
 		gwlog.Panicf("%s is already using AOI", space)
 	}
 
-	space.Attrs.SetBool(_SPACE_ENABLE_AOI_KEY, true)
-	space.aoiMgr = aoi.NewXZListAOIManager()
+	space.Attrs.SetFloat(_SPACE_ENABLE_AOI_KEY, float64(defaultAOIDistance))
+	space.aoiMgr = aoi.NewXZListAOIManager(aoi.Coord(defaultAOIDistance))
 	//space.aoiMgr = aoi.NewTowerAOIManager(-500, 500, -500, 500, 10)
 }
 
@@ -118,8 +118,9 @@ func (space *Space) EnableAOI() {
 func (space *Space) OnRestored() {
 	space.onSpaceCreated()
 	//gwlog.Debugf("space %s restored: atts=%+v", space, space.Attrs)
-	if space.GetBool(_SPACE_ENABLE_AOI_KEY) {
-		space.EnableAOI()
+	aoidist := space.GetFloat(_SPACE_ENABLE_AOI_KEY)
+	if aoidist > 0 {
+		space.EnableAOI(Coord(aoidist))
 	}
 }
 
@@ -150,7 +151,6 @@ func (space *Space) OnSpaceCreated() {
 // OnDestroy is called when Space entity is destroyed
 func (space *Space) OnDestroy() {
 	space.I.OnSpaceDestroy()
-	//space.callCompositiveMethod("OnSpaceDestroy")
 	// destroy all entities
 	for e := range space.entities {
 		e.Destroy()

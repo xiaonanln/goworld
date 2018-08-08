@@ -104,7 +104,7 @@ func Run() {
 	crontab.Initialize()
 
 	gwlog.Infof("Setup http server ...")
-	binutil.SetupHTTPServer(gameConfig.HTTPIp, gameConfig.HTTPPort, nil)
+	binutil.SetupHTTPServer(gameConfig.HTTPAddr, nil)
 
 	entity.SetSaveInterval(gameConfig.SaveInterval)
 
@@ -130,7 +130,7 @@ func Run() {
 
 	setupSignals()
 
-	service.Startup(gameid)
+	service.Setup(gameid)
 	gwlog.Infof("Game service start running ...")
 	gameService.run()
 }

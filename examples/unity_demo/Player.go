@@ -14,7 +14,7 @@ type Player struct {
 }
 
 func (a *Player) DescribeEntityType(desc *entity.EntityTypeDesc) {
-	desc.SetPersistent(true).SetUseAOI(true)
+	desc.SetPersistent(true).SetUseAOI(true, 100)
 	desc.DefineAttr("name", "AllClients", "Persistent")
 	desc.DefineAttr("lv", "AllClients", "Persistent")
 	desc.DefineAttr("hp", "AllClients")

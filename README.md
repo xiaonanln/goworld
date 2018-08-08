@@ -156,4 +156,4 @@ The client for unity demo is hosted at [https://github.com/xiaonanln/goworld-uni
 The project was created and built in [Unity 2017.1](https://unity3d.com/). 
 
 You can try the demo by downloading [GoWorldUnityDemo.zip](http://goworldgs.com/goworld_files/GoWorldUnityDemo.zip). 
-The demo connects to a goworld server on Amazon EC2 instance. 
+The demo connects to a goworld server on Huawei Cloud instance.

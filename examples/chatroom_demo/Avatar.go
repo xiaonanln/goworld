@@ -16,7 +16,7 @@ type Avatar struct {
 }
 
 func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
-	desc.SetPersistent(true).SetUseAOI(true)
+	desc.SetPersistent(true).SetUseAOI(true, 100)
 	desc.DefineAttr("name", "Client", "Persistent")
 	desc.DefineAttr("chatroom", "Client")
 }

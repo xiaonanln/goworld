@@ -18,10 +18,12 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
+	"github.com/xiaonanln/goworld/engine/gwvar"
 	"github.com/xiaonanln/goworld/engine/kvdb"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
+	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
@@ -45,20 +47,18 @@ type GameService struct {
 	dispatcherStartFreezeAcks      []bool
 	positionSyncInterval           time.Duration
 	ticker                         <-chan time.Time
-	isGameConnected                []bool
-	//collectEntitySyncInfosRequest chan struct{}
-	//collectEntitySycnInfosReply   chan interface{}
+	onlineGames                    common.Uint16Set
+	isDeploymentReady              bool
 }
 
 func newGameService(gameid uint16) *GameService {
 	//cfg := config.GetGame(gameid)
-	totalGameNum := config.GetGamesNum()
 	return &GameService{
 		id: gameid,
 		//registeredServices: map[string]common.EntityIDSet{},
-		packetQueue:     make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
-		ticker:          time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
-		isGameConnected: make([]bool, totalGameNum),
+		packetQueue: make(chan proto.Message, consts.GAME_SERVICE_PACKET_QUEUE_SIZE),
+		ticker:      time.Tick(consts.GAME_SERVICE_TICK_INTERVAL),
+		onlineGames: common.Uint16Set{},
 		//terminated:         xnsyncutil.NewOneTimeCond(),
 		//dumpNotify:         xnsyncutil.NewOneTimeCond(),
 		//dumpFinishedNotify: xnsyncutil.NewOneTimeCond(),
@@ -152,6 +152,10 @@ func (gs *GameService) serveRoutine() {
 				gs.HandleStartFreezeGameAck(dispid)
 			case proto.MT_NOTIFY_GAME_CONNECTED:
 				gs.handleNotifyGameConnected(pkt)
+			case proto.MT_NOTIFY_GAME_DISCONNECTED:
+				gs.handleNotifyGameDisconnected(pkt)
+			case proto.MT_NOTIFY_DEPLOYMENT_READY:
+				gs.handleNotifyDeploymentReady(pkt)
 			case proto.MT_SET_GAME_ID_ACK:
 				gs.handleSetGameIDAck(pkt)
 			default:
@@ -313,47 +317,42 @@ func (gs *GameService) HandleStartFreezeGameAck(dispid uint16) {
 
 func (gs *GameService) handleNotifyGameConnected(pkt *netutil.Packet) {
 	gameid := pkt.ReadUint16() // the new connected game
-	if int(gameid) > config.GetGamesNum() {
-		gwlog.Panicf("%s: handle notify game connected: gameid %d is out of range", gs, gameid)
-		return
-	}
-
-	if gs.isGameConnected[gameid-1] {
+	if gs.onlineGames.Contains(gameid) {
 		// should not happen
 		gwlog.Errorf("%s: handle notify game connected: game%d is connected, but it was already connected", gs, gameid)
 		return
 	}
 
-	gs.isGameConnected[gameid-1] = true
-	if gs.isAllGamesConnected() {
-		entity.OnAllGamesConnected()
-	}
+	gs.onlineGames.Add(gameid)
+	gwlog.Infof("%s notify game connected: %d online games currently", gs, len(gs.onlineGames))
 }
 
-func (gs *GameService) isAllGamesConnected() bool {
-	for _, connected := range gs.isGameConnected {
-		if !connected {
-			return false
-		}
+func (gs *GameService) handleNotifyGameDisconnected(pkt *netutil.Packet) {
+	gameid := pkt.ReadUint16()
+
+	if !gs.onlineGames.Contains(gameid) {
+		// should not happen
+		gwlog.Errorf("%s: handle notify game disconnected: game%d is disconnected, but it was not connected", gs, gameid)
+		return
 	}
-	return true
+
+	gs.onlineGames.Remove(gameid)
+	gwlog.Infof("%s notify game disconnected: %d online games left", gs, len(gs.onlineGames))
+}
+
+func (gs *GameService) handleNotifyDeploymentReady(pkt *netutil.Packet) {
+	gs.onDeploymentReady()
 }
 
 func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 	dispid := pkt.ReadUint16() // dispatcher  that sent the SET_GAME_ID_ACK
+	isDeploymentReady := pkt.ReadBool()
+
 	gameNum := int(pkt.ReadUint16())
-	for i := range gs.isGameConnected {
-		gs.isGameConnected[i] = false // set all games to be not connected
-	}
-	numConnectedGames := 0
+	gs.onlineGames = common.Uint16Set{} // clear online games first
 	for i := 0; i < gameNum; i++ {
 		gameid := pkt.ReadUint16()
-		if int(gameid) > len(gs.isGameConnected) {
-			gwlog.Errorf("%s: set game ID ack: gameid %s is out of range", gs, gameid)
-			continue
-		}
-		gs.isGameConnected[gameid-1] = true
-		numConnectedGames += 1
+		gs.onlineGames.Add(gameid)
 	}
 
 	rejectEntitiesNum := pkt.ReadUint32()
@@ -375,11 +374,25 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		srvdis.WatchSrvdisRegister(srvid, srvinfo)
 	}
 
-	gwlog.Infof("%s: set game ID ack received, connected games: %v, reject entities: %d, srvdis map: %+v", gs, numConnectedGames, rejectEntitiesNum, srvdisMap)
-	if gs.isAllGamesConnected() {
+	gwlog.Infof("%s: set game ID ack received, deployment ready: %v, %d online games, reject entities: %d, srvdis map: %+v",
+		gs, isDeploymentReady, len(gs.onlineGames), rejectEntitiesNum, srvdisMap)
+	if isDeploymentReady {
 		// all games are connected
-		entity.OnAllGamesConnected()
+		gs.onDeploymentReady()
 	}
+}
+
+func (gs *GameService) onDeploymentReady() {
+	if gs.isDeploymentReady {
+		// should never happen, because dispatcher never send deployment ready to a game more than once
+		return
+	}
+
+	gs.isDeploymentReady = true
+	gwvar.IsDeploymentReady.Set(true)
+	gwlog.Infof("DEPLOYMENT IS READY!")
+	entity.OnGameReady()
+	service.OnDeploymentReady()
 }
 
 func (gs *GameService) HandleSyncPositionYawFromClient(pkt *netutil.Packet) {
@@ -467,6 +480,7 @@ func (gs *GameService) startFreeze() {
 	dispatchercluster.SendStartFreezeGame()
 }
 
-func ConnectedGamesNum() int {
-	return len(gameService.isGameConnected)
+// GetOnlineGames returns all online game IDs
+func GetOnlineGames() common.Uint16Set {
+	return gameService.onlineGames
 }

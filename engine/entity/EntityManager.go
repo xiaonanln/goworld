@@ -25,6 +25,7 @@ type EntityTypeDesc struct {
 	isService       bool
 	IsPersistent    bool
 	useAOI          bool
+	aoiDistance     Coord
 	entityType      reflect.Type
 	rpcDescs        rpcDescMap
 	allClientAttrs  common.StringSet
@@ -47,8 +48,13 @@ func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
 	return desc
 }
 
-func (desc *EntityTypeDesc) SetUseAOI(useAOI bool) *EntityTypeDesc {
+func (desc *EntityTypeDesc) SetUseAOI(useAOI bool, aoiDistance Coord) *EntityTypeDesc {
+	if aoiDistance < 0 {
+		gwlog.Panicf("aoi distance < 0")
+	}
+
 	desc.useAOI = useAOI
+	desc.aoiDistance = aoiDistance
 	return desc
 }
 
@@ -180,7 +186,6 @@ func RegisterEntity(typeName string, entity IEntity, isService bool) *EntityType
 	//// define entity Attrs
 	entity.DescribeEntityType(entityTypeDesc)
 	return entityTypeDesc
-	//e.callCompositiveMethod("DescribeEntityType", entityTypeDesc)
 }
 
 func GetEntityTypeDesc(typeName string) *EntityTypeDesc {
@@ -504,17 +509,17 @@ func OnGameTerminating() {
 	}
 }
 
-var allGamesConnected bool
+var gameIsReady bool
 
-// OnAllGamesConnected is called when all games are connected to dispatcher cluster
-func OnAllGamesConnected() {
-	if allGamesConnected {
+// OnGameReady is called when all games are connected to dispatcher cluster
+func OnGameReady() {
+	if gameIsReady {
 		gwlog.Warnf("all games connected, but not for the first time")
 		//gwlog.Warnf("registered services: %+v", entityManager.registeredServices)
 		return
 	}
 
-	allGamesConnected = true
+	gameIsReady = true
 	gwlog.Infof("all games connected, nil space = %s", nilSpace)
 	if nilSpace != nil {
 		nilSpace.I.OnGameReady()
@@ -551,7 +556,6 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 
 		err := gwutils.CatchPanic(func() {
 			e.I.OnFreeze()
-			//e.callCompositiveMethod("OnFreeze")
 		})
 		if err != nil {
 			// OnFreeze failed
