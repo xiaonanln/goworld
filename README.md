@@ -61,8 +61,6 @@ go get ./cmd/...
 
 Or using [Docker](https://www.docker.com/community-edition):
 ```bash
-# debian-jessie + golang + goworld
-docker run -it xiaonanln/goworld
 # debian-jessie + golang + goworld + mongodb 3.4 
 docker run -it xiaonanln/goworld-dev
 ```
