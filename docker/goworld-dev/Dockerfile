@@ -91,17 +91,12 @@ VOLUME /data/db /data/configdb
 ## Install Useful Tools For Development
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
-		sudo \
 		vim \
 		less \
 		git \
 		&& rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r goworld && useradd -m -g goworld -s /bin/bash goworld && echo goworld:goworld | chpasswd && adduser goworld sudo
-# RUN chown goworld:goworld /home/goworld
-
-USER goworld
-ENV HOME=/home/goworld
+ENV HOME=/root
 ENV GOPATH=$HOME/go PATH=$HOME/go/bin:$PATH
 RUN echo "GOPATH: $GOPATH"
 RUN echo "PATH: $PATH"
@@ -113,6 +108,7 @@ WORKDIR $GOPATH/src/github.com/xiaonanln/goworld
 RUN dep ensure
 RUN go get ./cmd/...
 RUN make all
-RUN cp goworld_docker.ini goworld.ini
 
-CMD ["bash"]
+# RUN MongoDB Server
+ADD start_mongod.sh .
+CMD ./start_mongod.sh && bash
