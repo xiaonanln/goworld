@@ -12,7 +12,7 @@ The game process is where game logic actually runs. A Space will always reside i
 Entities can migrate between multiple game processes by entering spaces on other game processes.
 GoWorld server can scale arbitrarily by running more process.
 
-goworld package
+Package goworld
 
 goworld package is dedicated to provide GoWorld game engine APIs for developers. Most of time developers should use
 functions exported by goworld package to manipulate spaces and entities. Developers can also use public methods of
@@ -52,7 +52,14 @@ use goworld.CreateEntity* functions to create entities.
 
 Loading Entities
 
+use goworld.LoadEntity* functions to load entities from database.
+
 Entity RPC
+
+use goworld.Call* functions to do RPC among entities
+
+Entity Attributes
+
 
 
 Configuration
