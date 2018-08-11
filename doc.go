@@ -14,7 +14,8 @@ GoWorld server can scale arbitrarily by running more process.
 
 Run game
 
-GoWorld does not provide a game executable. Developers have to build their own game.
+GoWorld does not provide a game executable. Developers have to build their own game program. A common game program looks
+like bellow:
 
 	import "goworld"
 
@@ -32,6 +33,15 @@ GoWorld does not provide a game executable. Developers have to build their own g
 		// Run the game server
 		goworld.Run()
 	}
+
+You must register a Space type which must be "inherit" goworld.Space  using `RegisterSpace`. `RegisterSpace` must
+be called exactly once, because GoWorld does not support multiple Space types.
+
+	type MySpace struct {
+		goworld.Space // Space type should always inherit from goworld.Space
+		...
+	}
+
 
 
 Configuration
