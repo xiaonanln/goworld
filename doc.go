@@ -12,6 +12,12 @@ The game process is where game logic actually runs. A Space will always reside i
 Entities can migrate between multiple game processes by entering spaces on other game processes.
 GoWorld server can scale arbitrarily by running more process.
 
+goworld package
+
+goworld package is dedicated to provide GoWorld game engine APIs for developers. Most of time developers should use
+functions exported by goworld package to manipulate spaces and entities. Developers can also use public methods of
+Space and Entity.
+
 Run game
 
 GoWorld does not provide a game executable. Developers have to build their own game program. A common game program looks
@@ -34,14 +40,19 @@ like bellow:
 		goworld.Run()
 	}
 
-You must register a Space type which must be "inherit" goworld.Space  using `RegisterSpace`. `RegisterSpace` must
-be called exactly once, because GoWorld does not support multiple Space types.
+Basically, you need to register space type, service types and entity types and then start the endless loop of game logic.
 
-	type MySpace struct {
-		goworld.Space // Space type should always inherit from goworld.Space
-		...
-	}
+Creating Spaces
 
+Use goworld.CreateSpace* functions to create spaces.
+
+Creating Entities
+
+use goworld.CreateEntity* functions to create entities.
+
+Loading Entities
+
+Entity RPC
 
 
 Configuration
