@@ -16,8 +16,15 @@ import (
 
 // Export useful types
 type Vector3 = entity.Vector3
+
+// Entity type is the type of any entity in game
 type Entity = entity.Entity
+
+// Space is the type of spaces
 type Space = entity.Space
+
+// EntityID is a global unique ID for entities and spaces.
+// EntityID is unique in the whole game server, and also unique across multiple games.
 type EntityID = common.EntityID
 
 // Run runs the server endless loop

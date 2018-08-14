@@ -48,23 +48,43 @@ Use goworld.CreateSpace* functions to create spaces.
 
 Creating Entities
 
-use goworld.CreateEntity* functions to create entities.
+Use goworld.CreateEntity* functions to create entities.
 
 Loading Entities
 
-use goworld.LoadEntity* functions to load entities from database.
+Use goworld.LoadEntity* functions to load entities from database.
 
 Entity RPC
 
-use goworld.Call* functions to do RPC among entities
+Use goworld.Call* functions to do RPC among entities
 
-Entity Attributes
+Entity storage and attributes
 
+Each entity type should override function DescribeEntityType to declare its expected behavior and all attributes,
+just like bellow.
 
+	func (a *Avatar) DescribeEntityType(desc *entity.EntityTypeDesc) {
+		desc.SetPersistent(true).SetUseAOI(true, 100)
+		desc.DefineAttr("name", "AllClients", "Persistent")
+		desc.DefineAttr("exp", "Client", "Persistent")
+		desc.DefineAttr("lastMailID", "Persistent")
+		desc.DefineAttr("testListField", "AllClients")
+		desc.DefineAttr("enteringNilSpace")
+	}
+
+Function SetPersistent can be used to make entities persistent. Persistent entities' attributes will be marshalled and
+saved on Entity Storage (e.g. MongoDB) every configurable minutes.
+
+Entities use attributes to store related data. Attributes can be synchronized to clients automatically.
+An entity's "AllClient" attributes will be synchronized to all clients of entities where this entity is
+in its AOI range. "Client" attributes wil be synchronized to own clients of entities. "Persistent" attributes will be
+saved on entity storage when entities are saved periodically.
+When entity is migrated from one game process to another, all attributes are marshalled and sent to the target game where
+the entity will be reconstructed using attribute data.
 
 Configuration
 
-GoWorld uses `goworld.ini` as the default config file.
+GoWorld uses `goworld.ini` as the default config file. Use '-configfile <path>' to use specified config file for processes.
 
 */
 package goworld
