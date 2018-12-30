@@ -1,5 +1,4 @@
 /*
-*goworld*库为开发者提供大部分的GoWorld服务器引擎接口。
 GoWorld是一个分布式的游戏服务器引擎，理论上支持无限横向扩展。
 一个GoWorld服务器由三种不同的进程注册：dispatcher、gate、game。
 gate负责接受客户端连接并对通信数据进行压缩和加密。
@@ -20,7 +19,8 @@ entity（上述Account，Player都是entity）则可以在space之间进行迁�
 goworld在逻辑开发的时候使用一直单线程事件触发的方式进行开发。game只在主线程（单个goroutine）运行游戏逻辑。
 因此任何游戏逻辑都不能调用任何堵塞的系统调用（例如time.Sleep）。单线程的逻辑开发可以大幅度简化逻辑代码的复杂度，因为任何逻辑和数据结构都不需要考虑并发和加锁。
 
-goworld模块是goworld将开发者常用的功能函数都提取到这个模块中。例如goworld模块提供注册entity，创建space，创建entity等核心功能。
+
+*goworld*库为开发者提供大部分的GoWorld服务器引擎接口。例如goworld模块提供注册entity，创建space，创建entity等核心功能。
 开发者可以参考现有的服务器例子代码来学习如何初始化并启动game。
 */
 package goworld
@@ -40,48 +40,46 @@ import (
 )
 
 const (
-	// ENTITYID_LENGTH 是EntityID的长度，目前为16
+	// ENTITYID_LENGTH 是EntityID的长度，目前固定为16字节。
 	ENTITYID_LENGTH = common.ENTITYID_LENGTH
 )
 
-// GameID 是Game进程的ID。
+// EntityID 唯一代表一个Entity。EntityID是一个字符串（string），长度固定为ENTITYID_LENGTH。
+// EntityID是全局唯一的。不同进程上产生的EntityID都是唯一的，不会出现重复。因此即使是不同的游戏服务器产生的EntityID也是唯一的。
+type EntityID = common.EntityID
+
+// GameID 是Game进程的ID（数字，uint16）
 // GoWorld要求GameID的数值必须是从1~N的连续N个数字，其中N为服务器配置文件中配置的game进程数目。
 type GameID = uint16
 
-// GateID 是Gate进程的ID。
+// GateID 是Gate进程的ID（数字，uint16）
 // GoWorld要求GateID的数值必须是从1~N的连续N个数字，其中N为服务器配置文件中配置的game进程数目。
 type GateID = uint16
 
-// DispatcherID 是Dispatcher进程的ID
+// DispatcherID 是Dispatcher进程的ID（数字，uint16）
 // GoWorld要求DispatcherID的数值必须是从1~N的连续N个数字，其中N为服务器配置文件中配置的dispatcher进程数目
 type DispatcherID uint16
 
-// EntityID 唯一代表一个Entity。EntityID是一个字符串（string），长度固定（ENTITYID_LENGTH）。
-// EntityID是全局唯一的。不同进程上产生的EntityID都是唯一的，不会出现重复。一般来说即使是不用的游戏服务器产生的EntityID也是唯一的。
-type EntityID = common.EntityID
-
-// Entity 类型代表游戏服务器中的一个对象。开发者可以使用GoWorld提供的接口进行对象创建、载入。对象载入之后，GoWorld提供定时的对象数据存盘。
-// 同一个game进程中的Entity之间可以拿到相互的引用（指针）并直接进行相关的函数调用。不同game进程中的Entity之间可以使用RPC进行相互通信。
+// Entity 类型代表游戏服务器中的一个对象。开发者可以使用GoWorld提供的接口进行对象创建、载入。
+// 同一个game进程中的Entity之间可以拿到相互的引用（指针）并直接进行相关的函数调用。不同game进程中的Entity之间可以通过EntityID使用RPC进行相互通信。
+// Entity通过属性机制进行定时存盘和客户端数据同步。一般来说，开发者为Entity定义各种不同类型不同特性的属性，PERSISTENT的属性将会被定时存入到数据库中
+// Client和AllClients属性能够被自动同步到客户端。当entity在game之间迁移（切换场景）的时候，所有的属性将会被导出并发送到目标game从而在目标game上重建entity对象。
+// 游戏中的所有对象都必须继承Entity对象（添加一个goworld.Entity类型的匿名成员）
 type Entity = entity.Entity
 
 // Space 类型代表一个游戏服务器中的一个场景。一个场景中可以包含多个Entity。Space和其中的Entity都存在于一个game进程中。
 // Entity可以通过调用EnterSpace函数来切换Space。如果EnterSpace调用所指定的Space在其他game进程上，Entity将被迁移到对应的game进程并添加到Space中。
+// 游戏中的场景对象必须继承Space对象（添加一个goworld.Space类型的匿名成员）
 type Space = entity.Space
 
-// Kind 类型表示Space的种类。开发者在创建Space的时候需要提供Kind参数，从而创建特定Kind的Space。NilSpace的Kind总是为0，并且开发者不能创建Kind=0的Space。
+// SpaceKind 类型表示Space的种类。开发者在创建Space的时候需要提供kind参数，从而创建特定SpaceKind的Space。
+// NilSpace的Kind总是为0，并且开发者不能创建Kind=0的Space。
 // 开发者可以根据Kind的值来区分不同的场景，具体的区分规则由开发者自己决定。
-type Kind = int
+type SpaceKind = int
 
 // Vector3 是服务端用于存储Entity位置的类型，包含X, Y, Z三个字段。
 // GoWorld使用X轴和Z轴坐标进行AOI管理，无视Y轴坐标值。
 type Vector3 = entity.Vector3
-
-// Run 开始运行game服务。开发者需要为自己的游戏服务器提供一个main模块和main函数，并在main函数里正确初始化GoWorld服务器并启动服务器。
-// 一般来说，开发者需要在main函数中注册相应的Space类型、Service类型、Entity类型，然后调用 goworld.Run() 启动GoWorld服务器即可，可参考：
-// https://github.com/xiaonanln/goworld/blob/master/examples/unity_demo/unity_demo.go
-func Run() {
-	game.Run()
-}
 
 // RegisterSpace 注册一个Space对象类型。开发者必须并且只能调用这个接口一次，从而注册特定的Space类型。一个合法的Space类型必须继承goworld.Space类型。
 func RegisterSpace(spacePtr entity.ISpace) {
@@ -101,23 +99,31 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 	service.RegisterService(typeName, entityPtr)
 }
 
-// CreateSpaceAnywhere 在一个随机选择的game（以后会支持自动负载均衡）上创建一个特定Kind的Space对象。
-func CreateSpaceAnywhere(kind Kind) EntityID {
+// Run 开始运行game服务。开发者需要为自己的游戏服务器提供一个main模块和main函数，并在main函数里正确初始化GoWorld服务器并启动服务器。
+// 一般来说，开发者需要在main函数中注册相应的Space类型、Service类型、Entity类型，然后调用 goworld.Run() 启动GoWorld服务器即可，可参考：
+// https://github.com/xiaonanln/goworld/blob/master/examples/unity_demo/unity_demo.go
+func Run() {
+	game.Run()
+}
+
+// CreateSpaceAnywhere 在一个随机选择的game（以后会支持自动负载均衡）上创建一个特定SpaceKind的Space对象。
+// 返回所创建space的EntityID（space本质上也是entity），entity可以调用EnterSpace进入这个space。
+func CreateSpaceAnywhere(kind SpaceKind) EntityID {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
 	return entity.CreateSpaceSomewhere(0, kind)
 }
 
-// CreateSpaceOnGame creates a space with specified kind on the specified game
-//
-// returns the space EntityID
+// CreateSpaceAnywhere 做制定的game上创建一个特定SpaceKind的Space对象。
+// 返回所创建space的EntityID（space本质上也是entity），entity可以调用EnterSpace进入这个space。
 func CreateSpaceOnGame(gameid uint16, kind int) EntityID {
 	return entity.CreateSpaceSomewhere(gameid, kind)
 }
 
 // CreateSpaceLocally 在本地game进程上创建一个指定Kind的Space。
-func CreateSpaceLocally(kind Kind) *Space {
+// 返回对应的Space对象。
+func CreateSpaceLocally(kind SpaceKind) *Space {
 	if kind == 0 {
 		gwlog.Panicf("Can not create nil space with kind=0. Game will create 1 nil space automatically.")
 	}
@@ -125,42 +131,43 @@ func CreateSpaceLocally(kind Kind) *Space {
 }
 
 // CreateEntityLocally 在本地game进程上创建一个指定类型的Entity
+// 返回创建的entity对象
 func CreateEntityLocally(typeName string) *Entity {
 	return entity.CreateEntityLocally(typeName, nil)
 }
 
 // CreateEntityAnywhere 在随机选择的game进程上创建一个特定类型的Entity
+// 返回创建对象的EntityID，可以使用这个EntityID向entity进行RPC调用
 func CreateEntityAnywhere(typeName string) EntityID {
 	return entity.CreateEntitySomewhere(0, typeName)
 }
 
+// CreateEntityOnGame 在指定的game进程上创建一个特定类型的Entity
+// 返回创建对象的EntityID，可以使用这个EntityID向entity进行RPC调用
 func CreateEntityOnGame(gameid uint16, typeName string) EntityID {
 	return entity.CreateEntitySomewhere(gameid, typeName)
 }
 
 // LoadEntityAnywhere 在随机选择的game进程上载入指定的Entity。
-// GoWorld保证每个Entity最多只会存在于一个game进程，即只有一份实例。
-// 如果这个Entity当前已经存在，则GoWorld不会做任何操作。
+// 如果这个Entity当前已经在任意一个game上存在，则不会重复创建。
+// GoWorld保证每个Entity最多只会存在于一个game进程，即只有一份实例，在根本上规避了重复创建玩家对象可能导致的各种回档等严重问题。
 func LoadEntityAnywhere(typeName string, entityID EntityID) {
 	entity.LoadEntityAnywhere(typeName, entityID)
 }
 
 // LoadEntityOnGame 在指定的game进程上载入特定的Entity对象。
-// 如果这个Entity当前已经存在，则GoWorld不会做任何操作。因此在调用LoadEntityOnGame之后并不能严格保证Entity必然存在于所指定的game进程中。
+// 如果这个Entity当前已经做任意一个game上存在，则GoWorld不会做任何操作。
+// 因此在调用LoadEntityOnGame之后并不能100%保证Entity必然存在于所指定的game进程中！
 func LoadEntityOnGame(typeName string, entityID EntityID, gameid GameID) {
 	entity.LoadEntityOnGame(typeName, entityID, gameid)
 }
 
 // LoadEntityLocally 在当前的game进程中载入特定的Entity对象
-// 如果这个Entity当前已经存在，则GoWorld不会做任何操作。因此在调用LoadEntityOnGame之后并不能严格保证Entity必然存在于当前game进程中。
+// 如果这个Entity当前已经存在，则GoWorld不会做任何操作。
+// 因此在调用LoadEntityOnGame之后并不能严格保证Entity必然存在于当前game进程中。
+// 由于载入Entity的操作是异步的，做调用本函数之后立刻调用GetEntity不能立刻找到Entity。
 func LoadEntityLocally(typeName string, entityID EntityID) {
 	entity.LoadEntityOnGame(typeName, entityID, GetGameID())
-}
-
-// ListEntityIDs 获得某个类型的所有Entity对象的EntityID列表
-// （这个接口将被弃用）
-func ListEntityIDs(typeName string, callback storage.ListCallbackFunc) {
-	storage.ListEntityIDs(typeName, callback)
 }
 
 // Exists 检查某个特定的Entity是否存在（已创建存盘）
@@ -184,6 +191,8 @@ func GetGameID() GameID {
 }
 
 // MapAttr 创建一个新的空MapAttr对象
+//
+//
 func MapAttr() *entity.MapAttr {
 	return entity.NewMapAttr()
 }

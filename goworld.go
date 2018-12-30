@@ -101,13 +101,6 @@ func LoadEntityLocally(typeName string, entityID EntityID) {
 	entity.LoadEntityOnGame(typeName, entityID, GetGameID())
 }
 
-// ListEntityIDs gets all saved entity ids in storage, may take long time and block the main routine
-//
-// returns result in callback
-func ListEntityIDs(typeName string, callback storage.ListCallbackFunc) {
-	storage.ListEntityIDs(typeName, callback)
-}
-
 // Exists checks if entityID exists in entity storage
 //
 // returns result in callback
