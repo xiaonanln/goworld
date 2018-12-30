@@ -17,6 +17,11 @@ space提供一种房间，场景的逻辑抽象。space被创建就永远常驻�
 entity（上述Account，Player都是entity）则可以在space之间进行迁移。entity可以通过EnterSpace调用进入场景，如果这个场景在其他game上，goworld就会将entity的所有属性数据都打包并发送到目标game，然后在目标game上重建这个entity。这个过程对开发者来说是无缝透明的。
 同一个space里的所有entity都在同一个game，因此可以直接相互调用。不同space中的entity很可能在不同的game上，因此只能通过rpc相互调用。
 
+goworld在逻辑开发的时候使用一直单线程事件触发的方式进行开发。game只在主线程（单个goroutine）运行游戏逻辑。
+因此任何游戏逻辑都不能调用任何堵塞的系统调用（例如time.Sleep）。单线程的逻辑开发可以大幅度简化逻辑代码的复杂度，因为任何逻辑和数据结构都不需要考虑并发和加锁。
+
+goworld模块是goworld将开发者常用的功能函数都提取到这个模块中。例如goworld模块提供注册entity，创建space，创建entity等核心功能。
+开发者可以参考现有的服务器例子代码来学习如何初始化并启动game。
 */
 package goworld
 
