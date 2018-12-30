@@ -2,6 +2,21 @@
 *goworld*库为开发者提供大部分的GoWorld服务器引擎接口。
 GoWorld是一个分布式的游戏服务器引擎，理论上支持无限横向扩展。
 一个GoWorld服务器由三种不同的进程注册：dispatcher、gate、game。
+gate负责接受客户端连接并对通信数据进行压缩和加密。
+game负责所有的游戏逻辑。
+dispatcher作为game和gate之间的数据转发中心，负责将数据发送到正确的game或gate。
+
+gate和diapatcher是直接编译运行的，开发者不需要自己编写任何代码。
+game本质上是一个库，开发者需要自己提供main函数并调用合适的goworld模块方法启动game。
+
+game采用一种场景（space）和（entity）的方式进行逻辑开发和通信。
+当客户端登录到goworld服务器之后，就会在任意一个game上创建一个Account对象。这个Account对象就负责处理所有的客户端请求，即成为了一个ClientOwner。
+一般来说，Account对象负责玩家的登录逻辑。当玩家登录成功的时候，Account就创建一个Player对象并将客户端移交（GiveClientTo）Player。
+开发者应该根据游戏逻辑创建相应的space并让Player进入这些space。
+space提供一种房间，场景的逻辑抽象。space被创建就永远常驻在某个game上直到被销毁，space无法迁移。
+entity（上述Account，Player都是entity）则可以在space之间进行迁移。entity可以通过EnterSpace调用进入场景，如果这个场景在其他game上，goworld就会将entity的所有属性数据都打包并发送到目标game，然后在目标game上重建这个entity。这个过程对开发者来说是无缝透明的。
+同一个space里的所有entity都在同一个game，因此可以直接相互调用。不同space中的entity很可能在不同的game上，因此只能通过rpc相互调用。
+
 */
 package goworld
 
