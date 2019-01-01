@@ -190,26 +190,28 @@ func GetGameID() GameID {
 	return game.GetGameID()
 }
 
-// MapAttr 创建一个新的空MapAttr对象
+// MapAttr 创建一个新的空MapAttr属性
 //
-//
+// MapAttr允许将多个属性按照Key-Value的形式组合成一个MapAttr。Key的类型总是字符串，Value的类型可以是普通的Int, Float, Bool, Str也可以是嵌套的MapAttr和ListAttr。
 func MapAttr() *entity.MapAttr {
 	return entity.NewMapAttr()
 }
 
-// ListAttr 创建一个新的空ListAttr对象
+// ListAttr 创建一个新的空ListAttr属性
+//
+// ListAttr允许将多个属性按照数组/列表的形式组合成一个ListAttr。ListAttr中的元素类型可以是普通的Int, Float, Bool, Str也可以是嵌套的MapAttr和ListAttr。
 func ListAttr() *entity.ListAttr {
 	return entity.NewListAttr()
 }
 
 // Entities 返回所有的Entity对象（通过EntityMap类型返回）
-// 此接口将被弃用
+//
+// 返回的EntityMap只能读取，不能做任何修改
 func Entities() entity.EntityMap {
 	return entity.Entities()
 }
 
 // Call 函数调用指定Entity的指定方法，并传递参数。
-// 如果指定的Entity在当前game进程中，则会立刻调用其方法。否则将通过RPC发送函数调用和参数到所对应的game进程中。
 func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
@@ -225,12 +227,17 @@ func GetServiceEntityID(serviceName string) common.EntityID {
 }
 
 // CallNilSpaces 向所有game进程中的NilSpace发起RPC调用。
-// 由于每个game进程中都有一个唯一的NilSpace，因此这个函数想每个game进程都发起了一次函数调用。
+//
+// 每个game在启动之后都会在本地创建一个唯一的NilSpace。
+// NilSpace和普通的space的区别在于只能由系统创建，并且kind等于0。所有Entity在创建出来还没有EnterSpace之前，总是属于NilSpace。
+// 每个game上的NilSpace的EntityID都是确定的，可以根据gameid直接计算出来。因此我们可以使用NilSpace的EntityID来调用EnterSpace实现Entity到目标game的迁移。
+// CallNilSpaces将会在所有game上执行一次目标函数。
 func CallNilSpaces(method string, args ...interface{}) {
 	entity.CallNilSpaces(method, args, game.GetGameID())
 }
 
 // GetNilSpaceID 返回特定game进程中的NilSpace的EntityID。
+//
 // GoWorld为每个game进程中的NilSpace使用了固定的EntityID值，例如目前GoWorld实现中在game1上NilSpace的EntityID总是"AAAAAAAAAAAAAAAx"，每次重启服务器都不会变化。
 func GetNilSpaceID(gameid GameID) EntityID {
 	return entity.GetNilSpaceID(gameid)
@@ -256,18 +263,16 @@ func GetOrPutKVDB(key string, val string, callback kvdb.KVDBGetOrPutCallback) {
 	kvdb.GetOrPut(key, val, callback)
 }
 
-// AddTimer adds a timer to be executed after specified duration
+// AddCallback 添加一个定时回调。回调将在指定时间之后触发。回调函数（callback）总是在主线程（逻辑coroutine）中运行。
 func AddCallback(d time.Duration, callback func()) {
 	timer.AddCallback(d, callback)
 }
 
-// AddTimer adds a repeat timer to be executed every specified duration
+// AddTimer 添加一个定时触发的回调函数。在制定时间间隔之后触发第一次，以后每过指定时间触发一次。所有触发函数总是在主线程（逻辑coroutine）中执行。
 func AddTimer(d time.Duration, callback func()) {
 	timer.AddTimer(d, callback)
 }
 
-// Post posts a callback to be executed
-// It is almost same as AddCallback(0, callback)
 func Post(callback post.PostCallback) {
 	post.Post(callback)
 }
