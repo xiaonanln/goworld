@@ -7,8 +7,8 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 [![ApacheLicense](https://img.shields.io/badge/license-APACHE%20License-blue.svg)](https://raw.githubusercontent.com/xiaonanln/goworld/master/LICENSE)
 [![Join the chat at https://gitter.im/goworldgs/Lobby](https://badges.gitter.im/goworldgs/Lobby.svg)](https://gitter.im/goworldgs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-* [中文文档](https://godoc.org/github.com/xiaonanln/goworld/cn)
----------------------------------------
+
+
   * [Features](#features)
   * [Architecture](#architecture)
   * [Introduction](#introduction)
@@ -18,10 +18,26 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
     * [Chatroom Demo](#chatroom-demo)
     * [Unity Demo](#unity-demo): [GoWorldUnityDemo.zip](http://goworldgs.com/goworld_files/GoWorldUnityDemo.zip) 
 ---------------------------------------
->  中文资料：
-> [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)
-> [目录结构说明](https://github.com/xiaonanln/goworld/wiki/GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84) 
-> [使用GoWorld轻松实现分布式聊天服务器](https://github.com/xiaonanln/goworld/wiki/%E4%BD%BF%E7%94%A8GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E8%81%8A%E5%A4%A9%E6%9C%8D%E5%8A%A1%E5%99%A8)
+#### 中文资料 
+> [中文文档](https://godoc.org/github.com/xiaonanln/goworld/cn)  
+> [游戏服务器介绍](http://www.cnblogs.com/isaiah/p/7259036.html)  
+> [目录结构说明](https://github.com/xiaonanln/goworld/wiki/GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84)   
+> [使用GoWorld轻松实现分布式聊天服务器](https://github.com/xiaonanln/goworld/wiki/%E4%BD%BF%E7%94%A8GoWorld%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BC%95%E6%93%8E%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E8%81%8A%E5%A4%A9%E6%9C%8D%E5%8A%A1%E5%99%A8)  
+
+
+#### 游戏服务端开源引擎GoWorld教程  
+1.[安装和运行](https://zhuanlan.zhihu.com/p/66304813 "安装和运行")  
+2.[Unity示例双端联调](https://zhuanlan.zhihu.com/p/67065981 "Unity示例双端联调")  
+3.手把手写一个聊天室   [编写中]  
+4.多个频道的聊天室   [编写中]  
+5.登录注册和存储   [编写中]  
+6.移动同步和AOI   [编写中]  
+7.源码解析之启动流程和热更新   [编写中]  
+8.源码解析之gate   [编写中]  
+9.源码解析之dispatcher  [编写中]  
+10.源码解析之entity   [编写中]  
+
+---------------------------------------
 > **欢迎加入Go服务端开发交流群：[662182346](http://shang.qq.com/wpa/qunwpa?idkey=f2a99bd9bd9e6df3528174180aad753d05b372a8828e1b8e5c1ec5df42b301db)**
 ---------------------------------------  
 ## Features
