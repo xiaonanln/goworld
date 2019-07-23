@@ -28,14 +28,15 @@ _**Scalable Distributed Game Server Engine with Hot Reload in Golang**_
 #### 游戏服务端开源引擎GoWorld教程  
 1.[安装和运行](https://zhuanlan.zhihu.com/p/66304813 "安装和运行")  
 2.[Unity示例双端联调](https://zhuanlan.zhihu.com/p/67065981 "Unity示例双端联调")  
-3.手把手写一个聊天室   [编写中]  
-4.多个频道的聊天室   [编写中]  
-5.登录注册和存储   [编写中]  
-6.移动同步和AOI   [编写中]  
-7.源码解析之启动流程和热更新   [编写中]  
-8.源码解析之gate   [编写中]  
-9.源码解析之dispatcher  [编写中]  
-10.源码解析之entity   [编写中]  
+3.[手把手写一个聊天室](https://zhuanlan.zhihu.com/p/67951379 "手把手写一个聊天室")  
+4.[多个频道的聊天室](https://zhuanlan.zhihu.com/p/68901701 "多个频道的聊天室")  
+5.[登录注册和存储](https://zhuanlan.zhihu.com/p/70039615 "登录注册和存储")  
+6.[移动同步和AOI](https://zhuanlan.zhihu.com/p/70778081 "移动同步和AOI")  
+7.[源码解析之启动流程和热更新](https://zhuanlan.zhihu.com/p/72093172 "源码解析之启动流程和热更新")  
+8.[码解析之gate](https://zhuanlan.zhihu.com/p/73727839 "码解析之gate")  
+9.[源码解析之dispatcher](https://zhuanlan.zhihu.com/p/73906406 "源码解析之dispatcher")  
+10.[源码解析之entity](https://zhuanlan.zhihu.com/p/74736032 "源码解析之entity")  
+
 
 ---------------------------------------
 > **欢迎加入Go服务端开发交流群：[662182346](http://shang.qq.com/wpa/qunwpa?idkey=f2a99bd9bd9e6df3528174180aad753d05b372a8828e1b8e5c1ec5df42b301db)**
