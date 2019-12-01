@@ -552,9 +552,6 @@ func (service *DispatcherService) chooseGameForBootEntity() *gameDispatchInfo {
 		gwlog.Errorf("%s chooseGameForBootEntity: no game", service)
 		return nil
 	}
-	gameid := service.bootGames[rand.Intn(len(service.bootGames))]
-	gdi := service.games[gameid]
-	return gdi
 }
 
 func (service *DispatcherService) handleDispatcherClientDisconnect(dcp *dispatcherClientProxy) {
