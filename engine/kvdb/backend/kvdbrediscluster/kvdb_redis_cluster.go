@@ -15,7 +15,7 @@ const (
 )
 
 type redisKVDB struct {
-	c *redis.Cluster
+	c redis.Cluster
 }
 
 // OpenRedisKVDB opens Redis for KVDB backend
@@ -118,7 +118,6 @@ func (db *redisKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, e
 }
 
 func (db *redisKVDB) Close() {
-	db.c.Close()
 }
 
 func (db *redisKVDB) IsConnectionError(err error) bool {
