@@ -1,4 +1,4 @@
-FROM golang:1.10-alpine3.8
+FROM golang:1-alpine
 
 RUN apk add --no-cache git
 RUN go get -u github.com/golang/dep/cmd/dep

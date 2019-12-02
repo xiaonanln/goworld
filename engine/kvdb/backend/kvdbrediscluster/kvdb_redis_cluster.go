@@ -15,7 +15,7 @@ const (
 )
 
 type redisKVDB struct {
-	c *redis.Cluster
+	c redis.Cluster
 }
 
 // OpenRedisKVDB opens Redis for KVDB backend
