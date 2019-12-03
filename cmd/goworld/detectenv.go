@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -51,16 +53,58 @@ func getGoSearchPaths() []string {
 	return paths
 }
 
-func detectGoWorldPath() {
+type ModuleInfo struct {
+	Path      string `json:"Path"`
+	Main      bool   `json:"Main"`
+	Dir       string `json:"Dir"`
+	GoMod     string `json:"GoMod"`
+	GoVersion string `json:"GoVersion"`
+}
+
+func goListModule() (*ModuleInfo, error) {
+	cmd := exec.Command("go", "list", "-m", "-json")
+
+	r, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	d := json.NewDecoder(r)
+	var mi ModuleInfo
+	err = d.Decode(&mi)
+	if err != nil {
+		return nil, err
+	}
+
+	cmd.Wait()
+	return &mi, err
+}
+
+func _detectGoWorldPath() string {
+	mi, err := goListModule()
+	if err == nil {
+		showMsg("go list -m -json: %+v", *mi)
+		return mi.Dir
+	}
+
 	searchPaths := getGoSearchPaths()
 	showMsg("go search paths: %s", strings.Join(searchPaths, string(os.PathListSeparator)))
 	for _, sp := range searchPaths {
 		goworldPath := filepath.Join(sp, "src", "github.com", "xiaonanln", "goworld")
 		if isdir(goworldPath) {
-			env.GoWorldRoot = goworldPath
-			break
+			return goworldPath
 		}
 	}
+	return ""
+}
+
+func detectGoWorldPath() {
+	env.GoWorldRoot = _detectGoWorldPath()
 	if env.GoWorldRoot == "" {
 		showMsgAndQuit("goworld directory is not detected")
 	}
@@ -68,5 +112,4 @@ func detectGoWorldPath() {
 	showMsg("goworld directory found: %s", env.GoWorldRoot)
 	configFile := filepath.Join(env.GoWorldRoot, "goworld.ini")
 	config.SetConfigFile(configFile)
-	//config.Get()
 }

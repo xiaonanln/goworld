@@ -67,18 +67,10 @@ back to work but with the latest executable image. This feature enables updating
  transparently without significant interference of online players. 
 
 ## Installing GoWorld
-GoWorld requries Go 1.10.x to install.
+GoWorld requries Go 1.11+ to install.
 ```bash
-go get -d github.com/xiaonanln/goworld
-go get -u github.com/golang/dep/cmd/dep
-cd $GOPATH/src/github.com/xiaonanln/goworld
-dep ensure
-go get ./cmd/...
-```
-**GoWorld uses [Dep](https://github.com/golang/dep) to manage packages.** 
-
-**For Chinese only:** 
-中国的朋友可能会碰到网络问题，那么您可以通过点击下载[vendor.tar.gz](http://goworldgs.com/goworld_files/vendor.tar.gz)，并将其解压到goworld根目录下。
+go get github.com/xiaonanln/goworld/cmd/...
+``` 
 
 Or using [Docker](https://www.docker.com/community-edition):
 ```bash

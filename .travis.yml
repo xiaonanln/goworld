@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.10.x
+  - 1.13.x
 
 
 env:
@@ -13,16 +13,9 @@ services:
   - redis-server
 
 before_install:
-  - DEP_OS_ARCH=`go env GOHOSTOS`-`go env GOHOSTARCH`
-  - DEP_LATEST_RELEASE_URL="https://github.com/golang/dep/releases/download/v0.3.2/dep-${DEP_OS_ARCH}"
-  - wget ${DEP_LATEST_RELEASE_URL} -O /tmp/dep
-  - export PATH=$PATH:/tmp/
-  - chmod +x /tmp/dep
-
   - mysql -e 'CREATE DATABASE goworld;'
 
 install:
-  - dep ensure
   - make
 
 script:

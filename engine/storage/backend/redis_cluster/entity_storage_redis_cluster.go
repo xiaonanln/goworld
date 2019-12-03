@@ -17,7 +17,7 @@ var (
 )
 
 type redisClusterEntityStorage struct {
-	c *redis.Cluster
+	c redis.Cluster
 }
 
 // OpenRedis opens redis as entity storage
@@ -115,7 +115,6 @@ func (es *redisClusterEntityStorage) Exists(typeName string, entityID common.Ent
 }
 
 func (es *redisClusterEntityStorage) Close() {
-	es.c.Close()
 }
 
 func (es *redisClusterEntityStorage) IsEOF(err error) bool {
