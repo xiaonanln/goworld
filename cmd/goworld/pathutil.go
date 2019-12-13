@@ -52,6 +52,14 @@ func binPath() string {
 	return filepath.Join(env.WorkspaceRoot, "bin")
 }
 
+func dispatcherFileName() string {
+	return "dispatcher" + BinaryExtension
+}
+
+func gateFileName() string {
+	return "gate" + BinaryExtension
+}
+
 func copyFile(src, dest string) (err error) {
 	msg := "Failed to copy default config file."
 	source, err := os.Open(src)

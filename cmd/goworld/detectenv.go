@@ -30,12 +30,12 @@ func (env *Env) GetGateDir() string {
 
 // GetDispatcherBinary returns the path to the dispatcher binary
 func (env *Env) GetDispatcherBinary() string {
-	return filepath.Join(env.GetDispatcherDir(), "dispatcher"+BinaryExtension)
+	return filepath.Join(env.GetDispatcherDir(), dispatcherFileName())
 }
 
 // GetGateBinary returns the path to the gate binary
 func (env *Env) GetGateBinary() string {
-	return filepath.Join(env.GetGateDir(), "gate"+BinaryExtension)
+	return filepath.Join(env.GetGateDir(), gateFileName())
 }
 
 var env Env
