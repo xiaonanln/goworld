@@ -44,6 +44,10 @@ func isexists(path string) bool {
 	return true
 }
 
+func srcPath() string {
+	return filepath.Join(env.WorkspaceRoot, "src")
+}
+
 func binPath() string {
 	return filepath.Join(env.WorkspaceRoot, "bin")
 }
