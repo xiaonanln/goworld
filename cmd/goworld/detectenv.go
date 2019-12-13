@@ -81,7 +81,7 @@ func goListModule() (*ModuleInfo, error) {
 		return nil, err
 	}
 
-	cmd.Wait()
+	err = cmd.Wait()
 	return &mi, err
 }
 
