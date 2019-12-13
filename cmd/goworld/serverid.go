@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// ServerID represents a server
+// ServerID represents a server.
+// It's the 2nd argument of `goworld.exe` CLI.
 type ServerID string
 
 // Path returns the path to the server
