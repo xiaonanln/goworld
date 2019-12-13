@@ -34,3 +34,4 @@ vendor/
 .idea.bak/
 .vscode/
 tests/
+/goworld.ini
