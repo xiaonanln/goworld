@@ -53,6 +53,7 @@ func getGoSearchPaths() []string {
 	return paths
 }
 
+// ModuleInfo holds information about Go modules
 type ModuleInfo struct {
 	Path      string `json:"Path"`
 	Main      bool   `json:"Main"`
