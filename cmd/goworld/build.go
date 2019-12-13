@@ -65,6 +65,6 @@ func moveBinary(dir string) {
 	err := os.Rename(fullPath, dest)
 	checkErrorOrQuit(err, "Failed to move binary to workspace")
 
-	err = os.Chmod(dest, 0544)
+	err = chmod(dest, 0544)
 	checkErrorOrQuit(err, "Failed to set binary permission")
 }

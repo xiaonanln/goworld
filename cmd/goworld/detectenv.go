@@ -165,7 +165,7 @@ func checkConfigFile() {
 			checkErrorOrQuit(err, "Failed to create default config file")
 		}
 
-		err := os.Chmod(configFile, 0644)
+		err := chmod(configFile, 0644)
 		checkErrorOrQuit(err, "Failed to set config file permission")
 	}
 
