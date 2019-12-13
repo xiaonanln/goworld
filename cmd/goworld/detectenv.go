@@ -16,26 +16,56 @@ type Env struct {
 	WorkspaceRoot string
 }
 
+const _Dispatcher = "dispatcher"
+const _Gate = "gate"
+
 const defaultConfigFile = "goworld.ini"
 
-// GetDispatcherDir returns the path to the dispatcher
-func (env *Env) GetDispatcherDir() string {
-	return filepath.Join(env.GoWorldRoot, "components", _Dispatch)
+// GetSourceDir returns the path to source files
+func (env *Env) GetSourceDir() string {
+	return filepath.Join(env.WorkspaceRoot, "src")
 }
 
-// GetGateDir returns the path to the gate
-func (env *Env) GetGateDir() string {
-	return filepath.Join(env.GoWorldRoot, "components", _Gate)
+// GetBinaryDir returns the path to binaries
+func (env *Env) GetBinaryDir() string {
+	return filepath.Join(env.WorkspaceRoot, "bin")
 }
 
-// GetDispatcherBinary returns the path to the dispatcher binary
-func (env *Env) GetDispatcherBinary() string {
-	return filepath.Join(env.GetDispatcherDir(), dispatcherFileName())
+// GetComponentBinaryName returns executable file name of the specified component
+func (env *Env) GetComponentBinaryName(component string) string {
+	return component + BinaryExtension
 }
 
-// GetGateBinary returns the path to the gate binary
-func (env *Env) GetGateBinary() string {
-	return filepath.Join(env.GetGateDir(), gateFileName())
+// GetComponentDir returns path to the specified component
+func (env *Env) GetComponentDir(component string) string {
+	// We first check if there's a directory in the source tree that
+	// corresponds to the specified component
+	dir := filepath.Join(env.WorkspaceRoot, "components", component)
+	if isexists(dir) {
+		return dir
+	}
+
+	// If it's not in the source tree, the presume to be inside
+	// the `goworld` directory
+	return filepath.Join(env.GoWorldRoot, "components", component)
+}
+
+// GetComponentBinaryDir returns path to the specified component
+func (env *Env) GetComponentBinaryDir(component string) string {
+	// We'll have to iterate all possible locations of a binary.
+	// Just to maintain better backward compatibility.
+	dirs := []string{
+		env.GetBinaryDir(),
+		filepath.Join(env.WorkspaceRoot, "components"),
+		filepath.Join(env.GoWorldRoot, "components"),
+	}
+	file := env.GetComponentBinaryName(component)
+	for _, dir := range dirs {
+		if isexists(filepath.Join(dir, file)) {
+			return dir
+		}
+	}
+	return ""
 }
 
 var env Env
@@ -123,7 +153,7 @@ func detectGoWorldPath() {
 }
 
 func checkConfigFile() {
-	configFile := filepath.Join(binPath(), defaultConfigFile)
+	configFile := filepath.Join(env.GetBinaryDir(), defaultConfigFile)
 	if !isexists(configFile) {
 		def := filepath.Join(env.GoWorldRoot, defaultConfigFile)
 		if isexists(def) {

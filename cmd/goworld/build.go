@@ -11,7 +11,7 @@ func build(sid ServerID) {
 	showMsg("building server %s ...", sid)
 
 	buildServer(sid)
-	buildComponent(_Dispatch)
+	buildComponent(_Dispatcher)
 	buildComponent(_Gate)
 }
 
@@ -28,7 +28,7 @@ func buildServer(sid ServerID) {
 
 func buildComponent(component string) {
 	showMsg(fmt.Sprintf("go build %s ...", component))
-	buildDirectory(componentDir(component))
+	buildDirectory(env.GetComponentDir(component))
 }
 
 func buildDirectory(dir string) {
@@ -57,7 +57,7 @@ func buildDirectory(dir string) {
 func moveBinary(dir string) {
 	file := filepath.Base(dir) + BinaryExtension
 	fullPath := filepath.Join(dir, file)
-	dest := filepath.Join(binPath(), file)
+	dest := filepath.Join(env.GetBinaryDir(), file)
 	if !isfile(fullPath) {
 		showMsgAndQuit("Couldn't find the binary: %s", fullPath)
 	}

@@ -4,20 +4,17 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
 )
 
 func start(sid ServerID) {
-	err := os.Chdir(env.GoWorldRoot)
-	checkErrorOrQuit(err, "chdir to goworld directory failed")
-
 	ss := detectServerStatus()
 	if ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 {
 		status()
@@ -39,13 +36,20 @@ func startDispatchers() {
 }
 
 func startDispatcher(dispid uint16) {
+	dir := env.GetComponentBinaryDir(_Dispatcher)
+	if "" == dir {
+		showMsgAndQuit("Failed to locate dispatcher executable")
+	}
+	err := os.Chdir(dir)
+	checkErrorOrQuit(err, "Failed to change to dispatcher's directory")
+
 	cfg := config.GetDispatcher(dispid)
 	args := []string{"-dispid", strconv.Itoa(int(dispid))}
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
-	cmd := exec.Command(env.GetDispatcherBinary(), args...)
-	err := runCmdUntilTag(cmd, cfg.LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
+	cmd := exec.Command(env.GetComponentBinaryName(_Dispatcher), args...)
+	err = runCmdUntilTag(cmd, cfg.LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 }
 
@@ -61,7 +65,7 @@ func startGames(sid ServerID, isRestore bool) {
 func startGame(sid ServerID, gameid uint16, isRestore bool) {
 	showMsg("start game %d ...", gameid)
 
-	gameExePath := filepath.Join(sid.Path(), gameFileName(sid))
+	gameExePath := sid.BinaryPathName()
 	args := []string{"-gid", strconv.Itoa(int(gameid))}
 	if isRestore {
 		args = append(args, "-restore")
@@ -86,12 +90,19 @@ func startGates() {
 func startGate(gateid uint16) {
 	showMsg("start gate %d ...", gateid)
 
+	dir := env.GetComponentBinaryDir(_Gate)
+	if "" == dir {
+		showMsgAndQuit("Failed to locate gate executable")
+	}
+	err := os.Chdir(dir)
+	checkErrorOrQuit(err, "Failed to change to gate's directory")
+
 	args := []string{"-gid", strconv.Itoa(int(gateid))}
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
-	cmd := exec.Command(env.GetGateBinary(), args...)
-	err := runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
+	cmd := exec.Command(env.GetComponentBinaryName(_Gate), args...)
+	err = runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }
 
