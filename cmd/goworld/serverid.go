@@ -11,10 +11,11 @@ type ServerID string
 
 // Path returns the path to the server
 func (sid ServerID) Path() string {
+	server := strings.Split(string(sid), "/")
+
 	// We first detect the following Go's workspace conventional
 	// directory structure. Where all source lives in the `src`
 	// directory.
-	server := strings.Split(string(sid), "/")
 	parts := append([]string{srcPath()}, server...)
 	srcDir := filepath.Join(parts...)
 	if isdir(srcDir) {
