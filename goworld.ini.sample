@@ -2,7 +2,7 @@
 debug = 1 ; set to 0 in production
 
 [deployment]
-desired_dispatchers=1
+desired_dispatchers=2
 desired_games=1
 desired_gates=1
 
