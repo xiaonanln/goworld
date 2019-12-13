@@ -1,24 +1,34 @@
 package main
 
 import (
-	"path"
 	"path/filepath"
 	"strings"
 )
 
 // ServerID represents a server.
-// It's the 2nd argument of `goworld.exe` CLI.
+// It's the 2nd argument of `goworld` CLI.
 type ServerID string
 
 // Path returns the path to the server
 func (sid ServerID) Path() string {
-	serverPath := strings.Split(string(sid), "/")
-	serverPath = append([]string{env.GoWorldRoot}, serverPath...)
-	return filepath.Join(serverPath...)
+	// We first detect the following Go's workspace conventional
+	// directory structure. Where all source lives in the `src`
+	// directory.
+	server := strings.Split(string(sid), "/")
+	parts := append([]string{srcPath()}, server...)
+	srcDir := filepath.Join(parts...)
+	if isdir(srcDir) {
+		return srcDir
+	}
+
+	// If the source package cannot be found by conventional structure,
+	// we then assume that it's using a structure where source are
+	// placed inside `goworld` directory.
+	parts = append([]string{env.GoWorldRoot}, server...)
+	return filepath.Join(parts...)
 }
 
 // Name returns the name of the server
 func (sid ServerID) Name() string {
-	_, file := path.Split(string(sid))
-	return file
+	return filepath.Base(string(sid))
 }
