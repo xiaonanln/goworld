@@ -11,8 +11,8 @@ func build(sid ServerID) {
 	showMsg("building server %s ...", sid)
 
 	buildServer(sid)
-	buildComponent("dispatcher")
-	buildComponent("gate")
+	buildComponent(_Dispatch)
+	buildComponent(_Gate)
 }
 
 func buildServer(sid ServerID) {
@@ -28,12 +28,7 @@ func buildServer(sid ServerID) {
 
 func buildComponent(component string) {
 	showMsg(fmt.Sprintf("go build %s ...", component))
-	dir := filepath.Join(env.WorkspaceRoot, "components", component)
-	if isexists(dir) {
-		buildDirectory(dir)
-	} else {
-		buildDirectory(filepath.Join(env.GoWorldRoot, "components", component))
-	}
+	buildDirectory(componentDir(component))
 }
 
 func buildDirectory(dir string) {

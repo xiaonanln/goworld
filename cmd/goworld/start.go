@@ -61,7 +61,7 @@ func startGames(sid ServerID, isRestore bool) {
 func startGame(sid ServerID, gameid uint16, isRestore bool) {
 	showMsg("start game %d ...", gameid)
 
-	gameExePath := filepath.Join(sid.Path(), sid.Name()+BinaryExtension)
+	gameExePath := filepath.Join(sid.Path(), gameFileName(sid))
 	args := []string{"-gid", strconv.Itoa(int(gameid))}
 	if isRestore {
 		args = append(args, "-restore")

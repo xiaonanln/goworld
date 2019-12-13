@@ -20,12 +20,12 @@ const defaultConfigFile = "goworld.ini"
 
 // GetDispatcherDir returns the path to the dispatcher
 func (env *Env) GetDispatcherDir() string {
-	return filepath.Join(env.GoWorldRoot, "components", "dispatcher")
+	return filepath.Join(env.GoWorldRoot, "components", _Dispatch)
 }
 
 // GetGateDir returns the path to the gate
 func (env *Env) GetGateDir() string {
-	return filepath.Join(env.GoWorldRoot, "components", "gate")
+	return filepath.Join(env.GoWorldRoot, "components", _Gate)
 }
 
 // GetDispatcherBinary returns the path to the dispatcher binary
