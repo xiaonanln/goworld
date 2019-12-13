@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -117,7 +118,7 @@ func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Dura
 	for time.Now().Before(timeoutTime) {
 		time.Sleep(time.Millisecond * 200)
 		if isTagInFile(logFile, tag) {
-			cmd.Process.Release()
+			err = cmd.Process.Release()
 			return
 		}
 	}
@@ -127,7 +128,10 @@ func runCmdUntilTag(cmd *exec.Cmd, logFile string, tag string, timeout time.Dura
 }
 
 func clearLogFile(logFile string) {
-	ioutil.WriteFile(logFile, []byte{}, 0644)
+	err := ioutil.WriteFile(logFile, []byte{}, 0644)
+	if err != nil {
+		fmt.Printf("Failed to write log: %v", err)
+	}
 }
 
 func isTagInFile(filename string, tag string) bool {
