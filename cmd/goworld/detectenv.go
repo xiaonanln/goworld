@@ -12,8 +12,11 @@ import (
 
 // Env represents environment variables
 type Env struct {
-	GoWorldRoot string
+	GoWorldRoot   string
+	WorkspaceRoot string
 }
+
+const defaultConfigFile = "goworld.ini"
 
 // GetDispatcherDir returns the path to the dispatcher
 func (env *Env) GetDispatcherDir() string {
@@ -105,12 +108,36 @@ func _detectGoWorldPath() string {
 }
 
 func detectGoWorldPath() {
+	wsRoot, err := os.Getwd()
+	checkErrorOrQuit(err, "Failed to get current work directory.")
+
+	env.WorkspaceRoot = wsRoot
 	env.GoWorldRoot = _detectGoWorldPath()
 	if env.GoWorldRoot == "" {
 		showMsgAndQuit("goworld directory is not detected")
 	}
 
 	showMsg("goworld directory found: %s", env.GoWorldRoot)
-	configFile := filepath.Join(env.GoWorldRoot, "goworld.ini")
+
+	checkConfigFile()
+}
+
+func checkConfigFile() {
+	configFile := filepath.Join(binPath(), defaultConfigFile)
+	if !isexists(configFile) {
+		def := filepath.Join(env.GoWorldRoot, defaultConfigFile)
+		if isexists(def) {
+			err := os.Rename(def, configFile)
+			checkErrorOrQuit(err, "Failed to create default config file")
+		} else {
+			def = filepath.Join(env.GoWorldRoot, defaultConfigFile+".sample")
+			err := copyFile(def, configFile)
+			checkErrorOrQuit(err, "Failed to create default config file")
+		}
+
+		err := os.Chmod(configFile, 0644)
+		checkErrorOrQuit(err, "Failed to set config file permission")
+	}
+
 	config.SetConfigFile(configFile)
 }
