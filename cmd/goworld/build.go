@@ -11,8 +11,8 @@ func build(sid ServerID) {
 	showMsg("building server %s ...", sid)
 
 	buildServer(sid)
-	buildComponent(_Dispatcher)
-	buildComponent(_Gate)
+	buildComponent(sid, _Dispatcher)
+	buildComponent(sid, _Gate)
 }
 
 func buildServer(sid ServerID) {
@@ -35,7 +35,7 @@ func buildServer(sid ServerID) {
 // sub-directory.
 func buildComponent(sid ServerID, component string) {
 	showMsg(fmt.Sprintf("go build %s ...", component))
-	buildDirectory(env.GetComponentDir(component))
+	buildDirectory(env.GetServerComponentDir(sid, component))
 }
 
 func buildDirectory(dir string) {
@@ -54,7 +54,7 @@ func buildDirectory(dir string) {
 		"go",
 		"build",
 		"-o",
-		filepath.Join(binPath()),
+		filepath.Join(env.GetBinDir()),
 		".",
 	)
 	cmd.Stderr = os.Stderr

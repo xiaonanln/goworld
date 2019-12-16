@@ -15,7 +15,7 @@ func (sid ServerID) Path() string {
 
 	// We first follow Go's conventional workspace directory structure.
 	// Where all source lives in the `src` directory.
-	parts := append([]string{env.GetSourceDir()}, server...)
+	parts := append([]string{env.GetSrcDir()}, server...)
 	srcDir := filepath.Join(parts...)
 	if isdir(srcDir) {
 		return srcDir
@@ -25,6 +25,23 @@ func (sid ServerID) Path() string {
 	// we then assume that it's using a structure where source are
 	// placed inside `goworld` directory.
 	parts = append([]string{env.GoWorldRoot}, server...)
+	return filepath.Join(parts...)
+}
+
+// BinPath returns the path to the server executable
+func (sid ServerID) BinPath() string {
+	// We first follow Go's conventional workspace directory structure.
+	// Where all source lives in the `src` directory.
+	dir := env.GetBinDir()
+	if isexists(filepath.Join(dir, sid.BinaryName())) {
+		return dir
+	}
+
+	// If the source package cannot be found by conventional structure,
+	// we then assume that it's using a structure where source are
+	// placed inside `goworld` directory.
+	server := strings.Split(string(sid), "/")
+	parts := append([]string{env.GoWorldRoot}, server...)
 	return filepath.Join(parts...)
 }
 
@@ -40,5 +57,5 @@ func (sid ServerID) BinaryName() string {
 
 // BinaryPathName returns the full path of the server executable
 func (sid ServerID) BinaryPathName() string {
-	return filepath.Join(sid.Path(), sid.BinaryName())
+	return filepath.Join(sid.BinPath(), sid.BinaryName())
 }

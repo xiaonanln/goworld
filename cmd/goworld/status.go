@@ -60,10 +60,10 @@ func detectServerStatus() *ServerStatus {
 
 		dir, file := filepath.Split(relpath)
 
-		if file == env.GetComponentBinaryName(_Dispatcher) {
+		if file == env.GetServerComponentBinDir(_Dispatcher) {
 			ss.NumDispatcherRunning++
 			ss.DispatcherProcs = append(ss.DispatcherProcs, proc)
-		} else if file == env.GetComponentBinaryName(_Gate) {
+		} else if file == env.GetServerComponentBinDir(_Gate) {
 			ss.NumGatesRunning++
 			ss.GateProcs = append(ss.GateProcs, proc)
 		} else {

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -37,20 +36,25 @@ func startDispatchers() {
 }
 
 func startDispatcher(dispid uint16) {
-	dir := env.GetComponentBinaryDir(_Dispatcher)
-	if "" == dir {
+	path := env.GetDispatcherBinary()
+	if "" == path {
 		showMsgAndQuit("Failed to locate dispatcher executable")
 	}
-	err := os.Chdir(dir)
-	checkErrorOrQuit(err, "Failed to change to dispatcher's directory")
+	// err := os.Chdir(path)
+	// checkErrorOrQuit(err, "Failed to change to dispatcher's directory")
 
 	cfg := config.GetDispatcher(dispid)
-	args := []string{"-dispid", strconv.Itoa(int(dispid))}
+	args := []string{
+		"-configfile",
+		env.ConfigPath,
+		"-dispid",
+		strconv.Itoa(int(dispid)),
+	}
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
-	cmd := exec.Command(env.GetComponentBinaryName(_Dispatcher), args...)
-	err = runCmdUntilTag(cmd, cfg.LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
+	cmd := exec.Command(path, args...)
+	err := runCmdUntilTag(cmd, cfg.LogFile, consts.DISPATCHER_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start dispatcher failed, see dispatcher.log for error")
 }
 
@@ -67,7 +71,12 @@ func startGame(sid ServerID, gameid uint16, isRestore bool) {
 	showMsg("start game %d ...", gameid)
 
 	gameExePath := sid.BinaryPathName()
-	args := []string{"-gid", strconv.Itoa(int(gameid))}
+	args := []string{
+		"-configfile",
+		env.ConfigPath,
+		"-gid",
+		strconv.Itoa(int(gameid)),
+	}
 	if isRestore {
 		args = append(args, "-restore")
 	}
@@ -91,19 +100,24 @@ func startGates() {
 func startGate(gateid uint16) {
 	showMsg("start gate %d ...", gateid)
 
-	dir := env.GetComponentBinaryDir(_Gate)
-	if "" == dir {
+	path := env.GetGateBinary()
+	if "" == path {
 		showMsgAndQuit("Failed to locate gate executable")
 	}
-	err := os.Chdir(dir)
-	checkErrorOrQuit(err, "Failed to change to gate's directory")
+	// err := os.Chdir(path)
+	// checkErrorOrQuit(err, "Failed to change to gate's directory")
 
-	args := []string{"-gid", strconv.Itoa(int(gateid))}
+	args := []string{
+		"-configfile",
+		env.ConfigPath,
+		"-gid",
+		strconv.Itoa(int(gateid)),
+	}
 	if arguments.runInDaemonMode {
 		args = append(args, "-d")
 	}
-	cmd := exec.Command(env.GetComponentBinaryName(_Gate), args...)
-	err = runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
+	cmd := exec.Command(path, args...)
+	err := runCmdUntilTag(cmd, config.GetGate(gateid).LogFile, consts.GATE_STARTED_TAG, time.Second*10)
 	checkErrorOrQuit(err, "start gate failed, see gate.log for error")
 }
 
