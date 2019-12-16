@@ -1,15 +1,13 @@
 package main
 
 import (
-	"os"
-
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/config"
 )
 
 func reload(sid ServerID) {
-	err := os.Chdir(env.GoWorldRoot)
-	checkErrorOrQuit(err, "chdir to goworld directory failed")
+	// err := os.Chdir(env.GoWorldRoot)
+	// checkErrorOrQuit(err, "chdir to goworld directory failed")
 
 	ss := detectServerStatus()
 	showServerStatus(ss)
