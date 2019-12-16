@@ -121,7 +121,10 @@ func goListModule() (*ModuleInfo, error) {
 
 func _detectGoWorldPath() string {
 	mi, err := goListModule()
-	if err == nil {
+	// There's a problem while running `goworld` using debugger in `GoLand`.
+	// It's possible that `go list -m` returns the following for `Path`.
+	// So we have to exclude the case.
+	if err == nil && mi.Path != "command-line-arguments" {
 		showMsg("go list -m -json: %+v", *mi)
 		return mi.Dir
 	}
