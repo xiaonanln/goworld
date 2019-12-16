@@ -55,7 +55,7 @@ func main() {
 	} else if cmd == "kill" {
 		kill(ServerID(args[1]))
 	} else if cmd == "status" {
-		status()
+		status(ServerID(args[1]))
 	} else {
 		showMsgAndQuit("unknown command: %s", cmd)
 	}

@@ -15,9 +15,9 @@ import (
 )
 
 func start(sid ServerID) {
-	ss := detectServerStatus()
+	ss := detectServerStatus(sid)
 	if ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 {
-		status()
+		status(sid)
 		showMsgAndQuit("server is already running, can not start multiple servers")
 	}
 
