@@ -1,24 +1,14 @@
-package main
+package gate
 
 import (
-	"flag"
-
-	"math/rand"
-	"time"
-
-	"os"
-
-	_ "net/http/pprof"
-
-	"runtime"
-
-	"os/signal"
-
-	"syscall"
-
 	"fmt"
-
+	"math/rand"
+	_ "net/http/pprof"
+	"os"
 	"path"
+	"runtime"
+	"syscall"
+	"time"
 
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
@@ -27,34 +17,11 @@ import (
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
-	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
-var (
-	args struct {
-		gateid          uint16
-		configFile      string
-		logLevel        string
-		runInDaemonMode bool
-		//listenAddr      string
-	}
-	gateService *GateService
-	signalChan  = make(chan os.Signal, 1)
-)
-
-func parseArgs() {
-	var gateIdArg int
-	flag.IntVar(&gateIdArg, "gid", 0, "set gateid")
-	flag.StringVar(&args.configFile, "configfile", "", "set config file path")
-	flag.StringVar(&args.logLevel, "log", "", "set log level, will override log level in config")
-	flag.BoolVar(&args.runInDaemonMode, "d", false, "run in daemon mode")
-	//flag.StringVar(&args.listenAddr, "listen-addr", "", "set listen address for gate, overriding listen_addr in config file")
-	flag.Parse()
-	args.gateid = uint16(gateIdArg)
-}
-
-func main() {
+// Start fires up the gate server instance
+func Start() {
 	rand.Seed(time.Now().UnixNano())
 	parseArgs()
 
@@ -100,41 +67,12 @@ func main() {
 	gateService.run() // run gate service in another goroutine
 }
 
-func verifyGateConfig(gateConfig *config.GateConfig) {
-}
-
-func setupSignals() {
-	gwlog.Infof("Setup signals ...")
-	signal.Ignore(syscall.Signal(10), syscall.Signal(12), syscall.SIGPIPE, syscall.SIGHUP)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		for {
-			sig := <-signalChan
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
-				// terminating gate ...
-				gwlog.Infof("Terminating gate service ...")
-				post.Post(func() {
-					gateService.terminate()
-				})
-
-				gateService.terminated.Wait()
-				gwlog.Infof("Gate %d terminated gracefully.", args.gateid)
-				os.Exit(0)
-			} else {
-				gwlog.Errorf("unexpected signal: %s", sig)
-			}
-		}
-	}()
-}
-
-type gateDispatcherClientDelegate struct {
-}
-
+// HandleDispatcherClientPacket sends client packets to queue
 func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
 	gateService.dispatcherClientPacketQueue <- proto.Message{msgtype, packet}
 }
 
+// HandleDispatcherClientDisconnect sends a signal to disconnects a client
 func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientDisconnect() {
 	//gwlog.Errorf("Disconnected from dispatcher, try reconnecting ...")
 	// if gate is disconnected from dispatcher, we just quit
@@ -142,6 +80,7 @@ func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientDisconnect()
 	signalChan <- syscall.SIGTERM // let gate quit
 }
 
+// GetEntityIDsForDispatcher currently does nothing
 func (deleget *gateDispatcherClientDelegate) GetEntityIDsForDispatcher(dispid uint16) []common.EntityID {
 	return nil
 }

@@ -41,7 +41,7 @@ func buildComponent(sid ServerID, component string) {
 func buildDirectory(dir string) {
 	var err error
 
-	fmt.Printf("building directory %s ...", dir)
+	fmt.Printf("building directory %s ...\n", dir)
 	err = os.Chdir(dir)
 	checkErrorOrQuit(err, "Failed to change directory.")
 
