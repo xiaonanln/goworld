@@ -63,7 +63,5 @@ func buildDirectory(dir string) {
 	err = cmd.Run()
 	checkErrorOrQuit(err, fmt.Sprintf("Failed to build %s", dir))
 
-	// moveBinary(dir)
-
 	return
 }
