@@ -25,11 +25,11 @@ script:
   - goworld build examples/test_game
   - goworld start examples/test_game
   - sleep 5
-  - examples/test_client/test_client -N 100 -strict -duration 300
+  - examples/test_client/test_client -N 200 -strict -duration 300
   - sleep 5
   - goworld reload examples/test_game
   - sleep 5
-  - examples/test_client/test_client -N 100 -strict -duration 300
+  - examples/test_client/test_client -N 200 -strict -duration 300
   - sleep 1
   - goworld stop examples/test_game
 
