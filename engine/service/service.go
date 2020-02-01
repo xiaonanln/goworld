@@ -16,7 +16,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwvar"
-	"github.com/xiaonanln/goworld/engine/srvdis"
+	"github.com/xiaonanln/goworld/engine/kvdis"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
 
@@ -41,7 +41,7 @@ func RegisterService(typeName string, entityPtr entity.IEntity) {
 
 func Setup(gameid_ uint16) {
 	gameid = gameid_
-	srvdis.AddPostCallback(checkServicesLater)
+	kvdis.AddPostCallback(checkServicesLater)
 }
 
 func OnDeploymentReady() {
@@ -82,7 +82,7 @@ func checkServices() {
 		return info
 	}
 
-	srvdis.TraverseByPrefix(serviceSrvdisPrefix, func(srvid string, srvinfo string) {
+	kvdis.TraverseByPrefix(serviceSrvdisPrefix, func(srvid string, srvinfo string) {
 		servicePath := strings.Split(srvid[serviceSrvdisPrefixLen:], "/")
 		//gwlog.Infof("service: found service %v = %+v", servicePath, srvinfo)
 
@@ -107,7 +107,7 @@ func checkServices() {
 			case "EntityID":
 				getServiceInfo(serviceName).EntityID = common.EntityID(srvinfo)
 			default:
-				gwlog.Warnf("unknown srvdis info: %s = %s", srvid, srvinfo)
+				gwlog.Warnf("unknown kvdis info: %s = %s", srvid, srvinfo)
 			}
 		} else {
 			gwlog.Panic(servicePath)
@@ -144,7 +144,7 @@ func checkServices() {
 			if localEid != getServiceInfo(serviceName).EntityID {
 				// might happen if dispatchers recover from crash
 				gwlog.Warnf("service %s: local entity is %s, but has %s on dispatchers", serviceName, localEid, getServiceInfo(serviceName).EntityID)
-				srvdis.Register(getSrvID(serviceName)+"/EntityID", string(localEid), true)
+				kvdis.Register(getSrvID(serviceName)+"/EntityID", string(localEid), true)
 			}
 		} else {
 			// multiple service entities ? should never happen! so just destroy all invalid service entities
@@ -160,12 +160,12 @@ func checkServices() {
 	// register all service types that are not registered to dispatcher yet
 	for serviceName := range registeredServices {
 		if !getServiceInfo(serviceName).Registered {
-			gwlog.Warnf("service: %s not found, registering srvdis ...", serviceName)
+			gwlog.Warnf("service: %s not found, registering kvdis ...", serviceName)
 			// delay for a random time so that each game might register servcie randomly
 			randomDelay := time.Millisecond * time.Duration(rand.Intn(100))
 			_serviceName := serviceName
 			timer.AddCallback(randomDelay, func() {
-				srvdis.Register(getSrvID(_serviceName), fmt.Sprintf("game%d", gameid), false)
+				kvdis.Register(getSrvID(_serviceName), fmt.Sprintf("game%d", gameid), false)
 			})
 		}
 	}
@@ -179,7 +179,7 @@ func createServiceEntity(serviceName string) {
 	if !desc.IsPersistent {
 		e := entity.CreateEntityLocally(serviceName, nil)
 		gwlog.Infof("Created service entity: %s: %s", serviceName, e)
-		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(e.ID), true)
+		kvdis.Register(getSrvID(serviceName)+"/EntityID", string(e.ID), true)
 	} else {
 		createPersistentServiceEntity(serviceName)
 	}
@@ -208,7 +208,7 @@ func createPersistentServiceEntity(serviceName string) {
 			gwlog.Infof("Loading service entity: %s: %s", serviceName, eid)
 		}
 
-		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
+		kvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
 	})
 }
 

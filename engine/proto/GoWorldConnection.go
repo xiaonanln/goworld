@@ -113,10 +113,10 @@ func (gwc *GoWorldConnection) SendLoadEntitySomewhere(typeName string, entityID 
 	return gwc.SendPacketRelease(packet)
 }
 
-// SendSrvdisRegister
-func (gwc *GoWorldConnection) SendSrvdisRegister(srvid string, info string, force bool) error {
+// SendKvdisRegister
+func (gwc *GoWorldConnection) SendKvdisRegister(srvid string, info string, force bool) error {
 	packet := gwc.packetConn.NewPacket()
-	packet.AppendUint16(MT_SRVDIS_REGISTER)
+	packet.AppendUint16(MT_KVDIS_REGISTER)
 	packet.AppendVarStr(srvid)
 	packet.AppendVarStr(info)
 	packet.AppendBool(force)
@@ -401,7 +401,7 @@ func MakeNotifyDeploymentReadyPacket() *netutil.Packet {
 	return pkt
 }
 
-func (gwc *GoWorldConnection) SendSetGameIDAck(dispid uint16, isDeploymentReady bool, connectedGameIDs []uint16, rejectEntities []common.EntityID, srvdisRegisterMap map[string]string) error {
+func (gwc *GoWorldConnection) SendSetGameIDAck(dispid uint16, isDeploymentReady bool, connectedGameIDs []uint16, rejectEntities []common.EntityID, kvdisRegisterMap map[string]string) error {
 	pkt := netutil.NewPacket()
 	pkt.AppendUint16(MT_SET_GAME_ID_ACK)
 	pkt.AppendUint16(dispid)
@@ -418,7 +418,7 @@ func (gwc *GoWorldConnection) SendSetGameIDAck(dispid uint16, isDeploymentReady 
 		pkt.AppendEntityID(eid)
 	}
 	// put all services to the packet
-	pkt.AppendMapStringString(srvdisRegisterMap)
+	pkt.AppendMapStringString(kvdisRegisterMap)
 	return gwc.SendPacketRelease(pkt)
 }
 

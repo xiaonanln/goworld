@@ -20,11 +20,11 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/gwvar"
 	"github.com/xiaonanln/goworld/engine/kvdb"
+	"github.com/xiaonanln/goworld/engine/kvdis"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/proto"
 	"github.com/xiaonanln/goworld/engine/service"
-	"github.com/xiaonanln/goworld/engine/srvdis"
 )
 
 const (
@@ -136,14 +136,8 @@ func (gs *GameService) serveRoutine() {
 				method := pkt.ReadVarStr()
 				args := pkt.ReadArgs()
 				gs.HandleCallNilSpaces(method, args)
-			case proto.MT_SRVDIS_REGISTER:
-				gs.HandleSrvdisRegister(pkt)
-			//case proto.MT_UNDECLARE_SERVICE:
-			//	eid := pkt.ReadEntityID()
-			//	serviceName := pkt.ReadVarStr()
-			//	gs.HandleUndeclareService(eid, serviceName)
-			//case proto.MT_NOTIFY_ALL_GAMES_CONNECTED:
-			//	gs.handleNotifyAllGamesConnected()
+			case proto.MT_KVDIS_REGISTER:
+				gs.HandleKvdisRegister(pkt)
 			case proto.MT_NOTIFY_GATE_DISCONNECTED:
 				gateid := pkt.ReadUint16()
 				gs.HandleGateDisconnected(gateid)
@@ -289,14 +283,14 @@ func (gs *GameService) HandleLoadEntitySomewhere(typeName string, entityID commo
 	entity.OnLoadEntitySomewhere(typeName, entityID)
 }
 
-func (gs *GameService) HandleSrvdisRegister(pkt *netutil.Packet) {
+func (gs *GameService) HandleKvdisRegister(pkt *netutil.Packet) {
 	// tell the entity that it is registered successfully
 	srvid := pkt.ReadVarStr()
 	srvinfo := pkt.ReadVarStr()
 	force := pkt.ReadBool() // force is not useful here
-	gwlog.Infof("%s srvdis register: %s => %s, force %v", gs, srvid, srvinfo, force)
+	gwlog.Infof("%s kvdis register: %s => %s, force %v", gs, srvid, srvinfo, force)
 
-	srvdis.WatchSrvdisRegister(srvid, srvinfo)
+	kvdis.WatchKvdisRegister(srvid, srvinfo)
 }
 
 func (gs *GameService) HandleGateDisconnected(gateid uint16) {
@@ -368,14 +362,14 @@ func (gs *GameService) handleSetGameIDAck(pkt *netutil.Packet) {
 		}
 	}
 
-	srvdisMap := pkt.ReadMapStringString()
-	srvdis.ClearByDispatcher(dispid)
-	for srvid, srvinfo := range srvdisMap {
-		srvdis.WatchSrvdisRegister(srvid, srvinfo)
+	kvdisMap := pkt.ReadMapStringString()
+	kvdis.ClearByDispatcher(dispid)
+	for srvid, srvinfo := range kvdisMap {
+		kvdis.WatchKvdisRegister(srvid, srvinfo)
 	}
 
-	gwlog.Infof("%s: set game ID ack received, deployment ready: %v, %d online games, reject entities: %d, srvdis map: %+v",
-		gs, isDeploymentReady, len(gs.onlineGames), rejectEntitiesNum, srvdisMap)
+	gwlog.Infof("%s: set game ID ack received, deployment ready: %v, %d online games, reject entities: %d, kvdis map: %+v",
+		gs, isDeploymentReady, len(gs.onlineGames), rejectEntitiesNum, kvdisMap)
 	if isDeploymentReady {
 		// all games are connected
 		gs.onDeploymentReady()
