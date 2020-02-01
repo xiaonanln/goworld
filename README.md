@@ -72,12 +72,6 @@ GoWorld requries Go 1.11+ to install.
 go get github.com/xiaonanln/goworld/cmd/...
 ``` 
 
-Or using [Docker](https://www.docker.com/community-edition):
-```bash
-# debian-jessie + golang + goworld + mongodb 3.4 
-docker run -it xiaonanln/goworld-dev
-```
-
 ## Manage GoWorld Servers
 Use command `goworld` to build, start, stop and reload game servers. 
 
