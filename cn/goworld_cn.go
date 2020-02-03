@@ -95,8 +95,8 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTyp
 // RegisterService 注册一个Service类型到game中。Service是一种全局唯一的特殊的Entity对象。
 // 每个game进程中初始化的时候都应该注册所有的Service。GoWorld服务器会在某一个game进程中自动创建或载入Service对象（取决于Service类型是否是Persistent）。
 // 开发者不能手动创建Service对象。
-func RegisterService(typeName string, entityPtr entity.IEntity) {
-	service.RegisterService(typeName, entityPtr)
+func RegisterService(typeName string, entityPtr entity.IEntity, shardCount int) {
+	service.RegisterService(typeName, entityPtr, shardCount)
 }
 
 // Run 开始运行game服务。开发者需要为自己的游戏服务器提供一个main模块和main函数，并在main函数里正确初始化GoWorld服务器并启动服务器。
@@ -222,8 +222,8 @@ func CallService(serviceName string, method string, args ...interface{}) {
 }
 
 // GetServiceEntityID 返回Service对象的EntityID。这个函数可以用来确定Service对象是否已经在某个game进程上成功创建或载入。
-func GetServiceEntityID(serviceName string) common.EntityID {
-	return service.GetServiceEntityID(serviceName)
+func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
+	return service.GetServiceEntityID(serviceName, shardIndex)
 }
 
 // CallNilSpaces 向所有game进程中的NilSpace发起RPC调用。
