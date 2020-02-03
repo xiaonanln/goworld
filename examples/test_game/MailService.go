@@ -22,22 +22,32 @@ const (
 type MailService struct {
 	entity.Entity // Entity type should always inherit entity.Entity
 	mailPacker    netutil.MsgPacker
+	lastMailID    int
 }
 
 func (s *MailService) DescribeEntityType(desc *entity.EntityTypeDesc) {
-	desc.SetPersistent(true)
-	desc.DefineAttr("lastMailID", "Persistent")
 }
 
 // OnInit is called when initializing MailService
 func (s *MailService) OnInit() {
 	s.mailPacker = netutil.MessagePackMsgPacker{}
+	s.lastMailID = -1
 }
 
 // OnCreated is called when MailService is created
 func (s *MailService) OnCreated() {
 	gwlog.Infof("Registering MailService ...")
-	s.Attrs.SetDefaultInt("lastMailID", 0)
+	kvdb.GetOrPut("MailService:lastMailID", "0", func(oldVal string, err error) {
+		if oldVal == "" {
+			s.lastMailID = 0
+		} else {
+			var err error
+			s.lastMailID, err = strconv.Atoi(oldVal)
+			if err != nil {
+				gwlog.Panicf("MailService: lastMailID is invalid: %#v", oldVal)
+			}
+		}
+	})
 }
 
 // SendMail handles send mail requests from avatars
@@ -92,13 +102,23 @@ func (s *MailService) GetMails(avatarID common.EntityID, lastMailID int) {
 }
 
 func (s *MailService) genMailID() int {
-	lastMailID := int(s.Attrs.GetInt("lastMailID")) + 1
-	s.Attrs.SetInt("lastMailID", int64(lastMailID))
-	return lastMailID
+	if s.lastMailID < 0 {
+		gwlog.Panicf("MailService: lastMailId=%v (not loaded successfully)", s.lastMailID)
+	}
+
+	s.lastMailID += 1
+	kvdb.Put("MailService:lastMailID", strconv.Itoa(s.lastMailID), func(err error) {
+		if err != nil {
+			gwlog.Panicf("MailService: save lastMailID failed: %+v", err)
+		} else {
+			gwlog.Debugf("MailService: save lastMailID = %+v", s.lastMailID)
+		}
+	})
+	return s.lastMailID
 }
 
 func (s *MailService) getMailKey(mailID int, targetID common.EntityID) string {
-	return fmt.Sprintf("mail$%s$%010d", targetID, mailID)
+	return fmt.Sprintf("MailService:mail$%s$%010d", targetID, mailID)
 }
 
 func (s *MailService) parseMailKey(mailKey string) (common.EntityID, int) {

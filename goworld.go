@@ -163,6 +163,16 @@ func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
 	return service.GetServiceEntityID(serviceName, shardIndex)
 }
 
+// GetServiceShardCount returns the Shard Count of the service
+func GetServiceShardCount(serviceName string) int {
+	return service.GetServiceShardCount(serviceName)
+}
+
+// CheckServiceEntitiesReady returns if the service entities are all ready
+func CheckServiceEntitiesReady(serviceName string) bool {
+	return service.CheckServiceEntitiesReady(serviceName)
+}
+
 // CallNilSpaces calls methods of all nil spaces on all games
 func CallNilSpaces(method string, args ...interface{}) {
 	entity.CallNilSpaces(method, args, game.GetGameID())

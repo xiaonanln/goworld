@@ -28,11 +28,11 @@ func main() {
 	// Register each entity types
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("AOITester", &AOITester{})
-	goworld.RegisterService("OnlineService", &OnlineService{})
-	goworld.RegisterService("SpaceService", &SpaceService{})
-	goworld.RegisterService("MailService", &MailService{})
+	goworld.RegisterService("OnlineService", &OnlineService{}, 1)
+	goworld.RegisterService("SpaceService", &SpaceService{}, 1)
+	goworld.RegisterService("MailService", &MailService{}, 1)
 
-	pubsub.RegisterService()
+	pubsub.RegisterService(1)
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{})
@@ -55,8 +55,8 @@ func checkServerStarted() {
 
 func isAllServicesReady() bool {
 	for _, serviceName := range _SERVICE_NAMES {
-		if goworld.GetServiceEntityID(serviceName).IsNil() {
-			gwlog.Infof("%s is not ready ...", serviceName)
+		if !goworld.CheckServiceEntitiesReady(serviceName) {
+			gwlog.Infof("%s entities are not ready ...", serviceName)
 			return false
 		}
 	}

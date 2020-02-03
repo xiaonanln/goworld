@@ -165,7 +165,7 @@ func checkServices() {
 		serviceName, shardIndex := splitServiceId(serviceId)
 		regShardCount := registeredServices[serviceName]
 
-		if shardIndex > regShardCount {
+		if shardIndex >= regShardCount {
 			gwlog.Errorf("invalid service id: %#v (shard index is out of range)", serviceId)
 			continue
 		}
@@ -218,7 +218,7 @@ func checkServices() {
 
 	// register all service ids that are not registered to dispatcher yet
 	for serviceName, shardCount := range registeredServices {
-		for shardIndex := 1; shardIndex <= shardCount; shardIndex++ {
+		for shardIndex := 0; shardIndex < shardCount; shardIndex++ {
 			serviceId := getServiceId(serviceName, shardIndex)
 			serviceInfo := getServiceInfo(serviceId)
 
@@ -294,4 +294,29 @@ func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
 	} else {
 		return ""
 	}
+}
+
+func GetServiceShardCount(serviceName string) int {
+	return registeredServices[serviceName]
+}
+
+func CheckServiceEntitiesReady(serviceName string) bool {
+	shardCount := registeredServices[serviceName]
+	gwlog.Warnf("CheckServiceEntitiesReady %s: shard=%d, eids=%+v", serviceName, shardCount, serviceMap[serviceName])
+	if shardCount <= 0 {
+		return false
+	}
+
+	eids := serviceMap[serviceName]
+	if len(eids) != shardCount {
+		return false
+	}
+
+	for _, eid := range eids {
+		if eid.IsNil() {
+			return false
+		}
+	}
+
+	return true
 }
