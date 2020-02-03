@@ -44,6 +44,10 @@ func init() {
 }
 
 func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
+	if desc.isService {
+		gwlog.Panicf("Service entity must NOT be persistent: %s", desc.entityType.Name())
+	}
+
 	desc.IsPersistent = persistent
 	return desc
 }

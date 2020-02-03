@@ -61,8 +61,8 @@ func (pss *PublishSubscribeService) OnCreated() {
 }
 
 // RegisterService registeres PublishSubscribeService to goworld
-func RegisterService() {
-	goworld.RegisterService(ServiceName, &PublishSubscribeService{})
+func RegisterService(shardCount int) {
+	goworld.RegisterService(ServiceName, &PublishSubscribeService{}, shardCount)
 }
 
 // Publish is called when Avatars login

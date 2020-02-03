@@ -45,8 +45,8 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTyp
 
 // RegisterService registeres an service type
 // After registeration, the service entity will be created automatically on some game
-func RegisterService(typeName string, entityPtr entity.IEntity) {
-	service.RegisterService(typeName, entityPtr)
+func RegisterService(typeName string, entityPtr entity.IEntity, shardCount int) {
+	service.RegisterService(typeName, entityPtr, shardCount)
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
@@ -159,8 +159,8 @@ func CallService(serviceName string, method string, args ...interface{}) {
 }
 
 // GetServiceEntityID returns the entityid of the service
-func GetServiceEntityID(serviceName string) common.EntityID {
-	return service.GetServiceEntityID(serviceName)
+func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
+	return service.GetServiceEntityID(serviceName, shardIndex)
 }
 
 // CallNilSpaces calls methods of all nil spaces on all games

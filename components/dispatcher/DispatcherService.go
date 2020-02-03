@@ -747,15 +747,15 @@ func (service *DispatcherService) handleKvdisRegister(dcp *dispatcherClientProxy
 	}
 }
 
-func (service *DispatcherService) handleServiceDown(gameid uint16, serviceName string, eid common.EntityID) {
-	gwlog.Warnf("%s: service %s: entity %s is down!", service, serviceName, eid)
-	pkt := netutil.NewPacket()
-	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
-	pkt.AppendEntityID(eid)
-	pkt.AppendVarStr(serviceName)
-	service.broadcastToGamesExcept(pkt, gameid)
-	pkt.Release()
-}
+//func (service *DispatcherService) handleServiceDown(gameid uint16, serviceName string, eid common.EntityID) {
+//	gwlog.Warnf("%s: service %s: entity %s is down!", service, serviceName, eid)
+//	pkt := netutil.NewPacket()
+//	pkt.AppendUint16(proto.MT_UNDECLARE_SERVICE)
+//	pkt.AppendEntityID(eid)
+//	pkt.AppendVarStr(serviceName)
+//	service.broadcastToGamesExcept(pkt, gameid)
+//	pkt.Release()
+//}
 
 func (service *DispatcherService) handleCallEntityMethod(dcp *dispatcherClientProxy, pkt *netutil.Packet) {
 	entityID := pkt.ReadEntityID()
