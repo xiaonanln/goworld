@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"syscall"
 	"time"
 
@@ -13,10 +12,10 @@ func stop(sid ServerID) {
 }
 
 func stopWithSignal(sid ServerID, signal syscall.Signal) {
-	err := os.Chdir(env.GoWorldRoot)
-	checkErrorOrQuit(err, "chdir to goworld directory failed")
+	// err := os.Chdir(env.GoWorldRoot)
+	// checkErrorOrQuit(err, "chdir to goworld directory failed")
 
-	ss := detectServerStatus()
+	ss := detectServerStatus(sid)
 	showServerStatus(ss)
 	if !ss.IsRunning() {
 		// server is not running

@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"io"
+	"os"
+)
 
 func isfile(path string) bool {
 	fi, err := os.Stat(path)
@@ -38,4 +41,23 @@ func isexists(path string) bool {
 		panic(err)
 	}
 	return true
+}
+
+func copyFile(src, dest string) (err error) {
+	msg := "Failed to copy default config file."
+	source, err := os.Open(src)
+	checkErrorOrQuit(err, msg)
+	defer func() {
+		err = source.Close()
+		checkErrorOrQuit(err, msg)
+	}()
+
+	destination, err := os.Create(dest)
+	checkErrorOrQuit(err, msg)
+	defer func() {
+		err = destination.Close()
+		checkErrorOrQuit(err, msg)
+	}()
+	_, err = io.Copy(destination, source)
+	return
 }

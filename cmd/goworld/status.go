@@ -1,10 +1,8 @@
 package main
 
 import (
-	"path/filepath"
-	"strings"
-
 	"fmt"
+	"strings"
 
 	"github.com/xiaonanln/goworld/cmd/goworld/process"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -27,7 +25,11 @@ func (ss *ServerStatus) IsRunning() bool {
 	return ss.NumDispatcherRunning > 0 || ss.NumGatesRunning > 0 || ss.NumGamesRunning > 0
 }
 
-func detectServerStatus() *ServerStatus {
+// detectServerStatus finds out if there's any server instance running.
+// Originally, this function matches only on file names, which is pretty
+// risky on server environment. For now, we'll just change the checking
+// to full path matches.
+func detectServerStatus(sid ServerID) *ServerStatus {
 	ss := &ServerStatus{}
 	procs, err := process.Processes()
 	checkErrorOrQuit(err, "list processes failed")
@@ -38,47 +40,52 @@ func detectServerStatus() *ServerStatus {
 		}
 
 		if !isexists(path) {
-			cmdline, err := proc.CmdlineSlice()
-			if err != nil {
-				continue
-			}
-			path = cmdline[0]
-			if !filepath.IsAbs(path) {
-				cwd, err := proc.Cwd()
-				if err != nil {
-					continue
-				}
-				path = filepath.Join(cwd, path)
-			}
-
-		}
-
-		relpath, err := filepath.Rel(env.GoWorldRoot, path)
-		if err != nil || strings.HasPrefix(relpath, "..") {
+			// cmdline, err := proc.CmdlineSlice()
+			// if err != nil {
+			// 	continue
+			// }
+			// path = cmdline[0]
+			// if !filepath.IsAbs(path) {
+			// 	cwd, err := proc.Cwd()
+			// 	if err != nil {
+			// 		continue
+			// 	}
+			// 	path = filepath.Join(cwd, path)
+			// }
+			// this can be safely ignored now
 			continue
 		}
 
-		dir, file := filepath.Split(relpath)
+		// relpath, err := filepath.Rel(env.GoWorldRoot, path)
+		// if err != nil || strings.HasPrefix(relpath, "..") {
+		// 	continue
+		// }
+		//
+		// dir, file := filepath.Split(relpath)
 
-		if file == "dispatcher"+BinaryExtension {
+		switch path {
+		case env.GetDispatcherBinary():
 			ss.NumDispatcherRunning++
 			ss.DispatcherProcs = append(ss.DispatcherProcs, proc)
-		} else if file == "gate"+BinaryExtension {
+		case env.GetGateBinary():
 			ss.NumGatesRunning++
 			ss.GateProcs = append(ss.GateProcs, proc)
-		} else {
-			if strings.HasSuffix(dir, string(filepath.Separator)) {
-				dir = dir[:len(dir)-1]
-			}
-			serverid := ServerID(strings.Join(strings.Split(dir, string(filepath.Separator)), "/"))
-			if strings.HasPrefix(string(serverid), "cmd/") || strings.HasPrefix(string(serverid), "components/") || string(serverid) == "examples/test_client" {
-				// this is a cmd or a component, not a game
-				continue
-			}
-			ss.NumGamesRunning++
-			ss.GameProcs = append(ss.GameProcs, proc)
-			if ss.ServerID == "" {
-				ss.ServerID = serverid
+		default:
+			// TODO come back here to process cmd & component
+			// _, base := filepath.Split(path)
+			// file := filepath.Join(env.GetBinDir(), base)
+			// strings.Trim(dir, string(filepath.Separator))
+			// serverid := ServerID(strings.Join(strings.Split(dir, string(filepath.Separator)), "/"))
+			// if strings.HasPrefix(string(serverid), "cmd/") || strings.HasPrefix(string(serverid), "components/") || string(serverid) == "examples/test_client" {
+			// 	// this is a cmd or a component, not a game
+			// 	continue
+			// }
+			if sid.BinaryPathName() == path {
+				ss.NumGamesRunning++
+				ss.GameProcs = append(ss.GameProcs, proc)
+				if ss.ServerID == "" {
+					ss.ServerID = sid // serverid
+				}
 			}
 		}
 	}
@@ -86,15 +93,19 @@ func detectServerStatus() *ServerStatus {
 	return ss
 }
 
-func status() {
-	ss := detectServerStatus()
+func status(sid ServerID) {
+	ss := detectServerStatus(sid)
 	showServerStatus(ss)
 }
 
 func showServerStatus(ss *ServerStatus) {
-	showMsg("%d dispatcher running, %d/%d gates running, %d/%d games (%s) running", ss.NumDispatcherRunning,
-		ss.NumGatesRunning, config.GetDeployment().DesiredGates,
-		ss.NumGamesRunning, config.GetDeployment().DesiredGames,
+	showMsg(
+		"%d dispatcher running, %d/%d gates running, %d/%d games (%s) running",
+		ss.NumDispatcherRunning,
+		ss.NumGatesRunning,
+		config.GetDeployment().DesiredGates,
+		ss.NumGamesRunning,
+		config.GetDeployment().DesiredGames,
 		ss.ServerID,
 	)
 
