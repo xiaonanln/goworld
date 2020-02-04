@@ -30,9 +30,10 @@ func main() {
 	goworld.RegisterEntity("AOITester", &AOITester{})
 	goworld.RegisterService("OnlineService", &OnlineService{}, 3)
 	goworld.RegisterService("SpaceService", &SpaceService{}, 3)
+	// todo: implement sharding for MailService. Currently, MailService only allows 1 shard
 	goworld.RegisterService("MailService", &MailService{}, 1)
 
-	pubsub.RegisterService(1)
+	pubsub.RegisterService(3)
 
 	// Register Monster type and define attributes
 	goworld.RegisterEntity("Monster", &Monster{})

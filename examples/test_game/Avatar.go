@@ -51,7 +51,7 @@ func (a *Avatar) OnCreated() {
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	goworld.CallServiceShardKey("OnlineService", string(a.ID), "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
-		goworld.CallServiceAny(pubsub.ServiceName, "Subscribe", a.ID, subject)
+		goworld.CallServiceShardKey(pubsub.ServiceName, subject, "Subscribe", a.ID, subject)
 	}
 
 	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
@@ -176,7 +176,7 @@ func (a *Avatar) OnMigrateIn() {
 func (a *Avatar) OnDestroy() {
 	goworld.CallServiceShardKey("OnlineService", string(a.ID), "CheckOut", a.ID)
 	// unsubscribe all subjects
-	goworld.CallServiceAny(pubsub.ServiceName, "UnsubscribeAll", a.ID)
+	goworld.CallServiceAll(pubsub.ServiceName, "UnsubscribeAll", a.ID)
 }
 
 // SendMail_Client is a client RPC to send mail to others
@@ -254,7 +254,7 @@ func (a *Avatar) TestPublish_Client() {
 	if subject[len(subject)-1] == '*' {
 		subject = subject[:len(subject)-1] + strconv.Itoa(rand.Intn(100))
 	}
-	goworld.CallServiceAny(pubsub.ServiceName, "Publish", subject, fmt.Sprintf("%s: hello %s, this is a test publish message", a.ID, subject))
+	goworld.CallServiceShardKey(pubsub.ServiceName, subject, "Publish", subject, fmt.Sprintf("%s: hello %s, this is a test publish message", a.ID, subject))
 }
 
 func (a *Avatar) OnPublish(subject string, content string) {
