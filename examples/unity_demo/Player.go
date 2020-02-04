@@ -6,6 +6,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
+	"strconv"
 )
 
 // Player 对象代表一名玩家
@@ -53,7 +54,7 @@ func (p *Player) enterSpace(spaceKind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Infof("%s enter space from %d => %d", p, p.Space.Kind, spaceKind)
 	}
-	goworld.CallServiceAny("SpaceService", "EnterSpace", p.ID, spaceKind)
+	goworld.CallServiceShardKey("SpaceService", strconv.Itoa(spaceKind), "EnterSpace", p.ID, spaceKind)
 }
 
 // OnClientConnected is called when client is connected

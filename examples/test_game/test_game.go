@@ -29,7 +29,7 @@ func main() {
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("AOITester", &AOITester{})
 	goworld.RegisterService("OnlineService", &OnlineService{}, 3)
-	goworld.RegisterService("SpaceService", &SpaceService{}, 1)
+	goworld.RegisterService("SpaceService", &SpaceService{}, 3)
 	goworld.RegisterService("MailService", &MailService{}, 1)
 
 	pubsub.RegisterService(1)

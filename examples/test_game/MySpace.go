@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"time"
 
 	timer "github.com/xiaonanln/goTimer"
@@ -26,7 +27,7 @@ func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
 	space.EnableAOI(100)
 
-	goworld.CallServiceAny("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
+	goworld.CallServiceShardKey("SpaceService", strconv.Itoa(space.Kind), "NotifySpaceLoaded", space.Kind, space.ID)
 
 	M := 10
 	for i := 0; i < M; i++ {
@@ -77,7 +78,7 @@ func (space *MySpace) CheckForDestroy() {
 		gwlog.Panicf("Avatar count should be 0, but is %d", avatarCount)
 	}
 
-	goworld.CallServiceAny("SpaceService", "RequestDestroy", space.Kind, space.ID)
+	goworld.CallServiceShardKey("SpaceService", strconv.Itoa(space.Kind), "RequestDestroy", space.Kind, space.ID)
 }
 
 func (space *MySpace) clearDestroyCheckTimer() {

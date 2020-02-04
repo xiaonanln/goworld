@@ -94,7 +94,7 @@ func (a *Avatar) enterSpace(spaceKind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Infof("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
 	}
-	goworld.CallServiceAny("SpaceService", "EnterSpace", a.ID, spaceKind)
+	goworld.CallServiceShardKey("SpaceService", strconv.Itoa(spaceKind), "EnterSpace", a.ID, spaceKind)
 }
 
 // OnClientConnected is called when client is connected
