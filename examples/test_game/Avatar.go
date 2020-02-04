@@ -49,7 +49,7 @@ func (a *Avatar) OnAttrsReady() {
 // OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
-	goworld.CallServiceAny("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
+	goworld.CallServiceShardKey("OnlineService", string(a.ID), "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
 		goworld.CallServiceAny(pubsub.ServiceName, "Subscribe", a.ID, subject)
 	}
@@ -174,7 +174,7 @@ func (a *Avatar) OnMigrateIn() {
 
 // OnDestroy is called when avatar is destroying
 func (a *Avatar) OnDestroy() {
-	goworld.CallServiceAny("OnlineService", "CheckOut", a.ID)
+	goworld.CallServiceShardKey("OnlineService", string(a.ID), "CheckOut", a.ID)
 	// unsubscribe all subjects
 	goworld.CallServiceAny(pubsub.ServiceName, "UnsubscribeAll", a.ID)
 }

@@ -159,17 +159,17 @@ func CallServiceAny(serviceName string, method string, args ...interface{}) {
 }
 
 // CallServiceAll calls the methods of all services entities
-func CallServiceAll(serviceName string, method string, args []interface{}) {
+func CallServiceAll(serviceName string, method string, args ...interface{}) {
 	service.CallServiceAll(serviceName, method, args)
 }
 
 // CallServiceShardIndex calls the method of the service entity specified by shard index
-func CallServiceShardIndex(serviceName string, shardIndex int, method string, args []interface{}) {
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args ...interface{}) {
 	service.CallServiceShardIndex(serviceName, shardIndex, method, args)
 }
 
 // CallServiceShardKey calls the method of the service entity specified by shard key (string)
-func CallServiceShardKey(serviceName string, shardKey string, method string, args []interface{}) {
+func CallServiceShardKey(serviceName string, shardKey string, method string, args ...interface{}) {
 	service.CallServiceShardKey(serviceName, shardKey, method, args)
 }
 
