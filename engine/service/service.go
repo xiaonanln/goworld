@@ -271,20 +271,60 @@ func CallServiceAny(serviceName string, method string, args []interface{}) {
 	entity.Call(eid, method, args)
 }
 
-func CallServiceByShardIndex(serviceName string, shardIndex int, method string, args []interface{}) {
+func CallServiceAll(serviceName string, method string, args []interface{}) {
+	serviceEids := serviceMap[serviceName]
+	if len(serviceEids) == 0 {
+		gwlog.Errorf("CallServiceAll %s.%s: no service entity found!", serviceName, method)
+		return
+	}
+
+	for shardIndex, eid := range serviceEids {
+		if eid.IsNil() {
+			gwlog.Errorf("CallServiceAll %s.%s: service entity %d is nil!", serviceName, method, shardIndex)
+			continue
+		}
+
+		// TODO: optimize calls to multiple entities
+		entity.Call(eid, method, args)
+	}
+}
+
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args []interface{}) {
 	serviceEids := serviceMap[serviceName]
 	if shardIndex < 0 || shardIndex >= len(serviceEids) {
-		gwlog.Errorf("CallServiceByShardIndex %s.%s: found %d service entities, but shard index is %d!", serviceName, method, len(serviceEids), shardIndex)
+		gwlog.Errorf("CallServiceShardIndex %s.%s: found %d service entities, but shard index is %d!", serviceName, method, len(serviceEids), shardIndex)
 		return
 	}
 
 	eid := serviceEids[shardIndex]
 	if eid.IsNil() {
-		gwlog.Errorf("CallServiceByShardIndex %s.%s: service entity %d is nil!", serviceName, method, shardIndex)
+		gwlog.Errorf("CallServiceShardIndex %s.%s: service entity %d is nil!", serviceName, method, shardIndex)
 		return
 	}
 
 	entity.Call(eid, method, args)
+}
+
+func CallServiceShardKey(serviceName string, shardKey string, method string, args []interface{}) {
+	serviceEids := serviceMap[serviceName]
+
+	if len(serviceEids) <= 0 {
+		gwlog.Errorf("CallServiceShardKey %s.%s: no service entities", serviceName, method)
+		return
+	}
+
+	shardIndex := shardByKey(shardKey, len(serviceEids))
+	eid := serviceEids[shardIndex]
+	if eid.IsNil() {
+		gwlog.Errorf("CallServiceShardKey %s.%s: service entity %d (shard key %+v) is nil!", serviceName, method, shardIndex, shardKey)
+		return
+	}
+
+	entity.Call(eid, method, args)
+}
+
+func shardByKey(key string, shardCount int) int {
+	return int(common.HashString(key)) % shardCount
 }
 
 func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {

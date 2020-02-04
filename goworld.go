@@ -153,9 +153,24 @@ func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
-// CallServiceAny calls a service entity
+// CallServiceAny calls the method of a random service entity
 func CallServiceAny(serviceName string, method string, args ...interface{}) {
 	service.CallServiceAny(serviceName, method, args)
+}
+
+// CallServiceAll calls the methods of all services entities
+func CallServiceAll(serviceName string, method string, args []interface{}) {
+	service.CallServiceAll(serviceName, method, args)
+}
+
+// CallServiceShardIndex calls the method of the service entity specified by shard index
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args []interface{}) {
+	service.CallServiceShardIndex(serviceName, shardIndex, method, args)
+}
+
+// CallServiceShardKey calls the method of the service entity specified by shard key (string)
+func CallServiceShardKey(serviceName string, shardKey string, method string, args []interface{}) {
+	service.CallServiceShardKey(serviceName, shardKey, method, args)
 }
 
 // GetServiceEntityID returns the entityid of the service

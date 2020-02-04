@@ -16,8 +16,7 @@ func hashGateID(gateid uint16) int {
 }
 
 func hashString(s string) int {
-	h := common.Hash([]byte(s), 0xbc9f1d34)
-	return int(h)
+	return int(common.HashString(s))
 }
 
 func hashSrvID(sn string) int {

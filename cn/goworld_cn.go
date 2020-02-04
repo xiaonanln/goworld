@@ -221,6 +221,21 @@ func CallServiceAny(serviceName string, method string, args ...interface{}) {
 	service.CallServiceAny(serviceName, method, args)
 }
 
+// CallServiceAll 向所有Service对象发起方法调用
+func CallServiceAll(serviceName string, method string, args []interface{}) {
+	service.CallServiceAll(serviceName, method, args)
+}
+
+// CallServiceShardIndex 向shard index所指定的service entity发起方法调用
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args []interface{}) {
+	service.CallServiceShardIndex(serviceName, shardIndex, method, args)
+}
+
+// CallServiceShardKey 向shard key所指定的service entity发起方法调用
+func CallServiceShardKey(serviceName string, shardKey string, method string, args []interface{}) {
+	service.CallServiceShardKey(serviceName, shardKey, method, args)
+}
+
 // GetServiceEntityID 返回Service对象的EntityID。这个函数可以用来确定Service对象是否已经在某个game进程上成功创建或载入。
 func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
 	return service.GetServiceEntityID(serviceName, shardIndex)
