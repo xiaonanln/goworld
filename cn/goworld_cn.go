@@ -226,6 +226,16 @@ func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
 	return service.GetServiceEntityID(serviceName, shardIndex)
 }
 
+// GetServiceShardCount 返回Service的分片数目
+func GetServiceShardCount(serviceName string) int {
+	return service.GetServiceShardCount(serviceName)
+}
+
+// CheckServiceEntitiesReady 返回Service的所有Entity是否创建完毕
+func CheckServiceEntitiesReady(serviceName string) bool {
+	return service.CheckServiceEntitiesReady(serviceName)
+}
+
 // CallNilSpaces 向所有game进程中的NilSpace发起RPC调用。
 //
 // 每个game在启动之后都会在本地创建一个唯一的NilSpace。
