@@ -216,9 +216,9 @@ func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
-// CallService 发起一次Service调用。开发者只需要传入指定的Service名字，不需要指知道Service的EntityID或者当前在哪个game进程。
-func CallService(serviceName string, method string, args ...interface{}) {
-	service.CallService(serviceName, method, args)
+// CallServiceAny 发起一次Service调用。开发者只需要传入指定的Service名字，不需要指知道Service的EntityID或者当前在哪个game进程。
+func CallServiceAny(serviceName string, method string, args ...interface{}) {
+	service.CallServiceAny(serviceName, method, args)
 }
 
 // GetServiceEntityID 返回Service对象的EntityID。这个函数可以用来确定Service对象是否已经在某个game进程上成功创建或载入。

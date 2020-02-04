@@ -255,16 +255,16 @@ func getServiceRegKey(serviceId serviceId) string {
 	return serviceSrvdisPrefix + string(serviceId)
 }
 
-func CallService(serviceName string, method string, args []interface{}) {
+func CallServiceAny(serviceName string, method string, args []interface{}) {
 	serviceEids := serviceMap[serviceName]
 	if len(serviceEids) == 0 {
-		gwlog.Errorf("CallService %s.%s: no service entity found!", serviceName, method)
+		gwlog.Errorf("CallServiceAny %s.%s: no service entity found!", serviceName, method)
 		return
 	}
 
 	eid := serviceEids[rand.Intn(len(serviceEids))]
 	if eid.IsNil() {
-		gwlog.Errorf("CallService %s.%s: service entity is nil!", serviceName, method)
+		gwlog.Errorf("CallServiceAny %s.%s: service entity is nil!", serviceName, method)
 		return
 	}
 

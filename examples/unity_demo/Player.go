@@ -53,7 +53,7 @@ func (p *Player) enterSpace(spaceKind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Infof("%s enter space from %d => %d", p, p.Space.Kind, spaceKind)
 	}
-	goworld.CallService("SpaceService", "EnterSpace", p.ID, spaceKind)
+	goworld.CallServiceAny("SpaceService", "EnterSpace", p.ID, spaceKind)
 }
 
 // OnClientConnected is called when client is connected

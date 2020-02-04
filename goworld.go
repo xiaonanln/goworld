@@ -153,9 +153,9 @@ func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
-// CallService calls a service entity
-func CallService(serviceName string, method string, args ...interface{}) {
-	service.CallService(serviceName, method, args)
+// CallServiceAny calls a service entity
+func CallServiceAny(serviceName string, method string, args ...interface{}) {
+	service.CallServiceAny(serviceName, method, args)
 }
 
 // GetServiceEntityID returns the entityid of the service

@@ -49,9 +49,9 @@ func (a *Avatar) OnAttrsReady() {
 // OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
 	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
-	goworld.CallService("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
+	goworld.CallServiceAny("OnlineService", "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
 	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
-		goworld.CallService(pubsub.ServiceName, "Subscribe", a.ID, subject)
+		goworld.CallServiceAny(pubsub.ServiceName, "Subscribe", a.ID, subject)
 	}
 
 	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
@@ -94,7 +94,7 @@ func (a *Avatar) enterSpace(spaceKind int) {
 	if consts.DEBUG_SPACES {
 		gwlog.Infof("%s enter space from %d => %d", a, a.Space.Kind, spaceKind)
 	}
-	goworld.CallService("SpaceService", "EnterSpace", a.ID, spaceKind)
+	goworld.CallServiceAny("SpaceService", "EnterSpace", a.ID, spaceKind)
 }
 
 // OnClientConnected is called when client is connected
@@ -174,14 +174,14 @@ func (a *Avatar) OnMigrateIn() {
 
 // OnDestroy is called when avatar is destroying
 func (a *Avatar) OnDestroy() {
-	goworld.CallService("OnlineService", "CheckOut", a.ID)
+	goworld.CallServiceAny("OnlineService", "CheckOut", a.ID)
 	// unsubscribe all subjects
-	goworld.CallService(pubsub.ServiceName, "UnsubscribeAll", a.ID)
+	goworld.CallServiceAny(pubsub.ServiceName, "UnsubscribeAll", a.ID)
 }
 
 // SendMail_Client is a client RPC to send mail to others
 func (a *Avatar) SendMail_Client(targetID common.EntityID, mail MailData) {
-	goworld.CallService("MailService", "SendMail", a.ID, a.GetStr("name"), targetID, mail)
+	goworld.CallServiceAny("MailService", "SendMail", a.ID, a.GetStr("name"), targetID, mail)
 }
 
 // OnSendMail is called by MailService to notify sending mail succeed
@@ -191,12 +191,12 @@ func (a *Avatar) OnSendMail(ok bool) {
 
 // NotifyReceiveMail is called by MailService to notify Avatar of receiving any mail
 func (a *Avatar) NotifyReceiveMail() {
-	//goworld.CallService("MailService", "GetMails", a.ID)
+	//goworld.CallServiceAny("MailService", "GetMails", a.ID)
 }
 
 // GetMails_Client is a RPC for clients to retrive mails
 func (a *Avatar) GetMails_Client() {
-	goworld.CallService("MailService", "GetMails", a.ID, a.GetInt("lastMailID"))
+	goworld.CallServiceAny("MailService", "GetMails", a.ID, a.GetInt("lastMailID"))
 }
 
 // OnGetMails is called by MailService to send mails to avatar
@@ -254,7 +254,7 @@ func (a *Avatar) TestPublish_Client() {
 	if subject[len(subject)-1] == '*' {
 		subject = subject[:len(subject)-1] + strconv.Itoa(rand.Intn(100))
 	}
-	goworld.CallService(pubsub.ServiceName, "Publish", subject, fmt.Sprintf("%s: hello %s, this is a test publish message", a.ID, subject))
+	goworld.CallServiceAny(pubsub.ServiceName, "Publish", subject, fmt.Sprintf("%s: hello %s, this is a test publish message", a.ID, subject))
 }
 
 func (a *Avatar) OnPublish(subject string, content string) {

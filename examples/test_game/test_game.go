@@ -28,7 +28,7 @@ func main() {
 	// Register each entity types
 	goworld.RegisterEntity("Account", &Account{})
 	goworld.RegisterEntity("AOITester", &AOITester{})
-	goworld.RegisterService("OnlineService", &OnlineService{}, 1)
+	goworld.RegisterService("OnlineService", &OnlineService{}, 3)
 	goworld.RegisterService("SpaceService", &SpaceService{}, 1)
 	goworld.RegisterService("MailService", &MailService{}, 1)
 

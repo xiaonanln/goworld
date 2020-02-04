@@ -26,7 +26,7 @@ func (space *MySpace) OnSpaceCreated() {
 	// notify the SpaceService that it's ok
 	space.EnableAOI(100)
 
-	goworld.CallService("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
+	goworld.CallServiceAny("SpaceService", "NotifySpaceLoaded", space.Kind, space.ID)
 
 	M := 10
 	for i := 0; i < M; i++ {
@@ -77,7 +77,7 @@ func (space *MySpace) CheckForDestroy() {
 		gwlog.Panicf("Avatar count should be 0, but is %d", avatarCount)
 	}
 
-	goworld.CallService("SpaceService", "RequestDestroy", space.Kind, space.ID)
+	goworld.CallServiceAny("SpaceService", "RequestDestroy", space.Kind, space.ID)
 }
 
 func (space *MySpace) clearDestroyCheckTimer() {
