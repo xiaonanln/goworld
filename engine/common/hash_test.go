@@ -38,7 +38,7 @@ var hashTests = []struct {
 
 func TestHash(t *testing.T) {
 	for i, x := range hashTests {
-		h := Hash(x.data, x.seed)
+		h := HashSeed(x.data, x.seed)
 		if h != x.hash {
 			t.Fatalf("test-%d: invalid hash, %#x vs %#x", i, h, x.hash)
 		}

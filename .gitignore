@@ -20,9 +20,6 @@
 .*.swo
 
 _entity_storage/
-components/dispatcher/dispatcher
-examples/test_client/test_client
-examples/test_game/test_game
 fc
 *.db/
 .idea/
@@ -34,3 +31,11 @@ vendor/
 .idea.bak/
 .vscode/
 tests/
+/components/dispatcher/dispatcher
+/components/gate/gate
+/examples/test_client/test_client
+/examples/test_game/test_game
+/examples/chatroom_demo/chatroom_demo
+/examples/nil_game/nil_game
+/examples/unity_demo/unity_demo
+/go.sum

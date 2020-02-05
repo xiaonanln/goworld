@@ -94,8 +94,8 @@ func SendStartFreezeGame() {
 	return
 }
 
-func SendSrvdisRegister(srvid string, info string, force bool) {
-	SelectBySrvID(srvid).SendSrvdisRegister(srvid, info, force)
+func SendKvdisRegister(srvid string, info string, force bool) {
+	SelectBySrvID(srvid).SendKvdisRegister(srvid, info, force)
 }
 
 func SendCallNilSpaces(exceptGameID uint16, method string, args []interface{}) {

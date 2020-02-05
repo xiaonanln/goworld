@@ -95,8 +95,8 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTyp
 // RegisterService 注册一个Service类型到game中。Service是一种全局唯一的特殊的Entity对象。
 // 每个game进程中初始化的时候都应该注册所有的Service。GoWorld服务器会在某一个game进程中自动创建或载入Service对象（取决于Service类型是否是Persistent）。
 // 开发者不能手动创建Service对象。
-func RegisterService(typeName string, entityPtr entity.IEntity) {
-	service.RegisterService(typeName, entityPtr)
+func RegisterService(typeName string, entityPtr entity.IEntity, shardCount int) {
+	service.RegisterService(typeName, entityPtr, shardCount)
 }
 
 // Run 开始运行game服务。开发者需要为自己的游戏服务器提供一个main模块和main函数，并在main函数里正确初始化GoWorld服务器并启动服务器。
@@ -216,14 +216,39 @@ func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
-// CallService 发起一次Service调用。开发者只需要传入指定的Service名字，不需要指知道Service的EntityID或者当前在哪个game进程。
-func CallService(serviceName string, method string, args ...interface{}) {
-	service.CallService(serviceName, method, args)
+// CallServiceAny 发起一次Service调用。开发者只需要传入指定的Service名字，不需要指知道Service的EntityID或者当前在哪个game进程。
+func CallServiceAny(serviceName string, method string, args ...interface{}) {
+	service.CallServiceAny(serviceName, method, args)
+}
+
+// CallServiceAll 向所有Service对象发起方法调用
+func CallServiceAll(serviceName string, method string, args ...interface{}) {
+	service.CallServiceAll(serviceName, method, args)
+}
+
+// CallServiceShardIndex 向shard index所指定的service entity发起方法调用
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args ...interface{}) {
+	service.CallServiceShardIndex(serviceName, shardIndex, method, args)
+}
+
+// CallServiceShardKey 向shard key所指定的service entity发起方法调用
+func CallServiceShardKey(serviceName string, shardKey string, method string, args ...interface{}) {
+	service.CallServiceShardKey(serviceName, shardKey, method, args)
 }
 
 // GetServiceEntityID 返回Service对象的EntityID。这个函数可以用来确定Service对象是否已经在某个game进程上成功创建或载入。
-func GetServiceEntityID(serviceName string) common.EntityID {
-	return service.GetServiceEntityID(serviceName)
+func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
+	return service.GetServiceEntityID(serviceName, shardIndex)
+}
+
+// GetServiceShardCount 返回Service的分片数目
+func GetServiceShardCount(serviceName string) int {
+	return service.GetServiceShardCount(serviceName)
+}
+
+// CheckServiceEntitiesReady 返回Service的所有Entity是否创建完毕
+func CheckServiceEntitiesReady(serviceName string) bool {
+	return service.CheckServiceEntitiesReady(serviceName)
 }
 
 // CallNilSpaces 向所有game进程中的NilSpace发起RPC调用。

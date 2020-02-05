@@ -45,8 +45,8 @@ func RegisterEntity(typeName string, entityPtr entity.IEntity) *entity.EntityTyp
 
 // RegisterService registeres an service type
 // After registeration, the service entity will be created automatically on some game
-func RegisterService(typeName string, entityPtr entity.IEntity) {
-	service.RegisterService(typeName, entityPtr)
+func RegisterService(typeName string, entityPtr entity.IEntity, shardCount int) {
+	service.RegisterService(typeName, entityPtr, shardCount)
 }
 
 // CreateSpaceAnywhere creates a space with specified kind in any game server
@@ -153,14 +153,39 @@ func Call(id EntityID, method string, args ...interface{}) {
 	entity.Call(id, method, args)
 }
 
-// CallService calls a service entity
-func CallService(serviceName string, method string, args ...interface{}) {
-	service.CallService(serviceName, method, args)
+// CallServiceAny calls the method of a random service entity
+func CallServiceAny(serviceName string, method string, args ...interface{}) {
+	service.CallServiceAny(serviceName, method, args)
+}
+
+// CallServiceAll calls the methods of all services entities
+func CallServiceAll(serviceName string, method string, args ...interface{}) {
+	service.CallServiceAll(serviceName, method, args)
+}
+
+// CallServiceShardIndex calls the method of the service entity specified by shard index
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args ...interface{}) {
+	service.CallServiceShardIndex(serviceName, shardIndex, method, args)
+}
+
+// CallServiceShardKey calls the method of the service entity specified by shard key (string)
+func CallServiceShardKey(serviceName string, shardKey string, method string, args ...interface{}) {
+	service.CallServiceShardKey(serviceName, shardKey, method, args)
 }
 
 // GetServiceEntityID returns the entityid of the service
-func GetServiceEntityID(serviceName string) common.EntityID {
-	return service.GetServiceEntityID(serviceName)
+func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
+	return service.GetServiceEntityID(serviceName, shardIndex)
+}
+
+// GetServiceShardCount returns the Shard Count of the service
+func GetServiceShardCount(serviceName string) int {
+	return service.GetServiceShardCount(serviceName)
+}
+
+// CheckServiceEntitiesReady returns if the service entities are all ready
+func CheckServiceEntitiesReady(serviceName string) bool {
+	return service.CheckServiceEntitiesReady(serviceName)
 }
 
 // CallNilSpaces calls methods of all nil spaces on all games

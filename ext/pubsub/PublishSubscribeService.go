@@ -34,7 +34,7 @@ func newSubscribing() *subscribing {
 type PublishSubscribeService struct {
 	entity.Entity
 
-	tree                       trietst.TrieMO // althrough TST performs a little better, but it has bad worst case performance
+	tree                       trietst.TrieMO // although TST performs a little better, but it has bad worst case performance
 	avatarSubscribings         map[common.EntityID]common.StringSet
 	avatarWildcardSubscribings map[common.EntityID]common.StringSet
 }
@@ -61,8 +61,8 @@ func (pss *PublishSubscribeService) OnCreated() {
 }
 
 // RegisterService registeres PublishSubscribeService to goworld
-func RegisterService() {
-	goworld.RegisterService(ServiceName, &PublishSubscribeService{})
+func RegisterService(shardCount int) {
+	goworld.RegisterService(ServiceName, &PublishSubscribeService{}, shardCount)
 }
 
 // Publish is called when Avatars login

@@ -16,36 +16,72 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwvar"
-	"github.com/xiaonanln/goworld/engine/srvdis"
-	"github.com/xiaonanln/goworld/engine/storage"
+	"github.com/xiaonanln/goworld/engine/kvdis"
 )
 
 const (
-	checkServicesInterval   = time.Second * 60
-	serviceSrvdisPrefix     = "Service/"
-	serviceSrvdisPrefixLen  = len(serviceSrvdisPrefix)
-	checkServicesLaterDelay = time.Millisecond * 200
+	checkServicesInterval      = time.Second * 60
+	serviceSrvdisPrefix        = "Service/"
+	serviceSrvdisPrefixLen     = len(serviceSrvdisPrefix)
+	checkServicesLaterDelayMax = time.Millisecond * 500
+	serviceNameShardIndexSep   = "#" // must not be "/"
+	maxServiceShardCount       = 8192
 )
 
+type serviceId string
+
+func getServiceId(serviceName string, shardIndex int) serviceId {
+	return serviceId(fmt.Sprintf("%s#%d", serviceName, shardIndex))
+}
+
+func splitServiceId(serviceId serviceId) (serviceName string, shardIndex int) {
+	var err error
+
+	serviceNameIndex := strings.Split(string(serviceId), serviceNameShardIndexSep)
+	if len(serviceNameIndex) != 2 {
+		gwlog.Panicf("invalid service id: %#v (should be ServiceName#ShardIndex)", serviceId)
+	}
+
+	serviceName = serviceNameIndex[0]
+	shardIndex, err = strconv.Atoi(serviceNameIndex[1])
+	if err != nil {
+		gwlog.Panicf("invalid service id: %#v (invalid shard index)", serviceId)
+	}
+
+	if shardIndex < 0 || shardIndex > maxServiceShardCount {
+		gwlog.Panicf("invalid service id: %#v (shard index is out of range)", serviceId)
+	}
+
+	return
+}
+
 var (
-	registeredServices = common.StringSet{}
+	registeredServices = map[string]int{}
 	gameid             uint16
-	serviceMap         = map[string]common.EntityID{} // ServiceName -> Entity ID
+	serviceMap         = map[string][]common.EntityID{} // ServiceName -> []Entity ID
 	checkTimer         *timer.Timer
 )
 
-func RegisterService(typeName string, entityPtr entity.IEntity) {
+func RegisterService(typeName string, entityPtr entity.IEntity, shardCount int) {
+	if shardCount <= 0 || shardCount > maxServiceShardCount {
+		gwlog.Panicf("RegisterService: %s is using invalid shard count: %d, should be in range [%d ~ %d]", typeName, shardCount, 1, maxServiceShardCount)
+	}
+
+	if strings.Contains(typeName, serviceNameShardIndexSep) {
+		gwlog.Panicf("RegisterService: invalid service name: %s (should not contains %#v)", typeName, serviceNameShardIndexSep)
+	}
+
 	entity.RegisterEntity(typeName, entityPtr, true)
-	registeredServices.Add(typeName)
+	registeredServices[typeName] = shardCount
 }
 
 func Setup(gameid_ uint16) {
 	gameid = gameid_
-	srvdis.AddPostCallback(checkServicesLater)
+	kvdis.AddPostCallback(checkServicesLater)
 }
 
 func OnDeploymentReady() {
-	timer.AddTimer(checkServicesInterval, checkServices)
+	timer.AddTimer(checkServicesInterval, checkServicesLater)
 	checkServicesLater()
 }
 
@@ -55,177 +91,272 @@ type serviceInfo struct {
 }
 
 func checkServicesLater() {
-	if checkTimer == nil || !checkTimer.IsActive() {
-		checkTimer = timer.AddCallback(checkServicesLaterDelay, func() {
-			checkTimer = nil
-			checkServices()
-		})
+	if checkTimer != nil {
+		checkTimer.Cancel()
+		checkTimer = nil
 	}
+
+	checkTimer = timer.AddCallback(time.Duration(rand.Int63n(int64(checkServicesLaterDelayMax))), func() {
+		checkTimer = nil
+		checkServices()
+	})
 }
 
+// checkServices is executed per `checkServicesInterval`
 func checkServices() {
 	if !gwvar.IsDeploymentReady.Value() {
 		// deployment is not ready
 		return
 	}
 	gwlog.Infof("service: checking services ...")
-	dispRegisteredServices := map[string]*serviceInfo{} // all services that are registered on dispatchers
-	needLocalServiceEntities := common.StringSet{}
-	newServiceMap := make(map[string]common.EntityID, len(registeredServices))
+	dispRegisteredServices := map[serviceId]*serviceInfo{}     // all services that are registered on dispatchers
+	localRegServiceIds := map[serviceId]struct{}{}             //service ids that are registered on this game server
+	localRegServiceEntities := map[string]common.EntityIDSet{} // local service entities that is registered, group by ServiceName
+	newServiceMap := make(map[string][]common.EntityID, len(registeredServices))
 
-	getServiceInfo := func(serviceName string) *serviceInfo {
-		info := dispRegisteredServices[serviceName]
+	// ServiceId == ServiceName#ShardIndex
+	getServiceInfo := func(serviceId serviceId) *serviceInfo {
+		info := dispRegisteredServices[serviceId]
 		if info == nil {
 			info = &serviceInfo{}
-			dispRegisteredServices[serviceName] = info
+			dispRegisteredServices[serviceId] = info
 		}
 		return info
 	}
 
-	srvdis.TraverseByPrefix(serviceSrvdisPrefix, func(srvid string, srvinfo string) {
-		servicePath := strings.Split(srvid[serviceSrvdisPrefixLen:], "/")
-		//gwlog.Infof("service: found service %v = %+v", servicePath, srvinfo)
+	kvdis.TraverseByPrefix(serviceSrvdisPrefix, func(key string, val string) {
+		servicePath := strings.Split(key[serviceSrvdisPrefixLen:], "/")
+		//gwlog.Infof("service: found service %v = %+v", servicePath, val)
 
 		if len(servicePath) == 1 {
-			// ServiceName = gameX
-			serviceName := servicePath[0]
-			targetGameID, err := strconv.Atoi(srvinfo[4:])
+			// ServiceName#ShardIndex = gameX
+			serviceId := serviceId(servicePath[0])
+			regGameId, err := strconv.Atoi(val[4:])
 			if err != nil {
-				gwlog.Panic(errors.Wrap(err, "parse targetGameID failed"))
+				gwlog.Panic(errors.Wrap(err, "parse gameid failed"))
 			}
-			// XxxService = gameX
-			getServiceInfo(serviceName).Registered = true
+			getServiceInfo(serviceId).Registered = true
 
-			if int(gameid) == targetGameID {
-				needLocalServiceEntities.Add(serviceName)
+			// this service entity should be created on local game server
+			if int(gameid) == regGameId {
+				localRegServiceIds[serviceId] = struct{}{}
 			}
 		} else if len(servicePath) == 2 {
-			// ServiceName/EntityID = Xxxx
-			serviceName := servicePath[0]
+			// ServiceName#ShardIndex/EntityID = Xxxx
+			serviceId := serviceId(servicePath[0])
 			fieldName := servicePath[1]
 			switch fieldName {
 			case "EntityID":
-				getServiceInfo(serviceName).EntityID = common.EntityID(srvinfo)
+				getServiceInfo(serviceId).EntityID = common.EntityID(val)
 			default:
-				gwlog.Warnf("unknown srvdis info: %s = %s", srvid, srvinfo)
+				gwlog.Errorf("unknown kvdis info: %s = %s", key, val)
 			}
 		} else {
-			gwlog.Panic(servicePath)
+			gwlog.Errorf("unknown kvdis key: %s", servicePath)
 		}
 	})
 
-	for serviceName, info := range dispRegisteredServices {
-		if info.Registered && !info.EntityID.IsNil() {
-			newServiceMap[serviceName] = info.EntityID
+	// generate new service map from registered service IDs
+	for serviceId, info := range dispRegisteredServices {
+		if !info.Registered || info.EntityID.IsNil() {
+			continue
 		}
+
+		serviceName, shardIndex := splitServiceId(serviceId)
+		regShardCount := registeredServices[serviceName]
+
+		if shardIndex >= regShardCount {
+			gwlog.Errorf("invalid service id: %#v (shard index is out of range)", serviceId)
+			continue
+		}
+
+		serviceEids := newServiceMap[serviceName]
+		if serviceEids == nil {
+			serviceEids = make([]common.EntityID, regShardCount)
+			newServiceMap[serviceName] = serviceEids
+		}
+
+		serviceEids[shardIndex] = info.EntityID
 	}
+	// replace with new service map
 	serviceMap = newServiceMap
 
-	// destroy all service entities that is on this game, but is not verified by dispatcher
+	// find all service entities that should be created on local game, group by service name
+	for serviceId := range localRegServiceIds {
+		serviceInfo := getServiceInfo(serviceId)
+		serviceName, _ := splitServiceId(serviceId)
+		if !serviceInfo.EntityID.IsNil() {
+			if localRegServiceEntities[serviceName] == nil {
+				localRegServiceEntities[serviceName] = common.EntityIDSet{}
+			}
+
+			localRegServiceEntities[serviceName].Add(serviceInfo.EntityID)
+		}
+	}
+
+	// destroy all service entities that is on this game, but is not registered successfully
 	for serviceName := range registeredServices {
-		if !needLocalServiceEntities.Contains(serviceName) {
-			// this service should not be local
-			serviceEntities := entity.GetEntitiesByType(serviceName)
-			for _, e := range serviceEntities {
-				e.Destroy()
+		serviceEntities := entity.GetEntitiesByType(serviceName)
+		for eid, entity := range serviceEntities {
+			if !localRegServiceEntities[serviceName].Contains(eid) {
+				// this service entity is created locally, but not registered
+				// might be caused by registration delay (very low chance)
+				entity.Destroy()
 			}
 		}
 	}
 
 	// create all service entities that should be created on this game
-	for serviceName := range needLocalServiceEntities {
-		serviceEntities := entity.GetEntitiesByType(serviceName)
-		if len(serviceEntities) == 0 {
-			createServiceEntity(serviceName)
-		} else if len(serviceEntities) == 1 {
-			// make sure the current service entity is the
-			localEid := serviceEntities.Keys()[0]
-			//gwlog.Infof("service %s: found service entity: %s, service info: %+v", serviceName, serviceEntities.Values()[0], getServiceInfo(serviceName))
-			if localEid != getServiceInfo(serviceName).EntityID {
-				// might happen if dispatchers recover from crash
-				gwlog.Warnf("service %s: local entity is %s, but has %s on dispatchers", serviceName, localEid, getServiceInfo(serviceName).EntityID)
-				srvdis.Register(getSrvID(serviceName)+"/EntityID", string(localEid), true)
-			}
-		} else {
-			// multiple service entities ? should never happen! so just destroy all invalid service entities
-			correctEid := getServiceInfo(serviceName).EntityID
-			for _, e := range serviceEntities {
-				if e.ID != correctEid {
-					e.Destroy()
-				}
-			}
+	for serviceId := range localRegServiceIds {
+		serviceInfo := getServiceInfo(serviceId)
+
+		if serviceInfo.EntityID.IsNil() || entity.GetEntity(serviceInfo.EntityID) == nil {
+			// service entity not created locally yet
+			createServiceEntity(serviceId)
 		}
 	}
 
-	// register all service types that are not registered to dispatcher yet
-	for serviceName := range registeredServices {
-		if !getServiceInfo(serviceName).Registered {
-			gwlog.Warnf("service: %s not found, registering srvdis ...", serviceName)
-			// delay for a random time so that each game might register servcie randomly
-			randomDelay := time.Millisecond * time.Duration(rand.Intn(100))
-			_serviceName := serviceName
+	// register all service ids that are not registered to dispatcher yet
+	for serviceName, shardCount := range registeredServices {
+		for shardIndex := 0; shardIndex < shardCount; shardIndex++ {
+			serviceId := getServiceId(serviceName, shardIndex)
+			serviceInfo := getServiceInfo(serviceId)
+
+			if serviceInfo.Registered {
+				continue
+			}
+
+			gwlog.Warnf("service: %s not found, registering kvdis ...", serviceId)
+
+			// delay for a random time so that each game might register services randomly
+			randomDelay := time.Millisecond * time.Duration(rand.Intn(1000))
 			timer.AddCallback(randomDelay, func() {
-				srvdis.Register(getSrvID(_serviceName), fmt.Sprintf("game%d", gameid), false)
+				kvdis.Register(getServiceRegKey(serviceId), fmt.Sprintf("game%d", gameid), false)
 			})
 		}
 	}
 }
-func createServiceEntity(serviceName string) {
+
+func createServiceEntity(serviceId serviceId) {
+	serviceName, shardIndex := splitServiceId(serviceId)
+	_ = shardIndex
+
 	desc := entity.GetEntityTypeDesc(serviceName)
 	if desc == nil {
 		gwlog.Panicf("create service entity locally failed: service %s is not registered", serviceName)
 	}
 
-	if !desc.IsPersistent {
-		e := entity.CreateEntityLocally(serviceName, nil)
-		gwlog.Infof("Created service entity: %s: %s", serviceName, e)
-		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(e.ID), true)
-	} else {
-		createPersistentServiceEntity(serviceName)
-	}
+	e := entity.CreateEntityLocally(serviceName, nil)
+	kvdis.Register(getServiceRegKey(serviceId)+"/EntityID", string(e.ID), true)
+	gwlog.Infof("Created service entity: %s: %s", serviceName, e)
 }
 
-func createPersistentServiceEntity(serviceName string) {
-	storage.ListEntityIDs(serviceName, func(ids []common.EntityID, err error) {
-		if err != nil {
-			gwlog.Panic(errors.Wrap(err, "storage.ListEntityIDs failed"))
-		}
-
-		if len(entity.GetEntitiesByType(serviceName)) > 0 {
-			// service exists now
-			gwlog.Warnf("Was creating service %s, but found existing: %v", serviceName, entity.GetEntitiesByType(serviceName))
-			return
-		}
-
-		var eid common.EntityID
-		if len(ids) == 0 {
-			eid = entity.CreateEntityLocally(serviceName, nil).ID
-			gwlog.Infof("Created service entity: %s: %s", serviceName, eid)
-		} else {
-			eid = ids[0]
-			// try to load entity on the current game, but we need to tell dispatcher first
-			entity.LoadEntityOnGame(serviceName, eid, gameid)
-			gwlog.Infof("Loading service entity: %s: %s", serviceName, eid)
-		}
-
-		srvdis.Register(getSrvID(serviceName)+"/EntityID", string(eid), true)
-	})
+func getServiceRegKey(serviceId serviceId) string {
+	return serviceSrvdisPrefix + string(serviceId)
 }
 
-func getSrvID(serviceName string) string {
-	return serviceSrvdisPrefix + serviceName
-}
-
-func CallService(serviceName string, method string, args []interface{}) {
-	serviceEid := serviceMap[serviceName]
-	if serviceEid.IsNil() {
-		gwlog.Errorf("CallService %s.%s: service entity is not created yet!", serviceName, method)
+func CallServiceAny(serviceName string, method string, args []interface{}) {
+	serviceEids := serviceMap[serviceName]
+	if len(serviceEids) == 0 {
+		gwlog.Errorf("CallServiceAny %s.%s: no service entity found!", serviceName, method)
 		return
 	}
 
-	entity.Call(serviceEid, method, args)
+	eid := serviceEids[rand.Intn(len(serviceEids))]
+	if eid.IsNil() {
+		gwlog.Errorf("CallServiceAny %s.%s: service entity is nil!", serviceName, method)
+		return
+	}
+
+	entity.Call(eid, method, args)
 }
 
-func GetServiceEntityID(serviceName string) common.EntityID {
-	return serviceMap[serviceName]
+func CallServiceAll(serviceName string, method string, args []interface{}) {
+	serviceEids := serviceMap[serviceName]
+	if len(serviceEids) == 0 {
+		gwlog.Errorf("CallServiceAll %s.%s: no service entity found!", serviceName, method)
+		return
+	}
+
+	for shardIndex, eid := range serviceEids {
+		if eid.IsNil() {
+			gwlog.Errorf("CallServiceAll %s.%s: service entity %d is nil!", serviceName, method, shardIndex)
+			continue
+		}
+
+		// TODO: optimize calls to multiple entities
+		entity.Call(eid, method, args)
+	}
+}
+
+func CallServiceShardIndex(serviceName string, shardIndex int, method string, args []interface{}) {
+	serviceEids := serviceMap[serviceName]
+	if shardIndex < 0 || shardIndex >= len(serviceEids) {
+		gwlog.Errorf("CallServiceShardIndex %s.%s: found %d service entities, but shard index is %d!", serviceName, method, len(serviceEids), shardIndex)
+		return
+	}
+
+	eid := serviceEids[shardIndex]
+	if eid.IsNil() {
+		gwlog.Errorf("CallServiceShardIndex %s.%s: service entity %d is nil!", serviceName, method, shardIndex)
+		return
+	}
+
+	entity.Call(eid, method, args)
+}
+
+func CallServiceShardKey(serviceName string, shardKey string, method string, args []interface{}) {
+	serviceEids := serviceMap[serviceName]
+
+	if len(serviceEids) <= 0 {
+		gwlog.Errorf("CallServiceShardKey %s.%s: no service entities", serviceName, method)
+		return
+	}
+
+	shardIndex := shardByKey(shardKey, len(serviceEids))
+	eid := serviceEids[shardIndex]
+	if eid.IsNil() {
+		gwlog.Errorf("CallServiceShardKey %s.%s: service entity %d (shard key %+v) is nil!", serviceName, method, shardIndex, shardKey)
+		return
+	}
+
+	entity.Call(eid, method, args)
+}
+
+func shardByKey(key string, shardCount int) int {
+	return int(common.HashString(key)) % shardCount
+}
+
+func GetServiceEntityID(serviceName string, shardIndex int) common.EntityID {
+	eids := serviceMap[serviceName]
+	if shardIndex >= 0 && shardIndex < len(eids) {
+		return eids[shardIndex]
+	} else {
+		return ""
+	}
+}
+
+func GetServiceShardCount(serviceName string) int {
+	return registeredServices[serviceName]
+}
+
+func CheckServiceEntitiesReady(serviceName string) bool {
+	shardCount := registeredServices[serviceName]
+	gwlog.Warnf("CheckServiceEntitiesReady %s: shard=%d, eids=%+v", serviceName, shardCount, serviceMap[serviceName])
+	if shardCount <= 0 {
+		return false
+	}
+
+	eids := serviceMap[serviceName]
+	if len(eids) != shardCount {
+		return false
+	}
+
+	for _, eid := range eids {
+		if eid.IsNil() {
+			return false
+		}
+	}
+
+	return true
 }

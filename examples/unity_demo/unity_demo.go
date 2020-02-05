@@ -14,8 +14,8 @@ var (
 func main() {
 	goworld.RegisterSpace(&MySpace{}) // 注册自定义的Space类型
 
-	goworld.RegisterService("OnlineService", &OnlineService{})
-	goworld.RegisterService("SpaceService", &SpaceService{})
+	goworld.RegisterService("OnlineService", &OnlineService{}, 3)
+	goworld.RegisterService("SpaceService", &SpaceService{}, 3)
 	// 注册Account类型
 	goworld.RegisterEntity("Account", &Account{})
 	// 注册Monster类型
