@@ -16,13 +16,13 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwvar"
-	"github.com/xiaonanln/goworld/engine/kvdis"
+	"github.com/xiaonanln/goworld/engine/kvreg"
 )
 
 const (
 	checkServicesInterval      = time.Second * 60
-	serviceSrvdisPrefix        = "Service/"
-	serviceSrvdisPrefixLen     = len(serviceSrvdisPrefix)
+	serviceKvregPrefix         = "Service/"
+	serviceKvregPrefixLen      = len(serviceKvregPrefix)
 	checkServicesLaterDelayMax = time.Millisecond * 500
 	serviceNameShardIndexSep   = "#" // must not be "/"
 	maxServiceShardCount       = 8192
@@ -77,7 +77,7 @@ func RegisterService(typeName string, entityPtr entity.IEntity, shardCount int) 
 
 func Setup(gameid_ uint16) {
 	gameid = gameid_
-	kvdis.AddPostCallback(checkServicesLater)
+	kvreg.AddPostCallback(checkServicesLater)
 }
 
 func OnDeploymentReady() {
@@ -124,8 +124,8 @@ func checkServices() {
 		return info
 	}
 
-	kvdis.TraverseByPrefix(serviceSrvdisPrefix, func(key string, val string) {
-		servicePath := strings.Split(key[serviceSrvdisPrefixLen:], "/")
+	kvreg.TraverseByPrefix(serviceKvregPrefix, func(key string, val string) {
+		servicePath := strings.Split(key[serviceKvregPrefixLen:], "/")
 		//gwlog.Infof("service: found service %v = %+v", servicePath, val)
 
 		if len(servicePath) == 1 {
@@ -149,10 +149,10 @@ func checkServices() {
 			case "EntityID":
 				getServiceInfo(serviceId).EntityID = common.EntityID(val)
 			default:
-				gwlog.Errorf("unknown kvdis info: %s = %s", key, val)
+				gwlog.Errorf("unknown kvreg info: %s = %s", key, val)
 			}
 		} else {
-			gwlog.Errorf("unknown kvdis key: %s", servicePath)
+			gwlog.Errorf("unknown kvreg key: %s", servicePath)
 		}
 	})
 
@@ -226,12 +226,12 @@ func checkServices() {
 				continue
 			}
 
-			gwlog.Warnf("service: %s not found, registering kvdis ...", serviceId)
+			gwlog.Warnf("service: %s not found, registering kvreg ...", serviceId)
 
 			// delay for a random time so that each game might register services randomly
 			randomDelay := time.Millisecond * time.Duration(rand.Intn(1000))
 			timer.AddCallback(randomDelay, func() {
-				kvdis.Register(getServiceRegKey(serviceId), fmt.Sprintf("game%d", gameid), false)
+				kvreg.Register(getServiceRegKey(serviceId), fmt.Sprintf("game%d", gameid), false)
 			})
 		}
 	}
@@ -247,12 +247,12 @@ func createServiceEntity(serviceId serviceId) {
 	}
 
 	e := entity.CreateEntityLocally(serviceName, nil)
-	kvdis.Register(getServiceRegKey(serviceId)+"/EntityID", string(e.ID), true)
+	kvreg.Register(getServiceRegKey(serviceId)+"/EntityID", string(e.ID), true)
 	gwlog.Infof("Created service entity: %s: %s", serviceName, e)
 }
 
 func getServiceRegKey(serviceId serviceId) string {
-	return serviceSrvdisPrefix + string(serviceId)
+	return serviceKvregPrefix + string(serviceId)
 }
 
 func CallServiceAny(serviceName string, method string, args []interface{}) {

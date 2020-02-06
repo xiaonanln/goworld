@@ -1,4 +1,4 @@
-package kvdis
+package kvreg
 
 import (
 	"testing"

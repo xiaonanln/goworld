@@ -1,4 +1,4 @@
-package kvdis
+package kvreg
 
 import (
 	"strings"
@@ -16,8 +16,8 @@ var (
 )
 
 func Register(key string, val string, force bool) {
-	gwlog.Infof("kvdis: register %s = %s, force=%v", key, val, force)
-	dispatchercluster.SendKvdisRegister(key, val, force)
+	gwlog.Infof("kvreg: register %s = %s, force=%v", key, val, force)
+	dispatchercluster.SendKvregRegister(key, val, force)
 }
 
 func TraverseByPrefix(prefix string, cb func(key string, val string)) {
@@ -28,8 +28,8 @@ func TraverseByPrefix(prefix string, cb func(key string, val string)) {
 	}
 }
 
-func WatchKvdisRegister(key string, val string) {
-	gwlog.Infof("kvdis: watch %s = %s", key, val)
+func WatchKvregRegister(key string, val string) {
+	gwlog.Infof("kvreg: watch %s = %s", key, val)
 	kvmap[key] = val
 
 	for _, c := range postCallbacks {

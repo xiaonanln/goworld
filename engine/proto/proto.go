@@ -27,8 +27,8 @@ const (
 	MT_NOTIFY_CREATE_ENTITY
 	// MT_NOTIFY_DESTROY_ENTITY is a message type for destroying entities
 	MT_NOTIFY_DESTROY_ENTITY
-	// MT_KVDIS_REGISTER is a message type for declaring services
-	MT_KVDIS_REGISTER
+	// MT_KVREG_REGISTER is a message type for declaring services
+	MT_KVREG_REGISTER
 	// MT_UNDECLARE_SERVICE is a message type for undeclaring services
 	MT_UNDECLARE_SERVICE
 	// MT_CALL_ENTITY_METHOD is a message type for calling entity methods
