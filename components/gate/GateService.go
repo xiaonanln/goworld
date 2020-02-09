@@ -186,7 +186,7 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 		netconn = net.Conn(tlsConn)
 	}
 
-	conn := netutil.NetConnection{netconn}
+	conn := netutil.NetConn{netconn}
 	cp := newClientProxy(conn, cfg)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.ServeTCPConnection: client %s connected", gs, cp)
