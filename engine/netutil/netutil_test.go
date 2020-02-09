@@ -51,7 +51,7 @@ func TestPacketConnection(t *testing.T) {
 		t.Errorf("connect error: %s", err)
 	}
 
-	conn := NewPacketConnection(NetConn{_conn}, nil)
+	conn := NewPacketConnection(NetConn{_conn})
 
 	for i := 0; i < 10; i++ {
 		var PAYLOAD_LEN uint32 = uint32(rand.Intn(4096 + 1))

@@ -68,7 +68,7 @@ func TestMessagePackMsgPacker_UnpackMsg(t *testing.T) {
 }
 
 func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
-	packer := JsoniterMsgPacker{}
+	packer := MessagePackMsgPacker{}
 	items := []testMsg{}
 	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{
@@ -85,7 +85,7 @@ func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
 }
 
 func BenchmarkMessagePackMsgPacker_PackMsg_Array_OneByOne(b *testing.B) {
-	packer := JsoniterMsgPacker{}
+	packer := MessagePackMsgPacker{}
 	items := []testMsg{}
 	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{
