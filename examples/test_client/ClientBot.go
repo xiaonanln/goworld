@@ -102,9 +102,12 @@ func (bot *ClientBot) run() {
 	if cfg.EncryptConnection && !bot.useWebSocket {
 		netconn = tls.Client(netconn, tlsConfig)
 	}
-	bot.conn = proto.NewGoWorldConnection(
-		netconnutil.NewBufferedConn(netconn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE),
-		cfg.CompressConnection, cfg.CompressFormat)
+	var conn netutil.Connection = netutil.NetConn{netconn}
+	if cfg.CompressConnection {
+		conn = netconnutil.NewSnappyConn(conn)
+	}
+	conn = netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE)
+	bot.conn = proto.NewGoWorldConnection(conn)
 	defer bot.conn.Close()
 
 	if bot.useKCP {

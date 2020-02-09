@@ -365,7 +365,6 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 			packet := netutil.NewPacket()
 			packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
 			packet.AppendBytes(data)
-			packet.SetNotCompress() // too many these packets, giveup compress to save time
 			clientproxy.SendPacket(packet)
 			packet.Release()
 		}

@@ -36,9 +36,11 @@ type ClientProxy struct {
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
-	gwc := proto.NewGoWorldConnection(
-		netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE),
-		cfg.CompressConnection, cfg.CompressFormat)
+	if cfg.CompressConnection {
+		conn = netconnutil.NewSnappyConn(conn)
+	}
+	conn = netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE)
+	gwc := proto.NewGoWorldConnection(conn)
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid

@@ -81,8 +81,6 @@ http_addr=127.0.0.1:24000
 listen_addr=0.0.0.0:14000
 log_level=debug
 compress_connection=0
-; supported compress formats: gwsnappy|snappy|flate|lz4|lzw
-compress_format=gwsnappy
 encrypt_connection=0
 rsa_key=rsa.key
 rsa_certificate=rsa.crt
