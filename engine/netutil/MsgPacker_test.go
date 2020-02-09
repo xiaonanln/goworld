@@ -14,20 +14,8 @@ type testMsg struct {
 	MapField  map[string]interface{}
 }
 
-func BenchmarkJSONMsgPacker(b *testing.B) {
-	benchmarkMsgPacker(b, &JSONMsgPacker{})
-}
-
-func BenchmarkJsoniterMsgPacker(b *testing.B) {
-	benchmarkMsgPacker(b, &JsoniterMsgPacker{})
-}
-
 func BenchmarkMessagePackMsgPacker(b *testing.B) {
 	benchmarkMsgPacker(b, &MessagePackMsgPacker{})
-}
-
-func BenchmarkGobMsgPacker(b *testing.B) {
-	benchmarkMsgPacker(b, &GobMsgPacker{})
 }
 
 func benchmarkMsgPacker(b *testing.B, packer MsgPacker) {
