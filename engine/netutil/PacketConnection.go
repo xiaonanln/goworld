@@ -16,7 +16,6 @@ import (
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/netutil/compress"
 	"github.com/xiaonanln/goworld/engine/opmon"
 )
 
@@ -31,21 +30,7 @@ var (
 	// NETWORK_ENDIAN is the network Endian of connections
 	NETWORK_ENDIAN = binary.LittleEndian
 	errRecvAgain   = _ErrRecvAgain{}
-	//compressWritersPool = xnsyncutil.NewNewlessPool()
 )
-
-func init() {
-	//for i := 0; i < consts.COMPRESS_WRITER_POOL_SIZE; i++ {
-	//	cw, err := flate.NewWriter(os.Stderr, flate.BestSpeed)
-	//	if err != nil {
-	//		gwlog.Fatalf("create flate compressor failed: %v", err)
-	//	}
-	//
-	//	compressWritersPool.Put(cw)
-	//}
-
-	//gwlog.Infof("%d compress writer created.", consts.COMPRESS_WRITER_POOL_SIZE)
-}
 
 type _ErrRecvAgain struct{}
 
@@ -64,28 +49,23 @@ func (err _ErrRecvAgain) Timeout() bool {
 // PacketConnection is a connection that send and receive data packets upon a network stream connection
 type PacketConnection struct {
 	conn               Connection
-	compressed         bool
 	pendingPackets     []*Packet
 	pendingPacketsLock sync.Mutex
 
 	// buffers and infos for receiving a packet
 	payloadLenBuf         [_SIZE_FIELD_SIZE]byte
 	payloadLenBytesRecved int
-	recvCompressed        bool
 	recvTotalPayloadLen   uint32
 	recvedPayloadLen      uint32
 	recvingPacket         *Packet
-	compressor            compress.Compressor
 }
 
 // NewPacketConnection creates a packet connection based on network connection
-func NewPacketConnection(conn Connection, compressor compress.Compressor) *PacketConnection {
+func NewPacketConnection(conn Connection) *PacketConnection {
 	pc := &PacketConnection{
-		conn:       conn,
-		compressed: compressor != nil,
+		conn: conn,
 	}
 
-	pc.compressor = compressor
 	return pc
 }
 
@@ -134,10 +114,6 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 		// only 1 packet to send, just send it directly, no need to use send buffer
 		packet := packets[0]
 
-		if pc.compressed && packet.requireCompress() {
-			packet.compress(pc.compressor)
-		}
-
 		err = gwioutil.WriteAll(pc.conn, packet.data())
 		packet.Release()
 		if err == nil {
@@ -147,10 +123,6 @@ func (pc *PacketConnection) Flush(reason string) (err error) {
 	}
 
 	for _, packet := range packets {
-		if pc.compressed && packet.requireCompress() {
-			packet.compress(pc.compressor)
-		}
-
 		gwioutil.WriteAll(pc.conn, packet.data())
 		packet.Release()
 	}
@@ -181,14 +153,6 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 		}
 
 		pc.recvTotalPayloadLen = NETWORK_ENDIAN.Uint32(pc.payloadLenBuf[:])
-		//pc.recvCompressed = false
-		if pc.recvCompressed {
-			gwlog.Panicf("should be false")
-		}
-		if pc.recvTotalPayloadLen&_PAYLOAD_COMPRESSED_BIT_MASK != 0 {
-			pc.recvTotalPayloadLen &= _PAYLOAD_LEN_MASK
-			pc.recvCompressed = true
-		}
 
 		if pc.recvTotalPayloadLen == 0 || pc.recvTotalPayloadLen > _MAX_PAYLOAD_LENGTH {
 			err := errors.Errorf("invalid payload length: %v", pc.recvTotalPayloadLen)
@@ -209,9 +173,8 @@ func (pc *PacketConnection) RecvPacket() (*Packet, error) {
 	if pc.recvedPayloadLen == pc.recvTotalPayloadLen {
 		// full packet received, return the packet
 		packet := pc.recvingPacket
-		packet.setPayloadLenCompressed(pc.recvTotalPayloadLen, pc.recvCompressed)
+		packet.SetPayloadLen(pc.recvTotalPayloadLen)
 		pc.resetRecvStates()
-		packet.decompress(pc.compressor)
 
 		return packet, nil
 	}
@@ -226,7 +189,6 @@ func (pc *PacketConnection) resetRecvStates() {
 	pc.recvTotalPayloadLen = 0
 	pc.recvedPayloadLen = 0
 	pc.recvingPacket = nil
-	pc.recvCompressed = false
 }
 
 // Close the connection

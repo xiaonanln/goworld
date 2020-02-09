@@ -14,20 +14,8 @@ type testMsg struct {
 	MapField  map[string]interface{}
 }
 
-func BenchmarkJSONMsgPacker(b *testing.B) {
-	benchmarkMsgPacker(b, &JSONMsgPacker{})
-}
-
-func BenchmarkJsoniterMsgPacker(b *testing.B) {
-	benchmarkMsgPacker(b, &JsoniterMsgPacker{})
-}
-
 func BenchmarkMessagePackMsgPacker(b *testing.B) {
 	benchmarkMsgPacker(b, &MessagePackMsgPacker{})
-}
-
-func BenchmarkGobMsgPacker(b *testing.B) {
-	benchmarkMsgPacker(b, &GobMsgPacker{})
 }
 
 func benchmarkMsgPacker(b *testing.B, packer MsgPacker) {
@@ -80,7 +68,7 @@ func TestMessagePackMsgPacker_UnpackMsg(t *testing.T) {
 }
 
 func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
-	packer := JsoniterMsgPacker{}
+	packer := MessagePackMsgPacker{}
 	items := []testMsg{}
 	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{
@@ -97,7 +85,7 @@ func BenchmarkMessagePackMsgPacker_PackMsg_Array_AllInOne(b *testing.B) {
 }
 
 func BenchmarkMessagePackMsgPacker_PackMsg_Array_OneByOne(b *testing.B) {
-	packer := JsoniterMsgPacker{}
+	packer := MessagePackMsgPacker{}
 	items := []testMsg{}
 	for i := 0; i < 3; i++ {
 		items = append(items, testMsg{

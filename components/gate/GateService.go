@@ -171,22 +171,21 @@ func (gs *GateService) handleWebSocketConn(wsConn *websocket.Conn) {
 	gs.handleClientConnection(wsConn, true)
 }
 
-func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool) {
+func (gs *GateService) handleClientConnection(conn net.Conn, isWebSocket bool) {
 	// this function might run in multiple threads
 	if gs.terminating.Load() {
 		// server terminating, not accepting more connections
-		netconn.Close()
+		conn.Close()
 		return
 	}
 
 	cfg := config.GetGate(args.gateid)
 
 	if cfg.EncryptConnection && !isWebSocket {
-		tlsConn := tls.Server(netconn, gs.tlsConfig)
-		netconn = net.Conn(tlsConn)
+		tlsConn := tls.Server(conn, gs.tlsConfig)
+		conn = net.Conn(tlsConn)
 	}
 
-	conn := netutil.NetConnection{netconn}
 	cp := newClientProxy(conn, cfg)
 	if consts.DEBUG_CLIENTS {
 		gwlog.Debugf("%s.ServeTCPConnection: client %s connected", gs, cp)
@@ -365,7 +364,6 @@ func (gs *GateService) handleSyncPositionYawOnClients(packet *netutil.Packet) {
 			packet := netutil.NewPacket()
 			packet.AppendUint16(proto.MT_SYNC_POSITION_YAW_ON_CLIENTS)
 			packet.AppendBytes(data)
-			packet.SetNotCompress() // too many these packets, giveup compress to save time
 			clientproxy.SendPacket(packet)
 			packet.Release()
 		}
