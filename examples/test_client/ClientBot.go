@@ -102,7 +102,7 @@ func (bot *ClientBot) run() {
 	if cfg.EncryptConnection && !bot.useWebSocket {
 		netconn = tls.Client(netconn, tlsConfig)
 	}
-	var conn netutil.Connection = netutil.NetConn{netconn}
+	var conn netutil.Connection = netutil.NetConn{netconnutil.NewNoTempErrorConn(netconn)}
 	if cfg.CompressConnection {
 		conn = netconnutil.NewSnappyConn(conn)
 	}

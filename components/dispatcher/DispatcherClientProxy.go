@@ -22,6 +22,7 @@ type dispatcherClientProxy struct {
 }
 
 func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *dispatcherClientProxy {
+	conn = netconnutil.NewNoTempErrorConn(conn)
 	gwc := proto.NewGoWorldConnection(netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE))
 
 	dcp := &dispatcherClientProxy{

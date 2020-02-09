@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/xiaonanln/netconnutil"
+	"net"
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/common"
@@ -35,7 +36,9 @@ type ClientProxy struct {
 	ownerEntityID  common.EntityID // owner entity's ID
 }
 
-func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
+func newClientProxy(_conn net.Conn, cfg *config.GateConfig) *ClientProxy {
+	_conn = netconnutil.NewNoTempErrorConn(_conn)
+	var conn netutil.Connection = netutil.NetConn{_conn}
 	if cfg.CompressConnection {
 		conn = netconnutil.NewSnappyConn(conn)
 	}
