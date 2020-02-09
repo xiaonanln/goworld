@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-
+	"github.com/xiaonanln/netconnutil"
 	"time"
 
 	"github.com/xiaonanln/goworld/engine/common"
@@ -36,7 +36,9 @@ type ClientProxy struct {
 }
 
 func newClientProxy(conn netutil.Connection, cfg *config.GateConfig) *ClientProxy {
-	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn), cfg.CompressConnection, cfg.CompressFormat)
+	gwc := proto.NewGoWorldConnection(
+		netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE),
+		cfg.CompressConnection, cfg.CompressFormat)
 	return &ClientProxy{
 		GoWorldConnection: gwc,
 		clientid:          common.GenClientID(), // each client has its unique clientid

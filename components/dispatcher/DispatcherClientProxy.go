@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/xiaonanln/netconnutil"
 	"net"
 
 	"fmt"
@@ -20,9 +21,8 @@ type dispatcherClientProxy struct {
 	gateid uint16
 }
 
-func newDispatcherClientProxy(owner *DispatcherService, _conn net.Conn) *dispatcherClientProxy {
-	conn := netutil.NetConnection{_conn}
-	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(conn), false, "")
+func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *dispatcherClientProxy {
+	gwc := proto.NewGoWorldConnection(netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE), false, "")
 
 	dcp := &dispatcherClientProxy{
 		GoWorldConnection: gwc,

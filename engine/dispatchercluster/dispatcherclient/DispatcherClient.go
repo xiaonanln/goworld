@@ -1,11 +1,11 @@
 package dispatcherclient
 
 import (
+	"github.com/xiaonanln/netconnutil"
 	"net"
 
 	"github.com/xiaonanln/goworld/engine/consts"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/proto"
 )
 
@@ -25,7 +25,7 @@ type DispatcherClient struct {
 }
 
 func newDispatcherClient(dctype DispatcherClientType, conn net.Conn, isReconnect bool, isRestoreGame bool) *DispatcherClient {
-	gwc := proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{conn}), false, "")
+	gwc := proto.NewGoWorldConnection(netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE), false, "")
 	if dctype != GameDispatcherClientType && dctype != GateDispatcherClientType {
 		gwlog.Fatalf("invalid dispatcher client type: %v", dctype)
 	}

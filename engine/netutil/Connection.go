@@ -1,19 +1,18 @@
 package netutil
 
-import "net"
+import (
+	"github.com/xiaonanln/netconnutil"
+	"net"
+)
 
-// Connection interface for connections to servers
 type Connection interface {
-	net.Conn // Connection is more than net.Conn
-	Flush() error
+	netconnutil.FlushableConn
 }
 
-// NetConnection converts net.Conn to Connection
-type NetConnection struct {
+type NetConn struct {
 	net.Conn
 }
 
-// Flush flushes network connection
-func (c NetConnection) Flush() error {
+func (n NetConn) Flush() error {
 	return nil
 }

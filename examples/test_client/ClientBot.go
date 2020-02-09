@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/xiaonanln/netconnutil"
 	"net"
 	"sync"
 
@@ -101,7 +102,9 @@ func (bot *ClientBot) run() {
 	if cfg.EncryptConnection && !bot.useWebSocket {
 		netconn = tls.Client(netconn, tlsConfig)
 	}
-	bot.conn = proto.NewGoWorldConnection(netutil.NewBufferedConnection(netutil.NetConnection{netconn}), cfg.CompressConnection, cfg.CompressFormat)
+	bot.conn = proto.NewGoWorldConnection(
+		netconnutil.NewBufferedConn(netconn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE),
+		cfg.CompressConnection, cfg.CompressFormat)
 	defer bot.conn.Close()
 
 	if bot.useKCP {
