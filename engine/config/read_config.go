@@ -98,11 +98,9 @@ type GoWorldConfig struct {
 
 // StorageConfig defines fields of storage config
 type StorageConfig struct {
-	Type       string // Type of storage (filesystem, mongodb, redis, mysql)
-	Directory  string // Directory of filesystem storage (filesystem)
-	Url        string // Connection URL (mongodb, redis, mysql)
-	DB         string // Database name (mongodb, redis)
-	Driver     string // SQL Driver name (mysql)
+	Type       string // Type of storage (mongodb)
+	Url        string // Connection URL (mongodb)
+	DB         string // Database name (mongodb)
 	StartNodes common.StringSet
 }
 
@@ -112,7 +110,6 @@ type KVDBConfig struct {
 	Url        string // MongoDB
 	DB         string // MongoDB
 	Collection string // MongoDB
-	Driver     string // SQL Driver: e.x. mysql
 	StartNodes common.StringSet
 }
 
@@ -470,25 +467,19 @@ func _readDispatcherConfig(sec *ini.Section, config *DispatcherConfig) {
 
 func readStorageConfig(sec *ini.Section, config *StorageConfig) {
 	// setup default values
-	config.Type = "filesystem"
-	config.Directory = "_entity_storage"
+	config.Type = "mongodb"
 	config.DB = _DEFAULT_STORAGE_DB
 	config.Url = ""
-	config.Driver = ""
 	config.StartNodes = common.StringSet{}
 
 	for _, key := range sec.Keys() {
 		name := strings.ToLower(key.Name())
 		if name == "type" {
 			config.Type = key.MustString(config.Type)
-		} else if name == "directory" {
-			config.Directory = key.MustString(config.Directory)
 		} else if name == "url" {
 			config.Url = key.MustString(config.Url)
 		} else if name == "db" {
 			config.DB = key.MustString(config.DB)
-		} else if name == "driver" {
-			config.Driver = key.MustString(config.Driver)
 		} else if strings.HasPrefix(name, "start_nodes_") {
 			config.StartNodes.Add(key.MustString(""))
 		} else {
@@ -517,8 +508,6 @@ func readKVDBConfig(sec *ini.Section, config *KVDBConfig) {
 			config.DB = key.MustString(config.DB)
 		} else if name == "collection" {
 			config.Collection = key.MustString(config.Collection)
-		} else if name == "driver" {
-			config.Driver = key.MustString(config.Driver)
 		} else if strings.HasPrefix(name, "start_nodes_") {
 			config.StartNodes.Add(key.MustString(""))
 		} else {
@@ -560,13 +549,6 @@ func validateKVDBConfig(config *KVDBConfig) {
 				gwlog.Fatalf("start_nodes must not be empty")
 			}
 		}
-	} else if config.Type == "sql" {
-		if config.Driver == "" {
-			gwlog.Fatalf("invalid %s KVDB config:\n %s", config.Type, DumpPretty(config))
-		}
-		if config.Url == "" {
-			gwlog.Fatalf("invalid %s KVDB config:\n%s", config.Type, DumpPretty(config))
-		}
 	} else {
 		gwlog.Fatalf("unknown storage type: %s", config.Type)
 	}
@@ -595,40 +577,12 @@ func checkConfigError(err error, msg string) {
 }
 
 func validateStorageConfig(config *StorageConfig) {
-	if config.Type == "filesystem" {
-		// directory must be set
-		if config.Directory == "" {
-			gwlog.Fatalf("directory is not set in %s storage config", config.Type)
-		}
-	} else if config.Type == "mongodb" {
+	if config.Type == "mongodb" {
 		if config.Url == "" {
 			gwlog.Fatalf("url is not set in %s storage config", config.Type)
 		}
 		if config.DB == "" {
 			gwlog.Fatalf("db is not set in %s storage config", config.Type)
-		}
-	} else if config.Type == "redis" {
-		if config.Url == "" {
-			gwlog.Fatalf("redis host is not set")
-		}
-		if _, err := strconv.Atoi(config.DB); err != nil {
-			gwlog.Panic(errors.Wrap(err, "redis db must be integer"))
-		}
-	} else if config.Type == "redis_cluster" {
-		if len(config.StartNodes) == 0 {
-			gwlog.Fatalf("must have at least 1 start_nodes for [storage].redis_cluster")
-		}
-		for s := range config.StartNodes {
-			if s == "" {
-				gwlog.Fatalf("start_nodes must not be empty")
-			}
-		}
-	} else if config.Type == "sql" {
-		if config.Driver == "" {
-			gwlog.Fatalf("sql driver is not set")
-		}
-		if config.Url == "" {
-			gwlog.Fatalf("db url is not set")
 		}
 	} else {
 		gwlog.Fatalf("unknown storage type: %s", config.Type)

@@ -8,12 +8,8 @@ env:
   - TRAVIS=1 PYTHONWARNINGS=ignore
 
 services:
-  - mysql
   - mongodb
   - redis-server
-
-before_install:
-  - mysql -e 'CREATE DATABASE goworld;'
 
 install:
   - make

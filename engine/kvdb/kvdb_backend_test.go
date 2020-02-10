@@ -8,10 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"os"
-
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdb_mongodb"
-	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbmysql"
 	"github.com/xiaonanln/goworld/engine/kvdb/backend/kvdbredis"
 	. "github.com/xiaonanln/goworld/engine/kvdb/types"
 )
@@ -22,10 +19,6 @@ func TestMongoBackendSet(t *testing.T) {
 
 func TestRedisBackendSet(t *testing.T) {
 	testKVDBBackendSet(t, openTestRedisKVDB(t))
-}
-
-func TestMySQLBackendSet(t *testing.T) {
-	testKVDBBackendSet(t, openTestMySQLKVDB(t))
 }
 
 func testKVDBBackendSet(t *testing.T, kvdb KVDBEngine) {
@@ -61,10 +54,6 @@ func TestMongoBackendFind(t *testing.T) {
 //func TestRedisBackendFind(t *testing.T) {
 //	testBackendFind(t, openTestRedisKVDB(t))
 //}
-
-func TestMySQLBackendFind(t *testing.T) {
-	testBackendFind(t, openTestMySQLKVDB(t))
-}
 
 func testBackendFind(t *testing.T, kvdb KVDBEngine) {
 	beginKey := strconv.Itoa(1000 + rand.Intn(2000-1000))
@@ -134,10 +123,6 @@ func BenchmarkRedisBackendGetSet(b *testing.B) {
 	benchmarkBackendGetSet(b, openTestRedisKVDB(b))
 }
 
-func BenchmarkSQLBackendGetSet(b *testing.B) {
-	benchmarkBackendGetSet(b, openTestMySQLKVDB(b))
-}
-
 func benchmarkBackendGetSet(b *testing.B, kvdb KVDBEngine) {
 	key := "testkey"
 
@@ -161,10 +146,6 @@ func BenchmarkMongoBackendFind(b *testing.B) {
 
 func BenchmarkRedisBackendFind(b *testing.B) {
 	benchmarkBackendFind(b, openTestRedisKVDB(b))
-}
-
-func BenchmarkSQLBackendFind(b *testing.B) {
-	benchmarkBackendFind(b, openTestMySQLKVDB(b))
 }
 
 func benchmarkBackendFind(b *testing.B, kvdb KVDBEngine) {
@@ -213,18 +194,6 @@ func openTestMongoKVDB(f _Fataler) KVDBEngine {
 
 func openTestRedisKVDB(f _Fataler) KVDBEngine {
 	kvdb, err := kvdbredis.OpenRedisKVDB("redis://127.0.0.1:6379", 0)
-	if err != nil {
-		f.Fatal(err)
-	}
-	return kvdb
-}
-
-func openTestMySQLKVDB(f _Fataler) KVDBEngine {
-	testpwd := "testmysql"
-	if os.Getenv("TRAVIS") != "" {
-		testpwd = ""
-	}
-	kvdb, err := kvdbmysql.OpenMySQLKVDB(fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/goworld", testpwd))
 	if err != nil {
 		f.Fatal(err)
 	}

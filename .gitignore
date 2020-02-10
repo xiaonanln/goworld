@@ -24,7 +24,6 @@ fc
 *.db/
 .idea/
 examples/*/*.sh
-engine/storage/backend/filesystem/test_entity_storage/
 *.bat
 *.dat
 vendor/
