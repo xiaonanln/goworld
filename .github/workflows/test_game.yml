@@ -11,8 +11,8 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         if: "github.ref != 'refs/heads/master'"
 
-  test:
-    name: Test (Go ${{ matrix.go }}, ${{ matrix.os }})
+  test_game:
+    name: Test Game (Go ${{ matrix.go }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -34,6 +34,13 @@ jobs:
       - name: Test
         run: |
           cp goworld_actions.ini goworld.ini
-          bash covertest.sh
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+          goworld build examples/test_game
+          goworld start examples/test_game
+          sleep 5
+          examples/test_client/test_client -N 200 -strict -duration 300
+          sleep 5
+          goworld reload examples/test_game
+          sleep 5
+          examples/test_client/test_client -N 200 -strict -duration 300
+          sleep 1
+          goworld stop examples/test_game
