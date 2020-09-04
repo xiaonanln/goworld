@@ -103,16 +103,7 @@ func (space *Space) EnableAOI(defaultAOIDistance Coord) {
 
 	space.Attrs.SetFloat(_SPACE_ENABLE_AOI_KEY, float64(defaultAOIDistance))
 	space.aoiMgr = aoi.NewXZListAOIManager(aoi.Coord(defaultAOIDistance))
-	//space.aoiMgr = aoi.NewTowerAOIManager(-500, 500, -500, 500, 10)
 }
-
-//func (space *Space) UseTowerAOI(minX, maxX, minY, maxY Coord, towerRange Coord) {
-//	if space.aoiMgr != nil || len(space.entities) > 0 {
-//		gwlog.Panicf("%s is already using AOI", space)
-//	}
-//
-//	space.aoiMgr = aoi.NewTowerAOIManager(aoi.Coord(minX), aoi.Coord(maxX), aoi.Coord(minY), aoi.Coord(maxY), aoi.Coord(towerRange))
-//}
 
 // OnRestored is called when space entity is restored
 func (space *Space) OnRestored() {

@@ -249,15 +249,6 @@ func TestDropIndex(t *testing.T) {
 	wait.Wait()
 }
 
-//func TestDropIndexName(t *testing.T) {
-//	wait.Add(1)
-//	DropIndexName("mongodb_test", "a_b_c", func(res interface{}, err error) {
-//		checkRequest(t, err, res)
-//		wait.Done()
-//	})
-//	wait.WaitClear()
-//}
-
 func TestRemoveId(t *testing.T) {
 	var id interface{}
 	wait.Add(1)
@@ -330,15 +321,6 @@ func TestDropCollection(t *testing.T) {
 	})
 	wait.Wait()
 }
-
-//func TestDropDatabase(t *testing.T) {
-//	wait.Add(1)
-//	DropDatabase(func(res interface{}, err error) {
-//		checkRequest(t, err, res)
-//		wait.Done()
-//	})
-//	wait.WaitClear()
-//}
 
 func checkRequest(t *testing.T, err error, res interface{}) {
 	if err != nil {
