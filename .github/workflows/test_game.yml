@@ -31,9 +31,10 @@ jobs:
         with:
           redis-version: '4.x'
       - uses: actions/checkout@v2
-      - name: Test
+      - name: Test Game
         run: |
           cp goworld_actions.ini goworld.ini
+          go get ./cmd/...
           goworld build examples/test_game
           goworld start examples/test_game
           sleep 5

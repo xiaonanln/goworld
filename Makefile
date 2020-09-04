@@ -4,7 +4,7 @@
 all: install dispatcher test_game test_client gate chatroom_demo unity_demo
 
 install:
-	go install ./cmd/...
+	go get ./cmd/...
 
 dispatcher:
 	cd components/dispatcher && go build
