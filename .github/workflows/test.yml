@@ -25,9 +25,4 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build
         run: |
-          go install ./cmd/...
-          goworld build examples/nil_game
-          goworld build examples/test_game
-          goworld build examples/test_client
-          goworld build examples/chatroom_demo
-          goworld build examples/unity_demo
+          go test -v ./...
