@@ -35,6 +35,7 @@ jobs:
         run: |
           cp goworld_actions.ini goworld.ini
           go get ./cmd/...
+          goworld build examples/test_client
           goworld build examples/test_game
           goworld start examples/test_game
           sleep 5
