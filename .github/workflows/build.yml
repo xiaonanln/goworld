@@ -1,0 +1,33 @@
+name: Build
+
+on: [ pull_request ]
+
+jobs:
+  cancel-previous-runs:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: rokroskar/workflow-run-cleanup-action@master
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        if: "github.ref != 'refs/heads/master'"
+
+  build:
+    name: Build (Go ${{ matrix.go }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        go: [1.11, 1.14]
+        os: ["ubuntu-18.04", "macos-10.15"]
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          go get ./cmd/...
+          goworld build examples/nil_game
+          goworld build examples/test_game
+          goworld build examples/test_client
+          goworld build examples/chatroom_demo
+          goworld build examples/unity_demo

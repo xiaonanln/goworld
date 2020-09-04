@@ -1,0 +1,39 @@
+name: Test
+
+on: [ pull_request ]
+
+jobs:
+  cancel-previous-runs:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: rokroskar/workflow-run-cleanup-action@master
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        if: "github.ref != 'refs/heads/master'"
+
+  test:
+    name: Test (Go ${{ matrix.go }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        go: [1.11, 1.14]
+        os: ["ubuntu-18.04"]
+        mongodb-version: [3.6]
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+      - uses: shogo82148/actions-setup-redis@v1
+        with:
+          redis-version: '4.x'
+      - uses: actions/checkout@v2
+      - name: Test
+        run: |
+          cp goworld_actions.ini goworld.ini
+          bash covertest.sh
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
