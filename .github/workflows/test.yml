@@ -31,6 +31,8 @@ jobs:
         with:
           redis-version: '4.x'
       - uses: actions/checkout@v2
-      - name: Build
+      - name: Test
         run: |
-          go test -v ./...
+          bash covertest.sh
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
