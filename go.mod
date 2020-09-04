@@ -6,17 +6,14 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chasex/redis-go-cluster v1.0.0
-	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/garyburd/redigo v1.6.0
 	github.com/go-ini/ini v1.51.0
 	github.com/go-ole/go-ole v1.2.4
-	github.com/go-sql-driver/mysql v1.4.1
-	github.com/golang/snappy v0.0.1
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/klauspost/reedsolomon v1.9.3 // indirect
 	github.com/petar/GoLLRB v0.0.0-20190514000832-33fb24c13b99
-	github.com/pierrec/lz4 v2.3.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sevlyar/go-daemon v0.1.5
 	github.com/shirou/gopsutil v2.19.11+incompatible
@@ -31,6 +28,8 @@ require (
 	github.com/xiaonanln/go-xnsyncutil v0.0.5
 	github.com/xiaonanln/goTimer v0.0.3
 	github.com/xiaonanln/netconnutil v0.0.0-20200208154411-dc274e29fea7
+	github.com/xiaonanln/pktconn v0.0.0-20200206154948-4ca31f7eb154 // indirect
+	github.com/xiaonanln/tickchan v0.0.0-20181130012730-45de2aab1755 // indirect
 	github.com/xiaonanln/typeconv v0.0.4
 	github.com/xtaci/kcp-go v5.4.19+incompatible
 	github.com/xtaci/lossyconn v0.0.0-20190602105132-8df528c0c9ae // indirect

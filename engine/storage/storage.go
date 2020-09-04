@@ -3,8 +3,6 @@ package storage
 import (
 	"time"
 
-	"strconv"
-
 	"github.com/xiaonanln/go-xnsyncutil/xnsyncutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -12,11 +10,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/opmon"
 	"github.com/xiaonanln/goworld/engine/post"
-	"github.com/xiaonanln/goworld/engine/storage/backend/filesystem"
 	"github.com/xiaonanln/goworld/engine/storage/backend/mongodb"
-	"github.com/xiaonanln/goworld/engine/storage/backend/mysql"
-	"github.com/xiaonanln/goworld/engine/storage/backend/redis"
-	"github.com/xiaonanln/goworld/engine/storage/backend/redis_cluster"
 	"github.com/xiaonanln/goworld/engine/storage/storage_common"
 )
 
@@ -135,26 +129,8 @@ func assureStorageEngineReady() (err error) {
 	}
 
 	cfg := config.GetStorage()
-	if cfg.Type == "filesystem" {
-		storageEngine, err = entitystoragefilesystem.OpenDirectory(cfg.Directory)
-	} else if cfg.Type == "mongodb" {
+	if cfg.Type == "mongodb" {
 		storageEngine, err = entitystoragemongodb.OpenMongoDB(cfg.Url, cfg.DB)
-	} else if cfg.Type == "redis" {
-		var dbindex int = -1
-		if cfg.DB != "" {
-			if dbindex, err = strconv.Atoi(cfg.DB); err != nil {
-				return err
-			}
-		}
-		storageEngine, err = entitystorageredis.OpenRedis(cfg.Url, dbindex)
-	} else if cfg.Type == "redis_cluster" {
-		storageEngine, err = entitystoragerediscluster.OpenRedisCluster(cfg.StartNodes.ToList())
-	} else if cfg.Type == "sql" {
-		if cfg.Driver == "mysql" {
-			storageEngine, err = entitystoragemysql.OpenMySQL(cfg.Url)
-		} else {
-			gwlog.Panicf("unknown sql driver: %s", cfg.Driver)
-		}
 	} else {
 		gwlog.Panicf("unknown storage type: %s", cfg.Type)
 	}
