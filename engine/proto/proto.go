@@ -5,16 +5,10 @@ import (
 
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/netutil"
 )
 
 // MsgType is the type of message types
 type MsgType uint16
-
-type Message struct {
-	MsgType MsgType
-	Packet  *netutil.Packet
-}
 
 const (
 	// MT_INVALID is the invalid message type

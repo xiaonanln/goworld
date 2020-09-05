@@ -2,6 +2,7 @@ package game
 
 import (
 	"flag"
+	"github.com/xiaonanln/pktconn"
 
 	"math/rand"
 	"time"
@@ -31,9 +32,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/entity"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/kvdb"
-	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
-	"github.com/xiaonanln/goworld/engine/proto"
 	"github.com/xiaonanln/goworld/engine/service"
 	"github.com/xiaonanln/goworld/engine/storage"
 )
@@ -218,13 +217,8 @@ func waitEntityStorageFinish() {
 type _GameDispatcherClientDelegate struct {
 }
 
-var lastWarnGateServiceQueueLen = 0
-
-func (delegate *_GameDispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
-	gameService.packetQueue <- proto.Message{ // may block the dispatcher client routine
-		MsgType: msgtype,
-		Packet:  packet,
-	}
+func (delegate *_GameDispatcherClientDelegate) GetDispatcherClientPacketQueue() chan *pktconn.Packet {
+	return gameService.packetQueue
 }
 
 func (delegate *_GameDispatcherClientDelegate) HandleDispatcherClientDisconnect() {

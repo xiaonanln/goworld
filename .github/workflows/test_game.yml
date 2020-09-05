@@ -43,6 +43,6 @@ jobs:
           sleep 5
           goworld reload examples/test_game
           sleep 5
-          examples/test_client/test_client -N 200 -strict -duration 300
+          examples/test_client/test_client -N 200 -strict -duration 60
           sleep 1
           goworld stop examples/test_game
