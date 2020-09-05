@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/xiaonanln/pktconn"
 
 	"net"
 
@@ -13,7 +14,6 @@ import (
 
 	"container/heap"
 
-	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -38,10 +38,10 @@ func (edi *entityDispatchInfo) blockRPC(d time.Duration) {
 	}
 }
 
-func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
+func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) {
 	if edi.blockUntilTime.IsZero() {
 		// most common case. handle it quickly
-		return dispatcherService.dispatchPacketToGame(edi.gameid, pkt)
+		dispatcherService.dispatchPacketToGame(edi.gameid, pkt)
 	}
 
 	// blockUntilTime is set, need to check if block should be released
@@ -49,17 +49,14 @@ func (edi *entityDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 	if now.Before(edi.blockUntilTime) {
 		// keep blocking, just put the call to wait
 		if len(edi.pendingPacketQueue) < consts.ENTITY_PENDING_PACKET_QUEUE_MAX_LEN {
-			pkt.AddRefCount(1)
+			pkt.Retain()
 			edi.pendingPacketQueue = append(edi.pendingPacketQueue, pkt)
-			return nil
 		} else {
 			gwlog.Errorf("%s.dispatchPacket: packet queue too long, packet dropped", edi)
-			return errors.Errorf("%s: packet of entity dropped", dispatcherService)
 		}
 	} else {
 		// time to unblock
 		edi.unblock()
-		return nil
 	}
 }
 
@@ -116,7 +113,7 @@ func (gdi *gameDispatchInfo) isConnected() bool {
 	return gdi.clientProxy != nil
 }
 
-func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
+func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) {
 	if gdi.checkBlocked() && gdi.clientProxy == nil {
 		// blocked from true -> false, and game is already disconnected before
 		// in this case, the game should be cleaned up
@@ -124,18 +121,17 @@ func (gdi *gameDispatchInfo) dispatchPacket(pkt *netutil.Packet) error {
 	}
 
 	if !gdi.isBlocked && gdi.clientProxy != nil {
-		return gdi.clientProxy.SendPacket(pkt)
+		gdi.clientProxy.SendPacket(pkt)
 	} else {
 		if len(gdi.pendingPacketQueue) < consts.GAME_PENDING_PACKET_QUEUE_MAX_LEN {
 			gdi.pendingPacketQueue = append(gdi.pendingPacketQueue, pkt)
-			pkt.AddRefCount(1)
+			pkt.Retain()
 
 			if len(gdi.pendingPacketQueue)%1 == 0 {
 				gwlog.Warnf("game %d pending packet count = %d, blocked = %v, clientProxy = %s", gdi.gameid, len(gdi.pendingPacketQueue), gdi.isBlocked, gdi.clientProxy)
 			}
-			return nil
 		} else {
-			return errors.Errorf("packet to game %d is dropped", gdi.gameid)
+			gwlog.Errorf("packet to game %d is dropped", gdi.gameid)
 		}
 	}
 }
@@ -168,11 +164,6 @@ func (gdi *gameDispatchInfo) clearPendingPackets() {
 	}
 }
 
-type dispatcherMessage struct {
-	dcp *dispatcherClientProxy
-	proto.Message
-}
-
 // DispatcherService implements the dispatcher service
 type DispatcherService struct {
 	dispid                uint16
@@ -180,7 +171,7 @@ type DispatcherService struct {
 	games                 map[uint16]*gameDispatchInfo
 	bootGames             []uint16
 	gates                 map[uint16]*dispatcherClientProxy
-	messageQueue          chan dispatcherMessage
+	messageQueue          chan *pktconn.Packet
 	entityDispatchInfos   map[common.EntityID]*entityDispatchInfo
 	kvregRegisterMap      map[string]string
 	entitySyncInfosToGame map[uint16]*netutil.Packet // cache entity sync infos to gates
@@ -195,7 +186,7 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 	ds := &DispatcherService{
 		dispid:                dispid,
 		config:                cfg,
-		messageQueue:          make(chan dispatcherMessage, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
+		messageQueue:          make(chan *pktconn.Packet, consts.DISPATCHER_SERVICE_PACKET_QUEUE_SIZE),
 		games:                 map[uint16]*gameDispatchInfo{},
 		gates:                 map[uint16]*dispatcherClientProxy{},
 		entityDispatchInfos:   map[common.EntityID]*entityDispatchInfo{},
@@ -214,10 +205,12 @@ func newDispatcherService(dispid uint16) *DispatcherService {
 func (service *DispatcherService) messageLoop() {
 	for {
 		select {
-		case msg := <-service.messageQueue:
-			dcp := msg.dcp
-			msgtype := msg.MsgType
-			pkt := msg.Packet
+		case _pkt := <-service.messageQueue:
+			pkt := (*netutil.Packet)(_pkt)
+			dcp := pkt.Src.Tag.(*dispatcherClientProxy)
+
+			msgtype := pkt.ReadUint16()
+
 			if msgtype >= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_START && msgtype <= proto.MT_REDIRECT_TO_GATEPROXY_MSG_TYPE_STOP {
 				service.handleDoSomethingOnSpecifiedClient(dcp, pkt)
 			} else {
@@ -512,12 +505,12 @@ func (service *DispatcherService) connectedGameClientsNum() int {
 	return num
 }
 
-func (service *DispatcherService) dispatchPacketToGame(gameid uint16, pkt *netutil.Packet) error {
+func (service *DispatcherService) dispatchPacketToGame(gameid uint16, pkt *netutil.Packet) {
 	gdi := service.games[gameid]
 	if gdi != nil {
-		return gdi.dispatchPacket(pkt)
+		gdi.dispatchPacket(pkt)
 	} else {
-		return errors.Errorf("%s: dispatchPacketToGame: game%d is not found", service, gameid)
+		gwlog.Errorf("%s: dispatchPacketToGame: game%d is not found", service, gameid)
 	}
 }
 

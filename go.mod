@@ -27,8 +27,8 @@ require (
 	github.com/xiaonanln/go-trie-tst v0.0.0-20171018095208-5b9678d55438
 	github.com/xiaonanln/go-xnsyncutil v0.0.5
 	github.com/xiaonanln/goTimer v0.0.3
-	github.com/xiaonanln/netconnutil v0.0.0-20200208154411-dc274e29fea7
-	github.com/xiaonanln/pktconn v0.0.0-20200206154948-4ca31f7eb154 // indirect
+	github.com/xiaonanln/netconnutil v0.0.0-20200905060227-8faf06e9a365
+	github.com/xiaonanln/pktconn v0.0.0-20200905130536-8a9529b7c220
 	github.com/xiaonanln/tickchan v0.0.0-20181130012730-45de2aab1755 // indirect
 	github.com/xiaonanln/typeconv v0.0.4
 	github.com/xtaci/kcp-go v5.4.19+incompatible
