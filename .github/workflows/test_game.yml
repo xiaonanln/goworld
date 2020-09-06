@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Game
         run: |
-          cp .github/goworld.ini goworld.ini
+          cp .github/res/goworld.ini goworld.ini
           go get ./cmd/...
           goworld build examples/test_client
           goworld build examples/test_game
