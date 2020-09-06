@@ -328,7 +328,7 @@ func readGameCommonConfig(section *ini.Section, scc *GameConfig) {
 }
 
 func readGameConfig(sec *ini.Section, gameCommonConfig *GameConfig) *GameConfig {
-	var sc GameConfig = *gameCommonConfig // copy from game_common
+	var sc = *gameCommonConfig // copy from game_common
 	_readGameConfig(sec, &sc)
 	// validate game config
 	if sc.BootEntity == "" {
@@ -380,7 +380,7 @@ func readGateCommonConfig(section *ini.Section, gcc *GateConfig) {
 }
 
 func readGateConfig(sec *ini.Section, gateCommonConfig *GateConfig) *GateConfig {
-	var sc GateConfig = *gateCommonConfig // copy from game_common
+	var sc = *gateCommonConfig // copy from game_common
 	_readGateConfig(sec, &sc)
 	// validate game config here
 	if sc.EncryptConnection && sc.RSAKey == "" {

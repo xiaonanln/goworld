@@ -5,7 +5,7 @@ import (
 
 	"time"
 
-	redis "github.com/chasex/redis-go-cluster"
+	"github.com/chasex/redis-go-cluster"
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/kvdb/types"
 )

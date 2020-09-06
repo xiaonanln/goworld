@@ -39,7 +39,7 @@ func (a *Avatar) GetSpaceID(callerID common.EntityID) {
 	a.Call(callerID, "OnGetAvatarSpaceID", a.ID, a.Space.ID)
 }
 
-var spaceSep *regexp.Regexp = regexp.MustCompile("\\s")
+var spaceSep = regexp.MustCompile("\\s")
 
 // SendChat_Client 是用来发送聊天信息的客户端RPC
 func (a *Avatar) SendChat_Client(text string) {

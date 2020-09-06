@@ -15,17 +15,17 @@ import (
 
 var (
 	// DebugLevel level
-	DebugLevel Level = Level(zap.DebugLevel)
+	DebugLevel = Level(zap.DebugLevel)
 	// InfoLevel level
-	InfoLevel Level = Level(zap.InfoLevel)
+	InfoLevel = Level(zap.InfoLevel)
 	// WarnLevel level
-	WarnLevel Level = Level(zap.WarnLevel)
+	WarnLevel = Level(zap.WarnLevel)
 	// ErrorLevel level
-	ErrorLevel Level = Level(zap.ErrorLevel)
+	ErrorLevel = Level(zap.ErrorLevel)
 	// PanicLevel level
-	PanicLevel Level = Level(zap.PanicLevel)
+	PanicLevel = Level(zap.PanicLevel)
 	// FatalLevel level
-	FatalLevel Level = Level(zap.FatalLevel)
+	FatalLevel = Level(zap.FatalLevel)
 )
 
 type logFormatFunc func(format string, args ...interface{})

@@ -475,6 +475,7 @@ func (service *DispatcherService) handleStartFreezeGame(dcp *dispatcherClientPro
 	gdi := service.games[gameid]
 	if gdi == nil {
 		gwlog.Panicf("%s handleStartFreezeGame: game%d not found", service, gameid)
+		return
 	}
 
 	gdi.block(consts.DISPATCHER_FREEZE_GAME_TIMEOUT)

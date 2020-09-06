@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
@@ -32,10 +31,6 @@ type DispatcherConnMgr struct {
 	isReconnect, isRestoreGame, isBanBootEntity bool // more properties for Game
 	delegate                                    IDispatcherClientDelegate
 }
-
-var (
-	errDispatcherNotConnected = errors.New("dispatcher not connected")
-)
 
 func NewDispatcherConnMgr(gid uint16, dctype DispatcherClientType, dispid uint16, isRestoreGame, isBanBootEntity bool, delegate IDispatcherClientDelegate) *DispatcherConnMgr {
 	return &DispatcherConnMgr{

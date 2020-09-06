@@ -84,7 +84,7 @@ type entityMigrateData struct {
 	SpaceID           common.EntityID        `msgpack:"SP"`
 	TimerData         []byte                 `msgpack:"TD,omitempty"`
 	FilterProps       map[string]string      `msgpack:"FP"`
-	SyncingFromClient bool                   `msgpack""SFC`
+	SyncingFromClient bool                   `msgpack:"SFC"`
 	SyncInfoFlag      syncInfoFlag           `msgpack:"SIF"`
 }
 
@@ -1283,7 +1283,7 @@ func (e *Entity) GetYaw() Yaw {
 // SetYaw sets entity Yaw
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
-	e.syncInfoFlag |= (sifSyncNeighborClients | sifSyncOwnClient)
+	e.syncInfoFlag |= sifSyncNeighborClients | sifSyncOwnClient
 	//e.ForAllClients(func(Client *GameClient) {
 	//	Client.updateYawOnClient(e.ID, e.Yaw)
 	//})

@@ -39,7 +39,7 @@ func WatchKvregRegister(key string, val string) {
 
 func ClearByDispatcher(dispid uint16) {
 	removeKeys := []string(nil)
-	for key, _ := range kvmap {
+	for key := range kvmap {
 		if dispatchercluster.SrvIDToDispatcherID(key) == dispid {
 			removeKeys = append(removeKeys, key)
 		}

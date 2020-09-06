@@ -1,14 +1,11 @@
 package entity
 
 import (
-	"reflect"
-
 	"github.com/xiaonanln/goworld/engine/common"
 )
 
 var (
 	spaceManager = newSpaceManager()
-	spaceType    reflect.Type
 )
 
 type _SpaceManager struct {
@@ -35,9 +32,6 @@ func (spmgr *_SpaceManager) getSpace(id common.EntityID) *Space {
 
 // RegisterSpace registers the user custom space type
 func RegisterSpace(spacePtr ISpace) {
-	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
-	spaceType = spaceVal.Type()
-
 	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr, false)
 }
 
