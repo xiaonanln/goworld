@@ -1,12 +1,18 @@
 package netutil
 
 import (
+	"encoding/binary"
 	"io"
 	"net"
 
 	"unsafe"
 
 	"github.com/pkg/errors"
+)
+
+var (
+	// NETWORK_ENDIAN is the network Endian of connections
+	NETWORK_ENDIAN = binary.LittleEndian
 )
 
 // IsConnectionError check if the error is a connection error (close)

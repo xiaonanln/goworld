@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
@@ -23,13 +22,13 @@ type dispatcherClientProxy struct {
 
 func newDispatcherClientProxy(owner *DispatcherService, conn net.Conn) *dispatcherClientProxy {
 	conn = netconnutil.NewNoTempErrorConn(conn)
-	gwc := proto.NewGoWorldConnection(netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE))
 
 	dcp := &dispatcherClientProxy{
-		GoWorldConnection: gwc,
-		owner:             owner,
+		owner: owner,
 	}
-	dcp.SetAutoFlush(consts.DISPATCHER_CLIENT_PROXY_WRITE_FLUSH_INTERVAL)
+
+	dcp.GoWorldConnection = proto.NewGoWorldConnection(netconnutil.NewBufferedConn(conn, consts.BUFFERED_READ_BUFFSIZE, consts.BUFFERED_WRITE_BUFFSIZE), dcp)
+
 	return dcp
 }
 
@@ -47,27 +46,10 @@ func (dcp *dispatcherClientProxy) serve() {
 	}()
 
 	gwlog.Infof("New dispatcher client: %s", dcp)
-	for {
-		var msgtype proto.MsgType
-		pkt, err := dcp.Recv(&msgtype)
 
-		if err != nil {
-			if gwioutil.IsTimeoutError(err) {
-				continue
-			} else if netutil.IsConnectionError(err) {
-				break
-			}
-
-			gwlog.Panic(err)
-		}
-
-		//
-		//if consts.DEBUG_PACKETS {
-		//	gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dcp, msgtype, pkt.Payload())
-		//}
-
-		// pass the packet to the dispatcher service
-		dcp.owner.messageQueue <- dispatcherMessage{dcp, proto.Message{msgtype, pkt}}
+	err := dcp.GoWorldConnection.RecvChan(dcp.owner.messageQueue)
+	if err != nil {
+		gwlog.Panic(err)
 	}
 }
 

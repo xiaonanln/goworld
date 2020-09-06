@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/xiaonanln/pktconn"
 
 	"math/rand"
 	"time"
@@ -26,9 +27,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/dispatchercluster"
 	"github.com/xiaonanln/goworld/engine/dispatchercluster/dispatcherclient"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/post"
-	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 var (
@@ -131,8 +130,8 @@ func setupSignals() {
 type gateDispatcherClientDelegate struct {
 }
 
-func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet) {
-	gateService.dispatcherClientPacketQueue <- proto.Message{msgtype, packet}
+func (delegate *gateDispatcherClientDelegate) GetDispatcherClientPacketQueue() chan *pktconn.Packet {
+	return gateService.dispatcherClientPacketQueue
 }
 
 func (delegate *gateDispatcherClientDelegate) HandleDispatcherClientDisconnect() {

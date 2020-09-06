@@ -1,6 +1,7 @@
 package dispatcherclient
 
 import (
+	"github.com/xiaonanln/pktconn"
 	"time"
 
 	"net"
@@ -14,11 +15,9 @@ import (
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
 	"github.com/xiaonanln/goworld/engine/consts"
-	"github.com/xiaonanln/goworld/engine/gwioutil"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/netutil"
-	"github.com/xiaonanln/goworld/engine/proto"
 )
 
 const (
@@ -102,7 +101,7 @@ func (dcm *DispatcherConnMgr) connectDispatchClient() (*DispatcherClient, error)
 
 // IDispatcherClientDelegate defines functions that should be implemented by dispatcher clients
 type IDispatcherClientDelegate interface {
-	HandleDispatcherClientPacket(msgtype proto.MsgType, packet *netutil.Packet)
+	GetDispatcherClientPacketQueue() chan *pktconn.Packet
 	HandleDispatcherClientDisconnect()
 	GetEntityIDsForDispatcher(dispid uint16) []common.EntityID
 }
@@ -124,24 +123,13 @@ func (dcm *DispatcherConnMgr) serveDispatcherClient() {
 	gwlog.Debugf("%s.serveDispatcherClient: start serving dispatcher client ...", dcm)
 	for {
 		dc := dcm.assureConnected()
-		var msgtype proto.MsgType
-		pkt, err := dc.Recv(&msgtype)
 
-		if err != nil {
-			if gwioutil.IsTimeoutError(err) {
-				continue
-			}
+		err := dc.GoWorldConnection.RecvChan(dcm.delegate.GetDispatcherClientPacketQueue())
 
-			gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
-			dc.Close()
-			dcm.delegate.HandleDispatcherClientDisconnect()
-			time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
-			continue
-		}
+		gwlog.TraceError("serveDispatcherClient: RecvMsgPacket error: %s", err.Error())
+		dc.Close()
 
-		if consts.DEBUG_PACKETS {
-			gwlog.Debugf("%s.RecvPacket: msgtype=%v, payload=%v", dc, msgtype, pkt.Payload())
-		}
-		dcm.delegate.HandleDispatcherClientPacket(msgtype, pkt)
+		dcm.delegate.HandleDispatcherClientDisconnect()
+		time.Sleep(_LOOP_DELAY_ON_DISPATCHER_CLIENT_ERROR)
 	}
 }
