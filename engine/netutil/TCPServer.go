@@ -10,7 +10,6 @@ import (
 
 const (
 	_RESTART_TCP_SERVER_INTERVAL = 3 * time.Second
-	_RESTART_UDP_SERVER_INTERVAL = 3 * time.Second
 )
 
 // TCPServerDelegate is the implementations that a TCP server should provide

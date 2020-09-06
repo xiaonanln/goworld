@@ -10,6 +10,6 @@ func TestProcesses(t *testing.T) {
 
 	for _, p := range ps {
 		cmdline, err := p.CmdlineSlice()
-		t.Logf("process %+s, err %v", cmdline, err)
+		t.Logf("process %s, err %v", cmdline, err)
 	}
 }

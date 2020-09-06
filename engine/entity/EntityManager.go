@@ -198,40 +198,7 @@ func GetEntityTypeDesc(typeName string) *EntityTypeDesc {
 
 var entityType = reflect.TypeOf(Entity{})
 
-func isEntityType(t reflect.Type) bool {
-	if t == entityType {
-		return true
-	}
-	if t.Kind() != reflect.Struct {
-		return false
-	}
-	entityField, ok := t.FieldByName("Entity")
-	return ok && entityField.Type == entityType
-}
-
-//var componentType = reflect.TypeOf(Component{})
-
-//func isComponentType(t reflect.Type) bool {
-//	//if t == componentType {
-//	//	return true
-//	//}
-//	if t.Kind() != reflect.Struct {
-//		return false
-//	}
-//	componentField, ok := t.FieldByName("Component")
-//	return ok && componentField.Type == componentType
-//}
-
-//type createCause int
-//
-//const (
-//	ccCreate createCause = 1 + iota
-//	ccMigrate
-//	ccRestore
-//)
-
 func createEntity(typeName string, space *Space, pos Vector3, entityID common.EntityID, data map[string]interface{}) *Entity {
-	//gwlog.Debugf("createEntity: %s in Space %s", typeName, space)
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
 		gwlog.Panicf("unknown entity type: %s", typeName)
@@ -277,7 +244,6 @@ func createEntity(typeName string, space *Space, pos Vector3, entityID common.En
 }
 
 func restoreEntity(entityID common.EntityID, mdata *entityMigrateData, isRestore bool) {
-	//gwlog.Debugf("restoring entity %s: mdata=%+v, isRestore=%v", entityID, mdata, isRestore)
 	typeName := mdata.Type
 	entityTypeDesc, ok := registeredEntityTypes[typeName]
 	if !ok {
@@ -582,11 +548,6 @@ func Freeze(gameid uint16) (*FreezeData, error) {
 	}
 
 	freeze.Entities = entityFreezeInfos
-	//registeredServices := make(map[string][]common.EntityID, len(entityManager.registeredServices))
-	//for serviceName, eids := range entityManager.registeredServices {
-	//	registeredServices[serviceName] = eids.ToList()
-	//}
-	//freeze.Services = registeredServices
 
 	return &freeze, nil
 }

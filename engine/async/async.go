@@ -7,12 +7,10 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/post"
-	"golang.org/x/net/context"
 )
 
 var (
-	asyncRunning, asyncCancelRunning = context.WithCancel(context.Background())
-	numAsyncJobWorkersRunning        sync.WaitGroup
+	numAsyncJobWorkersRunning sync.WaitGroup
 )
 
 // AsyncCallback is a function which will be called after async job is finished with result and error
