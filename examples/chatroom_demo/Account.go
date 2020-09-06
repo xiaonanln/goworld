@@ -43,7 +43,6 @@ func (a *Account) Register_Client(username string, password string) {
 // Login_Client 是处理玩家登录请求的RPC函数
 func (a *Account) Login_Client(username string, password string) {
 	if a.logining {
-		// logining
 		gwlog.Errorf("%s is already logining", a)
 		return
 	}

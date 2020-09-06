@@ -32,7 +32,6 @@ func setupHTTPServer(listenAddr string, wsHandler func(ws *websocket.Conn), cert
 		gwlog.Infof("TLS is enabled on http: key=%s, cert=%s", keyFile, certFile)
 	}
 
-	//http.Handle("/", http.FileServer(http.Dir(".")))
 	if wsHandler != nil {
 		http.Handle("/ws", websocket.Handler(wsHandler))
 	}
@@ -60,25 +59,6 @@ func SetupGWLog(component string, logLevel string, logFile string, logStderr boo
 		outputs = append(outputs, logFile)
 	}
 	gwlog.SetOutput(outputs)
-
-	//outputWriters := make([]io.Writer, 0, 2)
-	//if logFile != "" {
-	//	fileWriter, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	//	if err != nil {
-	//		gwlog.Fatalf("open log file %s failed: %v", logFile, err)
-	//	}
-	//	outputWriters = append(outputWriters, fileWriter)
-	//}
-	//
-	//if logStderr {
-	//	outputWriters = append(outputWriters, os.Stderr)
-	//}
-	//
-	//if len(outputWriters) == 1 {
-	//	gwlog.SetOutput(outputWriters[0])
-	//} else {
-	//	gwlog.SetOutput(io.MultiWriter(outputWriters...))
-	//}
 }
 
 func PrintSupervisorTag(tag string) {

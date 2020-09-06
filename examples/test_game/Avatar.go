@@ -43,18 +43,15 @@ func (a *Avatar) OnInit() {
 func (a *Avatar) OnAttrsReady() {
 	a.setDefaultAttrs()
 	gwlog.Debugf("Avatar %s is ready: client=%s, mails=%d", a, a.GetClient(), a.Attrs.GetMapAttr("mails").Size())
-	//a.Msgbox.SetMsgHandler(a.handleMsgboxMsg)
 }
 
 // OnCreated is called when avatar is created
 func (a *Avatar) OnCreated() {
-	//gwlog.Debugf("Found OnlineService: %s", onlineServiceEid)
 	goworld.CallServiceShardKey("OnlineService", string(a.ID), "CheckIn", a.ID, a.Attrs.GetStr("name"), a.Attrs.GetInt("level"))
+
 	for _, subject := range _TEST_PUBLISH_SUBSCRIBE_SUBJECTS { // subscribe all subjects
 		goworld.CallServiceShardKey(pubsub.ServiceName, subject, "Subscribe", a.ID, subject)
 	}
-
-	//a.AddTimer(time.Second, "PerSecondTick", 1, "")
 }
 
 // PerSecondTick is ticked per second, if timer is setup
