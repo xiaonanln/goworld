@@ -1,4 +1,4 @@
-name: Test
+name: Test Game
 
 on: [ pull_request ]
 
@@ -11,12 +11,12 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         if: "github.ref != 'refs/heads/master'"
 
-  test:
-    name: Test (Go ${{ matrix.go }}, ${{ matrix.os }})
+  test_game:
+    name: Test Game (Go ${{ matrix.go }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go: [1.11, 1.14]
+        go: [1.14]
         os: ["ubuntu-18.04"]
         mongodb-version: [3.6]
     steps:
@@ -31,9 +31,18 @@ jobs:
         with:
           redis-version: '4.x'
       - uses: actions/checkout@v2
-      - name: Test
+      - name: Test Game
         run: |
-          cp .github/goworld.ini goworld.ini
-          bash covertest.sh
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+          cp .github/goworld_stress.ini goworld.ini
+          go get ./cmd/...
+          goworld build examples/test_client
+          goworld build examples/test_game
+          goworld start examples/test_game
+          sleep 5
+          examples/test_client/test_client -N 200 -strict -duration 300
+          sleep 5
+          goworld reload examples/test_game
+          sleep 5
+          examples/test_client/test_client -N 200 -strict -duration 60
+          sleep 1
+          goworld stop examples/test_game
