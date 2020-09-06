@@ -1283,7 +1283,7 @@ func (e *Entity) GetYaw() Yaw {
 // SetYaw sets entity Yaw
 func (e *Entity) SetYaw(yaw Yaw) {
 	e.yaw = yaw
-	e.syncInfoFlag |= (sifSyncNeighborClients | sifSyncOwnClient)
+	e.syncInfoFlag |= sifSyncNeighborClients | sifSyncOwnClient
 	//e.ForAllClients(func(Client *GameClient) {
 	//	Client.updateYawOnClient(e.ID, e.Yaw)
 	//})

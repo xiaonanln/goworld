@@ -34,7 +34,7 @@ func HashSeed(data []byte, seed uint32) uint32 {
 	for n := len(data) - len(data)%4; i < n; i += 4 {
 		h += binary.LittleEndian.Uint32(data[i:])
 		h *= m
-		h ^= (h >> 16)
+		h ^= h >> 16
 	}
 
 	switch len(data) - i {
@@ -49,7 +49,7 @@ func HashSeed(data []byte, seed uint32) uint32 {
 	case 1:
 		h += uint32(data[i])
 		h *= m
-		h ^= (h >> r)
+		h ^= h >> r
 	case 0:
 	}
 

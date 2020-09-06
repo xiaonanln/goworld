@@ -362,7 +362,7 @@ func loadEntityLocally(typeName string, entityID common.EntityID, space *Space, 
 		// need to remove NOT persistent fields from data
 		entityTypeDesc := registeredEntityTypes[typeName]
 		removeFields := []string{}
-		for k, _ := range data {
+		for k := range data {
 			if !entityTypeDesc.persistentAttrs.Contains(k) {
 				removeFields = append(removeFields, k)
 			}

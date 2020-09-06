@@ -3,7 +3,7 @@ package main
 import (
 	"unsafe"
 
-	llrb "github.com/petar/GoLLRB/llrb"
+	"github.com/petar/GoLLRB/llrb"
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/gwutils"
 	"github.com/xiaonanln/goworld/engine/proto"

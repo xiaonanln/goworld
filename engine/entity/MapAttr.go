@@ -58,7 +58,7 @@ func (a *MapAttr) HasKey(key string) bool {
 // Keys returns all keys of Attrs
 func (a *MapAttr) Keys() []string {
 	keys := make([]string, 0, len(a.attrs))
-	for k, _ := range a.attrs {
+	for k := range a.attrs {
 		keys = append(keys, k)
 	}
 	return keys
@@ -66,7 +66,7 @@ func (a *MapAttr) Keys() []string {
 
 // ForEachKey calls f on all keys
 func (a *MapAttr) ForEachKey(f func(key string)) {
-	for k, _ := range a.attrs {
+	for k := range a.attrs {
 		f(k)
 	}
 }
