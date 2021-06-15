@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	rfServer      = 1 << iota
-	rfOwnClient   = 1 << iota
-	rfOtherClient = 1 << iota
+	rfServer = 1 << iota
+	rfOwnClient
+	rfOtherClient
 )
 
 type rpcDesc struct {
