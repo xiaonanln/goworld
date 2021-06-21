@@ -628,11 +628,11 @@ func (e *Entity) getAllClientData() map[string]interface{} {
 }
 
 // GetMigrateData gets the migration data
-func (e *Entity) GetMigrateData(spaceid common.EntityID) *entityMigrateData {
+func (e *Entity) GetMigrateData(spaceid common.EntityID, pos Vector3) *entityMigrateData {
 	md := &entityMigrateData{
 		Type:              e.TypeName,
 		Attrs:             e.Attrs.ToMap(), // all Attrs are migrated, without filter
-		Pos:               e.Position,
+		Pos:               pos,
 		Yaw:               e.yaw,
 		TimerData:         e.dumpTimers(),
 		SpaceID:           spaceid,
@@ -657,7 +657,7 @@ func (e *Entity) loadMigrateData(data map[string]interface{}) {
 
 // getFreezeData gets freezed data
 func (e *Entity) getFreezeData() *entityMigrateData {
-	return e.GetMigrateData(e.Space.ID)
+	return e.GetMigrateData(e.Space.ID, e.Position)
 }
 
 // Client related utilities
@@ -1090,7 +1090,7 @@ func OnMigrateRequestAck(entityid common.EntityID, spaceid common.EntityID, spac
 }
 
 func (e *Entity) realMigrateTo(spaceid common.EntityID, pos Vector3, spaceGameID uint16) {
-	migrateData := e.GetMigrateData(spaceid)
+	migrateData := e.GetMigrateData(spaceid, pos)
 	data, err := netutil.MSG_PACKER.PackMsg(migrateData, nil)
 	if err != nil {
 		gwlog.Panicf("%s is migrating to space %s, but pack migrate data failed: %s", e, spaceid, err)

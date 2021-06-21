@@ -22,7 +22,7 @@ func TestMigrateData(t *testing.T) {
 	targetSpaceID := common.GenEntityID()
 	e.Attrs.SetBool("bool", true)
 	e.Attrs.SetStr("str", "strval")
-	md := e.GetMigrateData(targetSpaceID)
+	md := e.GetMigrateData(targetSpaceID, e.Position)
 	t.Logf("get migrate data: %+v", md)
 	data, err := netutil.MSG_PACKER.PackMsg(md, nil)
 	if err != nil {
