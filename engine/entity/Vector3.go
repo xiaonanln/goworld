@@ -62,7 +62,7 @@ func (dir Vector3) DirToYaw() Yaw {
 }
 
 func (p *Vector3) Normalize() {
-	d := Coord(math.Sqrt(float64(p.X*p.X + p.Y + p.Y + p.Z*p.Z)))
+	d := Coord(math.Sqrt(float64(p.X*p.X + p.Y*p.Y + p.Z*p.Z)))
 	if d == 0 {
 		return
 	}
