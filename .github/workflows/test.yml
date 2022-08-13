@@ -4,7 +4,7 @@ on: [ pull_request ]
 
 jobs:
   cancel-previous-runs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: rokroskar/workflow-run-cleanup-action@master
         env:
@@ -16,8 +16,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go: [1.11, 1.14]
-        os: ["ubuntu-18.04"]
+        go: [1.17, 1.18]
+        os: ["ubuntu-20.04"]
         mongodb-version: [3.6]
     steps:
       - uses: actions/setup-go@v2
@@ -34,6 +34,7 @@ jobs:
       - name: Test
         run: |
           cp goworld_actions.ini goworld.ini
+          go mod tidy
           bash covertest.sh
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

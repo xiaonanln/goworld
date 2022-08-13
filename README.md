@@ -66,7 +66,7 @@ back to work but with the latest executable image. This feature enables updating
 ## Installing GoWorld
 GoWorld requries Go 1.11+ to install.
 ```bash
-go get github.com/xiaonanln/goworld/cmd/...
+go install github.com/xiaonanln/goworld/cmd/...
 ``` 
 
 ## Manage GoWorld Servers
