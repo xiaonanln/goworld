@@ -35,7 +35,7 @@ func (a *Account) Register_Client(username string, password string) {
 				a.CallClient("ShowInfo", "Registered Successfully, please click login.") // 注册成功，请点击登录
 			})
 		} else {
-			a.CallClient("ShowError", "Sorry, this account aready exists.") // 抱歉，这个账号已经存在
+			a.CallClient("ShowError", "Sorry, this account already exists.") // 抱歉，这个账号已经存在
 		}
 	})
 }
