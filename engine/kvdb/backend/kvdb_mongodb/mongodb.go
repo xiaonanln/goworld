@@ -1,13 +1,15 @@
 package kvdbmongo
 
 import (
-	"gopkg.in/mgo.v2"
+	"context"
 
 	"io"
 
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"github.com/xiaonanln/goworld/engine/kvdb/types"
-	"gopkg.in/mgo.v2/bson"
+	kvdbtypes "github.com/xiaonanln/goworld/engine/kvdb/types"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 const (
@@ -16,25 +18,24 @@ const (
 )
 
 type mongoKVDB struct {
-	s *mgo.Session
-	c *mgo.Collection
+	s *mongo.Client
+	c *mongo.Collection
 }
 
 // OpenMongoKVDB opens mongodb as KVDB engine
 func OpenMongoKVDB(url string, dbname string, collectionName string) (kvdbtypes.KVDBEngine, error) {
 	gwlog.Debugf("Connecting MongoDB ...")
-	session, err := mgo.Dial(url)
+	session, err := mongo.Connect(options.Client().ApplyURI(url))
 	if err != nil {
 		return nil, err
 	}
 
-	session.SetMode(mgo.Monotonic, true)
 	if dbname == "" {
 		// if db is not specified, use default
 		dbname = _DEFAULT_DB_NAME
 	}
-	db := session.DB(dbname)
-	c := db.C(collectionName)
+	db := session.Database(dbname)
+	c := db.Collection(collectionName)
 	return &mongoKVDB{
 		s: session,
 		c: c,
@@ -42,18 +43,18 @@ func OpenMongoKVDB(url string, dbname string, collectionName string) (kvdbtypes.
 }
 
 func (kvdb *mongoKVDB) Put(key string, val string) error {
-	_, err := kvdb.c.UpsertId(key, map[string]string{
+	opts := options.UpdateOne().SetUpsert(true)
+	_, err := kvdb.c.UpdateOne(context.TODO(), bson.M{"_id": key}, bson.M{"$set": bson.M{
 		_VAL_KEY: val,
-	})
+	}}, opts)
 	return err
 }
 
 func (kvdb *mongoKVDB) Get(key string) (val string, err error) {
-	q := kvdb.c.FindId(key)
 	var doc map[string]string
-	err = q.One(&doc)
+	err = kvdb.c.FindOne(context.TODO(), bson.M{"_id": key}).Decode(&doc)
 	if err != nil {
-		if err == mgo.ErrNotFound {
+		if err == mongo.ErrNoDocuments {
 			err = nil
 		}
 		return
@@ -63,20 +64,24 @@ func (kvdb *mongoKVDB) Get(key string) (val string, err error) {
 }
 
 type mongoKVIterator struct {
-	it *mgo.Iter
+	it *mongo.Cursor
 }
 
 func (it *mongoKVIterator) Next() (kvdbtypes.KVItem, error) {
-	var doc map[string]string
-	ok := it.it.Next(&doc)
+	ok := it.it.Next(context.Background())
 	if ok {
+		var doc map[string]string
+		err := it.it.Decode(&doc)
+		if err != nil {
+			return kvdbtypes.KVItem{}, err
+		}
 		return kvdbtypes.KVItem{
 			Key: doc["_id"],
 			Val: doc["_"],
 		}, nil
 	}
 
-	err := it.it.Close()
+	err := it.it.Close(context.Background())
 	if err != nil {
 		return kvdbtypes.KVItem{}, err
 	}
@@ -84,15 +89,17 @@ func (it *mongoKVIterator) Next() (kvdbtypes.KVItem, error) {
 }
 
 func (kvdb *mongoKVDB) Find(beginKey string, endKey string) (kvdbtypes.Iterator, error) {
-	q := kvdb.c.Find(bson.M{"_id": bson.M{"$gte": beginKey, "$lt": endKey}})
-	it := q.Iter()
+	cur, err := kvdb.c.Find(context.Background(), bson.M{"_id": bson.M{"$gte": beginKey, "$lt": endKey}})
+	if err != nil {
+		return nil, err
+	}
 	return &mongoKVIterator{
-		it: it,
+		it: cur,
 	}, nil
 }
 
 func (kvdb *mongoKVDB) Close() {
-	kvdb.s.Close()
+	kvdb.s.Disconnect(context.Background())
 }
 
 func (kvdb *mongoKVDB) IsConnectionError(err error) bool {

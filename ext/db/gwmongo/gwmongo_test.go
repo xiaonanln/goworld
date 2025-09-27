@@ -8,8 +8,9 @@ import (
 	"sync"
 
 	"github.com/xiaonanln/goworld/engine/post"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var wait sync.WaitGroup
@@ -41,17 +42,17 @@ func TestClose(t *testing.T) {
 	wait.Wait()
 }
 
-func TestSetMode(t *testing.T) {
-	wait.Add(1)
-	mongodb.SetMode(mgo.SecondaryPreferred, func(res interface{}, err error) {
-		checkRequest(t, err, res)
-	})
-	mongodb.SetMode(mgo.Monotonic, func(res interface{}, err error) {
-		checkRequest(t, err, res)
-		wait.Done()
-	})
-	wait.Wait()
-}
+// func TestSetMode(t *testing.T) {
+// 	wait.Add(1)
+// 	mongodb.SetMode(mgo.SecondaryPreferred, func(res interface{}, err error) {
+// 		checkRequest(t, err, res)
+// 	})
+// 	mongodb.SetMode(mgo.Monotonic, func(res interface{}, err error) {
+// 		checkRequest(t, err, res)
+// 		wait.Done()
+// 	})
+// 	wait.Wait()
+// }
 
 func TestUseDB(t *testing.T) {
 	wait.Add(1)
@@ -93,7 +94,7 @@ func TestCount(t *testing.T) {
 	wait.Add(1)
 	mongodb.Count("mongodb_test", bson.M{"c": 1}, nil, func(res interface{}, err error) {
 		checkRequest(t, err, res)
-		count := res.(int)
+		count := res.(int64)
 		t.Logf("Count returns %d", count)
 		wait.Done()
 	})
@@ -102,10 +103,9 @@ func TestCount(t *testing.T) {
 
 func TestFindOne(t *testing.T) {
 	wait.Add(1)
-	mongodb.FindOne("mongodb_test", bson.M{"c": 2}, func(query *mgo.Query) {
-		query.Limit(2)
-		query.Sort("d", "a", "b")
-		query.Select(bson.M{"_id": 0})
+	mongodb.FindOne("mongodb_test", bson.M{"c": 2}, func(query *options.FindOneOptionsBuilder) {
+		query.SetSort(bson.D{{"d", 1}, {"a", 1}, {"b", 1}})
+		query.SetProjection(bson.M{"_id": 0})
 	}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		t.Logf("FindOne: %v", res.(bson.M))
@@ -117,9 +117,9 @@ func TestFindOne(t *testing.T) {
 
 func TestFindAll(t *testing.T) {
 	wait.Add(1)
-	mongodb.FindAll("mongodb_test", bson.M{"c": 2}, func(query *mgo.Query) {
-		query.Sort("d", "a", "b")
-		query.Select(bson.M{"_id": 0})
+	mongodb.FindAll("mongodb_test", bson.M{"c": 2}, func(query *options.FindOptionsBuilder) {
+		query.SetSort(bson.D{{"d", 1}, {"a", 1}, {"b", 1}})
+		query.SetProjection(bson.M{"_id": 0})
 	}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		t.Logf("FindAll: %v", res.([]bson.M))
@@ -130,7 +130,7 @@ func TestFindAll(t *testing.T) {
 }
 
 func TestFindId(t *testing.T) {
-	id := bson.NewObjectId()
+	id := bson.NewObjectID()
 	mongodb.Insert("mongodb_test", bson.M{"_id": id, "TestFindId": 1}, nil)
 
 	wait.Add(1)
@@ -143,7 +143,7 @@ func TestFindId(t *testing.T) {
 }
 
 func TestUpdateId(t *testing.T) {
-	id := bson.NewObjectId()
+	id := bson.NewObjectID()
 	mongodb.Insert("mongodb_test", bson.M{"_id": id, "TestUpdateId": 1}, nil)
 
 	wait.Add(1)
@@ -154,9 +154,11 @@ func TestUpdateId(t *testing.T) {
 	wait.Wait()
 
 	wait.Add(1)
-	mongodb.UpdateId("mongodb_test", bson.NewObjectId(), bson.M{"$set": bson.M{"TestUpdateId": 2}}, func(res interface{}, err error) {
-		if err == nil {
+	mongodb.UpdateId("mongodb_test", bson.NewObjectID(), bson.M{"$set": bson.M{"TestUpdateId": 2}}, func(res interface{}, err error) {
+		if err != nil {
 			t.Errorf("should returns error")
+		} else if res.(int64) != 0 {
+			t.Errorf("should returns 0")
 		}
 		checkRequest(t, err, res)
 		wait.Done()
@@ -193,12 +195,12 @@ func TestUpdateAll(t *testing.T) {
 
 func TestUpsertId(t *testing.T) {
 	wait.Add(1)
-	id := bson.NewObjectId()
+	id := bson.NewObjectID()
 	mongodb.UpsertId("mongodb_test", id, bson.M{"TestUpsertId": 1}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 	})
 
-	mongodb.UpsertId("mongodb_test", id, bson.M{"$set": bson.M{"TestUpdateId": 2}}, func(res interface{}, err error) {
+	mongodb.UpsertId("mongodb_test", id, bson.M{"TestUpdateId": 2}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		wait.Done()
 	})
@@ -222,8 +224,8 @@ func TestUpsert(t *testing.T) {
 
 func TestEnsureIndex(t *testing.T) {
 	wait.Add(1)
-	mongodb.EnsureIndex("mongodb_test", mgo.Index{
-		Key: []string{"a"},
+	mongodb.EnsureIndex("mongodb_test", mongo.IndexModel{
+		Keys: bson.D{{"a", 1}},
 	}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		wait.Done()
@@ -233,7 +235,7 @@ func TestEnsureIndex(t *testing.T) {
 
 func TestEnsureIndexKey(t *testing.T) {
 	wait.Add(1)
-	mongodb.EnsureIndexKey("mongodb_test", []string{"a", "b", "c"}, func(res interface{}, err error) {
+	mongodb.EnsureIndexKey("mongodb_test", bson.D{{"a", 1}, {"b", 1}, {"c", 1}}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		wait.Done()
 	})
@@ -242,7 +244,7 @@ func TestEnsureIndexKey(t *testing.T) {
 
 func TestDropIndex(t *testing.T) {
 	wait.Add(1)
-	mongodb.DropIndex("mongodb_test", []string{"a"}, func(res interface{}, err error) {
+	mongodb.DropIndex("mongodb_test", bson.D{{"a", 1}}, func(res interface{}, err error) {
 		checkRequest(t, err, res)
 		wait.Done()
 	})
@@ -261,8 +263,10 @@ func TestRemoveId(t *testing.T) {
 		})
 		mongodb.RemoveId("mongodb_test", id, func(res interface{}, err error) {
 			checkRequest(t, err, res)
-			if err != mgo.ErrNotFound {
-				t.Errorf("error should be not found")
+			if err != nil {
+				t.Errorf("error should be here")
+			} else if res.(int64) != 0 {
+				t.Errorf("should returns 0")
 			}
 			wait.Done()
 		})
@@ -280,8 +284,10 @@ func TestRemove(t *testing.T) {
 		})
 		mongodb.Remove("mongodb_test", bson.M{"TestRemove": 1}, func(res interface{}, err error) {
 			checkRequest(t, err, res)
-			if err != mgo.ErrNotFound {
-				t.Errorf("error should be not found")
+			if err != nil {
+				t.Errorf("error should be here")
+			} else if res.(int64) != 0 {
+				t.Errorf("should returns 0")
 			}
 			wait.Done()
 		})
@@ -313,14 +319,14 @@ func TestRemoveAll(t *testing.T) {
 	wait.Wait()
 }
 
-func TestDropCollection(t *testing.T) {
-	wait.Add(1)
-	mongodb.DropCollection("mongodb_test", func(res interface{}, err error) {
-		checkRequest(t, err, res)
-		wait.Done()
-	})
-	wait.Wait()
-}
+// func TestDropCollection(t *testing.T) {
+// 	wait.Add(1)
+// 	mongodb.DropCollection("mongodb_test", func(res interface{}, err error) {
+// 		checkRequest(t, err, res)
+// 		wait.Done()
+// 	})
+// 	wait.Wait()
+// }
 
 func checkRequest(t *testing.T, err error, res interface{}) {
 	if err != nil {

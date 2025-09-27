@@ -2,9 +2,9 @@ package game
 
 import (
 	"flag"
+
 	"github.com/xiaonanln/pktconn"
 
-	"math/rand"
 	"time"
 
 	"os"
@@ -22,7 +22,7 @@ import (
 
 	"context"
 
-	"github.com/xiaonanln/goworld/components/game/lbc"
+	gamelbc "github.com/xiaonanln/goworld/components/game/lbc"
 	"github.com/xiaonanln/goworld/engine/binutil"
 	"github.com/xiaonanln/goworld/engine/common"
 	"github.com/xiaonanln/goworld/engine/config"
@@ -63,7 +63,7 @@ func parseArgs() {
 //
 // This is the main game server loop
 func Run() {
-	rand.Seed(time.Now().UnixNano())
+	// rand.Seed(time.Now().UnixNano())
 	parseArgs()
 
 	if runInDaemonMode {

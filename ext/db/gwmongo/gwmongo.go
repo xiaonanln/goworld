@@ -1,11 +1,14 @@
 package gwmongo
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/xiaonanln/goworld/engine/async"
 	"github.com/xiaonanln/goworld/engine/gwlog"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 const (
@@ -18,8 +21,8 @@ var (
 
 // MongoDB is a MongoDB instance can be used to manipulate Mongo DBs
 type DB struct {
-	session *mgo.Session
-	db      *mgo.Database
+	session *mongo.Client
+	db      *mongo.Database
 }
 
 func (mdb *DB) checkConnected() bool {
@@ -31,13 +34,11 @@ func (mdb *DB) checkConnected() bool {
 func Dial(url string, dbname string, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		gwlog.Infof("Dailing MongoDB: %s ...", url)
-		session, err := mgo.Dial(url)
+		session, err := mongo.Connect(options.Client().ApplyURI(url))
 		if err != nil {
 			return nil, err
 		}
-
-		session.SetMode(mgo.Monotonic, true)
-		db := session.DB(dbname)
+		db := session.Database(dbname)
 		return &DB{session, db}, nil
 	}, ac)
 }
@@ -49,7 +50,7 @@ func (mdb *DB) Close(ac async.AsyncCallback) {
 			return nil, errNoSession
 		}
 
-		mdb.session.Close()
+		mdb.session.Disconnect(context.Background())
 		mdb.session = nil
 		mdb.db = nil
 		return nil, nil
@@ -63,84 +64,79 @@ func (mdb *DB) UseDB(dbname string, ac async.AsyncCallback) {
 			return nil, errNoSession
 		}
 
-		mdb.db = mdb.session.DB(dbname)
+		mdb.db = mdb.session.Database(dbname)
 		return nil, nil
 	}, ac)
 }
 
-// SetMode sets the consistency mode
-func (mdb *DB) SetMode(consistency mgo.Mode, ac async.AsyncCallback) {
-	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
-		if !mdb.checkConnected() {
-			return nil, errNoSession
-		}
-
-		mdb.session.SetMode(consistency, true)
-		return nil, nil
-	}, ac)
-}
+// // SetMode sets the consistency mode
+// func (mdb *DB) SetMode(consistency mgo.Mode, ac async.AsyncCallback) {
+// 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
+// 		if !mdb.checkConnected() {
+// 			return nil, errNoSession
+// 		}
+// 		return nil, nil
+// 	}, ac)
+// }
 
 // FindId finds document in collection by Id
-func (mdb *DB) FindId(collectionName string, id interface{}, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) FindId(collectionName string, id interface{}, setupQuery func(query *mongo.SingleResult), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
-		q := mdb.db.C(collectionName).FindId(id)
+		q := mdb.db.Collection(collectionName).FindOne(context.Background(), bson.M{"_id": id})
 		if setupQuery != nil {
 			setupQuery(q)
 		}
 		var res bson.M
-		err := q.One(&res)
+		err := q.Decode(&res)
 		return res, err
 	}, ac)
 }
 
 // FindOne finds one document with specified query
-func (mdb *DB) FindOne(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) FindOne(collectionName string, query bson.M, setupQuery func(query *options.FindOneOptionsBuilder), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
 
-		q := mdb.db.C(collectionName).Find(query)
+		opts := options.FindOne()
 		if setupQuery != nil {
-			setupQuery(q)
+			setupQuery(opts)
 		}
+		q := mdb.db.Collection(collectionName).FindOne(context.Background(), query, opts)
 		var res bson.M
-		err := q.One(&res)
+		err := q.Decode(&res)
 		return res, err
 	}, ac)
 }
 
 // FindAll finds all documents with specified query
-func (mdb *DB) FindAll(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) FindAll(collectionName string, query bson.M, setupQuery func(query *options.FindOptionsBuilder), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
-		q := mdb.db.C(collectionName).Find(query)
+		opts := options.Find()
 		if setupQuery != nil {
-			setupQuery(q)
+			setupQuery(opts)
 		}
+		cur, err := mdb.db.Collection(collectionName).Find(context.Background(), query, opts)
 		var res []bson.M
-		err := q.All(&res)
+		err = cur.All(context.Background(), &res)
 		return res, err
 	}, ac)
 }
 
 // Count counts the number of documents by query
-func (mdb *DB) Count(collectionName string, query bson.M, setupQuery func(query *mgo.Query), ac async.AsyncCallback) {
+func (mdb *DB) Count(collectionName string, query bson.M, setupQuery func(query *mongo.Cursor), ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
-		q := mdb.db.C(collectionName).Find(query)
-		if setupQuery != nil {
-			setupQuery(q)
-		}
-		n, err := q.Count()
-		return n, err
+		return mdb.db.Collection(collectionName).CountDocuments(context.TODO(), query)
 	}, ac)
 }
 
@@ -150,7 +146,7 @@ func (mdb *DB) Insert(collectionName string, doc bson.M, ac async.AsyncCallback)
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
-		err := mdb.db.C(collectionName).Insert(doc)
+		_, err := mdb.db.Collection(collectionName).InsertOne(context.TODO(), doc)
 		return nil, err
 	}, ac)
 }
@@ -165,7 +161,7 @@ func (mdb *DB) InsertMany(collectionName string, docs []bson.M, ac async.AsyncCa
 		for i := 0; i < len(docs); i++ {
 			insertDocs[i] = docs[i]
 		}
-		err := mdb.db.C(collectionName).Insert(insertDocs...)
+		_, err := mdb.db.Collection(collectionName).InsertMany(context.TODO(), insertDocs)
 		return nil, err
 	}, ac)
 }
@@ -177,8 +173,11 @@ func (mdb *DB) UpdateId(collectionName string, id interface{}, update bson.M, ac
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).UpdateId(id, update)
-		return nil, err
+		ret, err := mdb.db.Collection(collectionName).UpdateByID(context.TODO(), id, update)
+		if err != nil {
+			return nil, err
+		}
+		return ret.MatchedCount, err
 	}, ac)
 }
 
@@ -189,7 +188,7 @@ func (mdb *DB) Update(collectionName string, query bson.M, update bson.M, ac asy
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).Update(query, update)
+		_, err := mdb.db.Collection(collectionName).UpdateOne(context.TODO(), query, update)
 		return nil, err
 	}, ac)
 }
@@ -202,9 +201,9 @@ func (mdb *DB) UpdateAll(collectionName string, query bson.M, update bson.M, ac 
 		}
 
 		var updated int
-		info, err := mdb.db.C(collectionName).UpdateAll(query, update)
+		info, err := mdb.db.Collection(collectionName).UpdateMany(context.TODO(), query, update)
 		if info != nil {
-			updated = info.Updated
+			updated = int(info.ModifiedCount)
 		}
 		return updated, err
 	}, ac)
@@ -217,10 +216,11 @@ func (mdb *DB) UpsertId(collectionName string, id interface{}, update bson.M, ac
 			return nil, errNoSession
 		}
 
+		opts := options.UpdateOne().SetUpsert(true)
 		var upsertId interface{}
-		info, err := mdb.db.C(collectionName).UpsertId(id, update)
+		info, err := mdb.db.Collection(collectionName).UpdateByID(context.TODO(), id, bson.M{"$set": update}, opts)
 		if info != nil {
-			upsertId = info.UpsertedId
+			upsertId = info.UpsertedID
 		}
 		return upsertId, err
 	}, ac)
@@ -233,10 +233,11 @@ func (mdb *DB) Upsert(collectionName string, query bson.M, update bson.M, ac asy
 			return nil, errNoSession
 		}
 
+		opts := options.UpdateOne().SetUpsert(true)
 		var upsertId interface{}
-		info, err := mdb.db.C(collectionName).Upsert(query, update)
+		info, err := mdb.db.Collection(collectionName).UpdateOne(context.TODO(), query, bson.M{"$set": update}, opts)
 		if info != nil {
-			upsertId = info.UpsertedId
+			upsertId = info.UpsertedID
 		}
 		return upsertId, err
 	}, ac)
@@ -249,8 +250,11 @@ func (mdb *DB) RemoveId(collectionName string, id interface{}, ac async.AsyncCal
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).RemoveId(id)
-		return nil, err
+		ret, err := mdb.db.Collection(collectionName).DeleteOne(context.TODO(), bson.M{"_id": id})
+		if err != nil {
+			return nil, err
+		}
+		return ret.DeletedCount, err
 	}, ac)
 }
 
@@ -261,8 +265,11 @@ func (mdb *DB) Remove(collectionName string, query bson.M, ac async.AsyncCallbac
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).Remove(query)
-		return nil, err
+		ret, err := mdb.db.Collection(collectionName).DeleteOne(context.TODO(), query)
+		if err != nil {
+			return nil, err
+		}
+		return ret.DeletedCount, err
 	}, ac)
 }
 
@@ -274,46 +281,46 @@ func (mdb *DB) RemoveAll(collectionName string, query bson.M, ac async.AsyncCall
 		}
 
 		var n int
-		info, err := mdb.db.C(collectionName).RemoveAll(query)
+		info, err := mdb.db.Collection(collectionName).DeleteMany(context.Background(), query)
 		if info != nil {
-			n = info.Removed
+			n = int(info.DeletedCount)
 		}
 		return n, err
 	}, ac)
 }
 
 // EnsureIndex creates an index
-func (mdb *DB) EnsureIndex(collectionName string, index mgo.Index, ac async.AsyncCallback) {
+func (mdb *DB) EnsureIndex(collectionName string, index mongo.IndexModel, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).EnsureIndex(index)
-		return nil, err
+		name, err := mdb.db.Collection(collectionName).Indexes().CreateMany(context.Background(), []mongo.IndexModel{index})
+		return name, err
 	}, ac)
 }
 
 // EnsureIndexKey creates an index by keys
-func (mdb *DB) EnsureIndexKey(collectionName string, keys []string, ac async.AsyncCallback) {
+func (mdb *DB) EnsureIndexKey(collectionName string, keys bson.D, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).EnsureIndexKey(keys...)
-		return nil, err
+		name, err := mdb.db.Collection(collectionName).Indexes().CreateOne(context.Background(), mongo.IndexModel{Keys: keys})
+		return name, err
 	}, ac)
 }
 
 // DropIndex drops an index by keys
-func (mdb *DB) DropIndex(collectionName string, keys []string, ac async.AsyncCallback) {
+func (mdb *DB) DropIndex(collectionName string, keys bson.D, ac async.AsyncCallback) {
 	async.AppendAsyncJob(_MONGODB_ASYNC_JOB_GROUP, func() (interface{}, error) {
 		if !mdb.checkConnected() {
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).DropIndex(keys...)
+		err := mdb.db.Collection(collectionName).Indexes().DropWithKey(context.Background(), keys)
 		return nil, err
 	}, ac)
 }
@@ -325,7 +332,7 @@ func (mdb *DB) DropIndex(collectionName string, keys []string, ac async.AsyncCal
 //			return
 //		}
 //
-//		err := mdb.db.C(collectionName).DropIndexName(indexName)
+//		err := mdb.db.Collection(collectionName).DropIndexName(indexName)
 //		return nil, err
 //	}
 //}
@@ -337,7 +344,7 @@ func (mdb *DB) DropCollection(collectionName string, ac async.AsyncCallback) {
 			return nil, errNoSession
 		}
 
-		err := mdb.db.C(collectionName).DropCollection()
+		err := mdb.db.Collection(collectionName).Drop(context.Background())
 		return nil, err
 	}, ac)
 }
@@ -349,7 +356,7 @@ func (mdb *DB) DropDatabase(ac async.AsyncCallback) {
 			return nil, errNoSession
 		}
 
-		err := mdb.db.DropDatabase()
+		err := mdb.db.Drop(context.Background())
 		return nil, err
 	}, ac)
 }

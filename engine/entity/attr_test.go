@@ -6,7 +6,7 @@ import (
 
 	"strconv"
 
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestAttrVals(t *testing.T) {

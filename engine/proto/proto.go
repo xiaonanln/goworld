@@ -22,6 +22,8 @@ const (
 	MT_NOTIFY_DESTROY_ENTITY
 	// MT_KVREG_REGISTER is a message type for declaring services
 	MT_KVREG_REGISTER
+	// MT_UNDECLARE_SERVICE is a message type for undeclaring services
+	MT_UNDECLARE_SERVICE
 	// MT_CALL_ENTITY_METHOD is a message type for calling entity methods
 	MT_CALL_ENTITY_METHOD
 	// MT_CREATE_ENTITY_SOMEWHERE is a message type for creating entities
@@ -36,6 +38,8 @@ const (
 	MT_CALL_ENTITY_METHOD_FROM_CLIENT
 	// MT_SYNC_POSITION_YAW_FROM_CLIENT is a message type for clients
 	MT_SYNC_POSITION_YAW_FROM_CLIENT
+	// MT_NOTIFY_ALL_GAMES_CONNECTED is a message type for notify all game connected
+	MT_NOTIFY_ALL_GAMES_CONNECTED
 	// MT_NOTIFY_GATE_DISCONNECTED is a message type to notify gate disconnected
 	MT_NOTIFY_GATE_DISCONNECTED
 	// MT_START_FREEZE_GAME is a message type for hot swapping
